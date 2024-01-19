@@ -13,6 +13,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#ifndef _FECUDA_UTILS_CU_H
+#define _FECUDA_UTILS_CU_H
 /*##############--------- FECUDA Utility (fecuda_Utils.cu) variable declarations -------------#################*/
 extern float *haloSendBuff_d;  //Send-Buffer for coalesced halo exchanges
 extern float *haloRecvBuff_d;  //Recieve-Buffer for coalesced halo exchanges
@@ -60,3 +62,4 @@ extern "C" int fecuda_SendRecvSouthNorth(float* sendFld_d, float* recvFld_d, int
 Used to perform northern/southern device domain halo exchange for an arbitrary field.
 */
 extern "C" int fecuda_SendRecvNorthSouth(float* sendFld_d, float* recvFld_d, int hydroBCs);
+#endif //_FECUDA_UTILS_CU_H

@@ -22,6 +22,7 @@
 #include <parameters.h>
 #include <fecuda.h>
 #include <fecuda_Device.h>
+#include <fecuda_Utils.h>
 
 
 /*###################------------------- FECUDA module variable definitions ---------------------##############*/

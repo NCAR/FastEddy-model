@@ -905,22 +905,22 @@ int hydro_coreInit(){
           for(iFld2 = 0; iFld2 < 3; iFld2 ++){ // three spatial directions
              switch (iFld2){
               case 0:
-                sprintf(&moistName_tmp[0],&moistName_base[0]);
+                sprintf(&moistName_tmp[0],"%s",&moistName_base[0]);
                 sprintf(&moistName[0],"%d",1);
                 strcat(&moistName_tmp[0],&moistName[0]);
-                sprintf(&moistName[0],&moistName_tmp[0]);
+                sprintf(&moistName[0],"%s",&moistName_tmp[0]);
                 break;
               case 1:
-                sprintf(&moistName_tmp[0],&moistName_base[0]);
+                sprintf(&moistName_tmp[0],"%s",&moistName_base[0]);
                 sprintf(&moistName[0],"%d",2);
                 strcat(&moistName_tmp[0],&moistName[0]);
-                sprintf(&moistName[0],&moistName_tmp[0]);
+                sprintf(&moistName[0],"%s",&moistName_tmp[0]);
                 break;
               case 2:
-                sprintf(&moistName_tmp[0],&moistName_base[0]);
+                sprintf(&moistName_tmp[0],"%s",&moistName_base[0]);
                 sprintf(&moistName[0],"%d",3);
                 strcat(&moistName_tmp[0],&moistName[0]);
-                sprintf(&moistName[0],&moistName_tmp[0]);
+                sprintf(&moistName[0],"%s",&moistName_tmp[0]);
                 break;
               default:    //invalid iFld value
                 printf("hydro_coreInit:moistTauFlds[iFld=%d], invalid value for iFld.\n",iFld*3+iFld2);
@@ -980,7 +980,7 @@ int hydro_coreInit(){
 * Used to undertake the sequence of steps to build the Frhs of all hydro_core prognostic variable fields.
 */
 int hydro_corePrepareFromInitialConditions(){
-  int errorCode;
+  int errorCode = HYDRO_CORE_SUCCESS;
   
   if(surflayerSelector > 0){  
     ///Perform halo exchange for the 2-d fields associated with hydro_core(surface layer)
@@ -1189,30 +1189,30 @@ int hydro_coreSetBaseState(){
      } // end for(i...
    } //end if-else... stabilityScheme...
 
-   /*Fill top-most level and halos above with Geostrophic Wind */
-   uIni = &hydroFlds[U_INDX*fldStride];
-   vIni = &hydroFlds[V_INDX*fldStride];
-   wIni = &hydroFlds[W_INDX*fldStride];
-   for(i=iMin-Nh; i < iMax+Nh; i++){       // Cover the halos in X 
-     for(j=jMin-Nh; j < jMax+Nh; j++){     // Cover the halos in Y 
-       for(k=kMin; k < kMax+Nh; k++){   // Cover the halos in Z 
-         ijk = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+k;
-         if (zPos[ijk] < z_Ug){ 
-           uIni[ijk] = U_g*rhoBase[ijk];
-         } else{
-           uIni[ijk] = (U_g+Ug_grad*(zPos[ijk]-z_Ug))*rhoBase[ijk];
-         }
-         if (zPos[ijk] < z_Vg){
-           vIni[ijk] = V_g*rhoBase[ijk];
-         } else{
-           vIni[ijk] = (V_g+Vg_grad*(zPos[ijk]-z_Vg))*rhoBase[ijk];
-         }
-         wIni[ijk] = 0.0;
-       } //end for(k...
-     } // end for(j...
-   } // end for(i...
-
-   if((inFile == NULL)){
+   if(inFile == NULL){
+      /* Prescribe a geostrophic wind profile as initial conditions on U & V with W = 0 */
+      uIni = &hydroFlds[U_INDX*fldStride];
+      vIni = &hydroFlds[V_INDX*fldStride];
+      wIni = &hydroFlds[W_INDX*fldStride];
+      for(i=iMin-Nh; i < iMax+Nh; i++){       // Cover the halos in X 
+        for(j=jMin-Nh; j < jMax+Nh; j++){     // Cover the halos in Y 
+          for(k=kMin; k < kMax+Nh; k++){   // Cover the halos in Z 
+            ijk = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+k;
+            if (zPos[ijk] < z_Ug){ 
+              uIni[ijk] = U_g*rhoBase[ijk];
+            } else{
+              uIni[ijk] = (U_g+Ug_grad*(zPos[ijk]-z_Ug))*rhoBase[ijk];
+            }
+            if (zPos[ijk] < z_Vg){
+              vIni[ijk] = V_g*rhoBase[ijk];
+            } else{
+              vIni[ijk] = (V_g+Vg_grad*(zPos[ijk]-z_Vg))*rhoBase[ijk];
+            }
+            wIni[ijk] = 0.0;
+          } //end for(k...
+        } // end for(j...
+     } // end for(i...
+     /*Set initial conditions  on rho and Theta to match base state */
      for(iFld=0; iFld < 2; iFld++){
        switch (iFld){
          case 0:
@@ -1249,7 +1249,7 @@ int hydro_coreSetBaseState(){
        } // end for(i...
      } //endif thetaPerturbationSwitch==1
 
-   }else{
+   }else{ //Initial conditions were provided...
      if(stabilityScheme==3){
       for(iFld=0; iFld < 2; iFld++){
          switch (iFld){
