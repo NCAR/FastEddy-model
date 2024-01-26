@@ -129,20 +129,23 @@ int printList(){
 } //end printList
 
 void destroyList(){
-   int i;
+   
    ioVar_t *tmp;
    ioVar_t *toDelete;
    /*free the list*/
+#ifdef DEBUG
+   int i;
    i = 0;
+#endif
    tmp = head;
    while(tmp != NULL){
       toDelete = tmp;
       tmp = tmp->next;
-#ifdef dEBUG
+#ifdef DEBUG
       printf("Deleting Entry %d: name = %s\n",i,toDelete->name);
+      i++;
 #endif
       free(toDelete);
-      i++;
    }// end while
 
    return;
