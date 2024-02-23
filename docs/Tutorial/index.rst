@@ -17,14 +17,9 @@
  
   sensitivity.rst
 
-.. only
-    
-  .. toctree::
-    :caption: QUESTIONS
-  
-    questions.rst
+.. toctree::
+  :caption: QUESTIONS
+  :orphan:
+     
+  questions.rst
    
-  .. toctree::
-    :caption: SENSITIVITY TESTS
- 
-    sensitivity.rst
