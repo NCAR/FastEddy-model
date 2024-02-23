@@ -1,5 +1,6 @@
+************
 Introduction
-============
+************
 
 `FastEddy`_ is a resident-GPU large eddy simulation (LES) model owned by the National Center for Atmospheric Research (`NCAR`_) Research Applications Laboratory (`RAL`_). It is designed for future turbulence-resolving numerical weather prediction. 
 
