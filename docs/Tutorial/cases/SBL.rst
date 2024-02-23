@@ -20,11 +20,11 @@ Input parameters
 * Surface potential temperature: :math:`265` K
 * Potential temperature profile:
   .. math::
-    \partial{\theta}/\partial z =
-      \begin{cases}
-        0 & \text{if $z$ $\le$ 100 m}\\
-        0.01 & \text{if $z$ > 100 m}
-      \end{cases}   
+  \partial{\theta}/\partial z =
+    \begin{cases}
+      0 & \text{if $z$ $\le$ 100 m}\\
+      0.01 & \text{if $z$ > 100 m}
+    \end{cases}   
 * Surface heat flux:  :math:`-0.25` K/h
 * Surface roughness length: :math:`z_0=0.1` m
 * Rayleigh damping layer: uppermost :math:`75` m of the domain
