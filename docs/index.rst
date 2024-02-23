@@ -17,6 +17,6 @@ engineering applications.
 
 .. toctree::
    :hidden:
-   :caption: FastEddy
+   :caption: TUTORIAL
 
    Tutorial/index

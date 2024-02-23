@@ -1,0 +1,41 @@
+name: Documentation
+on:
+  push:
+    branches:
+      - develop
+      - feature_*
+      - main*
+      - bugfix_*
+    paths:
+      - docs/**
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+
+jobs:
+  documentation:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade python-dateutil requests sphinx \
+          sphinx-gallery Pillow sphinx_rtd_theme sphinx-panels
+          python -m pip install -r docs/requirements.txt
+      - name: Build docs
+        run: ./.github/jobs/build_documentation.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: documentation
+          path: artifact/documentation
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: documentation_warnings.log
+          path: artifact/doc_warnings.log
+          if-no-files-found: ignore
