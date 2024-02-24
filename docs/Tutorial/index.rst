@@ -17,9 +17,4 @@
  
   sensitivity.rst
 
-.. toctree::
-  :caption: QUESTIONS
-  :orphan:
-     
-  questions.rst
    
