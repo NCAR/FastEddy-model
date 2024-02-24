@@ -1,20 +1,20 @@
 .. toctree::
-  :caption: GETTING STARTED
+   :caption: GETTING STARTED
   
-  introduction.rst
+   introduction.rst
   
 .. toctree::
-  :caption: IDEAL TEST CASES 
-  :numbered:
+   :caption: IDEAL TEST CASES 
+   :numbered:
   
-  cases/NBL.rst
-  cases/CBL.rst
-  cases/SBL.rst
-  cases/MBL.rst
+   cases/NBL.rst
+   cases/CBL.rst
+   cases/SBL.rst
+   cases/MBL.rst
   
 .. toctree::   
-  :caption: SENSITIVITY TESTS
+   :caption: SENSITIVITY TESTS
  
-  sensitivity.rst
+   sensitivity.rst
 
    
