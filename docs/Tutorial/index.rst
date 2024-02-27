@@ -2,7 +2,7 @@
    :numbered:
       
    getting_started.rst
-   cases/cases.rst
+   cases.rst
    sensitivity.rst
 
    
