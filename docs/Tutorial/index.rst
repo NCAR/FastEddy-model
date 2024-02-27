@@ -7,6 +7,7 @@
    :caption: IDEAL TEST CASES 
    :numbered:
   
+   cases/cases.rst
    cases/NBL.rst
    cases/CBL.rst
    cases/SBL.rst
