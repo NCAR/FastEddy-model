@@ -1,5 +1,6 @@
+=============================
 Dry convective boundary layer
-================================
+=============================
 
 This is the convective boundary layer scenario described by Sauer and Munoz-Esparza (2020). This case represents the boundary layer conditions at the SWiFT facility near Lubbock, Texas at 4 July 2012 during the period of 18Z-20Z (12:00–14:00 local time), the strongest period of convection on the day.
 
