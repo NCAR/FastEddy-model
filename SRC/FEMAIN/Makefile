@@ -36,16 +36,20 @@ DEBUG_CFLAGS = -g
 DEFINES = -DCUB_IGNORE_DEPRECATED_CPP_DIALECT -DTHRUST_IGNORE_DEPRECATED_CPP_DIALECT
 
 
-TEST_CFLAGS = -Wall -m64 ${DEFINES} ${INCLUDES}
+TEST_CFLAGS = -Wall -m64 ${DEFINES} ${INCLUDES} ${OTHER_INCLUDES}
 ARCH_CU_FLAGS = -arch=sm_70
-TEST_CU_CFLAGS = ${ARCH_CU_FLAGS} -m64 -std=c++11 ${DEFINES} ${INCLUDES}
+TEST_CU_CFLAGS = ${ARCH_CU_FLAGS} -m64 -std=c++11 ${DEFINES} ${INCLUDES} ${OTHER_INCLUDES}
 
 L_CPPFLAGS =
+
+#OTHER_INCLUDES =
+# For compilation on NCAR's Derecho supercomputing using Cray compiler use the OTHER_INCLUDES below
+OTHER_INCLUDES = -I/opt/cray/pe/mpich/8.1.25/ucx/cray/10.0/include/
 
 TEST_LDFLAGS = -L.
 TEST_CU_LDFLAGS = -L.
 
-TEST_LIBS = -lm -lmpi -lstdc++ -lcurand
+TEST_LIBS = -lm -lmpi -lstdc++ -lcurand -lcudart -lnetcdf
 TEST_CU_LIBS = -lm -lmpi -lcudart
 
 

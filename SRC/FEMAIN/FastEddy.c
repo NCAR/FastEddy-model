@@ -479,7 +479,7 @@ int main(int argc, char **argv){
     printf("Shutting down MPI...\n Goodbye!\n");
   } //if mpi_rank_world == 0
   MPI_Barrier(MPI_COMM_WORLD);
-  errorCode = fempi_FinalizeMPI(argc, argv);
+  errorCode = fempi_FinalizeMPI();
 
   return(errorCode);
 } //end main{}
