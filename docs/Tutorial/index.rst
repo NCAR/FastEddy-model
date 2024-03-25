@@ -1,5 +1,8 @@
 .. toctree::
-  :caption: GETTING STARTED
-  
-  introduction.rst
-  
+   :numbered:
+      
+   getting_started.rst
+   cases.rst
+   sensitivity.rst
+
+   
