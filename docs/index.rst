@@ -2,7 +2,7 @@
 FastEddy version |version|
 ==========================
 
-.. image:: _static/fasteddy_banner.png
+.. image:: _static/CoastalCase_u_y-32km_0440.png
 
 FastEddy® (FE) is a large-eddy simulation (LES) model developed by the
 Research Applications Laboratory (RAL) at the National Center for Atmospheric
