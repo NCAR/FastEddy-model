@@ -14,6 +14,10 @@ microscale and multiscale, turbulence-resolving, atmospheric boundary layer
 modeling into local scale weather prediction or actionable science and
 engineering applications.
 
+.. toctree::
+   :hidden:
+
+   release_notes.rst   
 
 .. toctree::
    :hidden:
