@@ -80,7 +80,7 @@ mpirun -n 4 ./FastEddy Example02_CBL.in
 ```
 
 ## Tutorials 
-FastEddy tutorials for idealized cases are available at https://fasteddytutorial.readthedocs.io
+FastEddy tutorials for idealized cases are available at https://fasteddy-model.readthedocs.io
 
 ## References
 Model Publications: 
