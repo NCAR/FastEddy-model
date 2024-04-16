@@ -6,7 +6,7 @@ When applicable, release notes are followed by the GitHub issue number which
 describes the bugfix, enhancement, or new feature
 (`FastEddy-model GitHub issues <https://github.com/NCAR/FastEddy-model/issues>`_).
 
-FastEddy-model Version 1.1 Release Notes (22404??)
+FastEddy-model Version 1.1 Release Notes (202404??)
 ===================================================
 
 This is the initial release of the FastEddy, an NSF NCAR developed parallelized
