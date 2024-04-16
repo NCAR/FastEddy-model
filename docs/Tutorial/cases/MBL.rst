@@ -31,7 +31,7 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Run FastEddy using the input parameters file /examples/Example04_BOMEX.in. Note that the BOMEX case requires an initial condition provided in /datasets/BOMEX_IC/FE_BOMEX.0. To execute FastEddy, follow the instructions here: https://github.com/NCAR/FastEddy-model/blob/main/README.md.
+Run FastEddy using the input parameters file /tutorials/examples/Example04_BOMEX.in. Note that this example moist dynamics validation case requires an additional dataset available as a gzip compressed tape archive file at https://doi.org/10.5281/zenodo.10982246. The contents of the archive incude an initial conditions file BOMEX_IC/FE_BOMEX.0 which is needed to run FastEddy for this case. The archive dataset also contains results from the 11 models that participated in the original Siebesma et al. 2003 model intercomparison as NetCDF files under BOMEX_Siebesma2003_models/*.nc. Run FastEddy using the input parameters file /tutorials/examples/Example04_BOMEX.in. Be sure to modify the input parameters file by setting the path to your downloaded and extracted initial conditions file from the archived dataset.
 
 Visualize the output
 --------------------
