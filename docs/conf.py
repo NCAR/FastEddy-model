@@ -20,11 +20,11 @@ print(sys.path)
 project = 'FastEddy'
 author = 'UCAR/NCAR'
 author_list = 'Sauer, J., D. Muñoz-Esparza'
-version = 'main'
+version = '1.1.0'
 verinfo = version
 release = f'{version}'
-release_year = '2022'
-release_date = f'{release_year}-01-06'
+release_year = '2024'
+release_date = f'{release_year}-04-??'
 copyright = f'{release_year}, {author}'
 
 # -- General configuration ---------------------------------------------------
