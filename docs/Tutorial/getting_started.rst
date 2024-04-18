@@ -5,11 +5,9 @@ Getting Started
 Introduction
 ============
 
-`FastEddy`_ is a resident-GPU large eddy simulation (LES) model owned by the National Science Foundation (`NSF`_) National Center for Atmospheric Research (`NCAR`_) Research Applications Laboratory (`RAL`_). It is designed for future turbulence-resolving numerical weather prediction. 
+`FastEddy`_ is a resident-GPU large eddy simulation (LES) model owned by the U.S. National Science Foundation National Center for Atmospheric Research (`NSF NCAR <https://ncar.ucar.edu>`_) Research Applications Laboratory (`RAL`_). It is designed for future turbulence-resolving numerical weather prediction. 
 
 .. _FastEddy: https://ral.ucar.edu/solutions/products/fasteddy
-.. _NSF: https://www.nsf.gov
-.. _NCAR: https://ncar.ucar.edu
 .. _RAL: https://ral.ucar.edu
 
 This is a tutorial designed so that a user can learn how to execute FastEddy, using the four test cases described in this tutorial. 
