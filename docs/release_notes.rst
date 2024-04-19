@@ -13,9 +13,9 @@ This is the initial release of the FastEddy, an NSF NCAR developed parallelized
 and GPU-resident, large-eddy simulation code for accelerated modeling of the
 atmospheric boundary layer.
 
-In addition to the initial code, this release includes small fixes for building
-the system on the NSF NCAR supercomputer Derecho, along with other changes as
-detailed below:
+In addition to the initial code, this release includes a patch for building
+the system in the current NSF NCAR high performance computing environment on the
+Casper and Derecho platforms, along with other changes as detailed below:
 
   .. dropdown:: Repository, build, and test
 
