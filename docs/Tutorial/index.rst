@@ -3,10 +3,11 @@ Tutorial
 ########
 
 .. toctree::
+   :titlesonly:
    :numbered:
       
-   getting_started.rst
-   cases.rst
-   sensitivity.rst
+   getting_started
+   cases
+   sensitivity
 
    

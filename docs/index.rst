@@ -19,9 +19,4 @@ engineering applications.
    :hidden:
 
    release_notes.rst   
-
-.. toctree::
-   :hidden:
-   :caption: TUTORIAL
-
    Tutorial/index
