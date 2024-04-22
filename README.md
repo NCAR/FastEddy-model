@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 # Description
-FastEddy® (FE) is a large-eddy simulation (LES) model developed by the Research Applications Laboratory (RAL) at the National Science Foundation National Center for Atmospheric Research (NSF NCAR) in Boulder, Colorado, USA. The fundamental premise of FastEddy model development is to leverage the accelerated and more power efficient computing capacity of graphics processing units (GPU)s to enable not only more widespread use of LES in research activities but also to pursue the adoption of microscale and multiscale, turbulence-resolving, atmospheric boundary layer modeling into local scale weather prediction or actionable science and engineering applications.
+FastEddy® (FE) is a large-eddy simulation (LES) model developed by the Research Applications Laboratory (RAL) at the U.S. National Science Foundation National Center for Atmospheric Research (NSF NCAR) in Boulder, Colorado, USA. The fundamental premise of FastEddy model development is to leverage the accelerated and more power efficient computing capacity of graphics processing units (GPU)s to enable not only more widespread use of LES in research activities but also to pursue the adoption of microscale and multiscale, turbulence-resolving, atmospheric boundary layer modeling into local scale weather prediction or actionable science and engineering applications.
 
 ## Contact
 Please submit all comments, feedback, suggestions, or questions by email to the NSF NCAR FastEddy team at [fasteddy@ucar.edu](fasteddy@ucar.edu). Further information about FastEddy applications and research is available via the [RAL website](https://ral.ucar.edu/solutions/products/fasteddy). 
