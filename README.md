@@ -15,16 +15,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 # Description
-FastEddy® (FE) is a large-eddy simulation (LES) model developed by the Research Applications Laboratory (RAL) at the National Center for Atmospheric Research (NCAR) in Boulder, Colorado, USA. The fundamental premise of FastEddy model development is to leverage the accelerated and more power efficient computing capacity of graphics processing units (GPU)s to enable not only more widespread use of LES in research activities but also to pursue the adoption of microscale and multiscale, turbulence-resolving, atmospheric boundary layer modeling into local scale weather prediction or actionable science and engineering applications.
+FastEddy® (FE) is a large-eddy simulation (LES) model developed by the Research Applications Laboratory (RAL) at the U.S. National Science Foundation National Center for Atmospheric Research (NSF NCAR) in Boulder, Colorado, USA. The fundamental premise of FastEddy model development is to leverage the accelerated and more power efficient computing capacity of graphics processing units (GPU)s to enable not only more widespread use of LES in research activities but also to pursue the adoption of microscale and multiscale, turbulence-resolving, atmospheric boundary layer modeling into local scale weather prediction or actionable science and engineering applications.
 
 ## Contact
-Please submit all comments, feedback, suggestions, or questions by email to the NCAR FastEddy team at [fasteddy@ucar.edu](fasteddy@ucar.edu). Further information about FastEddy applications and research is available via the [RAL website](https://ral.ucar.edu/solutions/products/fasteddy). 
+Please submit all comments, feedback, suggestions, or questions by email to the NSF NCAR FastEddy team at [fasteddy@ucar.edu](fasteddy@ucar.edu). Further information about FastEddy applications and research is available via the [RAL website](https://ral.ucar.edu/solutions/products/fasteddy). 
 
 # Getting Started
-To get started using FastEddy on NCAR's Casper architecture simple instructions are provided below. These include a brief explanation of how to compile FastEddy, an example PBS job submission script, and a pointer to tutorial documentation for idealized test cases. Finally, reference publications for model formulation are provided.
+To get started using FastEddy on NSF NCAR's Casper architecture simple instructions are provided below. These include a brief explanation of how to compile FastEddy, an example PBS job submission script, and a pointer to tutorial documentation for idealized test cases. Finally, reference publications for model formulation are provided.
 
 ## Beta-build
-The Makefile-based build system included here assumes deployment on the NCAR Casper system https://arc.ucar.edu/knowledge_base/70549550. FastEddy requires a C-compiler, MPI, and CUDA. On Casper ensure modules are loaded for openmpi, netcdf, and cuda with module -t list, and e.g. module load [intel or gnu/openmpi/cuda] as necessary. Currently, the default modules of intel, openMPI, and CUDA are loaded at login and suffice.
+The Makefile-based build system included here assumes deployment on the NSF NCAR Casper system https://arc.ucar.edu/knowledge_base/70549550. FastEddy requires a C-compiler, MPI, and CUDA. On Casper ensure modules are loaded for openmpi, netcdf, and cuda with module -t list, and e.g. module load [intel or gnu/openmpi/cuda] as necessary. Currently, the default modules of intel, openMPI, and CUDA are loaded at login and suffice.
 
 1. Navigate to SRC/FEMAIN
 2. To build the FastEddy executable run make (optionally run make clean first if appropriate).
@@ -32,7 +32,7 @@ The Makefile-based build system included here assumes deployment on the NCAR Cas
 To build on other HPC systems with NVIDIA GPUs, check for availability of the aformentioned modules/dependencies. Successful compilation may require modifications to shell environment variable include or library paths, or alternatively minor adjustments to the include or library flags in SRC/FEMAIN/Makefile.    
 
 ## Example PBS job script
-A bash-based PBS job submission script for running the model on NCAR's Casper machine. This script assumes you have cloned this repository into a /glade/work/$USER/FastEddy directory you created.
+A bash-based PBS job submission script for running the model on NSF NCAR's Casper machine. This script assumes you have cloned this repository into a /glade/work/$USER/FastEddy directory you created.
 ```
 #!/bin/bash
 #

@@ -31,7 +31,7 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Note that this example moist dynamics validation case example requires an additional dataset available as a gzip compressed tape archive file at https://doi.org/10.5281/zenodo.10982246. The contents of the archive incude an initial conditions file BOMEX_IC/FE_BOMEX.0 which is needed to run FastEddy for this case. The archive dataset also contains results from the 11 models that participated in the original Siebesma et al. 2003 model intercomparison as NetCDF files under BOMEX_Siebesma2003_models/\*.nc. Run FastEddy using the input parameters file /tutorials/examples/Example04_BOMEX.in. Be sure to copy the extracted initial conditions file from the archived dataset into the initial subdirectory of your case run directory.
+Note that this example moist dynamics validation case example requires an additional dataset available as a gzip compressed tape archive file at `Zenodo record <https://zenodo.org/records/10982246>`_. The contents of the archive incude an initial conditions file BOMEX_IC/FE_BOMEX.0 which is needed to run FastEddy for this case. The archive dataset also contains results from the 11 models that participated in the original Siebesma et al. 2003 model intercomparison as NetCDF files under BOMEX_Siebesma2003_models/\*.nc. Run FastEddy using the input parameters file /tutorials/examples/Example04_BOMEX.in. Be sure to copy the extracted initial conditions file from the archived dataset into the initial subdirectory of your case run directory.
 
 Visualize the output
 --------------------
