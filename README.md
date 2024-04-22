@@ -1,6 +1,8 @@
 # FastEddy® 
 ©2016 University Corporation for Atmospheric Research
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11042755.svg)](https://doi.org/10.5281/zenodo.11042755)
+
 # Open-source License 
 The FastEddy® model is licensed under the Apache License, Version 2.0 (the "License");
 you may not use any source code in this repository except in compliance with the License.
