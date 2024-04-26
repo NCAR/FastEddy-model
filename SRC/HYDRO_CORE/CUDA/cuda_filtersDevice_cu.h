@@ -21,8 +21,11 @@
 
 /*##############------------------- FILTERS submodule variable declarations ---------------------#################*/
 /* array fields */
-extern __constant__ int filterSelector_d;     /* explicit filter selector: 0=off, 1=on */
-extern __constant__ float filter_6th_coeff_d; /* 6th-order filter factor: 0.0=off, 1.0=full */
+extern __constant__ int filter_6thdiff_vert_d;          /* vertical 6th-order filter on w selector: 0=off, 1=on */
+extern __constant__ float filter_6thdiff_vert_coeff_d;  /* vertical 6th-order filter w factor: 0.0=off, 1.0=full */
+extern __constant__ int filter_6thdiff_hori_d;          /* horizontal 6th-order filter on rho,theta,qv selector: 0=off, 1=on */
+extern __constant__ float filter_6thdiff_hori_coeff_d;  /* horizontal 6th-order filter factor: 0.0=off, 1.0=full */
+extern __constant__ int filter_divdamp_d;               /* divergence damping selector: 0=off, 1=on */
 
 /*##############-------------- FILTERS_CUDADEV submodule function declarations ------------------############*/
 
@@ -36,10 +39,22 @@ Used to free all malloced memory by the FILTERS submodule.
 */
 extern "C" int cuda_filtersDeviceCleanup();
 
-__global__ void cudaDevice_hydroCoreUnitTestCompleteFilters(float* hydroFlds_d, float* hydroFldsFrhs_d, float dt);
+__global__ void cudaDevice_hydroCoreUnitTestCompleteFilters(float* hydroFlds_d, float* hydroFldsFrhs_d, float dt,
+                                                            float* moistScalars_d, float* moistScalarsFrhs, float* hydroPres_d,
+                                                            float* hydroBaseStatePres_d, int timeStage);
 
 /*----->>>>> __device__ void cudaDevice_filter6th();  --------------------------------------------------
 */
 __device__ void cudaDevice_filter6th(float* fld, float* hydroFldsFrhs_d, float dt);
+
+/*----->>>>> __device__ void cudaDevice_filter6th2D();  --------------------------------------------------
+*/
+__device__ void cudaDevice_filter6th2D(float* fld, float* fld_Frhs, float dt);
+
+/*----->>>>> __device__ void cudaDevice_divergenceDamping();  --------------------------------------------------
+*/
+__device__ void cudaDevice_divergenceDamping(float* uFrhs, float* vFrhs, float* thetaFrhs,
+                                             float* theta, float* rho, float* moistScalars,
+                                             float* pres, float* baseStatePres, float dt, int timeStage);
 
 #endif // _FILTERS_CUDADEV_CU_H

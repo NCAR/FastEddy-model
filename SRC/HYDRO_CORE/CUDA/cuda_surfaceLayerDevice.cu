@@ -43,6 +43,16 @@ __constant__ float surflayer_ideal_amp_d; /*maximum amplitude of the idealized s
 __constant__ float surflayer_ideal_qts_d;  /*start time in seconds for the idealized sinusoidal surface forcing of latent heat flux*/
 __constant__ float surflayer_ideal_qte_d;  /*end time in seconds for the idealized sinusoidal surface forcing of latent heat flux*/
 __constant__ float surflayer_ideal_qamp_d; /*maximum amplitude of the idealized sinusoidal surface forcing of latent heat flux*/
+/*Offshore roughness parameters*/
+__constant__ int surflayer_offshore_d;         /* offshore selector: 0=off, 1=on */
+__constant__ int surflayer_offshore_opt_d;     /* offshore roughness parameterization: ==0 (Charnock), ==1 (Charnock with variable alpha), ==2 (Taylor & Yelland), ==3 (Donelan), ==4 (Drennan), ==5 (Porchetta) */
+__constant__ int surflayer_offshore_dyn_d;     /* selector to use parameterized ocean parameters: 0=off, 1=on (default) */
+__constant__ float surflayer_offshore_hs_d;    /* significant wave height */
+__constant__ float surflayer_offshore_lp_d;    /* peak wavelength */
+__constant__ float surflayer_offshore_cp_d;    /* wave phase speed */
+__constant__ float surflayer_offshore_theta_d; /* wave/wind angle */
+__constant__ int surflayer_offshore_visc_d;    /* viscous term on z0m: 0=off, 1=on (default) */
+float *sea_mask_d;
 
 /*----->>>>> int cuda_surfaceLayerDeviceSetup();       -------------------------------------------------------------
  * Used to cudaMalloc and cudaMemcpy parameters and coordinate arrays, and for the SURFLAYER HC-Submodule.
@@ -82,6 +92,21 @@ extern "C" int cuda_surfaceLayerDeviceSetup(){
    fecuda_DeviceMalloc(Nelems2d*sizeof(float), &z0m_d);
    fecuda_DeviceMalloc(Nelems2d*sizeof(float), &z0t_d);
 
+   // offshore
+   cudaMemcpyToSymbol(surflayer_offshore_d, &surflayer_offshore, sizeof(int));
+   cudaMemcpyToSymbol(surflayer_offshore_opt_d, &surflayer_offshore_opt, sizeof(int));
+   cudaMemcpyToSymbol(surflayer_offshore_dyn_d, &surflayer_offshore_dyn, sizeof(int));
+   cudaMemcpyToSymbol(surflayer_offshore_hs_d, &surflayer_offshore_hs, sizeof(float));
+   cudaMemcpyToSymbol(surflayer_offshore_lp_d, &surflayer_offshore_lp, sizeof(float));
+   cudaMemcpyToSymbol(surflayer_offshore_cp_d, &surflayer_offshore_cp, sizeof(float));
+   cudaMemcpyToSymbol(surflayer_offshore_theta_d, &surflayer_offshore_theta, sizeof(float));
+   cudaMemcpyToSymbol(surflayer_offshore_visc_d, &surflayer_offshore_visc, sizeof(int));
+
+   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &sea_mask_d);
+   if (surflayer_offshore > 0){
+     cudaMemcpy(sea_mask_d, sea_mask, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
+   }
+
    /* Done */
    return(errorCode);
 } //end cuda_surfaceLayerDeviceSetup
@@ -103,6 +128,9 @@ extern "C" int cuda_surfaceLayerDeviceCleanup(){
      cudaFree(invOblen_d);
      cudaFree(z0m_d);
      cudaFree(z0t_d);
+     if (surflayer_offshore > 0){
+       cudaFree(sea_mask_d);
+     }
 
    return(errorCode);
 }//end cuda_surfaceLayerDeviceCleanup()
@@ -322,7 +350,8 @@ __device__ void cudaDevice_SurfaceLayerLSMmoist(float simTime, int simTime_it, i
 __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, float* rho, float* theta,
                                                float* tau31, float* tau32, float* tauTH3,
                                                float* cd_iter, float* ch_iter, float* fricVel,
-                                               float* htFlux, float* tskin, float* invOblen, float* z0m, float* z0t, float* J33_d){
+                                               float* htFlux, float* tskin, float* invOblen, float* z0m,
+                                               float* z0t, float* sea_mask, float* J33_d){
 
    float cd_i,ch_i,cd_0;
    float z0,z1,z1oz0,z1ozt0;
@@ -411,6 +440,10 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
    *tauTH3 = tauthz;
    *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
 
+   if (surflayer_offshore_d==1){ // offshore point
+      cudaDevice_offshoreRoughness(z0m, z0t, fricVel, u1, v1, sea_mask);
+   }
+
 } //end cudaDevice_SurfaceLayerMOSTdry(...
 
 /*----->>>>> __device__ void cudaDevice_SurfaceLayerMOSTmoist();  --------------------------------------------------
@@ -419,7 +452,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
                                                  float* tau31, float* tau32, float* tauTH3, float* tauQ3,
                                                  float* cd_iter, float* ch_iter, float* cq_iter, float* fricVel,
                                                  float* htFlux, float* tskin, float* qFlux, float* qskin,
-                                                 float* invOblen, float* z0m, float* z0t, float* J33_d){
+                                                 float* invOblen, float* z0m, float* z0t, float* sea_mask, float* J33_d){
 
    float cd_i,ch_i,cd_0;
    float z0,z1,z1oz0,z1ozt0;
@@ -518,4 +551,87 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    *tauQ3 = tauqz;
    *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
 
+   if (surflayer_offshore_d==1){ // offshore point
+      cudaDevice_offshoreRoughness(z0m, z0t, fricVel, u1, v1, sea_mask);
+   }
+
 } //end cudaDevice_SurfaceLayerMOSTmoist(...
+
+/*----->>>>> __device__ void cudaDevice_offshoreRoughness();  --------------------------------------------------
+*/
+__device__ void cudaDevice_offshoreRoughness(float* z0m, float* z0t, float* fricVel, float u_1, float v_1, float* sea_mask){
+
+  float alpha_charnock = 0.018;
+  float alpha_charnock_mod;
+  float wspd_1;
+  float air_vis = 1.5e-5; // kinematic air viscosity (DME: make it T dependent ...)
+  float z0_m2t_fact = 0.1; // ratio of z0t/z0m
+  int z0_m2t_opt = 1; // 0; // ==0 (constant), ==1 (roughness Re dependent)
+  float Ren;
+  float A_opt2 = 1200.0; // coeffs. Taylor & Yelland (2001)
+  float B_opt2 = 4.5;
+  float A_opt3 = 0.46; // coeffs. Donelan (1990)
+  float B_opt3 = 2.53;
+  float A_opt4 = 3.35; // coeffs. Drennan (2003)
+  float B_opt4 = 3.4;
+  float A_opt5 = 20.0; // coeffs. Porchetta (2019)
+  float B_opt5 = 3.8;
+  float pi = acosf(-1.0);
+  float angle_rad;
+  float z0m_deep;
+  float hs_u,lp_u,cp_u,tp_u;
+  float z0m_tmp,z0t_tmp;
+
+  if (surflayer_offshore_dyn_d == 0){
+    hs_u = surflayer_offshore_hs_d;
+    lp_u = surflayer_offshore_lp_d;
+    cp_u = surflayer_offshore_cp_d;
+  } else if (surflayer_offshore_dyn_d == 1){
+    wspd_1 = sqrtf(powf(u_1,2.0)+powf(v_1,2.0));
+    hs_u = 0.0248*powf(wspd_1,2.0);
+    tp_u = 0.729*fmaxf(wspd_1,0.1);
+    lp_u = accel_g_d/(2.0*pi)*powf(tp_u,2.0);
+    cp_u = accel_g_d*tp_u/(2.0*pi);
+  }
+
+  if (surflayer_offshore_opt_d == 0){ // Charnock (1955)
+    z0m_tmp = alpha_charnock*powf(*fricVel,2.0)/accel_g_d;
+  } else if (surflayer_offshore_opt_d == 1){ // Variable alpha - Edson (2013) - COARE3.0
+    wspd_1 = sqrtf(powf(u_1,2.0)+powf(v_1,2.0));
+    alpha_charnock_mod = 0.011 + 0.007*fminf(fmaxf((wspd_1-10.0)/8.0,0.0),1.0);
+    z0m_tmp = alpha_charnock_mod*powf(*fricVel,2.0)/accel_g_d;
+  } else if (surflayer_offshore_opt_d == 2){ // Taylor & Yelland (2001)
+    if (hs_u/lp_u > 0.02){
+      z0m_tmp = A_opt2*hs_u*powf(hs_u/lp_u,B_opt2);
+    }else{
+      z0m_tmp = alpha_charnock*powf(*fricVel,2.0)/accel_g_d;
+    }
+  } else if (surflayer_offshore_opt_d == 3){ // Donelan (1990)
+    z0m_tmp = A_opt3*hs_u*powf(*fricVel/cp_u,B_opt3);
+  } else if (surflayer_offshore_opt_d == 4){ // Drennan (2003)
+    z0m_tmp = A_opt4*hs_u*powf(*fricVel/cp_u,B_opt4);
+  } else if (surflayer_offshore_opt_d == 5){ // Porchetta (2019)
+    angle_rad = surflayer_offshore_theta_d*pi/180.0;
+    z0m_tmp = A_opt5*hs_u*cosf(0.45*angle_rad)*powf(*fricVel/cp_u,B_opt5*cosf(-0.32*angle_rad));
+  }
+
+  if (surflayer_offshore_visc_d == 1){ // add viscous term to z0m
+    z0m_deep = 0.11*air_vis/fmaxf(*fricVel,0.01);
+    z0m_tmp = z0m_tmp + z0m_deep;
+  }
+
+  // Limits suggested by Davis et al. (2008)
+  z0m_tmp = fminf(fmaxf(z0m_tmp,1.27e-7),2.85e-3);
+
+  if (z0_m2t_opt == 0){
+    z0t_tmp = z0_m2t_fact*(z0m_tmp);
+  }else{ // Garrat 1992
+    Ren = fmaxf(*fricVel*(z0m_tmp)/air_vis,0.1);
+    z0t_tmp = z0m_tmp*expf(2.0-(2.48*powf(Ren,0.25)));
+    z0t_tmp = fminf(fmaxf(z0t_tmp,2.0e-9),5.5e-4); // formerly 5.5e-5...
+  }
+
+  *z0m = *sea_mask*z0m_tmp + (*z0m)*(1.0-*sea_mask);
+  *z0t = *sea_mask*z0t_tmp + (*z0t)*(1.0-*sea_mask);
+
+} // cudaDevice_offshoreRoughness()

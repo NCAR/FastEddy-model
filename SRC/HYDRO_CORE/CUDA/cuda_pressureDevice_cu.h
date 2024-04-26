@@ -30,11 +30,11 @@ extern float *hydroPres_d;            /*Base Adress of memory containing the dia
 /*----->>>>> __device__ void  cudaDevice_calcPerturbationPressure();  -----------------------------------------------
 * This is the cuda version of the calcPerturbationPressure routine from the HYDRO_CORE module
 */
-__device__ void cudaDevice_calcPerturbationPressure(float* pres, float* rhoTheta, float* rhoTheta_BS);
+__device__ void cudaDevice_calcPerturbationPressure(float* pres, float* rhoTheta, float* rhoTheta_BS, float* zPos_d);
 
 /*----->>>>> __device__ void  cudaDevice_calcPerturbationPressureMoist();  ------------------------------------------
 */ 
-__device__ void cudaDevice_calcPerturbationPressureMoist(float* pres, float* rho, float* rhoTheta, float* rhoTheta_BS, float* moist_qv);
+__device__ void cudaDevice_calcPerturbationPressureMoist(float* pres, float* rho, float* rhoTheta, float* rhoTheta_BS, float* moist_qv, float* zPos_d);
 
 /*----->>>>> __device__ void  cudaDevice_calcPressureGradientForce();  ---------------------------------------------
 * This is the cuda version of the calcPressureGradientForce routine from the HYDRO_CORE module

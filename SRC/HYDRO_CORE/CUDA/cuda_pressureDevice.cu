@@ -50,7 +50,7 @@ extern "C" int cuda_pressureDeviceCleanup(){
 /*----->>>>> __device__ void  cudaDevice_calcPerturbationPressure();  ----------------------------------------------
 * This is the cuda version of the calcPerturbationPressure routine from the HYDRO_CORE module
 */
-__device__ void cudaDevice_calcPerturbationPressure(float* pres, float* rhoTheta, float* rhoTheta_BS){
+__device__ void cudaDevice_calcPerturbationPressure(float* pres, float* rhoTheta, float* rhoTheta_BS, float* zPos_d){
   float constant_1;
   int i,j,k,ijk,iStride,jStride,kStride;
   i = (blockIdx.x)*blockDim.x + threadIdx.x;
@@ -62,15 +62,30 @@ __device__ void cudaDevice_calcPerturbationPressure(float* pres, float* rhoTheta
   constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
   ijk = i*iStride + j*jStride + k*kStride;
 
-  int ijkTarg;
+  float pkp2;
+  float pkp1;
+  float zk,zkT,zkTp1;
+  int ijkTarg,ijkTargp1;
   if((i >= iMin_d-Nh_d)&&(i < iMax_d+Nh_d) &&
      (j >= jMin_d-Nh_d)&&(j < jMax_d+Nh_d) ){
    if((k>0)&&(k<kMin_d)){
     ijkTarg = i*iStride + j*jStride + kMin_d*kStride;
-    pres[ijk] = powf((rhoTheta[ijkTarg])*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijkTarg])*constant_1, cp_cv_d);
+    ijkTargp1 = i*iStride + j*jStride + (kMin_d+1)*kStride;
+    zk = zPos_d[ijk];
+    zkT = zPos_d[ijkTarg];
+    zkTp1 = zPos_d[ijkTargp1];
+    pkp1 = powf((rhoTheta[ijkTarg])*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijkTarg])*constant_1, cp_cv_d);
+    pkp2 = powf((rhoTheta[ijkTargp1])*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijkTargp1])*constant_1, cp_cv_d);
+    pres[ijk] = (zk-zkT)*(pkp2-pkp1)/(zkTp1-zkT)+pkp1;
    }else if((k>=kMax_d)&&(k<kMax_d+Nh_d)){
     ijkTarg = i*iStride + j*jStride + (kMax_d-1)*kStride;
-    pres[ijk] = powf((rhoTheta[ijkTarg])*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijkTarg])*constant_1, cp_cv_d);
+    ijkTargp1 = i*iStride + j*jStride + (kMax_d-2)*kStride;
+    zk = zPos_d[ijk];
+    zkT = zPos_d[ijkTarg];
+    zkTp1 = zPos_d[ijkTargp1];
+    pkp1 = powf((rhoTheta[ijkTarg])*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijkTarg])*constant_1, cp_cv_d);
+    pkp2 = powf((rhoTheta[ijkTargp1])*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijkTargp1])*constant_1, cp_cv_d);
+    pres[ijk] = (zk-zkT)*(pkp1-pkp2)/(zkT-zkTp1)+pkp1;
    }else{
     pres[ijk] = powf((rhoTheta[ijk])*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijk])*constant_1, cp_cv_d);
    }//endif k < kMin_d elseif >=kMax_d else...
@@ -80,7 +95,7 @@ __device__ void cudaDevice_calcPerturbationPressure(float* pres, float* rhoTheta
 
 /*----->>>>> __device__ void  cudaDevice_calcPerturbationPressureMoist();  ------------------------------------------
 */ 
-__device__ void cudaDevice_calcPerturbationPressureMoist(float* pres, float* rho, float* rhoTheta, float* rhoTheta_BS, float* moist_qv){
+__device__ void cudaDevice_calcPerturbationPressureMoist(float* pres, float* rho, float* rhoTheta, float* rhoTheta_BS, float* moist_qv, float* zPos_d){
   float constant_1;
   int i,j,k,ijk,iStride,jStride,kStride;
   i = (blockIdx.x)*blockDim.x + threadIdx.x;
@@ -93,21 +108,40 @@ __device__ void cudaDevice_calcPerturbationPressureMoist(float* pres, float* rho
   constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
   ijk = i*iStride + j*jStride + k*kStride;
 
-  int ijkTarg;
-  float rhothm_ijk;
+  float pkp2;
+  float pkp1;
+  float zk,zkT,zkTp1;
+  int ijkTarg,ijkTargp1;
+  float rhothm_ijk,rhothm_ijkTarg,rhothm_ijkTargp1;
+
   if((i >= iMin_d-Nh_d)&&(i < iMax_d+Nh_d) &&
      (j >= jMin_d-Nh_d)&&(j < jMax_d+Nh_d) ){
    if((k>0)&&(k<kMin_d)){
-     ijkTarg = i*iStride + j*jStride + kMin_d*kStride;
-     rhothm_ijk = rhoTheta[ijkTarg]*(1.0 + Rv_Rg_d*moist_qv[ijkTarg]/rho[ijkTarg]*1e-3);
+    ijkTarg = i*iStride + j*jStride + kMin_d*kStride;
+    ijkTargp1 = i*iStride + j*jStride + (kMin_d+1)*kStride;
+    zk = zPos_d[ijk];
+    zkT = zPos_d[ijkTarg];
+    zkTp1 = zPos_d[ijkTargp1];
+    rhothm_ijkTarg = rhoTheta[ijkTarg]*(1.0 + Rv_Rg_d*moist_qv[ijkTarg]/rho[ijkTarg]*1e-3); // *1e-3 to convert from g/kg to kg/kg
+    rhothm_ijkTargp1 = rhoTheta[ijkTargp1]*(1.0 + Rv_Rg_d*moist_qv[ijkTargp1]/rho[ijkTargp1]*1e-3); // *1e-3 to convert from g/kg to kg/kg
+    pkp1 = powf(rhothm_ijkTarg*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijkTarg])*constant_1, cp_cv_d);
+    pkp2 = powf(rhothm_ijkTargp1*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijkTargp1])*constant_1, cp_cv_d);
+    pres[ijk] = (zk-zkT)*(pkp2-pkp1)/(zkTp1-zkT)+pkp1;
    }else if((k>=kMax_d)&&(k<kMax_d+Nh_d)){
-     ijkTarg = i*iStride + j*jStride + (kMax_d-1)*kStride;
-     rhothm_ijk = rhoTheta[ijkTarg]*(1.0 + Rv_Rg_d*moist_qv[ijkTarg]/rho[ijkTarg]*1e-3);
+    ijkTarg = i*iStride + j*jStride + (kMax_d-1)*kStride;
+    ijkTargp1 = i*iStride + j*jStride + (kMax_d-2)*kStride;
+    zk = zPos_d[ijk];
+    zkT = zPos_d[ijkTarg];
+    zkTp1 = zPos_d[ijkTargp1];
+    rhothm_ijkTarg = rhoTheta[ijkTarg]*(1.0 + Rv_Rg_d*moist_qv[ijkTarg]/rho[ijkTarg]*1e-3); // *1e-3 to convert from g/kg to kg/kg
+    rhothm_ijkTargp1 = rhoTheta[ijkTargp1]*(1.0 + Rv_Rg_d*moist_qv[ijkTargp1]/rho[ijkTargp1]*1e-3); // *1e-3 to convert from g/kg to kg/kg
+    pkp1 = powf(rhothm_ijkTarg*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijkTarg])*constant_1, cp_cv_d);
+    pkp2 = powf(rhothm_ijkTargp1*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijkTargp1])*constant_1, cp_cv_d);
+    pres[ijk] = (zk-zkT)*(pkp1-pkp2)/(zkT-zkTp1)+pkp1;
    }else{
-     ijkTarg = ijk;
-     rhothm_ijk = rhoTheta[ijk]*(1.0 + Rv_Rg_d*moist_qv[ijk]/rho[ijk]*1e-3);
+    rhothm_ijk = rhoTheta[ijk]*(1.0 + Rv_Rg_d*moist_qv[ijk]/rho[ijk]*1e-3);
+    pres[ijk] = powf(rhothm_ijk*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijk])*constant_1, cp_cv_d);
    }//endif k < kMin_d elseif >=kMax_d else...
-     pres[ijk] = powf(rhothm_ijk*constant_1, cp_cv_d) - powf((rhoTheta_BS[ijkTarg])*constant_1, cp_cv_d);
   }//endif i&&j...
 
 } // end cudaDevice_calcPerturbationPressureMoist()

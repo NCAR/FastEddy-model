@@ -123,6 +123,17 @@ float surflayer_ideal_qts;  /*start time in seconds for the idealized sinusoidal
 float surflayer_ideal_qte;  /*end time in seconds for the idealized sinusoidal surface forcing of latent heat flux*/
 float surflayer_ideal_qamp; /*maximum amplitude of the idealized sinusoidal surface forcing of latent heat flux*/
 
+/*Offshore roughness parameters*/
+int surflayer_offshore;         /* offshore selector: 0=off, 1=on */
+int surflayer_offshore_opt;     /* offshore roughness parameterization: ==0 (Charnock), ==1 (Charnock with variable alpha), ==2 (Taylor & Yelland), ==3 (Donelan), ==4 (Drennan), ==5 (Porchetta) */
+int surflayer_offshore_dyn;     /* selector to use parameterized ocean parameters: 0=off, 1=on (default) */
+float surflayer_offshore_hs;    /* significant wave height */
+float surflayer_offshore_lp;    /* peak wavelength */
+float surflayer_offshore_cp;    /* wave phase speed */
+float surflayer_offshore_theta; /* wave/wind angle */
+int surflayer_offshore_visc;    /* viscous term on z0m: 0=off, 1=on (default) */
+float* sea_mask;                /* Base Address of memory containing sea mask 0,1 field */
+
 /*Large-scale forcings parameters*/ 
 int lsfSelector;         /* large-scale forcings selector: 0=off, 1=on */
 float lsf_w_surf;        /* lsf to w at the surface */
@@ -160,8 +171,12 @@ int moistureCondBasePres;  /* selector to use base pressure for microphysics */
 float moistureMPcallTscale;/* time scale for microphysics to be called */
 
 /*Filters parameters*/
-int filterSelector;      /* explicit filter selector: 0=off, 1=on */
-float filter_6th_coeff;  /* 6th-order filter factor: 0.0=off, 1.0=full */
+int filterSelector;               /* explicit filter selector: 0=off, 1=on */
+int filter_6thdiff_vert;          /* vertical 6th-order filter on w selector: 0=off, 1=on */
+float filter_6thdiff_vert_coeff;  /* vertical 6th-order filter factor: 0.0=off, 1.0=full */
+int filter_6thdiff_hori;          /* horizontal 6th-order filter on rho,theta,qv selector: 0=off, 1=on */
+float filter_6thdiff_hori_coeff;  /* horizontal 6th-order filter factor: 0.0=off, 1.0=full */
+int filter_divdamp;               /* divergence damping selector: 0=off, 1=on */
 
 /*--- Rayleigh Damping Layer ---*/
 int dampingLayerSelector;       // Rayleigh Damping Layer selector
@@ -263,6 +278,40 @@ int hydro_coreGetParams(){
    //
    surflayer_stab = 0; // Default to on 
    errorCode = queryIntegerParameter("surflayer_stab", &surflayer_stab, 0, 1, PARAM_OPTIONAL);
+   surflayer_offshore = 0; // Default to off
+   surflayer_offshore_opt = 0;
+   surflayer_offshore_dyn = 1;
+   surflayer_offshore_hs = 0.0;
+   surflayer_offshore_lp = 0.1;
+   surflayer_offshore_cp = 0.1;
+   surflayer_offshore_theta = 0.0;
+   surflayer_offshore_visc = 1;
+   errorCode = queryIntegerParameter("surflayer_offshore", &surflayer_offshore, 0, 1, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("surflayer_offshore_visc", &surflayer_offshore_visc, 0, 1, PARAM_OPTIONAL);
+   if (surflayer_offshore > 0){
+     errorCode = queryIntegerParameter("surflayer_offshore_opt", &surflayer_offshore_opt, 0, 5, PARAM_MANDATORY);
+     errorCode = queryIntegerParameter("surflayer_offshore_dyn", &surflayer_offshore_dyn, 0, 1, PARAM_OPTIONAL);
+     if (surflayer_offshore_dyn == 0){
+       if (surflayer_offshore_opt == 2){
+         errorCode = queryFloatParameter("surflayer_offshore_hs", &surflayer_offshore_hs, 0, 1e+2, PARAM_MANDATORY);
+         errorCode = queryFloatParameter("surflayer_offshore_lp", &surflayer_offshore_lp, 0.1, 1e+3, PARAM_MANDATORY);
+       } else if (surflayer_offshore_opt == 3){
+         errorCode = queryFloatParameter("surflayer_offshore_hs", &surflayer_offshore_hs, 0, 1e+2, PARAM_MANDATORY);
+         errorCode = queryFloatParameter("surflayer_offshore_cp", &surflayer_offshore_cp, 0.1, 1e+2, PARAM_MANDATORY);
+       } else if (surflayer_offshore_opt == 4){
+         errorCode = queryFloatParameter("surflayer_offshore_hs", &surflayer_offshore_hs, 0, 1e+2, PARAM_MANDATORY);
+         errorCode = queryFloatParameter("surflayer_offshore_cp", &surflayer_offshore_cp, 0.1, 1e+2, PARAM_MANDATORY);
+       } else if (surflayer_offshore_opt == 5){
+         errorCode = queryFloatParameter("surflayer_offshore_hs", &surflayer_offshore_hs, 0, 1e+2, PARAM_MANDATORY);
+         errorCode = queryFloatParameter("surflayer_offshore_cp", &surflayer_offshore_cp, 0.1, 1e+2, PARAM_MANDATORY);
+         errorCode = queryFloatParameter("surflayer_offshore_theta", &surflayer_offshore_theta, 0.0, 180.0, PARAM_MANDATORY);
+       }
+     } else if (surflayer_offshore_dyn==1){
+       if (surflayer_offshore_opt == 5){
+         errorCode = queryFloatParameter("surflayer_offshore_theta", &surflayer_offshore_theta, 0.0, 180.0, PARAM_MANDATORY);
+       }
+     }
+   }
    //
    lsfSelector = 0; // Default to off 
    errorCode = queryIntegerParameter("lsfSelector", &lsfSelector, 0, 1, PARAM_MANDATORY);
@@ -330,7 +379,7 @@ int hydro_coreGetParams(){
      errorCode = queryFloatParameter("moistureAdvSelectorQv_b", &moistureAdvSelectorQv_b, 0.0, 1.0, PARAM_MANDATORY);
      errorCode = queryIntegerParameter("moistureAdvSelectorQi", &moistureAdvSelectorQi, 0, 2, PARAM_MANDATORY);
      errorCode = queryIntegerParameter("moistureSGSturb", &moistureSGSturb, 0, 1, PARAM_MANDATORY);
-     errorCode = queryIntegerParameter("moistureCond", &moistureCond, 1, 3, PARAM_MANDATORY);
+     errorCode = queryIntegerParameter("moistureCond", &moistureCond, 1, 4, PARAM_MANDATORY);
      errorCode = queryFloatParameter("moistureCondTscale", &moistureCondTscale, 1e-4, 1000.0, PARAM_MANDATORY);
      errorCode = queryIntegerParameter("moistureCondBasePres", &moistureCondBasePres, 0, 1, PARAM_MANDATORY);
      errorCode = queryFloatParameter("moistureMPcallTscale", &moistureMPcallTscale, 1e-4, 1000.0, PARAM_MANDATORY);
@@ -343,10 +392,24 @@ int hydro_coreGetParams(){
        errorCode = queryFloatParameter("surflayer_ideal_qamp", &surflayer_ideal_qamp, 0, 1e+3, PARAM_MANDATORY);
      }
    }
-   filterSelector = 0; // Default to off 
+   filterSelector = 0; // Default to off
+   filter_6thdiff_vert = 0; // Default to off
+   filter_6thdiff_vert_coeff = 0.03; // Default to 0.03
+   filter_6thdiff_hori = 0; // Default to off
+   filter_6thdiff_hori_coeff = 0.03; // Default to 0.03
+   filter_divdamp = 0; // Default to off
    errorCode = queryIntegerParameter("filterSelector", &filterSelector, 0, 1, PARAM_MANDATORY);
-   filter_6th_coeff = 0.12; // Default to 0.12 
-   errorCode = queryFloatParameter("filter_6th_coeff", &filter_6th_coeff, 0.0, 1.0, PARAM_MANDATORY);
+   if (filterSelector == 1){
+     errorCode = queryIntegerParameter("filter_6thdiff_vert", &filter_6thdiff_vert, 0, 1, PARAM_OPTIONAL);
+     errorCode = queryIntegerParameter("filter_6thdiff_hori", &filter_6thdiff_hori, 0, 1, PARAM_OPTIONAL);
+     errorCode = queryIntegerParameter("filter_divdamp", &filter_divdamp, 0, 1, PARAM_OPTIONAL);
+     if (filter_6thdiff_vert == 1){
+       errorCode = queryFloatParameter("filter_6thdiff_vert_coeff", &filter_6thdiff_vert_coeff, 0.0, 1.0, PARAM_MANDATORY);
+     }
+     if (filter_6thdiff_hori == 1){
+       errorCode = queryFloatParameter("filter_6thdiff_hori_coeff", &filter_6thdiff_hori_coeff, 0.0, 1.0, PARAM_MANDATORY);
+     }
+   }
    dampingLayerSelector = 0; // Default to off 
    errorCode = queryIntegerParameter("dampingLayerSelector", &dampingLayerSelector, 0, 1, PARAM_MANDATORY);
    dampingLayerDepth = 100.0; //Default to 100.0 (meters)  
@@ -462,6 +525,9 @@ int hydro_coreInit(){
       printParameter("surflayer_ideal_qte", "end time in seconds for the idealized sinusoidal surface forcing (qv)");
       printParameter("surflayer_ideal_qamp", "maximum amplitude of the idealized sinusoidal surface forcing (qv)");
       printParameter("surflayer_stab", "exchange coeffcient stability correction selector: 0= on, 1= off");
+      printComment("----------: OFFSHORE ROUGHNESS ---");
+      printParameter("surflayer_offshore", "offshore selector: 0=off, 1=on");
+      printParameter("surflayer_offshore_opt", "offshore roughness parameterization: ==0 (Charnock), ==1 (Charnock with variable alpha), ==2 (Taylor & Yelland), ==3 (Donelan), ==4 (Drennan), ==5 (Porchetta)");
       printComment("----------: LARGE-SCALE FORCINGS MODEL ---");
       printParameter("lsfSelector", "large-scale forcings selector: 0= off, 1= on");
       if (lsfSelector > 0){
@@ -497,8 +563,12 @@ int hydro_coreInit(){
         printParameter("moistureMPcallTscale", "time scale for microphysics to be called (in seconds)");
       }
       printComment("----------: EXPLICIT FILTERS ---");
-      printParameter("filterSelector", "explicit filter selector: 0= off, 1= on");
-      printParameter("filter_6th_coeff", "6th-order filter factor: 0.0=off, 1.0=full");
+      printParameter("filterSelector", "explicit filter selector: 0=off, 1=on");
+      printParameter("filter_6thdiff_vert", "vertical 6th-order filter on w selector: 0=off, 1=on");
+      printParameter("filter_6thdiff_vert_coeff", "vertical 6th-order filter factor: 0.0=off, 1.0=full");
+      printParameter("filter_6thdiff_hori", "horizontal 6th-order filter on rho,theta,qv selector: 0=off, 1=on");
+      printParameter("filter_6thdiff_hori_coeff", "horizontal 6th-order filter factor: 0.0=off, 1.0=full");
+      printParameter("filter_divdamp", "divergence damping selector: 0=off, 1=on");
       printComment("----------: RAYLEIGH DAMPING LAYER ---"); 
       printParameter("dampingLayerSelector", "Rayleigh damping layer selector: 0= off, 1= on.");
       printParameter("dampingLayerDepth", "Rayleigh damping layer depth in meters");
@@ -562,6 +632,14 @@ int hydro_coreInit(){
    MPI_Bcast(&surflayer_ideal_qte, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&surflayer_ideal_qamp, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&surflayer_stab, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&surflayer_offshore, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&surflayer_offshore_opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&surflayer_offshore_dyn, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&surflayer_offshore_hs, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&surflayer_offshore_lp, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&surflayer_offshore_cp, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&surflayer_offshore_theta, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&surflayer_offshore_visc, 1, MPI_INT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&lsfSelector, 1, MPI_INT, 0, MPI_COMM_WORLD);
    if (lsfSelector > 0){
      MPI_Bcast(&lsf_w_surf, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -598,7 +676,11 @@ int hydro_coreInit(){
      MPI_Bcast(&moistureMPcallTscale, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    }
    MPI_Bcast(&filterSelector, 1, MPI_INT, 0, MPI_COMM_WORLD);
-   MPI_Bcast(&filter_6th_coeff, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&filter_6thdiff_vert, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&filter_6thdiff_vert_coeff, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&filter_6thdiff_hori, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&filter_6thdiff_hori_coeff, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&filter_divdamp, 1, MPI_INT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&dampingLayerSelector, 1, MPI_INT, 0, MPI_COMM_WORLD); 
    MPI_Bcast(&dampingLayerDepth, 1, MPI_FLOAT, 0, MPI_COMM_WORLD); 
    MPI_Bcast(&stabilityScheme, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -866,6 +948,15 @@ int hydro_coreInit(){
      }
    } // end of surflayerSelector > 0
 
+   if(surflayer_offshore>0){
+     sea_mask = memAllocateFloat2DField(Nxp, Nyp, Nh, "sea_mask");
+     errorCode = sprintf(&fldName[0],"SeaMask");
+     errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, sea_mask);
+     printf("surflayer_offshore:Field = %s stored at %p, has been registered with IO.\n",
+             &fldName[0],sea_mask);
+     fflush(stdout);
+   }
+
    if(moistureSelector > 0){ 
      moistScalars = memAllocateFloat4DField(moistureNvars, Nxp, Nyp, Nzp, Nh, "moistScalars");
      moistScalarsFrhs = memAllocateFloat4DField(moistureNvars, Nxp, Nyp, Nzp, Nh, "moistScalarsFrhs");
@@ -1006,7 +1097,12 @@ int hydro_corePrepareFromInitialConditions(){
     
       errorCode=fempi_XdirHaloExchange2dXY(Nxp, Nyp, Nh, qskin);
       errorCode=fempi_YdirHaloExchange2dXY(Nxp, Nyp, Nh, qskin);
-    } //end if moistureSelector >0 
+    } //end if moistureSelector >0
+
+    if(surflayer_offshore > 0){
+     errorCode=fempi_XdirHaloExchange2dXY(Nxp, Nyp, Nh, sea_mask);
+     errorCode=fempi_YdirHaloExchange2dXY(Nxp, Nyp, Nh, sea_mask);
+    }
 
   } //end if surflayerSelector >0 
 
@@ -1563,6 +1659,9 @@ int hydro_coreCleanup(){
      }
      memReleaseFloat(z0m);
      memReleaseFloat(z0t);
+     if (surflayer_offshore > 0){
+       memReleaseFloat(sea_mask);
+     }
    }//end if surface selector > 0
    if(moistureSelector > 0){
      memReleaseFloat(moistScalars);
