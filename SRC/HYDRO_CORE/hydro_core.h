@@ -118,6 +118,16 @@ extern float surflayer_ideal_amp; /*maximum amplitude of the idealized sinusoida
 extern float surflayer_ideal_qts;  /*start time (seconds) for idealized sinusoidal surf. forcing of latent heat flux*/
 extern float surflayer_ideal_qte;  /*end time (seconds) for idealized sinusoidal surf. forcing of latent heat flux*/
 extern float surflayer_ideal_qamp; /*maximum amplitude of idealized sinusoidal surface forcing of latent heat flux*/
+/*OFFSHORE ROUGNESS PARAMETERS*/
+extern int surflayer_offshore;       /* offshore selector: 0=off, 1=on */
+extern int surflayer_offshore_opt;   /* offshore roughness parameterization: ==0 (Charnock), ==1 (Charnock with variable alpha), ==2 (Taylor & Yelland), ==3 (Donelan), ==4 (Drennan), ==5 (Porchetta) */
+extern int surflayer_offshore_dyn;     /* selector to use parameterized ocean parameters: 0=off, 1=on (default) */
+extern float surflayer_offshore_hs;    /* significant wave height */
+extern float surflayer_offshore_lp;    /* peak wavelength */
+extern float surflayer_offshore_cp;    /* wave phase speed */
+extern float surflayer_offshore_theta; /* wave/wind angle */
+extern int surflayer_offshore_visc;    /* viscous term on z0m: 0=off, 1=on (default) */
+extern float* sea_mask;              /* Base Address of memory containing sea mask 0,1 field */
 /*---LARGE SCALE FORCING*/ 
 extern int lsfSelector;         /* large-scale forcings selector: 0=off, 1=on */
 extern float lsf_w_surf;        /* lsf to w at the surface */
@@ -154,8 +164,12 @@ extern float moistureCondTscale;  /* relaxation time in seconds */
 extern int moistureCondBasePres;  /* selector to use base pressure for microphysics */
 extern float moistureMPcallTscale;  /* time scale for microphysics to be called */
 /*---FILTERS*/
-extern int filterSelector;      /* explicit filter selector: 0=off, 1=on */
-extern float filter_6th_coeff;  /* 6th-order filter factor: 0.0=off, 1.0=full */
+extern int filterSelector;               /* explicit filter selector: 0=off, 1=on */
+extern int filter_6thdiff_vert;          /* vertical 6th-order filter on w selector: 0=off, 1=on */
+extern float filter_6thdiff_vert_coeff;  /* vertical 6th-order filter w factor: 0.0=off, 1.0=full */
+extern int filter_6thdiff_hori;          /* horizontal 6th-order filter on rho,theta,qv selector: 0=off, 1=on */
+extern float filter_6thdiff_hori_coeff;  /* horizontal 6th-order filter factor: 0.0=off, 1.0=full */
+extern int filter_divdamp;               /* divergence damping selector: 0=off, 1=on */
 /*---RAYLEIGH DAMPING LAYER*/
 extern int dampingLayerSelector;       // Rayleigh Damping Layer selector
 extern float dampingLayerDepth;       // Rayleigh Damping Layer Depth

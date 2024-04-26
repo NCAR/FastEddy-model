@@ -52,6 +52,15 @@ extern __constant__ float surflayer_ideal_amp_d; /*maximum amplitude of the idea
 extern __constant__ float surflayer_ideal_qts_d;  /*start time in seconds for the idealized sinusoidal surface forcing of latent heat flux*/
 extern __constant__ float surflayer_ideal_qte_d;  /*end time in seconds for the idealized sinusoidal surface forcing of latent heat flux*/
 extern __constant__ float surflayer_ideal_qamp_d; /*maximum amplitude of the idealized sinusoidal surface forcing of latent heat flux*/
+/*Offshore roughness parameters*/
+extern __constant__ int surflayer_offshore_d;         /* offshore selector: 0=off, 1=on */
+extern __constant__ int surflayer_offshore_opt_d;     /* offshore roughness parameterization: ==0 (Charnock), ==1 (Charnock with variable alpha), ==2 (Taylor & Yelland), ==3 (Donelan), ==4 (Drennan), ==5 (Porchetta) */
+extern __constant__ int surflayer_offshore_dyn_d;     /* selector to use parameterized ocean parameters: 0=off, 1=on (default) */
+extern __constant__ float surflayer_offshore_hs_d;    /* significant wave height */
+extern __constant__ float surflayer_offshore_lp_d;    /* peak wavelength */
+extern __constant__ float surflayer_offshore_cp_d;    /* wave phase speed */
+extern __constant__ float surflayer_offshore_theta_d; /* wave/wind angle */
+extern __constant__ int surflayer_offshore_visc_d;    /* viscous term on z0m: 0=off, 1=on (default) */
 
 /*##############-------------- SURFLAYER_CUDADEV Submodule function declarations ------------------############*/
 
@@ -83,12 +92,15 @@ __device__ void cudaDevice_SurfaceLayerLSMmoist(float simTime, int simTime_it, i
 __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, float* rho, float* theta,
                                                float* tau31, float* tau32, float* tauTH3,
                                                float* cd_iter, float* ch_iter, float* fricVel,
-                                               float* htFlux, float* tskin, float* invOblen, float* z0m, float* z0t, float* J33_d);
+                                               float* htFlux, float* tskin, float* invOblen, float* z0m,
+                                               float* z0t, float* sea_mask, float* J33_d);
 
 __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, float* rho, float* theta, float* qv,
                                                  float* tau31, float* tau32, float* tauTH3, float* tauQ3,
                                                  float* cd_iter, float* ch_iter, float* cq_iter, float* fricVel,
                                                  float* htFlux, float* tskin, float* qFlux, float* qskin,
-                                                 float* invOblen, float* z0m, float* z0t, float* J33_d);
+                                                 float* invOblen, float* z0m, float* z0t, float* sea_mask, float* J33_d);
+
+__device__ void cudaDevice_offshoreRoughness(float* z0m, float* z0t, float* fricVel, float u_1, float v_1, float* sea_mask);
 
 #endif // _SURFLAYER_CUDADEV_CU_H

@@ -164,7 +164,7 @@ extern "C" int cuda_hydroCoreDeviceSetup(){
    }
 
    /* MOISTURE*/
-   if (moistureSelector > 0){ 
+   if (moistureSelector >= 0){ 
      errorCode = cuda_moistureDeviceSetup();
    }
 
@@ -332,7 +332,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    cudaDevice_hydroCoreUnitTestCommenceRhoInvPresPert<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, 
                                                           hydroBaseStateFlds_d, 
                                                           hydroPres_d, hydroBaseStatePres_d,
-                                                          moistScalars_d);
+                                                          moistScalars_d, zPos_d);
    gpuErrchk( cudaGetLastError() );
    gpuErrchk( cudaDeviceSynchronize() );
 #ifdef TIMERS_LEVEL2
@@ -349,9 +349,9 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
                                                             hydroFlds_d, hydroFldsFrhs_d,
                                                             hydroFaceVels_d, hydroPres_d,
                                                             hydroNuGradXFlds_d, hydroNuGradYFlds_d,
-                                                            hydroNuGradZFlds_d, hydroTauFlds_d, 
+                                                            hydroNuGradZFlds_d, hydroTauFlds_d,
                                                             cdFld_d, chFld_d, cqFld_d, fricVel_d, htFlux_d, tskin_d,
-                                                            invOblen_d, z0m_d, z0t_d, qFlux_d, qskin_d,
+                                                            invOblen_d, z0m_d, z0t_d, qFlux_d, qskin_d, sea_mask_d,
                                                             hydroRhoInv_d, hydroKappaM_d, sgstkeScalars_d, sgstke_ls_d,
                                                             dedxi_d, moistScalars_d, moistTauFlds_d, moistScalarsFrhs_d,
                                                             J31_d, J32_d, J33_d, D_Jac_d);
@@ -411,8 +411,10 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    printf("cuda_hydroCoreUnitTestComplete()  Kernel execution time (ms): %12.8f\n", elapsedTime);
 #endif
 
-   if (filterSelector > 0){ // explicit filter 
-     cudaDevice_hydroCoreUnitTestCompleteFilters<<<grid, tBlock>>>(hydroFlds_d,hydroFldsFrhs_d,dt);
+   if ((filterSelector > 0) && ((physics_oneRKonly==0) || (timeStage==numRKstages))){ // explicit filters
+     cudaDevice_hydroCoreUnitTestCompleteFilters<<<grid, tBlock>>>(hydroFlds_d,hydroFldsFrhs_d,dt,
+                                                                   moistScalars_d,moistScalarsFrhs_d,hydroPres_d,
+                                                                   hydroBaseStatePres_d,timeStage);
    }
 
 #ifdef TIMERS_LEVEL1
@@ -558,7 +560,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
 __global__ void cudaDevice_hydroCoreUnitTestCommenceRhoInvPresPert(float* hydroFlds_d, float* hydroRhoInv_d, 
                                                      float * hydroBaseStateFlds_d, 
                                                      float* hydroPres_d, float* hydroBaseStatePres_d,
-                                                     float* moistScalars_d){
+                                                     float* moistScalars_d, float* zPos_d){
    int i,j,k,ijk; 
    int iStride,jStride,kStride;
    int fldStride;
@@ -581,10 +583,10 @@ __global__ void cudaDevice_hydroCoreUnitTestCommenceRhoInvPresPert(float* hydroF
    } //end if in the range of cells in the field (halo-inclusive)
    if ((moistureSelector_d > 0)&&(moistureNvars_d > 0)){ // moist pressure calculation
      cudaDevice_calcPerturbationPressureMoist(&hydroPres_d[0], &hydroFlds_d[fldStride*RHO_INDX], &hydroFlds_d[fldStride*THETA_INDX],
-                                              &hydroBaseStateFlds_d[fldStride*THETA_INDX_BS], &moistScalars_d[0]); // qv
+                                              &hydroBaseStateFlds_d[fldStride*THETA_INDX_BS], &moistScalars_d[0], zPos_d); // qv
    }else{ // dry pressure calculation
      cudaDevice_calcPerturbationPressure(&hydroPres_d[0], &hydroFlds_d[fldStride*THETA_INDX],
-                                         &hydroBaseStateFlds_d[fldStride*THETA_INDX_BS]);
+                                         &hydroBaseStateFlds_d[fldStride*THETA_INDX_BS], zPos_d);
    }
 } // end cudaDevice_hydroCoreUnitTestCommenceRhoInvPresPert()
 
@@ -785,7 +787,7 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
                                                        float* hydroNuGradZFlds_d, float* hydroTauFlds_d,
                                                        float* cdFld_d, float* chFld_d, float* cqFld_d, float* fricVel_d,
                                                        float* htFlux_d, float* tskin_d, float* invOblen_d, 
-                                                       float* z0m_d, float* z0t_d, float* qFlux_d, float* qskin_d,
+                                                       float* z0m_d, float* z0t_d, float* qFlux_d, float* qskin_d, float* sea_mask_d,
                                                        float* hydroRhoInv_d, float* hydroKappaM_d, float* sgstkeScalars_d, float* sgstke_ls_d,
                                                        float* dedxi_d, float* moistScalars_d, float* moistTauFlds_d,
                                                        float* moistScalarsFrhs_d,
@@ -926,7 +928,7 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
                                           &hydroTauFlds_d[2*fldStride+ijk], &hydroTauFlds_d[3*fldStride+ijk], &hydroTauFlds_d[8*fldStride+ijk], &moistTauFlds_d[2*fldStride+ijk],
                                           &cdFld_d[ij], &chFld_d[ij], &cqFld_d[ij], &fricVel_d[ij],
                                           &htFlux_d[ij], &tskin_d[ij], &qFlux_d[ij], &qskin_d[ij],
-                                          &invOblen_d[ij], &z0m_d[ij], &z0t_d[ij], J33_d);
+                                          &invOblen_d[ij], &z0m_d[ij], &z0t_d[ij], &sea_mask_d[ij], J33_d);
        }else{ // DRY surface layer model
          // land-surface model
          cudaDevice_SurfaceLayerLSMdry(simTime, simTime_it, simTime_itRestart,
@@ -939,7 +941,7 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
                                         &hydroFlds_d[RHO_INDX*fldStride+ijk], &hydroFlds_d[THETA_INDX*fldStride+ijk],
                                         &hydroTauFlds_d[2*fldStride+ijk], &hydroTauFlds_d[3*fldStride+ijk], &hydroTauFlds_d[8*fldStride+ijk],
                                         &cdFld_d[ij], &chFld_d[ij], &fricVel_d[ij],
-                                        &htFlux_d[ij], &tskin_d[ij], &invOblen_d[ij], &z0m_d[ij], &z0t_d[ij], J33_d);
+                                        &htFlux_d[ij], &tskin_d[ij], &invOblen_d[ij], &z0m_d[ij], &z0t_d[ij], &sea_mask_d[ij], J33_d);
        } // end if moistureSelector_d
      } //end if surflayerSelector_d > 0 && k == kMin_d
    } //end if in the range of non-halo surface cells

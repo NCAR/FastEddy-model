@@ -38,21 +38,23 @@ extern "C" int cuda_moistureDeviceSetup(){
    int Nelems;
 
    cudaMemcpyToSymbol(moistureSelector_d, &moistureSelector, sizeof(int));
-   cudaMemcpyToSymbol(moistureNvars_d, &moistureNvars, sizeof(int));
-   cudaMemcpyToSymbol(moistureAdvSelectorQv_d, &moistureAdvSelectorQv, sizeof(int));
-   cudaMemcpyToSymbol(moistureAdvSelectorQv_b_d, &moistureAdvSelectorQv_b, sizeof(float));
-   cudaMemcpyToSymbol(moistureSGSturb_d, &moistureSGSturb, sizeof(int));
-   cudaMemcpyToSymbol(moistureCond_d, &moistureCond, sizeof(int));
-   cudaMemcpyToSymbol(moistureAdvSelectorQi_d, &moistureAdvSelectorQi, sizeof(int));
-   cudaMemcpyToSymbol(moistureCondTscale_d, &moistureCondTscale, sizeof(float));
-   cudaMemcpyToSymbol(moistureCondBasePres_d, &moistureCondBasePres, sizeof(int));
-   cudaMemcpyToSymbol(moistureMPcallTscale_d, &moistureMPcallTscale, sizeof(float));
+   if (moistureSelector > 0){
+     cudaMemcpyToSymbol(moistureNvars_d, &moistureNvars, sizeof(int));
+     cudaMemcpyToSymbol(moistureAdvSelectorQv_d, &moistureAdvSelectorQv, sizeof(int));
+     cudaMemcpyToSymbol(moistureAdvSelectorQv_b_d, &moistureAdvSelectorQv_b, sizeof(float));
+     cudaMemcpyToSymbol(moistureSGSturb_d, &moistureSGSturb, sizeof(int));
+     cudaMemcpyToSymbol(moistureCond_d, &moistureCond, sizeof(int));
+     cudaMemcpyToSymbol(moistureAdvSelectorQi_d, &moistureAdvSelectorQi, sizeof(int));
+     cudaMemcpyToSymbol(moistureCondTscale_d, &moistureCondTscale, sizeof(float));
+     cudaMemcpyToSymbol(moistureCondBasePres_d, &moistureCondBasePres, sizeof(int));
+     cudaMemcpyToSymbol(moistureMPcallTscale_d, &moistureMPcallTscale, sizeof(float));
 
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   fecuda_DeviceMalloc(Nelems*moistureNvars*sizeof(float), &moistScalars_d);
-   fecuda_DeviceMalloc(Nelems*moistureNvars*sizeof(float), &moistScalarsFrhs_d);
-   fecuda_DeviceMalloc(Nelems*moistureNvars*3*sizeof(float), &moistTauFlds_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &fcond_d);
+     Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
+     fecuda_DeviceMalloc(Nelems*moistureNvars*sizeof(float), &moistScalars_d);
+     fecuda_DeviceMalloc(Nelems*moistureNvars*sizeof(float), &moistScalarsFrhs_d);
+     fecuda_DeviceMalloc(Nelems*moistureNvars*3*sizeof(float), &moistTauFlds_d);
+     fecuda_DeviceMalloc(Nelems*sizeof(float), &fcond_d);
+   }
 
    return(errorCode);
 } //end cuda_moitureDeviceSetup()
@@ -102,10 +104,11 @@ __device__ void cudaDevice_moistZerothOrder(float* rho_qv, float* rho_ql, float*
   float p_vs;
   float f_for,f_lim;
   float Tf = 273.15; // K, freezing temperature
-  float t_cond; // s, relaxation time
   float r_v,r_vs;
   float pr_d;
   float constant_1;
+  float t_cond = moistureCondTscale_d; // s, relaxation time
+  float dt_mp = moistureMPcallTscale_d; // s, microphysics update time scale
 
   // Constants from Flatau et al. 1992 (Table 4, absolute norm)
   // Formulation from Morrison 2-moment 
@@ -129,8 +132,6 @@ __device__ void cudaDevice_moistZerothOrder(float* rho_qv, float* rho_ql, float*
   float a7i = 0.146898966e-11;
   float a8i = 0.252751365e-14;
   float Tc;
-
-  t_cond = moistureCondTscale_d;
 
   int i,j,k,ijk;
   int iStride,jStride,kStride;
@@ -169,19 +170,23 @@ __device__ void cudaDevice_moistZerothOrder(float* rho_qv, float* rho_ql, float*
     // saturation adjustment 0th-order closure
     if (moistureCond_d == 1){
       f_for = rho_qv[ijk]*1e-3 - (p_vs/(R_vapor_d*Td));
-      f_lim = rho_ql[ijk]*1e-3;
     }else if (moistureCond_d == 2){ // Bryan MWR2003
       r_v = rho_qv[ijk]*1e-3;
       r_vs = p_vs/(R_vapor_d*Td);
-      f_for = (r_v - r_vs)/(1.0+(powf(L_v_d,2.0)*r_vs*rhoInv[ijk]/(cp_gas_d*R_vapor_d*powf(Td,2.0))));
-      f_lim = rho_ql[ijk]*1e-3;
+      f_for = (r_v - r_vs)/(1.0+(powf(L_v_d,2.0)*r_vs*rhoInv[ijk]/(cp_gas_d*R_vapor_d*powf(Td,2.0)))/powf(1.0+r_v*rhoInv[ijk],2.0) );
     }else if (moistureCond_d == 3){
       r_v = rho_qv[ijk]*1e-3;
       r_vs = p_vs/(pr_d-p_vs)/Rv_Rg_d;
       r_vs = r_vs/rhoInv[ijk]; // add rho_dry factor to be consistent with r_v
-      f_for = (r_v - r_vs)/(1.0+(powf(L_v_d,2.0)*r_vs*rhoInv[ijk]/(cp_gas_d*R_vapor_d*powf(Td,2.0))));
-      f_lim = rho_ql[ijk]*1e-3;
+      f_for = (r_v - r_vs)/(1.0+(powf(L_v_d,2.0)*r_vs*rhoInv[ijk]/(cp_gas_d*R_vapor_d*powf(Td,2.0)))/powf(1.0+r_v*rhoInv[ijk],2.0) );
+    }else if (moistureCond_d == 4){
+      r_v = rho_qv[ijk]*1e-3;
+      r_vs = p_vs/(pr_d-p_vs)/Rv_Rg_d;
+      r_vs = r_vs/rhoInv[ijk]; // add rho_dry factor to be consistent with r_v
+      f_for = (r_v - r_vs)/( (1.0+(powf(L_v_d,2.0)*r_vs*rhoInv[ijk]/(cp_gas_d*R_vapor_d*powf(Td,2.0)))/powf(1.0+r_v*rhoInv[ijk],2.0) )*dt_mp + t_cond);
+      f_for = f_for*t_cond;
     }
+    f_lim = rho_ql[ijk]*1e-3;
     fcond[ijk] = fmaxf(f_for,0.0) - fmaxf(fminf(f_lim,-f_for),0.0);
     fcond[ijk] = fcond[ijk]/t_cond;
 
