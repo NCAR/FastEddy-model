@@ -2,7 +2,7 @@
 Downloads
 *********
 
-.. list-table:: Downloads Table
+.. list-table::
    :widths: auto
    :header-rows: 1
 
