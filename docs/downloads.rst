@@ -13,4 +13,4 @@ Downloads
    * - 1.1.0
      - April 22, 2024
      - `v1.1.0.tar.gz <https://github.com/NCAR/FastEddy-model/archive/refs/tags/v1.1.0.tar.gz>`_
-     - `Release Notes <https://fasteddy-model.readthedocs.io/en/main_v1.1/release_notes.html>`_
+     - `v1.1.0 Release Notes <https://fasteddy-model.readthedocs.io/en/main_v1.1/release_notes.html>`_
