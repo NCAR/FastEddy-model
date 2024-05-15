@@ -1,10 +1,10 @@
-==========================
-FastEddy version |version|
-==========================
+====================================
+FastEddy\ :sup:`®` version |version|
+====================================
 
 .. image:: _static/CoastalCase_u_y-32km_0440.png
 
-FastEddy® (FE) is a large-eddy simulation (LES) model developed by the
+FastEddy\ :sup:`®` (FE) is a large-eddy simulation (LES) model developed by the
 Research Applications Laboratory (RAL) at the U.S. National Science
 Foundation National Center for Atmospheric Research (NSF NCAR) in Boulder,
 Colorado, USA. The fundamental premise of FastEddy model development is to
@@ -18,5 +18,6 @@ engineering applications.
 .. toctree::
    :hidden:
 
-   release_notes.rst   
+   release_notes.rst
+   downloads.rst
    Tutorial/index
