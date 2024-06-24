@@ -34,6 +34,7 @@ extern __constant__ int surflayer_qskin_input_d;/* selector to use file input (r
 extern __constant__ float temp_grnd_d;        /* initial surface temperature */
 extern __constant__ float pres_grnd_d;        /* initial surface pressure */
 extern __constant__ int surflayer_stab_d;    /* exchange coeffcient stability correction selector: 0= on, 1= off */
+extern __constant__ int surflayer_z0tdyn_d;     /* dynamic z0t calculation following Zilitinkevich (1995) approach: 0= off, 1= constant Zilitinkevich coeff, 2= variable Zilitinkevich coeff */
 extern float* cdFld_d;                        /*Base address for momentum exchange coefficient*/ 
 extern float* chFld_d;                        /*Base address for sensible heat exchange coefficient*/ 
 extern float* cqFld_d;                        /*Base address for latent heat exchange coefficient (2d-array)*/
@@ -102,5 +103,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
                                                  float* invOblen, float* z0m, float* z0t, float* sea_mask, float* J33_d);
 
 __device__ void cudaDevice_offshoreRoughness(float* z0m, float* z0t, float* fricVel, float u_1, float v_1, float* sea_mask);
+
+__device__ void cudaDevice_z0tdyn(float* z0m, float* z0t, float* fricVel);
 
 #endif // _SURFLAYER_CUDADEV_CU_H

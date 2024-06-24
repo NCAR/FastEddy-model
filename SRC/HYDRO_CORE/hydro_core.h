@@ -103,6 +103,7 @@ extern float surflayer_wq;       /* kinematic latent heat flux at the surface */
 extern float surflayer_qr;       /* surface water vapor rate (g/kg) h-1 */
 extern int surflayer_qskin_input;/* selector for file input (restart) value for qskin under surflayerSelector == 2 */
 extern int surflayer_stab;       /* exchange coeffcient stability correction selector: 0= on, 1= off */
+extern int surflayer_z0tdyn;     /* dynamic z0t calculation following Zilitinkevich (1995) approach: 0= off, 1= constant Zilitinkevich coeff, 2= variable Zilitinkevich coeff */
 extern float *fricVel;           /*Surface friction velocity "u*" 2-d array (x by y) (ms^-1)*/
 extern float *htFlux;            /*Surface heat flux "(w'th')" 2-d array (x by y) (Kms^-1)*/
 extern float *tskin;             /*Surface skin temperature 2-d array (x by y) (K)*/

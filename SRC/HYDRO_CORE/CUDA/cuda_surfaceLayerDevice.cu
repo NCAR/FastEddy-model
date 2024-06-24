@@ -25,6 +25,7 @@ __constant__ int surflayer_qskin_input_d;/* selector to use file input (restart)
 __constant__ float temp_grnd_d;       /* initial surface temperature */
 __constant__ float pres_grnd_d;       /* initial surface pressure */
 __constant__ int surflayer_stab_d;    /* exchange coeffcient stability correction selector: 0= on, 1= off */
+__constant__ int surflayer_z0tdyn_d;     /* dynamic z0t calculation following Zilitinkevich (1995) approach: 0= off, 1= constant Zilitinkevich coeff, 2= variable Zilitinkevich coeff */
 float* cdFld_d;            /*Base address for momentum exchange coefficient (2d-array)*/ 
 float* chFld_d;            /*Base address for sensible heat exchange coefficient (2d-array)*/
 float* cqFld_d;            /*Base address for latent heat exchange coefficient (2d-array)*/
@@ -70,6 +71,7 @@ extern "C" int cuda_surfaceLayerDeviceSetup(){
    cudaMemcpyToSymbol(surflayer_qr_d, &surflayer_qr, sizeof(float));
    cudaMemcpyToSymbol(surflayer_qskin_input_d, &surflayer_qskin_input, sizeof(int));
    cudaMemcpyToSymbol(surflayer_stab_d, &surflayer_stab, sizeof(int));
+   cudaMemcpyToSymbol(surflayer_z0tdyn_d, &surflayer_z0tdyn, sizeof(int));
    cudaMemcpyToSymbol(surflayer_idealsine_d, &surflayer_idealsine, sizeof(int));
    cudaMemcpyToSymbol(surflayer_ideal_ts_d, &surflayer_ideal_ts, sizeof(float));
    cudaMemcpyToSymbol(surflayer_ideal_te_d, &surflayer_ideal_te, sizeof(float));
@@ -444,6 +446,10 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
       cudaDevice_offshoreRoughness(z0m, z0t, fricVel, u1, v1, sea_mask);
    }
 
+   if ( (surflayer_z0tdyn_d>0) && ((surflayer_offshore_d==0) || ((surflayer_offshore_d==1) && (*sea_mask<1e4))) ){ // dynamic z0t calculation
+      cudaDevice_z0tdyn(z0m, z0t, fricVel);
+   }
+
 } //end cudaDevice_SurfaceLayerMOSTdry(...
 
 /*----->>>>> __device__ void cudaDevice_SurfaceLayerMOSTmoist();  --------------------------------------------------
@@ -555,6 +561,10 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
       cudaDevice_offshoreRoughness(z0m, z0t, fricVel, u1, v1, sea_mask);
    }
 
+   if ( (surflayer_z0tdyn_d>0) && ((surflayer_offshore_d==0) || ((surflayer_offshore_d==1) && (*sea_mask<1e4))) ){ // dynamic z0t calculation
+      cudaDevice_z0tdyn(z0m, z0t, fricVel);
+   }
+
 } //end cudaDevice_SurfaceLayerMOSTmoist(...
 
 /*----->>>>> __device__ void cudaDevice_offshoreRoughness();  --------------------------------------------------
@@ -635,3 +645,24 @@ __device__ void cudaDevice_offshoreRoughness(float* z0m, float* z0t, float* fric
   *z0t = *sea_mask*z0t_tmp + (*z0t)*(1.0-*sea_mask);
 
 } // cudaDevice_offshoreRoughness()
+
+/*----->>>>> __device__ void cudaDevice_z0tdyn();  --------------------------------------------------
+*/
+__device__ void cudaDevice_z0tdyn(float* z0m, float* z0t, float* fricVel){
+
+  float c_zil_cte = 0.1; // Chen et al. (1997)
+  float c_zil;
+  float air_vis = 1.5e-5; // kinematic air viscosity
+  float Ren;
+
+  if (surflayer_z0tdyn_d==1){ // constant Zilitinkevich coeff
+    c_zil = c_zil_cte;
+  } else if (surflayer_z0tdyn_d==2){ // variable c_zil (Chen & Zhang, 2009)
+    c_zil = powf(10.0,-0.4*(*z0m)/0.07);
+  }
+
+  Ren = fmaxf(*fricVel*(*z0m)/air_vis,0.1);
+  *z0t = *z0m*expf(-c_zil*kappa_d*sqrtf(Ren));
+  *z0t = fmaxf(*z0t,1.0e-6); // Limits suggested in noahmp
+
+} // cudaDevice_z0tdyn()
