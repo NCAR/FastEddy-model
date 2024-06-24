@@ -104,6 +104,7 @@ float surflayer_wq;       /* kinematic latent heat flux at the surface */
 float surflayer_qr;       /* surface water vapor rate (kg/kg) h-1 */
 int surflayer_qskin_input;/* selector to use file input (restart) value for qskin under surflayerSelector == 2 */
 int surflayer_stab;       /* exchange coeffcient stability correction selector: 0= on, 1= off */
+int surflayer_z0tdyn;     /* dynamic z0t calculation following Zilitinkevich (1995) approach: 0= off, 1= constant Zilitinkevich coeff, 2= variable Zilitinkevich coeff */
 float* cdFld;             /*Base adress for momentum exchange coefficient (2d-array)*/
 float* chFld;             /*Base adress for sensible heat exchange coefficient (2d-array)*/
 float* cqFld;             /*Base address for latent heat exchange coefficient (2d-array)*/
@@ -278,6 +279,8 @@ int hydro_coreGetParams(){
    //
    surflayer_stab = 0; // Default to on 
    errorCode = queryIntegerParameter("surflayer_stab", &surflayer_stab, 0, 1, PARAM_OPTIONAL);
+   surflayer_z0tdyn = 1; // Default to option 1
+   errorCode = queryIntegerParameter("surflayer_z0tdyn", &surflayer_z0tdyn, 0, 2, PARAM_OPTIONAL);
    surflayer_offshore = 0; // Default to off
    surflayer_offshore_opt = 0;
    surflayer_offshore_dyn = 1;
@@ -525,6 +528,7 @@ int hydro_coreInit(){
       printParameter("surflayer_ideal_qte", "end time in seconds for the idealized sinusoidal surface forcing (qv)");
       printParameter("surflayer_ideal_qamp", "maximum amplitude of the idealized sinusoidal surface forcing (qv)");
       printParameter("surflayer_stab", "exchange coeffcient stability correction selector: 0= on, 1= off");
+      printParameter("surflayer_z0tdyn", "dynamic z0t calculation following Zilitinkevich (1995) approach: 0= off, 1= constant Zilitinkevich coeff, 2= variable Zilitinkevich coeff");
       printComment("----------: OFFSHORE ROUGHNESS ---");
       printParameter("surflayer_offshore", "offshore selector: 0=off, 1=on");
       printParameter("surflayer_offshore_opt", "offshore roughness parameterization: ==0 (Charnock), ==1 (Charnock with variable alpha), ==2 (Taylor & Yelland), ==3 (Donelan), ==4 (Drennan), ==5 (Porchetta)");
@@ -632,6 +636,7 @@ int hydro_coreInit(){
    MPI_Bcast(&surflayer_ideal_qte, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&surflayer_ideal_qamp, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&surflayer_stab, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&surflayer_z0tdyn, 1, MPI_INT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&surflayer_offshore, 1, MPI_INT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&surflayer_offshore_opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&surflayer_offshore_dyn, 1, MPI_INT, 0, MPI_COMM_WORLD);
