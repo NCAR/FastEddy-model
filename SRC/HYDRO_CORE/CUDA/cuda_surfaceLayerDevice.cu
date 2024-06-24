@@ -446,7 +446,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
       cudaDevice_offshoreRoughness(z0m, z0t, fricVel, u1, v1, sea_mask);
    }
 
-   if ( (surflayer_z0tdyn_d>0) && ((surflayer_offshore_d==0) || ((surflayer_offshore_d==1) && (*sea_mask<1e4))) ){ // dynamic z0t calculation
+   if ( (surflayer_z0tdyn_d>0) && ((surflayer_offshore_d==0) || ((surflayer_offshore_d==1) && (*sea_mask<1e-4))) ){ // dynamic z0t calculation
       cudaDevice_z0tdyn(z0m, z0t, fricVel);
    }
 
@@ -561,7 +561,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
       cudaDevice_offshoreRoughness(z0m, z0t, fricVel, u1, v1, sea_mask);
    }
 
-   if ( (surflayer_z0tdyn_d>0) && ((surflayer_offshore_d==0) || ((surflayer_offshore_d==1) && (*sea_mask<1e4))) ){ // dynamic z0t calculation
+   if ( (surflayer_z0tdyn_d>0) && ((surflayer_offshore_d==0) || ((surflayer_offshore_d==1) && (*sea_mask<1e-4))) ){ // dynamic z0t calculation
       cudaDevice_z0tdyn(z0m, z0t, fricVel);
    }
 
