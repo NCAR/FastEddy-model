@@ -63,6 +63,9 @@ extern float *hydroRhoInv_d;   //storage for 1.0/rho
 /*---SGSTKE */
 #include <cuda_sgstkeDevice_cu.h>
 
+/*---CANOPY */
+#include <cuda_canopyDevice_cu.h>
+
 /*---LARGE SCALE FORCINGS */
 #include <cuda_largeScaleForcingsDevice_cu.h>
 

@@ -129,6 +129,12 @@ extern float surflayer_offshore_cp;    /* wave phase speed */
 extern float surflayer_offshore_theta; /* wave/wind angle */
 extern int surflayer_offshore_visc;    /* viscous term on z0m: 0=off, 1=on (default) */
 extern float* sea_mask;              /* Base Address of memory containing sea mask 0,1 field */
+/*---CANOPY*/
+extern int canopySelector;         /* canopy selector: 0=off, 1=on */
+extern int canopySkinOpt;          /* canopy selector to use additional skin friction effect on drag coefficient: 0=off, 1=on */
+extern float canopy_cd;            /* non-dimensional canopy drag coefficient */
+extern float canopy_lf;            /* representative canopy element length scale */
+extern float *canopy_lad;          /* Base Address of memory containing leaf area density (LAD) field [m^{-1}] */
 /*---LARGE SCALE FORCING*/ 
 extern int lsfSelector;         /* large-scale forcings selector: 0=off, 1=on */
 extern float lsf_w_surf;        /* lsf to w at the surface */

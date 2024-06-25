@@ -135,6 +135,13 @@ float surflayer_offshore_theta; /* wave/wind angle */
 int surflayer_offshore_visc;    /* viscous term on z0m: 0=off, 1=on (default) */
 float* sea_mask;                /* Base Address of memory containing sea mask 0,1 field */
 
+/*Canopy module parameters*/
+int canopySelector;         /* canopy selector: 0=off, 1=on */
+int canopySkinOpt;          /* canopy selector to use additional skin friction effect on drag coefficient: 0=off, 1=on */
+float canopy_cd;            /* non-dimensional canopy drag coefficient cd coefficient */
+float canopy_lf;            /* representative canopy element length scale */
+float *canopy_lad;          /* Base Address of memory containing leaf area density (LAD) field [m^{-1}] */
+
 /*Large-scale forcings parameters*/ 
 int lsfSelector;         /* large-scale forcings selector: 0=off, 1=on */
 float lsf_w_surf;        /* lsf to w at the surface */
@@ -314,6 +321,16 @@ int hydro_coreGetParams(){
          errorCode = queryFloatParameter("surflayer_offshore_theta", &surflayer_offshore_theta, 0.0, 180.0, PARAM_MANDATORY);
        }
      }
+   }
+   canopySelector = 0; // Default to off
+   errorCode = queryIntegerParameter("canopySelector", &canopySelector, 0, 1, PARAM_OPTIONAL);
+   canopySkinOpt = 0; // Default to off
+   canopy_cd = 0.15; // Default to 0.15
+   canopy_lf = 0.1; // Default to 0.1
+   if (canopySelector > 0){
+     errorCode = queryIntegerParameter("canopySkinOpt", &canopySkinOpt, 0, 1, PARAM_MANDATORY);
+     errorCode = queryFloatParameter("canopy_cd", &canopy_cd, 0.0, 1e+2, PARAM_MANDATORY);
+     errorCode = queryFloatParameter("canopy_lf", &canopy_lf, 0.0, 1e+2, PARAM_MANDATORY);
    }
    //
    lsfSelector = 0; // Default to off 
@@ -532,6 +549,13 @@ int hydro_coreInit(){
       printComment("----------: OFFSHORE ROUGHNESS ---");
       printParameter("surflayer_offshore", "offshore selector: 0=off, 1=on");
       printParameter("surflayer_offshore_opt", "offshore roughness parameterization: ==0 (Charnock), ==1 (Charnock with variable alpha), ==2 (Taylor & Yelland), ==3 (Donelan), ==4 (Drennan), ==5 (Porchetta)");
+      printComment("----------: CANOPY MODEL ---");
+      printParameter("canopySelector", "canopy selector: 0= off, 1= on");
+      if (canopySelector > 0){
+        printParameter("canopySkinOpt", "canopy selector to use additional skin friction effect on drag coefficient: 0=off, 1=on");
+        printParameter("canopy_cd", "non-dimensional canopy drag coefficient when canopySelector > 0");
+        printParameter("canopy_lf", "representative canopy element length scale when canopySelector > 0");
+      }
       printComment("----------: LARGE-SCALE FORCINGS MODEL ---");
       printParameter("lsfSelector", "large-scale forcings selector: 0= off, 1= on");
       if (lsfSelector > 0){
@@ -645,6 +669,12 @@ int hydro_coreInit(){
    MPI_Bcast(&surflayer_offshore_cp, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&surflayer_offshore_theta, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&surflayer_offshore_visc, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&canopySelector, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   if (canopySelector > 0){
+     MPI_Bcast(&canopySkinOpt, 1, MPI_INT, 0, MPI_COMM_WORLD);
+     MPI_Bcast(&canopy_cd, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+     MPI_Bcast(&canopy_lf, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   }
    MPI_Bcast(&lsfSelector, 1, MPI_INT, 0, MPI_COMM_WORLD);
    if (lsfSelector > 0){
      MPI_Bcast(&lsf_w_surf, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -961,6 +991,15 @@ int hydro_coreInit(){
              &fldName[0],sea_mask);
      fflush(stdout);
    }
+
+   if(canopySelector>0){
+     canopy_lad = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "canopy_lad");
+     errorCode = sprintf(&fldName[0],"CanopyLAD");
+     errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, canopy_lad);
+     printf("canopy:Field = %s stored at %p, has been registered with IO.\n",
+            &fldName[0],canopy_lad);
+     fflush(stdout);
+   } // end of canopySelector > 0
 
    if(moistureSelector > 0){ 
      moistScalars = memAllocateFloat4DField(moistureNvars, Nxp, Nyp, Nzp, Nh, "moistScalars");
@@ -1668,6 +1707,9 @@ int hydro_coreCleanup(){
        memReleaseFloat(sea_mask);
      }
    }//end if surface selector > 0
+   if(canopySelector > 0){
+     memReleaseFloat(canopy_lad);
+   }
    if(moistureSelector > 0){
      memReleaseFloat(moistScalars);
      memReleaseFloat(moistScalarsFrhs);

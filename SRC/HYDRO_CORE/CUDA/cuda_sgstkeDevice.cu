@@ -67,26 +67,45 @@ extern "C" int cuda_sgstkeDeviceCleanup(){
 */
 __global__ void cudaDevice_hydroCoreUnitTestCompleteSGSTKE(float* hydroFlds_d, float* hydroRhoInv_d, float* hydroTauFlds_d,
                                                            float* hydroKappaM_d, float* dedxi_d, float* sgstke_ls_d,
-                                                           float* sgstkeScalars_d, float* sgstkeScalarsFrhs_d,
+                                                           float* sgstkeScalars_d, float* sgstkeScalarsFrhs_d, float* canopy_lad_d,
                                                            float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d){ 
 
    int fldStride,iFld;
    fldStride = (Nx_d+2*Nh_d)*(Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
 
    for(iFld=0; iFld < TKESelector_d; iFld++){ // loop over SGSTKE equations
-      cudaDevice_sgstkeBuoyancy(&hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
-                                &hydroTauFlds_d[fldStride*8], &sgstkeScalarsFrhs_d[fldStride*iFld]); // buoyancy source/sink term
-      cudaDevice_sgstkeDissip(&sgstkeScalars_d[fldStride*iFld], &hydroRhoInv_d[0], &sgstke_ls_d[fldStride*iFld],
-                              &sgstkeScalarsFrhs_d[fldStride*iFld], 1, D_Jac_d); // dissipation term
-      cudaDevice_sgstkeShearProd(&hydroTauFlds_d[fldStride*0], &hydroTauFlds_d[fldStride*1], &hydroTauFlds_d[fldStride*2],
-                                 &hydroTauFlds_d[fldStride*4], &hydroTauFlds_d[fldStride*3], &hydroTauFlds_d[fldStride*5],
-                                 &hydroFlds_d[fldStride*U_INDX], &hydroFlds_d[fldStride*V_INDX], &hydroFlds_d[fldStride*W_INDX],
-                                 &hydroRhoInv_d[0], &sgstkeScalarsFrhs_d[fldStride*iFld], 
-                                 J31_d, J32_d, J33_d); // shear production term
-      cudaDevice_sgstkeTurbTransport(&hydroKappaM_d[0], &dedxi_d[fldStride*(iFld*3+0)], &dedxi_d[fldStride*(iFld*3+1)],
-                                     &dedxi_d[fldStride*(iFld*3+2)], &hydroFlds_d[fldStride*RHO_INDX],
-                                     &sgstkeScalarsFrhs_d[fldStride*iFld],
-                                     J31_d, J32_d, J33_d); // turbulent transport term
+      if(iFld==0){ // 1-eq SGSTKE
+        cudaDevice_sgstkeBuoyancy(&hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
+                                  &hydroTauFlds_d[fldStride*8], &sgstkeScalarsFrhs_d[fldStride*iFld]); // buoyancy source/sink term
+        cudaDevice_sgstkeDissip(&sgstkeScalars_d[fldStride*iFld], &hydroRhoInv_d[0], &sgstke_ls_d[fldStride*iFld],
+                                &sgstkeScalarsFrhs_d[fldStride*iFld], 1, D_Jac_d); // dissipation term
+        cudaDevice_sgstkeShearProd(&hydroTauFlds_d[fldStride*0], &hydroTauFlds_d[fldStride*1], &hydroTauFlds_d[fldStride*2],
+                                   &hydroTauFlds_d[fldStride*4], &hydroTauFlds_d[fldStride*3], &hydroTauFlds_d[fldStride*5],
+                                   &hydroFlds_d[fldStride*U_INDX], &hydroFlds_d[fldStride*V_INDX], &hydroFlds_d[fldStride*W_INDX],
+                                   &hydroRhoInv_d[0], &sgstkeScalarsFrhs_d[fldStride*iFld],
+                                   J31_d, J32_d, J33_d); // shear production term
+        cudaDevice_sgstkeTurbTransport(&hydroKappaM_d[0], &dedxi_d[fldStride*(iFld*3+0)], &dedxi_d[fldStride*(iFld*3+1)],
+                                       &dedxi_d[fldStride*(iFld*3+2)], &hydroFlds_d[fldStride*RHO_INDX],
+                                       &sgstkeScalarsFrhs_d[fldStride*iFld],
+                                       J31_d, J32_d, J33_d); // turbulent transport term
+         if(canopySelector_d==1){ // 1-eq SGSTKE with canopy model
+            cudaDevice_canopySGSTKEtransfer(&hydroRhoInv_d[0], &hydroFlds_d[fldStride*U_INDX], &hydroFlds_d[fldStride*V_INDX],
+                                            &hydroFlds_d[fldStride*W_INDX], &canopy_lad_d[0],
+                                            &sgstkeScalars_d[fldStride*iFld], &sgstkeScalarsFrhs_d[fldStride*iFld], -1.0); // transfer to wake scale
+         }
+      }else if((iFld==1)&&(canopySelector_d==1)&&(TKESelector_d==2)){ // 2-eq SGSTKE with canopy model (wake scale SGSTKE)
+	cudaDevice_sgstkeTurbTransport(&hydroKappaM_d[0], &dedxi_d[fldStride*(iFld*3+0)], &dedxi_d[fldStride*(iFld*3+1)],
+                                       &dedxi_d[fldStride*(iFld*3+2)], &hydroFlds_d[fldStride*RHO_INDX],
+                                       &sgstkeScalarsFrhs_d[fldStride*iFld],
+                                       J31_d, J32_d, J33_d); // turbulent transport term
+        cudaDevice_sgstkeDissip(&sgstkeScalars_d[fldStride*iFld], &hydroRhoInv_d[0], &sgstke_ls_d[fldStride*iFld],
+                                &sgstkeScalarsFrhs_d[fldStride*iFld], 0, D_Jac_d); // dissipation term
+        cudaDevice_canopySGSTKEtransfer(&hydroRhoInv_d[0], &hydroFlds_d[fldStride*U_INDX], &hydroFlds_d[fldStride*V_INDX],
+                                        &hydroFlds_d[fldStride*W_INDX], &canopy_lad_d[0],
+                                        &sgstkeScalars_d[0], &sgstkeScalarsFrhs_d[fldStride*iFld], 1.0); // transfer from grid scale
+        cudaDevice_canopySGSTKEwakeprod(&hydroRhoInv_d[0], &hydroFlds_d[fldStride*U_INDX], &hydroFlds_d[fldStride*V_INDX],
+                                        &hydroFlds_d[fldStride*W_INDX], &canopy_lad_d[0], &sgstkeScalarsFrhs_d[fldStride*iFld]); // wake production
+      }
    }
 
 } // end cudaDevice_hydroCoreUnitTestCompleteSGSTKE()

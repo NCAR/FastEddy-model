@@ -40,7 +40,8 @@
 #include "cuda_surfaceLayerDevice.cu"
 #include "cuda_sgsTurbDevice.cu"
 #include "cuda_molecularDiffDevice.cu" 
-#include "cuda_sgstkeDevice.cu" 
+#include "cuda_sgstkeDevice.cu"
+#include "cuda_canopyDevice.cu"
 #include "cuda_largeScaleForcingsDevice.cu" 
 #include "cuda_moistureDevice.cu" 
 #include "cuda_filtersDevice.cu" 
@@ -158,6 +159,11 @@ extern "C" int cuda_hydroCoreDeviceSetup(){
    }
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
 
+   /* CANOPY */
+   if (canopySelector > 0){
+     errorCode = cuda_canopyDeviceSetup();
+   }
+
    /* LARGE SCALE FORCINGS*/
    if (lsfSelector > 0){ 
      errorCode = cuda_lsfDeviceSetup();
@@ -225,6 +231,9 @@ extern "C" int cuda_hydroCoreDeviceCleanup(){
    } 
    if (surflayerSelector > 0) { 
      errorCode = cuda_surfaceLayerDeviceCleanup();
+   }
+   if (canopySelector > 0) {
+     errorCode = cuda_canopyDeviceCleanup();
    }
    if (lsfSelector > 0) {
      errorCode = cuda_lsfDeviceCleanup();
@@ -374,8 +383,11 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
      if ((turbulenceSelector >0) && (TKESelector > 0)){
        cudaDevice_hydroCoreUnitTestCompleteSGSTKE<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, hydroTauFlds_d,
                                                                     hydroKappaM_d, dedxi_d, sgstke_ls_d,
-                                                                    sgstkeScalars_d, sgstkeScalarsFrhs_d,
+                                                                    sgstkeScalars_d, sgstkeScalarsFrhs_d, canopy_lad_d,
                                                                     J31_d, J32_d, J33_d, D_Jac_d); //call to prognostic TKE equation
+       if (canopySelector==1){ // canopy drag term to forcing of momentum
+         cudaDevice_hydroCoreUnitTestCompleteCanopy<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, canopy_lad_d, hydroFldsFrhs_d);
+       }
      } // end if (turbSelector >0) && (TKESelector > 0)
 
      if ((moistureSelector > 0)&&(moistureCond > 0)&&(moistureNvars > 1)){ // (moisture condensation forcing)
@@ -854,9 +866,13 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
      }
      if(TKESelector_d > 0){ // Lilly SGSTKE based Km
        for(iFld=0; iFld < TKESelector_d; iFld++){ // loop over SGSTKE equations
-         cudaDevice_sgstkeLengthScale(&hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
+	 if(iFld==0){
+           cudaDevice_sgstkeLengthScale(&hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
                                       &sgstkeScalars_d[fldStride*iFld], &sgstke_ls_d[fldStride*iFld],
                                       J31_d, J32_d, J33_d, D_Jac_d); // length scale calculation
+	 }else if(iFld==1){
+           cudaDevice_sgstkeLengthScaleLF(&sgstke_ls_d[fldStride*iFld]); // canopy length scale assignment
+         }
          cudaDevice_hydroCoreCalcEddyDiff(&hydroTauFlds_d[fldStride*0], &hydroTauFlds_d[fldStride*1], &hydroTauFlds_d[fldStride*2],
                                           &hydroTauFlds_d[fldStride*3], &hydroTauFlds_d[fldStride*4], &hydroTauFlds_d[fldStride*5],
                                           &hydroTauFlds_d[fldStride*8], &hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
