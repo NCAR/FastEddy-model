@@ -1,18 +1,18 @@
-==========================
-Canopy boundary layer flow
-==========================
+=================================================
+Boundary layer in the presence of resolved canopy
+=================================================
 
 Background
 ----------
 
-This is a canonical neutral boundary layer scenario. The case is broadly based upon Sauer and Munoz-Esparza (2020) but is not identical. A geostrophic wind is prescribed over ground with a set aerodynamic roughness length under a neutrally stratified boundary layer. The purpose of this test case is to visualize and analyze the resultant flow and turbulence characteristics that develop when the LES reaches statistical steady-state.
+This is an idealized scenario of a neutrally stratified boundary layer in the presence of a horizontally homogeneous canopy. This case utilizes a two-equation canopy model (Shaw and Scumann, 1992; Shaw and Patton, 2003).
 
 Input parameters
 ----------------
 
-* Number of grid points: :math:`[N_x,N_y,N_z]=[640,634,58]`
-* Isotropic grid spacings in the horizontal directions: :math:`[dx,dy]=[15,15]` m, vertical grid is :math:`dz=15` m at the surface and stretched with verticalDeformFactor :math:`=0.75`
-* Domain size: :math:`[9.6 \times 9.51 \times 1.08]` km
+* Number of grid points: :math:`[N_x,N_y,N_z]=[252,250,90]`
+* Isotropic grid spacings in the horizontal directions: :math:`[dx,dy]=[4,4]` m, vertical grid is :math:`dz=4` m at the surface and stretched with verticalDeformFactor :math:`=0.25`
+* Domain size: :math:`[1.0 \times 1.0 \times 1.44]` km
 * Model time step: :math:`0.04` s
 * Advection scheme: 5th-order upwind
 * Time scheme: 3rd-order Runge Kutta
@@ -30,13 +30,13 @@ Input parameters
     \end{cases} 
 
 * Surface heat flux:  :math:`0.0` Km/s
-* Surface roughness length: :math:`z_0=0.1` m
-* Rayleigh damping layer: uppermost :math:`400` m of the domain
+* Surface roughness length: :math:`z_0=1e-12` m
+* Rayleigh damping layer: uppermost :math:`600` m of the domain
 * Initial perturbations: :math:`\pm 0.25` K 
 * Depth of perturbations: :math:`375` m
 * Top boundary condition: free slip
 * Lateral boundary conditions: periodic
-* Time period: :math:`7` h
+* Time period: :math:`4` h
 
 Execute FastEddy
 ----------------
