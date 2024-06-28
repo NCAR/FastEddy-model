@@ -59,13 +59,13 @@ XY-plane views of instantaneous velocity components at :math:`t=4` h (FE_CANOPY.
 XZ-plane views of instantaneous velocity components at :math:`t=4` h (FE_CANOPY.1440000):
 
 .. image:: ../images/UVWTHETA-XZ-canopy.png
-  :width: 900
+  :width: 600
   :alt: Alternative text
   
 Mean (domain horizontal average) vertical profiles of wind speed at :math:`t=4` h (FE_CANOPY.1440000) and horizontally-averaged vertical profiles of turbulence quantities at :math:`t=3-4` h [perturbations are computed at each time instance from horizontal-slab means, then averaged horitontally and over the previous 1-hour mean]. Note that TKE_0 and TKE_1 correspond to the grid and wake-scale SGS TKE components.
 
 .. image:: ../images/TURB-PROF-canopy.png
-  :width: 750
+  :width: 600
   :alt: Alternative text 
 
 Analyze the output
@@ -73,5 +73,5 @@ Analyze the output
 
 * Using the XY and XZ cross sections, discuss the characteristics (scale and magnitude) of the resolved turbulence.
 * How does the vertical wind speed profile shape differ from the log-law?
-* Using the vertical TKE profiles, discuss how well-resolved are these LES results.
+* Using the vertical TKE profiles, discuss how well-resolved are these LES results and the regions where the SGS content of both TKE scales is most relevant.
 
