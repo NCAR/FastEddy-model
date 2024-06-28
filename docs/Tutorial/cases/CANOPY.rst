@@ -41,12 +41,12 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Run FastEddy using the input parameters file /examples/Example01_NBL.in. To execute FastEddy, follow the instructions here: https://github.com/NCAR/FastEddy-model/blob/main/README.md.
+Note that this example requires specification of a leaf area density (LAD) profile. A Jupyer notebook is provided in /tutorial/notebooks/Canopy_Prep.ipynb that reads in an LAD profile in .csv format (tape archive file at ZENODO blah blah blah!!!) and uses a FastEddy initial condition file to create a new initial condition file that includes de LAD information (CanopyLAD array). The notebook expects a canopy height value to be specified (:math: `h_c`), and that is currently set to 30.0 m. Run FastEddy using the input parameters file /tutorials/examples/Example05_CANOPY.in first for 1 timestep to create the FE_CANOPY.0 file, and then run the Jupyter notebook to modify the CanopyLAD array to contain the LAD profile instead of the initialized all zeros. Then run FastEddy for the :math:`4` h of the simulation. To execute FastEddy, follow the instructions here: https://github.com/NCAR/FastEddy-model/blob/main/README.md.
 
 Visualize the output
 --------------------
 
-Open the Jupyter notebook entitled "MAKE_FE_TUTORIAL_PLOTS.ipynb" and execute it using setting: case = 'neutral'.
+Open the Jupyter notebook entitled "MAKE_FE_TUTORIAL_PLOTS.ipynb" and execute it using setting: case = 'canopy'.
 
 XY-plane views of instantaneous velocity components at :math:`t=7` h (FE_NBL.630000):
 
