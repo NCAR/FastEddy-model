@@ -41,9 +41,9 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Note that this example requires specification of a leaf area density (LAD) profile. A Jupyer notebook is provided in /tutorial/notebooks/Canopy_Prep.ipynb that reads in an LAD profile in .csv format (tape archive file at ZENODO blah blah blah!!!) and uses a FastEddy initial condition file to create a new initial condition file that includes de LAD information (CanopyLAD array). The notebook expects a canopy height value to be specified (:math:`h_c`), and that is currently set to 30.0 m. Run FastEddy using the input parameters file /tutorials/examples/Example05_CANOPY.in first for 1 timestep to create the FE_CANOPY.0 file, and then run the Jupyter notebook to modify the CanopyLAD array to include the LAD profile instead of the initialized all zeros. Then, run FastEddy for the :math:`4` h of the simulation. To execute FastEddy, follow the instructions `here`_ (DME: this needs to be changed to main_v2.0 before relasing).
+Note that this example requires specification of a leaf area density (LAD) profile. A Jupyer notebook is provided in /tutorial/notebooks/Canopy_Prep.ipynb that reads in an LAD profile in .csv format (tape archive file at ZENODO blah blah blah!!!) and uses a FastEddy initial condition file to create a new initial condition file that includes de LAD information (CanopyLAD array). The notebook expects a canopy height value to be specified (:math:`h_c`), and that is currently set to 30.0 m. Run FastEddy using the input parameters file /tutorials/examples/Example05_CANOPY.in first for 1 timestep to create the FE_CANOPY.0 file, and then run the Jupyter notebook to modify the CanopyLAD array to include the LAD profile instead of the initialized all zeros. Then, run FastEddy for the :math:`4` h of the simulation. To execute FastEddy, follow the instructions `here`_.
 
-.. _here: https://github.com/NCAR/FastEddy-model/blob/main_v1.1/README.md
+.. _here: https://github.com/NCAR/FastEddy-model/blob/main_v2.0/README.md
 
 Visualize the output
 --------------------
@@ -65,13 +65,13 @@ XZ-plane views of instantaneous velocity components at :math:`t=4` h (FE_CANOPY.
 Mean (domain horizontal average) vertical profiles of wind speed at :math:`t=4` h (FE_CANOPY.1440000) and horizontally-averaged vertical profiles of turbulence quantities at :math:`t=3-4` h [perturbations are computed at each time instance from horizontal-slab means, then averaged horitontally and over the previous 1-hour mean]. Note that TKE_0 and TKE_1 correspond to the grid and wake-scale SGS TKE components.
 
 .. image:: ../images/TURB-PROF-canopy.png
-  :width: 1200
+  :width: 750
   :alt: Alternative text 
 
 Analyze the output
 ------------------
 
 * Using the XY and XZ cross sections, discuss the characteristics (scale and magnitude) of the resolved turbulence.
-* What is the boundary layer height in the neutral case?
-* Using the vertical profile plots, explain why the boundary layer is neutral.
+* How does the vertical wind speed profile shape differ from the log-law?
+* Using the vertical TKE profiles, discuss how well-resolved are these LES results.
 
