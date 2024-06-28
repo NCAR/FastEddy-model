@@ -13,7 +13,7 @@ Input parameters
 * Number of grid points: :math:`[N_x,N_y,N_z]=[252,250,90]`
 * Isotropic grid spacings in the horizontal directions: :math:`[dx,dy]=[4,4]` m, vertical grid is :math:`dz=4` m at the surface and stretched with verticalDeformFactor :math:`=0.25`
 * Domain size: :math:`[1.0 \times 1.0 \times 1.44]` km
-* Model time step: :math:`0.04` s
+* Model time step: :math:`0.01` s
 * Advection scheme: 5th-order upwind
 * Time scheme: 3rd-order Runge Kutta
 * Geostrophic wind: :math:`[U_g,V_g]=[10,0]` m/s
@@ -41,34 +41,30 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Note that this example requires specification of a leaf area density (LAD) profile. A Jupyer notebook is provided in /tutorial/notebooks/Canopy_Prep.ipynb that reads in an LAD profile in .csv format (tape archive file at ZENODO blah blah blah!!!) and uses a FastEddy initial condition file to create a new initial condition file that includes de LAD information (CanopyLAD array). The notebook expects a canopy height value to be specified (:math:`h_c`), and that is currently set to 30.0 m. Run FastEddy using the input parameters file /tutorials/examples/Example05_CANOPY.in first for 1 timestep to create the FE_CANOPY.0 file, and then run the Jupyter notebook to modify the CanopyLAD array to include the LAD profile instead of the initialized all zeros. Then, run FastEddy for the :math:`4` h of the simulation. To execute FastEddy, follow the instructions here: https://github.com/NCAR/FastEddy-model/blob/main_v1.1/README.md (DME: this needs to be changed to main_v2.0 before relasing).
+Note that this example requires specification of a leaf area density (LAD) profile. A Jupyer notebook is provided in /tutorial/notebooks/Canopy_Prep.ipynb that reads in an LAD profile in .csv format (tape archive file at ZENODO blah blah blah!!!) and uses a FastEddy initial condition file to create a new initial condition file that includes de LAD information (CanopyLAD array). The notebook expects a canopy height value to be specified (:math:`h_c`), and that is currently set to 30.0 m. Run FastEddy using the input parameters file /tutorials/examples/Example05_CANOPY.in first for 1 timestep to create the FE_CANOPY.0 file, and then run the Jupyter notebook to modify the CanopyLAD array to include the LAD profile instead of the initialized all zeros. Then, run FastEddy for the :math:`4` h of the simulation. To execute FastEddy, follow the instructions `here`_ (DME: this needs to be changed to main_v2.0 before relasing).
+
+.. _here: https://github.com/NCAR/FastEddy-model/blob/main_v1.1/README.md
 
 Visualize the output
 --------------------
 
 Open the Jupyter notebook entitled "MAKE_FE_TUTORIAL_PLOTS.ipynb" and execute it using setting: case = 'canopy'.
 
-XY-plane views of instantaneous velocity components at :math:`t=7` h (FE_NBL.630000):
+XY-plane views of instantaneous velocity components at :math:`t=4` h (FE_CANOPY.1440000):
 
-.. image:: ../images/UVWTHETA-XY-neutral.png
+.. image:: ../images/UVWTHETA-XY-canopy.png
   :width: 1200
   :alt: Alternative text
   
-XZ-plane views of instantaneous velocity components at :math:`t=7` h (FE_NBL.630000):
+XZ-plane views of instantaneous velocity components at :math:`t=4` h (FE_CANOPY.1440000):
 
-.. image:: ../images/UVWTHETA-XZ-neutral.png
+.. image:: ../images/UVWTHETA-XZ-canopy.png
   :width: 900
   :alt: Alternative text
   
-Mean (domain horizontal average) vertical profiles of state variables at :math:`t=7` h (FE_NBL.630000):
+Mean (domain horizontal average) vertical profiles of wind speed at :math:`t=4` h (FE_CANOPY.1440000) and horizontally-averaged vertical profiles of turbulence quantities at :math:`t=3-4` h [perturbations are computed at each time instance from horizontal-slab means, then averaged horitontally and over the previous 1-hour mean]. Note that TKE_0 and TKE_1 correspond to the grid and wake-scale SGS TKE components.
 
-.. image:: ../images/MEAN-PROF-neutral.png
-  :width: 750
-  :alt: Alternative text
- 
-Horizontally-averaged vertical profiles of turbulence quantities at :math:`t=6-7` h [perturbations are computed at each time instance from horizontal-slab means, then averaged horitontally and over the previous 1-hour mean]:
-
-.. image:: ../images/TURB-PROF-neutral.png
+.. image:: ../images/TURB-PROF-canopy.png
   :width: 1200
   :alt: Alternative text 
 
