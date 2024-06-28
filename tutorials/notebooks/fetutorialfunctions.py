@@ -178,7 +178,7 @@ def plot_XY_UVWTHETA(case, case_open, zChoose, save_plot_opt, path_figure):
         print(path_figure + fig_name)
         plt.savefig(path_figure + fig_name,dpi=300,bbox_inches = "tight")
 
-def plot_XZ_UVWTHETA(case, case_open, z_max, sizeX_XZ, sizeY_XZ, save_plot_opt, path_figure):
+def plot_XZ_UVWTHETA(case, case_open, z_max, sizeX_XZ, sizeY_XZ, save_plot_opt, path_figure, zline_opt, zline_val):
     
     ufield = case_open.u.isel(time=0).values
     vfield = case_open.v.isel(time=0).values
@@ -224,6 +224,8 @@ def plot_XZ_UVWTHETA(case, case_open, z_max, sizeX_XZ, sizeY_XZ, save_plot_opt, 
     ###############
     ax=axs[0]
     im = ax.pcolormesh(xPos/1e3,zPos/1e3,ufield[:,yChoose,:],cmap=colormap1,linewidth=0,rasterized=True,vmin=u_min,vmax=u_max)
+    if (zline_opt==1):
+        im2 = ax.plot([xPos[0,0]/1e3, xPos[0,xPos.shape[1]-1]/1e3],[zline_val/1e3, zline_val/1e3],'--',color='white',linewidth=2.5)
     ax.set_xticklabels([])
     ax.set_ylabel(r'$z$ $[\mathrm{km}]$',fontsize=fntSize)
     cbar=fig.colorbar(im, ax=ax)
@@ -237,6 +239,8 @@ def plot_XZ_UVWTHETA(case, case_open, z_max, sizeX_XZ, sizeY_XZ, save_plot_opt, 
     ###############
     ax=axs[1]
     im = ax.pcolormesh(xPos/1e3,zPos/1e3,vfield[:,yChoose,:],cmap=colormap1,linewidth=0,rasterized=True,vmin=v_min,vmax=v_max)
+    if (zline_opt==1):
+        im2 = ax.plot([xPos[0,0]/1e3, xPos[0,xPos.shape[1]-1]/1e3],[zline_val/1e3, zline_val/1e3],'--',color='white',linewidth=2.5)
     ax.set_xticklabels([])
     ax.set_ylabel(r'$z$ $[\mathrm{km}]$',fontsize=fntSize)
     cbar=fig.colorbar(im, ax=ax)
@@ -251,6 +255,8 @@ def plot_XZ_UVWTHETA(case, case_open, z_max, sizeX_XZ, sizeY_XZ, save_plot_opt, 
     w_min=-1.0*w_max
     ax=axs[2]
     im = ax.pcolormesh(xPos/1e3,zPos/1e3,wfield[:,yChoose,:],cmap=colormap2,linewidth=0,rasterized=True,vmin=w_min,vmax=w_max)
+    if (zline_opt==1):
+        im2 = ax.plot([xPos[0,0]/1e3, xPos[0,xPos.shape[1]-1]/1e3],[zline_val/1e3, zline_val/1e3],'--',color='black',linewidth=2.5)
     ax.set_xticklabels([])
     ax.set_ylabel(r'$z$ $[\mathrm{km}]$',fontsize=fntSize)
     cbar=fig.colorbar(im, ax=ax)
@@ -264,6 +270,8 @@ def plot_XZ_UVWTHETA(case, case_open, z_max, sizeX_XZ, sizeY_XZ, save_plot_opt, 
     ###############
     ax=axs[3]
     im = ax.pcolormesh(xPos/1e3,zPos/1e3,thetafield[:,yChoose,:],cmap=colormap3,linewidth=0,rasterized=True,vmin=t_min,vmax=t_max)
+    if (zline_opt==1):
+        im2 = ax.plot([xPos[0,0]/1e3, xPos[0,xPos.shape[1]-1]/1e3],[zline_val/1e3, zline_val/1e3],'--',color='black',linewidth=2.5)
     ax.set_ylabel(r'$z$ $[\mathrm{km}]$',fontsize=fntSize)
     ax.set_xlabel(r'$x$ $[\mathrm{km}]$',fontsize=fntSize)
     cbar=fig.colorbar(im, ax=ax)
@@ -341,18 +349,26 @@ def plot_mean_profiles(fig, axs, FE_mean, z_max, caseLabel, save_plot_opt, path_
         print(path_figure + fig_name)
         plt.savefig(path_figure + fig_name,dpi=300,bbox_inches = "tight")
 
-def compute_turb_profiles(FE_xr, array_out):
+def compute_turb_profiles(FE_xr, array_out, flag_taus):
+
+    var_list = list(FE_xr.data_vars.keys())
+    tke1_flag = 0
+    if 'TKE_1' in var_list:
+        tke1_flag = 1
     
     u_3d = np.squeeze(FE_xr.u.isel(time=0).values)
     v_3d = np.squeeze(FE_xr.v.isel(time=0).values)
     w_3d = np.squeeze(FE_xr.w.isel(time=0).values)
     th_3d = np.squeeze(FE_xr.theta.isel(time=0).values)
     z_3d = np.squeeze(FE_xr.zPos.isel(time=0).values)
-    tau13_3d = np.squeeze(FE_xr.Tau31.isel(time=0).values)
-    tau23_3d = np.squeeze(FE_xr.Tau32.isel(time=0).values)
-    tau33_3d = np.squeeze(FE_xr.Tau33.isel(time=0).values)
-    tauTH3_3d = np.squeeze(FE_xr.TauTH3.isel(time=0).values)
+    if (flag_taus==1):
+        tau13_3d = np.squeeze(FE_xr.Tau31.isel(time=0).values)
+        tau23_3d = np.squeeze(FE_xr.Tau32.isel(time=0).values)
+        tau33_3d = np.squeeze(FE_xr.Tau33.isel(time=0).values)
+        tauTH3_3d = np.squeeze(FE_xr.TauTH3.isel(time=0).values)
     sgstke_3d = np.squeeze(FE_xr.TKE_0.isel(time=0).values)
+    if (tke1_flag==1):
+        sgstke1_3d = np.squeeze(FE_xr.TKE_1.isel(time=0).values)
 
     Nz = u_3d.shape[0]
     Ny = u_3d.shape[1]
@@ -401,19 +417,24 @@ def compute_turb_profiles(FE_xr, array_out):
     upwp_1d = np.mean(np.mean(upwp,axis=2),axis=1)
     vpvp_1d = np.mean(np.mean(vpvp,axis=2),axis=1)
     vpwp_1d = np.mean(np.mean(vpwp,axis=2),axis=1)
-    tau13_1d = np.mean(np.mean(tau13_3d,axis=2),axis=1)
-    tau23_1d = np.mean(np.mean(tau23_3d,axis=2),axis=1)
-    tau33_1d = np.mean(np.mean(tau33_3d,axis=2),axis=1)
-    tauTH3_1d = np.mean(np.mean(tauTH3_3d,axis=2),axis=1)
+    if (flag_taus==1):
+        tau13_1d = np.mean(np.mean(tau13_3d,axis=2),axis=1)
+        tau23_1d = np.mean(np.mean(tau23_3d,axis=2),axis=1)
+        tau33_1d = np.mean(np.mean(tau33_3d,axis=2),axis=1)
+        tauTH3_1d = np.mean(np.mean(tauTH3_3d,axis=2),axis=1)
     sgstke_1d = np.mean(np.mean(sgstke_3d,axis=2),axis=1)
+    if (tke1_flag==1):
+        sgstke1_1d = np.mean(np.mean(sgstke1_3d,axis=2),axis=1)
     
     Upwp_1d = np.sqrt(np.power(upwp_1d,2.0)+np.power(vpwp_1d,2.0))
     wpwp_1d = np.mean(np.mean(wpwp,axis=2),axis=1)
     tke_1d = np.mean(np.mean(tke,axis=2),axis=1)
     thpwp_1d = np.mean(np.mean(thpwp,axis=2),axis=1)
-    tau1323_1d = np.sqrt(np.power(tau13_1d,2.0)+np.power(tau23_1d,2.0))
+    if (flag_taus==1):
+        tau1323_1d = np.sqrt(np.power(tau13_1d,2.0)+np.power(tau23_1d,2.0))
+
+    array_out = np.zeros([Nz,14])
     
-    array_out = np.zeros([Nz,15])
     array_out[:,0] = z_1d
     array_out[:,1] = upup_1d
     array_out[:,2] = upwp_1d
@@ -423,10 +444,13 @@ def compute_turb_profiles(FE_xr, array_out):
     array_out[:,6] = wpwp_1d
     array_out[:,7] = tke_1d
     array_out[:,8] = thpwp_1d
-    array_out[0:Nz-1,9] = 0.5*(tau1323_1d[0:Nz-1]+tau1323_1d[1:Nz])
-    array_out[:,10] = sgstke_1d
-    array_out[0:Nz-1,11] = 0.5*(tau33_1d[0:Nz-1]+tau33_1d[1:Nz])
-    array_out[0:Nz-1,12] = 0.5*(tauTH3_1d[0:Nz-1]+tauTH3_1d[1:Nz])
+    array_out[:,9] = sgstke_1d
+    if (tke1_flag==1):
+        array_out[:,10] = sgstke1_1d
+    if (flag_taus==1):
+        array_out[0:Nz-1,11] = 0.5*(tau1323_1d[0:Nz-1]+tau1323_1d[1:Nz])
+        array_out[0:Nz-1,12] = 0.5*(tau33_1d[0:Nz-1]+tau33_1d[1:Nz])
+        array_out[0:Nz-1,13] = 0.5*(tauTH3_1d[0:Nz-1]+tauTH3_1d[1:Nz])
                                
     return array_out
         
@@ -457,9 +481,9 @@ def plot_turb_profiles(fig, axs, case, FE_turb_tmp, z_max, save_plot_opt, path_f
     ### panel 0 ###
     ###############
     ax = axs[0]
-    varplot_1 = FE_turb_tmp[:,7]+FE_turb_tmp[:,10]
+    varplot_1 = FE_turb_tmp[:,7]+FE_turb_tmp[:,9]
     varplot_2 = FE_turb_tmp[:,7]
-    varplot_3 = FE_turb_tmp[:,10]
+    varplot_3 = FE_turb_tmp[:,9]
     im2 = ax.plot(varplot_1,zPos,lineas_v[0],color=colores_v[0],linewidth=2.5,markersize=8,label='Total',zorder=2)
     im2 = ax.plot(varplot_2,zPos,lineas_v[0],color=colores_v[2],linewidth=2.5,markersize=8,label='Res.',zorder=1)
     im2 = ax.plot(varplot_3,zPos,lineas_v[0],color=colores_v[1],linewidth=2.5,markersize=8,label='SGS',zorder=0)
@@ -481,9 +505,9 @@ def plot_turb_profiles(fig, axs, case, FE_turb_tmp, z_max, save_plot_opt, path_f
     ### panel 2 ###
     ###############
     ax = axs[2]
-    varplot_1 = FE_turb_tmp[:,8]+FE_turb_tmp[:,12]
+    varplot_1 = FE_turb_tmp[:,8]+FE_turb_tmp[:,13]
     varplot_2 = FE_turb_tmp[:,8]
-    varplot_3 = FE_turb_tmp[:,12]
+    varplot_3 = FE_turb_tmp[:,13]
     im2 = ax.plot(varplot_1,zPos,lineas_v[0],color=colores_v[0],linewidth=2.5,markersize=8,zorder=2)
     im2 = ax.plot(varplot_2,zPos,lineas_v[0],color=colores_v[2],linewidth=2.5,markersize=8,zorder=1)
     im2 = ax.plot(varplot_3,zPos,lineas_v[0],color=colores_v[1],linewidth=2.5,markersize=8,zorder=0)
@@ -501,15 +525,97 @@ def plot_turb_profiles(fig, axs, case, FE_turb_tmp, z_max, save_plot_opt, path_f
     ### panel 3 ###
     ###############
     ax = axs[3]
-    varplot_1 = FE_turb_tmp[:,5]+FE_turb_tmp[:,9]
+    varplot_1 = FE_turb_tmp[:,5]+FE_turb_tmp[:,11]
     varplot_2 = FE_turb_tmp[:,5]
-    varplot_3 = FE_turb_tmp[:,9]
+    varplot_3 = FE_turb_tmp[:,11]
     im2 = ax.plot(varplot_1,zPos,lineas_v[0],color=colores_v[0],linewidth=2.5,markersize=8,zorder=2)
     im2 = ax.plot(varplot_2,zPos,lineas_v[0],color=colores_v[2],linewidth=2.5,markersize=8,zorder=1)
     im2 = ax.plot(varplot_3,zPos,lineas_v[0],color=colores_v[1],linewidth=2.5,markersize=8,zorder=0)
     ax.set_xlabel(r"$\sigma_w^2$ $[$m$^2$ s$^{-2}]$",fontsize=fntSize)
     ax.set_xlabel(r"$\langle U' w' \rangle$ $[$m$^2$ s$^{-2}]$",fontsize=fntSize)
     ax.set_ylim(y_min/1e3,y_max/1e3)
+    
+    fig_name = "TURB-PROF-"+case+".png"
+    
+    if (save_plot_opt==1):
+        print(path_figure + fig_name)
+        plt.savefig(path_figure + fig_name,dpi=300,bbox_inches = "tight")
+
+def plot_turb_profiles_canopy(fig, axs, case, FE_mean, FE_turb_tmp, z_max, z_canopy, save_plot_opt, path_figure):
+
+    colores_v = []
+    # colores_v.append('dodgerblue')
+    colores_v.append('darkblue')
+    colores_v.append('dodgerblue')
+    colores_v.append('black')
+    # colores_v.append('darkblue')
+    colores_v.append('orangered')
+    colores_v.append('brown')
+
+    lineas_v = []
+    lineas_v.append('-')
+    lineas_v.append('-')
+    lineas_v.append('-')
+    lineas_v.append('-')
+
+    markers_v = []
+    markers_v.append('o')
+
+    marker_size = 6
+    
+    fntSize=16
+    fntSize_title=22
+    fntSize_legend=11
+    fntSize_label=16
+    plt.rcParams['xtick.labelsize']=fntSize
+    plt.rcParams['ytick.labelsize']=fntSize
+    plt.rcParams['axes.linewidth']=2.0
+    
+    y_min = 0.0/z_canopy
+    y_max = z_max/z_canopy
+    zPos = FE_turb_tmp[:,0]/z_canopy
+
+    x_min = 0.0/z_canopy
+
+    z_diff = np.abs(zPos-y_max)
+    ind_zmax = np.where(z_diff==np.min(z_diff))[0][0]
+
+    ###############
+    ### panel 0 ###
+    ###############
+    ax = axs[0]
+    varplot_1 = np.sqrt(np.power(FE_mean[:,1],2.0)+np.power(FE_mean[:,2],2.0))
+    x_max = 1.05*np.max(varplot_1[0:ind_zmax+1])
+    im2 = ax.plot(varplot_1,zPos,lineas_v[0],marker=markers_v[0],markersize=marker_size,color=colores_v[0],linewidth=2.5,label='Total',zorder=2)
+    im2 = ax.plot([x_min,x_max],[1.0,1.0],'--',color='k',linewidth=1.0,zorder=0)
+    ax.set_xlabel(r"$U$ $[$m s$^{-1}]$",fontsize=fntSize)
+    ax.set_ylabel(r"$z/h_c$",fontsize=fntSize)
+    # ax.legend(loc=0,prop={'size': fntSize_legend},edgecolor='white')
+    ax.set_ylim(y_min,y_max)
+    ax.set_xlim(x_min,x_max)
+    
+    ###############
+    ### panel 1 ###
+    ###############
+    ax = axs[1]
+    varplot_1 = FE_turb_tmp[:,7]
+    varplot_2 = FE_turb_tmp[:,7] + FE_turb_tmp[:,9] + FE_turb_tmp[:,10]
+    varplot_3 = FE_turb_tmp[:,9]
+    varplot_4 = FE_turb_tmp[:,10]
+    
+    x_max = 10.0*np.max(varplot_2[0:ind_zmax+1])
+    x_min = 0.1*np.min(varplot_4[0:ind_zmax+1])
+    
+    im2 = ax.plot(varplot_1,zPos,lineas_v[0],marker=markers_v[0],markersize=marker_size,color=colores_v[1],linewidth=2.5,label='Resolved',zorder=2)
+    im2 = ax.plot(varplot_3,zPos,lineas_v[1],marker=markers_v[0],markersize=marker_size,color=colores_v[3],linewidth=2.5,label='TKE_0',zorder=2)
+    im2 = ax.plot(varplot_4,zPos,lineas_v[2],marker=markers_v[0],markersize=marker_size,color=colores_v[4],linewidth=2.5,label='TKE_1',zorder=2)
+    im2 = ax.plot(varplot_2,zPos,lineas_v[3],marker=markers_v[0],markersize=marker_size,color=colores_v[0],fillstyle='none',linewidth=2.5,label='Total',zorder=2)
+    im2 = ax.plot([x_min,x_max],[1.0,1.0],'--',color='k',linewidth=1.0,zorder=0)
+    ax.set_xlabel(r"TKE $[$m$^2$ s$^{-2}]$",fontsize=fntSize)
+    ax.legend(loc=0,prop={'size': fntSize_legend},edgecolor='white')
+    ax.set_ylim(y_min,y_max)
+    ax.set_xscale('log')
+    ax.set_xlim(x_min,x_max)
     
     fig_name = "TURB-PROF-"+case+".png"
     
