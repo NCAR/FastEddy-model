@@ -240,7 +240,7 @@ int hydro_coreGetParams(){
    turbulenceSelector = 0; //Default to off
    errorCode = queryIntegerParameter("turbulenceSelector", &turbulenceSelector, 0, 1, PARAM_MANDATORY);
    TKESelector = 0; //Default to none
-   errorCode = queryIntegerParameter("TKESelector", &TKESelector, 0, 1, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("TKESelector", &TKESelector, 0, 2, PARAM_MANDATORY);
    TKEAdvSelector = 0; //Default to 0 for monotonic 1st-order upstream
    errorCode = queryIntegerParameter("TKEAdvSelector", &TKEAdvSelector, 0, 6, PARAM_MANDATORY);
    TKEAdvSelector_b_hyb = 0.0; //Default to 0.0
@@ -260,7 +260,7 @@ int hydro_coreGetParams(){
    surflayerSelector = 0; // Default to off
    errorCode = queryIntegerParameter("surflayerSelector", &surflayerSelector, 0, 2, PARAM_MANDATORY);
    surflayer_z0 = 0.1; // Default to 0.1 m 
-   errorCode = queryFloatParameter("surflayer_z0", &surflayer_z0, 1e-6, 1e+0, PARAM_MANDATORY);
+   errorCode = queryFloatParameter("surflayer_z0", &surflayer_z0, 1e-12, 1e+0, PARAM_MANDATORY);
    surflayer_z0t = 0.1; // Default to 0.1 m 
    errorCode = queryFloatParameter("surflayer_z0t", &surflayer_z0t, 1e-6, 1e+1, PARAM_MANDATORY);
    surflayer_tr = 0.0; // Default to 0.0 K h-1 
