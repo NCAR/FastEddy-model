@@ -68,7 +68,7 @@ diffusionSelector = 0 # diffusivity selector: 0= none, 1= const.
 nu_0 = 0.0 # constant diffusivity used when diffusionSelector = 1
 ##------------: EXPLICIT FILTERS ---
 filterSelector = 0 # explicit filter selector: 0=off, 1=on
-filter_6th_coeff = 0.03 # 6th-order filter factor: 0.0=off, 1.0=full
+filter_6thdiff_vert_coeff = 0.03 # vertical 6th-order filter factor: 0.0=off, 1.0=full
 ##----------: RAYLEIGH DAMPING LAYER ---
 dampingLayerSelector = 1 # Rayleigh damping layer selector: 0= off, 1= on.
 dampingLayerDepth = 100.0 # Rayleigh damping layer depth in meters
@@ -87,6 +87,7 @@ surflayer_ideal_amp = 4.0 # maximum amplitude of the idealized sinusoidal surfac
 surflayer_ideal_qts = 1.75 # start time in seconds for the idealized sinusoidal surface forcing (qv)
 surflayer_ideal_qte = 10.0 # end time in seconds for the idealized sinusoidal surface forcing (qv)
 surflayer_ideal_qamp = 2.0 # maximum amplitude of the idealized sinusoidal surface forcing (qv)
+surflayer_offshore = 0 # offshore selector: 0=off, 1=on
 #------------: BASE-STATE ---
 stabilityScheme = 2 # Scheme used to set hydrostatic, stability-dependent Base-State EOS fields
 temp_grnd = 265.0 # Air Temperature (K) at the ground used to set hydrostatic Base-State EOS fields

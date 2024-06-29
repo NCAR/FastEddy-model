@@ -17,3 +17,4 @@ Required tutorial resources including python utilities and Jupyter Notebooks are
    cases/CBL.rst
    cases/SBL.rst
    cases/MBL.rst
+   cases/CANOPY.rst

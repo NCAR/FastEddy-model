@@ -39,7 +39,9 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Run FastEddy using the input parameters file /examples/Example03_SBL.in. To execute FastEddy, follow the instructions here: https://github.com/NCAR/FastEddy-model/blob/main/README.md.
+Run FastEddy using the input parameters file /examples/Example03_SBL.in. To execute FastEddy, follow the instructions `here`_.
+
+.. _here: https://github.com/NCAR/FastEddy-model/blob/main_v2.0/README.md
 
 Visualize the output
 --------------------
