@@ -26,10 +26,11 @@ Casper and Derecho platforms, along with other changes as detailed below:
 
   .. dropdown:: Bugfixes
 
-     * None
+     * Fix to the restart model capability (`#6 <https://github.com/NCAR/FastEddy-model/pull/6>`_)
+     * Clean compile with warnings addressed (`#6 <https://github.com/NCAR/FastEddy-model/pull/6>`_)  
 
   .. dropdown:: Enhancements
 
-     * None
+     * Accommodate building on Derecho (`#6 <https://github.com/NCAR/FastEddy-model/pull/6>`_)
 
 
