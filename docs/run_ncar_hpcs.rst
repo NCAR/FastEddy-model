@@ -73,8 +73,8 @@ example, *FastEddy.o4960197* in the current working directory.
 To submit the script for batch processing, run `qsub <name of script>`, replacing
 *<name of script>* with the name of the script.
 
-Example PBS job script for Casper
-=================================
+Example PBS job script for Derecho
+==================================
 
 Below is bash-based PBS job submission script for running the model on NSF NCAR's Derecho machine.
 The FastEddy code will write its output to an `output` directory. Please create an output
