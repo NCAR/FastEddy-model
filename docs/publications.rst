@@ -1,8 +1,8 @@
-.. _refs:
+.. _pubs:
 
-**********
-References
-**********
+************
+Publications
+************
 
 .. _Geophysical_Research-2022:
 
