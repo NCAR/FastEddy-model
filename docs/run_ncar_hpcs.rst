@@ -2,9 +2,6 @@
 Running FastEddy on NSF NCAR HPCs
 *********************************
 
-Getting Started
-===============
-
 These instructions will help users get started using FastEddy on
 `NSF NCAR's High Performance Computing (HPC) machines <https://ncar-hpc-docs.readthedocs.io/en/latest/>`_,
 `Derecho <https://arc.ucar.edu/knowledge_base/74317833>`_ and
