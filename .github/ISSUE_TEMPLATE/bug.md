@@ -31,6 +31,12 @@ Describe the steps to reproduce the behavior:
 ### Relevant Deadlines ###
 *List relevant project deadlines here or state NONE.*
 
+### New Parameters ###
+*Define any new parameters here or state NONE.*
+
+### Technical References ###
+*List relevant technical references here or state NONE.*
+
 ## Define the Metadata ##
 
 ### Assignee ###
