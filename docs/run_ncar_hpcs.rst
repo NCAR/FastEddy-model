@@ -67,8 +67,8 @@ Sample Script
 
   mpirun -np 4 ${SRCDIR}/FastEddy ${TUTORIALDIR}/examples/${EXAMPLE}
 
-The code will produce an log file with the name *FastEddy.o<job_id>*.  For
-example, *FastEddy.o4960197* in the current working directory.
+The code will produce an log file with the name *FastEddy.o<job_id>*
+(for example, *FastEddy.o4960197*) in the current working directory.
 
 To submit the script for batch processing, run `qsub <name of script>`, replacing
 *<name of script>* with the name of the script.
@@ -112,8 +112,8 @@ Sample Script
 
   mpiexec -n 4 --ppn 4 set_gpu_rank ${SRCDIR}/FastEddy ${TUTORIALDIR}/examples/${EXAMPLE}
 
-The code will produce an log file with the name *FastEddy.o<job_id>*.  For
-example, *FastEddy.o4960197* in the current working directory.
+The code will produce an log file with the name *FastEddy.o<job_id>*
+(for example, *FastEddy.o4960197*) in the current working directory.
 
 To submit the script for batch processing, run `qsub <name of script>`, replacing
 *<name of script>* with the name of the script.
