@@ -40,9 +40,9 @@ Sample Script
 
 .. note::
 
-   Replace "<ProjectAccount>" below with a valid Project Account.
-   Replace "<path to code location>" below with the location that contains the `FastEddy-model` directory from unpacking the release.
-   Replace "<example .in filename>" below with the name of the example .in filename.  For example, Example01_NBL.in, Example02_CBL.in, etc.
+   * Replace "<ProjectAccount>" below with a valid Project Account.
+   * Replace "<path to code location>" below with the location that contains the `FastEddy-model` directory from unpacking the release.
+   * Replace "<example .in filename>" below with the name of the example .in filename.  For example, Example01_NBL.in, Example02_CBL.in, etc.
    
 .. code-block:: bash
 
@@ -85,9 +85,9 @@ Sample Script
 
 .. note::
 
-   Replace "<ProjectAccount>" below with a valid Project Account.
-   Replace "<path to code location>" below with the location that contains the `FastEddy-model` directory from unpacking the release.
-   Replace "<example .in filename>" below with the name of the example .in filename.  For example, Example01_NBL.in, Example02_CBL.in, etc.
+   * Replace "<ProjectAccount>" below with a valid Project Account.
+   * Replace "<path to code location>" below with the location that contains the `FastEddy-model` directory from unpacking the release.
+   * Replace "<example .in filename>" below with the name of the example .in filename.  For example, Example01_NBL.in, Example02_CBL.in, etc.
 
 .. code-block:: bash
 
