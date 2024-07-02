@@ -15,6 +15,13 @@ and multiscale, turbulence-resolving, atmospheric boundary layer
 modeling into local scale weather prediction or actionable science and
 engineering applications.
 
+The FastEddy code is located in an open, public
+`GitHub FastEddy-model repository <https://github.com/NCAR/FastEddy-model>`_.
+All versions of the FastEddy software can be cited by using the
+Digital Object Identifier (DOI)
+`10.5281/zenodo.11042754 <https://zenodo.org/doi/10.5281/zenodo.11042754>`_.
+This DOI represents all versions and will always resolve to the latest one.
+
 .. toctree::
    :hidden:
 
