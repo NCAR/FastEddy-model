@@ -28,3 +28,4 @@ This DOI represents all versions and will always resolve to the latest one.
    release_notes.rst
    downloads.rst
    Tutorial/index
+   publications.rst
