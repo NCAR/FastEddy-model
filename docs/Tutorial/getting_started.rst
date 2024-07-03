@@ -16,6 +16,6 @@ This is a tutorial designed so that a user can learn how to execute FastEddy, us
 Software and computing requirements
 ===================================
 
-Computing resources with at least four general purpose graphics processing units are recommended to carry out the test cases. System must be enabled with python and Jupyter notebook packages. Add other requirements (compilers, libraries, etc).
+Computing resources with at least four general purpose graphics processing units are recommended to carry out the test cases. The system must be enabled with Python and Jupyter notebook packages. 
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
