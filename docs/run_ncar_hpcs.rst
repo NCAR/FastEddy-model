@@ -1,3 +1,5 @@
+.. _run_fasteddy:
+
 *********************************
 Running FastEddy on NSF NCAR HPCs
 *********************************
