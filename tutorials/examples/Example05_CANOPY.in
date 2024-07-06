@@ -73,6 +73,7 @@ diffusionSelector = 0 # diffusivity selector: 0= none, 1= const.
 nu_0 = 0.0 # constant diffusivity used when diffusionSelector = 1
 ##------------: EXPLICIT FILTERS ---
 filterSelector = 1 # explicit filter selector: 0=off, 1=on
+filter_6thdiff_vert = 1 # vertical 6th-order filter on w selector: 0=off, 1=on
 filter_6thdiff_vert_coeff = 0.03 # vertical 6th-order filter factor: 0.0=off, 1.0=full
 ##----------: RAYLEIGH DAMPING LAYER ---
 dampingLayerSelector = 1 # Rayleigh damping layer selector: 0= off, 1= on.

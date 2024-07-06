@@ -30,7 +30,7 @@ Input parameters
     \end{cases} 
 
 * Surface heat flux:  :math:`0.0` Km/s
-* Surface roughness length: :math:`z_0=1e-12` m
+* Surface roughness length: :math:`z_0=1.0 \times 10^{-12}` m
 * Rayleigh damping layer: uppermost :math:`600` m of the domain
 * Initial perturbations: :math:`\pm 0.25` K 
 * Depth of perturbations: :math:`375` m
