@@ -4,9 +4,9 @@
 Running under NSF NCAR HPC
 **************************
 
-These instructions will help users get started running FastEddy on 
-`NSF NCAR's High Performance Computing (HPC) machines <https://ncar-hpc-docs.readthedocs.io/en/latest/>`_,
-`Derecho <https://arc.ucar.edu/knowledge_base/74317833>`_ and
+These instructions will help users get started running FastEddy in the 
+`NSF NCAR High Performance Computing (HPC) environment <https://ncar-hpc-docs.readthedocs.io/en/latest/>`_,
+using `Derecho <https://arc.ucar.edu/knowledge_base/74317833>`_ and
 `Casper <https://arc.ucar.edu/knowledge_base/70549550>`_.
 
 Compilation
