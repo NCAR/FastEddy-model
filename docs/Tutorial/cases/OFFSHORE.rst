@@ -40,14 +40,22 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Note that this example requires customization of the initial condition file. A Jupyer notebook is provided in /tutorial/notebooks/Offshore_Prep.ipynb that asigns the SeaMask 2d array to 1.0 (required to activate the offshore parameterization), imposes a linear profile initial condition for water vapor mixing ratio and an initial time-invariant skin water vapor mixing ratio content. In addition, the initial condition for dry hydrostatic desnity is readjusted to account for the presence of water vapor. Run FastEddy using the input parameters file /tutorials/examples/Example06_OFFSHORE.in first for 1 timestep to create the FE_OFFSHORE.0 file, and then run the Jupyter notebook to modify the initial condition as described. Then, run FastEddy for the :math:`4` h of the simulation. To execute FastEddy, follow the instructions `here`_.
+Note that this example requires customization of the initial condition file. A Jupyer notebook is provided in **/tutorial/notebooks/Offshore_Prep.ipynb** that assigns the SeaMask 2d array to 1.0 (required to activate the offshore parameterization), imposes a linear profile initial condition for water vapor mixing ratio and an initial time-invariant skin water vapor mixing ratio content. In addition, the initial condition for dry hydrostatic desnity is readjusted to account for the presence of water vapor.
 
-.. _here: https://github.com/NCAR/FastEddy-model/blob/main_v2.0/README.md
+Run FastEddy using the input parameters file **/tutorials/examples/Example06_OFFSHORE.in** first for 1 timestep to create the *FE_OFFSHORE.0* file.  To run for 1 timestep, the following values need to be changed in the **/tutorials/examples/Example06_OFFSHORE.in** file:
+
+  * Change `frqOutput` from 7500 to 1
+  * Change `Nt` from 360000 to 1
+  * Change `NtBatch` from 7500 to 1
+
+Then, run the Jupyter notebook to modify the initial condition as described. Then, run FastEddy for the :math:`4` h of the simulation by changing `frqOutput`, `Nt`, and `NtBatch` back to their original values.
+
+See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
 
 Visualize the output
 --------------------
 
-Open the Jupyter notebook entitled "MAKE_FE_TUTORIAL_PLOTS.ipynb" and execute it using setting: case = 'offshore'.
+Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb* and execute it using setting: `case = 'offshore'`.
 
 XY-plane views of instantaneous horizontal wind, vertical velocity, potential temperature and water vapor mixing ratio at :math:`t=4` h (FE_OFFSHORE.360000):
 

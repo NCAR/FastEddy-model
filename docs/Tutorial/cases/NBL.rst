@@ -41,14 +41,14 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Run FastEddy using the input parameters file /examples/Example01_NBL.in. To execute FastEddy, follow the instructions `here`_.
+Run FastEddy using the input parameters file **/tutorials/examples/Example01_NBL.in**. 
 
-.. _here: https://github.com/NCAR/FastEddy-model/blob/main_v2.0/README.md
+See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
 
 Visualize the output
 --------------------
 
-Open the Jupyter notebook entitled "MAKE_FE_TUTORIAL_PLOTS.ipynb" and execute it using setting: case = 'neutral'.
+Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb* and execute it using setting: `case = 'neutral'`.
 
 XY-plane views of instantaneous velocity components at :math:`t=7` h (FE_NBL.630000):
 

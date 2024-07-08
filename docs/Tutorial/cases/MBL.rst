@@ -31,14 +31,31 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Note that this example moist dynamics validation case example requires an additional dataset available as a gzip compressed tape archive file at `Zenodo record <https://zenodo.org/records/10982246>`_. The contents of the archive incude an initial conditions file BOMEX_IC/FE_BOMEX.0 which is needed to run FastEddy for this case. The archive dataset also contains results from the 11 models that participated in the original Siebesma et al. 2003 model intercomparison as NetCDF files under BOMEX_Siebesma2003_models/\*.nc. Run FastEddy using the input parameters file /tutorials/examples/Example04_BOMEX.in. Be sure to copy the extracted initial conditions file from the archived dataset into the initial subdirectory of your case run directory. To execute FastEddy, follow the instructions `here`_.
+Note that this example moist dynamics validation case example requires an additional dataset available as a gzip compressed tape archive file at `Zenodo record <https://zenodo.org/records/10982246>`_. The contents of the archive incude an initial conditions file **BOMEX_IC/FE_BOMEX.0** which is needed to run FastEddy for this case. The archive dataset also contains results from the 11 models that participated in the original Siebesma et al. 2003 model intercomparison as NetCDF files under **BOMEX_Siebesma2003_models/\*.nc**. Run FastEddy using the input parameters file **/tutorials/examples/Example04_BOMEX.in**. Be sure to copy the extracted initial conditions file from the archived dataset into the subdirectory where you will run this case. 
 
-.. _here: https://github.com/NCAR/FastEddy-model/blob/main_v2.0/README.md
+See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
+
+
+Note that running this case requires using only 1 GPU instead of 4 GPUs. This requires modification of two lines in the scripts provided in :ref:`run_fasteddy`.
+The following:
+
+.. code-block::
+   
+  #PBS -l select=1:ncpus=4:mpiprocs=4:ngpus=4:mem=100GB
+
+Should be changed to replace the references to *4* with *1* as follows:
+
+.. code-block::
+
+  #PBS -l select=1:ncpus=1:mpiprocs=1:ngpus=1:mem=100GB
+
+And, any values of *4* in the last line of the script (the *mpirun* line for Casper and the *mpiexec* line for Derecho) should be changed to *1*.
+
 
 Visualize the output
 --------------------
 
-Open the Jupyter notebook entitled "FE_Postrocessing_Example04_BOMEX.ipynb" and execute it.
+Open the Jupyter notebook entitled *FE_Postrocessing_Example04_BOMEX.ipynb* and execute it.
 
 Time evolution of domain averaged total cloud cover (:math:`\alpha_c`) and liquid water path (LWP):
 

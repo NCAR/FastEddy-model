@@ -43,7 +43,6 @@ Execute FastEddy
 
 Note that this example requires specification of a leaf area density (LAD) profile. A Jupyer notebook is provided in **/tutorial/notebooks/Canopy_Prep.ipynb** that reads in an LAD profile in .csv format (*LAD_profile.csv* at `Zenodo record <https://zenodo.org/records/12610511>`_) and uses a FastEddy initial condition file to create a new initial condition file that includes de LAD information (CanopyLAD array). The notebook expects a canopy height value to be specified (:math:`h_c`), and that is currently set to 30.0 m.
 
-
 Run FastEddy using the input parameters file **/tutorials/examples/Example05_CANOPY.in** first for 1 timestep to create the *FE_CANOPY.0* file.  To run for 1 timestep, the following values need to be changed in the **/tutorials/examples/Example05_CANOPY.in** file:
 
   * Change `frqOutput` from 30000 to 1

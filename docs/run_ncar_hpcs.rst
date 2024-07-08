@@ -14,10 +14,10 @@ Compilation
 
 The Makefile-based build system included here assumes deployment on the NSF
 NCAR HPCs. FastEddy requires a C-compiler, MPI, and CUDA. Currently, the
-default modules loaded at login suffice.
+default modules loaded at login suffice on Casper, however the `cuda` module
+will need to be loaded on Derecho by running `module load cuda`.
 
-1. Download the source code from the `Releases <https://github.com/NCAR/FastEddy-model/releases>`_ page.
-2. Unpack the release in the desired location.
+1. Download the source code from the `Releases <https://github.com/NCAR/FastEddy-model/releases>`_ page and unpack the release in the desired location or clone the `repository <https://github.com/NCAR/FastEddy-model>`_ in the desired location.
 3. Navigate to the **SRC/FEMAIN** directory.
 4. To build the FastEddy executable run `make` (optionally run `make clean` first if appropriate).
 
