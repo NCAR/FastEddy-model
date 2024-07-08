@@ -44,18 +44,18 @@ Note that this example requires customization of the initial condition file. A J
 
 Run FastEddy using the input parameters file **/tutorials/examples/Example06_OFFSHORE.in** first for 1 timestep to create the *FE_OFFSHORE.0* file.  To run for 1 timestep, the following values need to be changed in the **/tutorials/examples/Example06_OFFSHORE.in** file:
 
-  * Change `frqOutput` from 7500 to 1
-  * Change `Nt` from 360000 to 1
-  * Change `NtBatch` from 7500 to 1
+  * Change :code:`frqOutput` from 7500 to 1
+  * Change :code:`Nt` from 360000 to 1
+  * Change :code:`NtBatch` from 7500 to 1
 
-Then, run the Jupyter notebook to modify the initial condition as described. Then, run FastEddy for the :math:`4` h of the simulation by changing `frqOutput`, `Nt`, and `NtBatch` back to their original values.
+Then, run the Jupyter notebook to modify the initial condition as described. Then, run FastEddy for the :math:`4` h of the simulation by changing :code:`frqOutput`, :code:`Nt`, and :code:`NtBatch` back to their original values.
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
 
 Visualize the output
 --------------------
 
-Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb* and execute it using setting: `case = 'offshore'`.
+Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb* and execute it using setting: :code:`case = 'offshore'`.
 
 XY-plane views of instantaneous horizontal wind, vertical velocity, potential temperature and water vapor mixing ratio at :math:`t=4` h (FE_OFFSHORE.360000):
 

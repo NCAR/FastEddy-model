@@ -46,7 +46,7 @@ See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF
 Visualize the output
 --------------------
 
-Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb* and execute it using setting: `case = 'stable'`.
+Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb* and execute it using setting: :code:`case = 'stable'`.
 
 XY-plane views of instantaneous velocity components at :math:`t=12` h (FE_SBL.8640000):
 
