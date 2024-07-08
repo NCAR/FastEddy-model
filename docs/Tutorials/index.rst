@@ -1,6 +1,6 @@
-########
-Tutorial
-########
+#########
+Tutorials
+#########
 
 .. toctree::
    :titlesonly:

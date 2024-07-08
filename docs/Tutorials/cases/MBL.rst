@@ -49,7 +49,7 @@ Should be changed to replace the references to *4* with *1* as follows:
 
   #PBS -l select=1:ncpus=1:mpiprocs=1:ngpus=1:mem=100GB
 
-And, any values of *4* in the last line of the script (the *mpirun* line for Casper and the *mpiexec* line for Derecho) should be changed to *1*.
+And, any values of *4* in the last line of the script (the :code:`mpirun` line for Casper and the :code:`mpiexec` line for Derecho) should be changed to *1*.
 
 
 Visualize the output

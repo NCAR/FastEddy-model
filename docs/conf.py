@@ -62,7 +62,7 @@ html_static_path = ['_static']
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = os.path.join('_static','fasteddy_logo.png')
+html_logo = os.path.join('_static','fasteddy_logo_large_vertical_2024_06.png')
 
 # -- Intersphinx control -----------------------------------------------------
 intersphinx_mapping = {'numpy':("https://docs.scipy.org/doc/numpy/", None)}

@@ -48,7 +48,7 @@ Run FastEddy using the input parameters file **/tutorials/examples/Example06_OFF
   * Change :code:`Nt` from 360000 to 1
   * Change :code:`NtBatch` from 7500 to 1
 
-Then, run the Jupyter notebook to modify the initial condition as described. Then, run FastEddy for the :math:`4` h of the simulation by changing :code:`frqOutput`, :code:`Nt`, and :code:`NtBatch` back to their original values.
+Then, run the Jupyter notebook to modify the initial condition as described in the first paragraph. Then, run FastEddy for the :math:`4` h of the simulation by changing :code:`frqOutput`, :code:`Nt`, and :code:`NtBatch` back to their original values.
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
 

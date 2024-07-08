@@ -28,5 +28,5 @@ This DOI represents all versions and will always resolve to the latest one.
    release_notes.rst
    run_ncar_hpcs.rst
    downloads.rst
-   Tutorial/index
+   Tutorials/index
    publications.rst
