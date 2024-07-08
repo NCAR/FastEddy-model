@@ -17,7 +17,13 @@ engineering applications.
 
 The FastEddy code is located in an open, public
 `GitHub FastEddy-model repository <https://github.com/NCAR/FastEddy-model>`_.
-FastEddy should be cited as shown in this link: :ref:`Sauer, J., and D. Muñoz-Esparza (2020) <framework_advances_modeling_earth_systems_2020>`
+FastEddy should be cited as shown here:
+
+  | Sauer, J., and D. Muñoz-Esparza. "The FastEddy resident-GPU accelerated large-eddy
+  |   simulation framework: model formulation, dynamical-core validation and performance
+  |   benchmarks". *Journal of Advances in Modeling Earth Systems*, vol. 12 (2020)
+  |   https://doi.org/10.1029/2020MS002100
+
 
 .. toctree::
    :hidden:
