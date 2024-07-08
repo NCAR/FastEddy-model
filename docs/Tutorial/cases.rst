@@ -18,3 +18,4 @@ Required tutorial resources including python utilities and Jupyter Notebooks are
    cases/SBL.rst
    cases/MBL.rst
    cases/CANOPY.rst
+   cases/OFFSHORE.rst
