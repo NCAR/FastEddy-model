@@ -45,18 +45,18 @@ Note that this example requires specification of a leaf area density (LAD) profi
 
 Run FastEddy using the input parameters file **/tutorials/examples/Example05_CANOPY.in** first for 1 timestep to create the *FE_CANOPY.0* file.  To run for 1 timestep, the following values need to be changed in the **/tutorials/examples/Example05_CANOPY.in** file:
 
-  * Change `frqOutput` from 30000 to 1
-  * Change `Nt` from 1440000 to 1
-  * Change `NtBatch` from 30000 to 1
+  * Change :code:`frqOutput` from 30000 to 1
+  * Change :code:`Nt` from 1440000 to 1
+  * Change :code:`NtBatch` from 30000 to 1
 
-After running for 1 timestep, then run the Jupyter notebook to modify the CanopyLAD array to include the LAD profile instead of the initialized all zeros. Do this by modifying `inPath` and `inFile` to point to the initial condition *FE_CANOPY.0* file. Then, run FastEddy for the :math:`4` h of the simulation by changing `frqOutput`, `Nt`, and `NtBatch` back to their original values.
+After running for 1 timestep, then run the Jupyter notebook to modify the CanopyLAD array to include the LAD profile instead of the initialized all zeros. Do this by modifying :code:`inPath` and :code:`inFile` to point to the initial condition *FE_CANOPY.0* file. Then, run FastEddy for the :math:`4` h of the simulation by changing :code:`frqOutput`, :code:`Nt`, and :code:`NtBatch` back to their original values.
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
 
 Visualize the output
 --------------------
 
-Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb* and execute it using setting: `case = 'canopy'`.
+Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb* and execute it using setting: :code:`case = 'canopy'`.
 
 XY-plane views of instantaneous velocity components at :math:`t=4` h (FE_CANOPY.1440000):
 
