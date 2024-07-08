@@ -17,7 +17,7 @@ engineering applications.
 
 The FastEddy code is located in an open, public
 `GitHub FastEddy-model repository <https://github.com/NCAR/FastEddy-model>`_.
-FastEddy software should be cited as it is listed here: :ref:`framework_Advances_Modeling_Earth_Systems-2020`
+FastEddy should be cited as it is listed here: :ref:`framework_Advances_Modeling_Earth_Systems-2020`
 
 .. toctree::
    :hidden:
