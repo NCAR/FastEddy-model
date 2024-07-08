@@ -4,7 +4,7 @@
 Publications
 ************
 
-.. _Geophysical_Research-2022:
+.. _geophysical_research-2022:
 
 | Muñoz-Esparza, D., C. Becker, J.A. Sauer, D.J. Gagne II, J. Schreck, B. Kosović.
 |   "On the application of an observations-based machine learning parameterization
@@ -12,7 +12,7 @@ Publications
 |   *Journal of Geophysical Research: Atmospheres*, vol. 127 (2022)
 |   https://doi.org/10.1029/2021JD036214
 
-.. _Advances_Modeling_Earth_Systems-2022:
+.. _advances_modeling_earth_systems-2022:
 
 | Muñoz-Esparza, D., J.A. Sauer, A.A. Jensen, L. Xue, W.W. Grabowski. "The FastEddy®
 |   resident-GPU accelerated large-eddy simulation framework: Moist Dynamics Extension,
@@ -20,21 +20,21 @@ Publications
 |   *Journal of Advances in Modeling Earth Systems*, vol. 14 (2022)
 |   https://doi.org/10.1029/2021MS002904
 
-.. _AGU_Advances-2021:
+.. _agu_advances-2021:
 
 | Muñoz-Esparza, D., H.H. Shin, J.A. M. Sauer, M. Steiner, P. Hawbecker, J. Boehnert,
 |   J.O. Pinto, B. Kosovic, R.D. Sharman. "Efficient GPU modeling of street-scale
 |   weather effects in support of aerial operations in the urban environment".
 |   *AGU Advances*, vol. 2 (2021) https://doi.org/10.1029/2021AV000432
 
-.. _Atmospheric_Sciences-2021:
+.. _atmospheric_sciences-2021:
 
 | Shin, H.H., D. Muñoz-Esparza, J.A. Sauer, and M. Steiner. "Large-eddy simulations
 |   of stability-varying atmospheric boundary layer flow over isolated buildings".
 |   *Journal of the Atmospheric Sciences*, vol. 78 (2021) 1487–1501
 |   https://doi.org/10.1175/JAS-D-20-0160.1
 
-.. _Advances_Modeling_Earth_Systems-2020:
+.. _advances_modeling_earth_systems-2020:
 
 | Muñoz-Esparza, D., J.A. Sauer, H.H. Shin, R. Sharman, B. Kosović, S. Meech,
 |   C. García-Sánchez, M. Steiner, J. Knievel, J. Pinto, S. Swerdlin. "Inclusion of
@@ -42,7 +42,7 @@ Publications
 |   body force method". *Journal of Advances in Modeling Earth Systems*, vol. 12 (2020)
 |   https://doi.org/10.1029/2020MS002141
 
-.. _framework_Advances_Modeling_Earth_Systems-2020:
+.. _framework_advances_modeling_earth_systems-2020:
 
 | Sauer, J., and D. Muñoz-Esparza. "The FastEddy resident-GPU accelerated large-eddy
 |   simulation framework: model formulation, dynamical-core validation and performance
