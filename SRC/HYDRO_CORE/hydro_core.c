@@ -190,6 +190,27 @@ int filter_divdamp;               /* divergence damping selector: 0=off, 1=on */
 int dampingLayerSelector;       // Rayleigh Damping Layer selector
 float dampingLayerDepth;       // Rayleigh Damping Layer Depth
 
+/*---AUX_SCALARS*/
+/*Auxiliary Scalar Fields*/
+int NhydroAuxScalars;    /*Number of prognostic auxiliary scalar variable fields */
+int AuxScAdvSelector;    /*Advection Scheme to use for auxiliary scalar variable fields */
+float AuxScAdvSelector_b_hyb; /* hybrid advection scheme parameter */
+float *hydroAuxScalars;  /*Base Adress of memory containing all prognostic auxiliary scalar variable fields */
+float *hydroAuxScalarsFrhs; /*Base Adress of memory containing all prognostic auxiliary scalar variable fields */
+int AuxScSGSturb;           /* selector to apply sub-grid scale diffusion to auxiliary scalar fields */
+
+/*Auxiliary Scalar Sources*/
+char *srcAuxScFile;        /* The path+filename to an Auxilliary Scalar Sources specification file*/
+int *srcAuxScTemporalType;     /*Temporal characterization of source (0 = instantaneous, 1 = continuous) */
+float *srcAuxScStartSeconds;     /*Source start time in seconds */
+float *srcAuxScDurationSeconds;  /*Source duration in seconds */
+int *srcAuxScGeometryType;         /*0 = point (single cell volume), 1 = line (line of surface cells) */
+float *srcAuxScLocation;      /*Cartesian coordinate tuple 'center' of the source*/
+float *srcAuxScGeometryBounds;      /*Cartesian coordinate tuple 'center' of the source*/
+int *srcAuxScMassSpecType; /*Mass specification type 0 = strict mass in kg, 1 = mass source rate in kg/s,  */
+float *srcAuxScMassSpecValue; /*Mass specification value in kg or kg/s given by srcAuxScMassSpecType 0 or 1 */
+int srcAuxScStartIteration = -1; /*Source start time in iterations from simulation start under prescribed dt */
+
 /*---BASE_STATE*/
 int stabilityScheme;  /*Base-State stability setup scheme, (0 = none, 1 = profile, 2 = linear in theta)*/
 float temp_grnd;
@@ -434,6 +455,54 @@ int hydro_coreGetParams(){
    errorCode = queryIntegerParameter("dampingLayerSelector", &dampingLayerSelector, 0, 1, PARAM_MANDATORY);
    dampingLayerDepth = 100.0; //Default to 100.0 (meters)  
    errorCode = queryFloatParameter("dampingLayerDepth", &dampingLayerDepth, 0.0, FLT_MAX, PARAM_MANDATORY);
+   /*Auxiliary scalar parameters*/
+   NhydroAuxScalars = 0; // Default to zero auxiliary scalars
+   errorCode = queryIntegerParameter("NhydroAuxScalars", &NhydroAuxScalars, 0, MAX_AUXSC_SRC, PARAM_OPTIONAL);
+   if(NhydroAuxScalars > 0){
+     AuxScAdvSelector = 0; //Default to 0 for monotonic 1st-order upstream
+     errorCode = queryIntegerParameter("AuxScAdvSelector", &AuxScAdvSelector, 0, 6, PARAM_MANDATORY);
+     AuxScAdvSelector_b_hyb = 0.0; //Default to 0.0
+     errorCode = queryFloatParameter("AuxScAdvSelector_b_hyb", &AuxScAdvSelector_b_hyb, 0.0, 1.0, PARAM_MANDATORY);
+     errorCode = queryFileParameter("srcAuxScFile", &srcAuxScFile, PARAM_OPTIONAL);
+     AuxScSGSturb = 0; // Default to off
+     errorCode = queryIntegerParameter("AuxScSGSturb", &AuxScSGSturb, 0, 1, PARAM_MANDATORY);
+     /*Allocate space for source specification arrays*/
+     srcAuxScTemporalType = malloc(NhydroAuxScalars*sizeof(int));
+     srcAuxScStartSeconds = malloc(NhydroAuxScalars*sizeof(float));
+     srcAuxScDurationSeconds = malloc(NhydroAuxScalars*sizeof(float));
+     srcAuxScGeometryType = malloc(NhydroAuxScalars*sizeof(int));
+     srcAuxScMassSpecType = malloc(NhydroAuxScalars*sizeof(int));
+     srcAuxScMassSpecValue = malloc(NhydroAuxScalars*sizeof(float));
+     srcAuxScLocation = malloc(NhydroAuxScalars*3*sizeof(float));
+     if((srcAuxScFile == NULL) && (NhydroAuxScalars == 1)){  //Can read a single AuxScalar's source characteristics as parameters (original implementation)...
+       srcAuxScTemporalType[0] = 0; /*Default to instantaneous */
+       errorCode = queryIntegerParameter("srcAuxScTemporalType", &srcAuxScTemporalType[0], 0, 1, PARAM_MANDATORY);
+       srcAuxScStartSeconds[0] = 0; /*Default to from simulation start*/
+       errorCode = queryFloatParameter("srcAuxScStartSeconds", &srcAuxScStartSeconds[0], 0, FLT_MAX, PARAM_MANDATORY);
+       srcAuxScDurationSeconds[0] = 30; /* Default to 30 seconds */
+       errorCode = queryFloatParameter("srcAuxScDurationSeconds", &srcAuxScDurationSeconds[0], 0, FLT_MAX, PARAM_MANDATORY);
+       srcAuxScGeometryType[0] = 0;  /*Default to 0 = point (single cell volume) */
+       errorCode = queryIntegerParameter("srcAuxScGeometryType", &srcAuxScGeometryType[0], 0, 0, PARAM_MANDATORY);
+       srcAuxScLocation[0] = 0.0; /* Default to domain origin in x-direction */
+       errorCode = queryFloatParameter("srcAuxScLocation_X", &srcAuxScLocation[0], -FLT_MAX, FLT_MAX, PARAM_MANDATORY);
+       srcAuxScLocation[1] = 0.0; /* Default to domain origin in y-direction */
+       errorCode = queryFloatParameter("srcAuxScLocation_Y", &srcAuxScLocation[1], -FLT_MAX, FLT_MAX, PARAM_MANDATORY);
+       srcAuxScLocation[2] = 0.0; /* Default to domain origin in z-direction */
+       errorCode = queryFloatParameter("srcAuxScLocation_Z", &srcAuxScLocation[2], -FLT_MAX, FLT_MAX, PARAM_MANDATORY);
+       if(srcAuxScGeometryType[0] > 0){
+         printf("!!!!!ERROR-- srcAuxScGeometryType = %d > 0 is not yet supported. Source not included --ERROR!!!!!!\n",
+                 srcAuxScGeometryType[0]);
+         fflush(stdout);
+          /*TODO Malloc and initialize the bounds arrays appropriately*/
+          //*srcAuxScGeometryBounds;      /*Cartesian coordinate tuple 'center' of the source*/
+       }
+       srcAuxScMassSpecType[0] = 0; /*Default to a strict total mass*/
+       errorCode = queryIntegerParameter("srcAuxScMassSpecType", &srcAuxScMassSpecType[0], 0, 0, PARAM_MANDATORY);
+       srcAuxScMassSpecValue[0] = 1.0; /*Default to 1.0 kg or 1 kg/s given by srcAuxScMassSpecType = 0 or 1 */
+       errorCode = queryFloatParameter("srcAuxScMassSpecValue", &srcAuxScMassSpecValue[0],
+                                        0.0, FLT_MAX, PARAM_MANDATORY);
+     } //endif srcAuxScFile == NULL...
+   }// endif NhydroAuxScalars > 0
    stabilityScheme = 0; //Default to constant rho & theta
    errorCode = queryIntegerParameter("stabilityScheme", &stabilityScheme, 0, 4, PARAM_MANDATORY);
    temp_grnd = 300.0; //Default to 300.0-(Kelvin) = 80.33-(Fahrenheit) = 26.85-(Celsius) 
@@ -487,6 +556,7 @@ int hydro_coreInit(){
    int iFld2; //simple integer index
    char fldName[MAX_HC_FLDNAME_LENGTH];
    char frhsName[MAX_HC_FLDNAME_LENGTH+2];
+   char AuxScName[MAX_HC_FLDNAME_LENGTH];
    char TauScName[MAX_HC_FLDNAME_LENGTH];
    char sgstkeScName[MAX_HC_FLDNAME_LENGTH];
    char moistName[MAX_HC_FLDNAME_LENGTH];
@@ -495,6 +565,7 @@ int hydro_coreInit(){
    float pi;
    int fldStride;
    float z1oz0,z1,z1ozt0;
+   int strLength;
 
    MPI_Barrier(MPI_COMM_WORLD); 
    printf("Entering hydro_coreInit:------\n"); 
@@ -600,6 +671,33 @@ int hydro_coreInit(){
       printComment("----------: RAYLEIGH DAMPING LAYER ---"); 
       printParameter("dampingLayerSelector", "Rayleigh damping layer selector: 0= off, 1= on.");
       printParameter("dampingLayerDepth", "Rayleigh damping layer depth in meters");
+
+      printComment("----------: AUXILIARY SCALARS ---");
+      printParameter("NhydroAuxScalars", "Number of prognostic auxiliary scalar fields");
+      if(NhydroAuxScalars > 0){
+        printParameter("AuxScAdvSelector", "Advection Scheme to use for auxiliary scalar fields");
+        printParameter("AuxScAdvSelector_b_hyb", "hybrid advection scheme parameter");
+        printParameter("AuxScSGSturb", "selector to apply sub-grid scale diffusion to auxiliary scalar fields");
+        printComment("----------: AUXILIARY SCALAR SOURCES ---");
+        printParameter("srcAuxScFile",
+                       "The path+filename to an Auxilliary Scalar Sources specification file");
+        if((srcAuxScFile == NULL) && (NhydroAuxScalars == 1)){
+          printParameter("srcAuxScTemporalType",
+                         "Temporal characterization of source (0 = instantaneous, 1 = continuous)");
+          printParameter("srcAuxScStartSeconds",
+                         "Source start time in seconds from start of simulation (i.e. time = 0.0)");
+          printParameter("srcAuxScDurationSeconds", "Source duration in seconds from srcAuxScStartSeconds");
+          printParameter("srcAuxScGeometryType", "0 = point (single cell volume), 1 = line (line of surface cells)");
+          printParameter("srcAuxScLocation_X", "Source geometry centroid postion in x (west-east)");
+          printParameter("srcAuxScLocation_Y", "Source geometry centroid postion in y (south-north)");
+          printParameter("srcAuxScLocation_Z", "Source geometry centroid postion in z (vertical above the surface)");
+          printParameter("srcAuxScMassSpecType",
+                         "Source mass specification type 0 = mass in kg, 1 = mass source rate in kg/s");
+          printParameter("srcAuxScMassSpecValue",
+                         "Source mass specification in kg or kg/s given by srcAuxScMassSpecType 0 or 1");
+        }//end if (srcAuxScFile == NULL) ....
+      }// endif NhydroAuxScalars > 0
+
       printComment("----------: BASE-STATE ---");
       printParameter("stabilityScheme", "Scheme used to set hydrostatic, stability-dependent Base-State EOS fields");
       printParameter("temp_grnd", "Air Temperature (K) at the ground used to set hydrostatic Base-State EOS fields");
@@ -718,6 +816,53 @@ int hydro_coreInit(){
    MPI_Bcast(&filter_divdamp, 1, MPI_INT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&dampingLayerSelector, 1, MPI_INT, 0, MPI_COMM_WORLD); 
    MPI_Bcast(&dampingLayerDepth, 1, MPI_FLOAT, 0, MPI_COMM_WORLD); 
+   MPI_Bcast(&NhydroAuxScalars, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   if(NhydroAuxScalars > 0){
+     MPI_Bcast(&AuxScAdvSelector, 1, MPI_INT, 0, MPI_COMM_WORLD);
+     MPI_Bcast(&AuxScAdvSelector_b_hyb, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+     MPI_Bcast(&AuxScSGSturb, 1, MPI_INT, 0, MPI_COMM_WORLD);
+     /*Determine strLength of srcAuxScFile*/
+     strLength = 0;
+     if(mpi_rank_world == 0){
+        if(srcAuxScFile != NULL){
+           strLength = strlen(srcAuxScFile)+1;
+        }else{
+         strLength = 0;
+       }
+     } //end if(mpi_rank_world == 0)
+     MPI_Bcast(&strLength, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+     if(strLength > 0){
+       if(mpi_rank_world != 0){
+          srcAuxScFile = (char *) malloc(strLength*sizeof(char));
+       } //if a non-root mpi_rank
+       MPI_Bcast(srcAuxScFile, strLength, MPI_CHARACTER, 0, MPI_COMM_WORLD);
+     }//endif strLength of srcAuxScFile > 0 
+     if(mpi_rank_world != 0){
+       srcAuxScTemporalType = malloc(NhydroAuxScalars*sizeof(int));
+       srcAuxScStartSeconds = malloc(NhydroAuxScalars*sizeof(float));
+       srcAuxScDurationSeconds = malloc(NhydroAuxScalars*sizeof(float));
+       srcAuxScGeometryType = malloc(NhydroAuxScalars*sizeof(int));
+       srcAuxScMassSpecType = malloc(NhydroAuxScalars*sizeof(int));
+       srcAuxScMassSpecValue = malloc(NhydroAuxScalars*sizeof(float));
+       srcAuxScLocation = malloc(NhydroAuxScalars*3*sizeof(float));
+     } //if a non-root mpi_rank
+     if((srcAuxScFile == NULL) && (NhydroAuxScalars == 1)){
+       MPI_Bcast(&srcAuxScTemporalType[0], NhydroAuxScalars, MPI_INT, 0, MPI_COMM_WORLD);
+       MPI_Bcast(&srcAuxScStartSeconds[0], NhydroAuxScalars, MPI_FLOAT, 0, MPI_COMM_WORLD);
+       MPI_Bcast(&srcAuxScDurationSeconds[0], NhydroAuxScalars, MPI_FLOAT, 0, MPI_COMM_WORLD);
+       MPI_Bcast(&srcAuxScGeometryType[0], NhydroAuxScalars, MPI_INT, 0, MPI_COMM_WORLD);
+       MPI_Bcast(&srcAuxScLocation[0], NhydroAuxScalars*3, MPI_FLOAT, 0, MPI_COMM_WORLD);
+       MPI_Bcast(&srcAuxScMassSpecType[0], NhydroAuxScalars, MPI_INT, 0, MPI_COMM_WORLD);
+       MPI_Bcast(&srcAuxScMassSpecValue[0], NhydroAuxScalars, MPI_FLOAT, 0, MPI_COMM_WORLD);
+     }else if((srcAuxScFile == NULL) && (NhydroAuxScalars > 1)){
+       printf("srcAuxFile is NULL, but NhydroAuxScalars = %d is > 1. INVALID!!!i Use a srcAuxScFile to specifiy > 1 AuxScalar sources...\n", NhydroAuxScalars);
+       fflush(stdout);
+       errorCode = 1;
+       exit(errorCode);
+     }else{
+       errorCode = srcAuxScConstructor();
+     }//endif (srcAuxScFile == NULL)...
+   }// endif NhydroAuxScalars > 0 
    MPI_Bcast(&stabilityScheme, 1, MPI_INT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&temp_grnd, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&pres_grnd, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -773,6 +918,19 @@ int hydro_coreInit(){
      }
    } //end for iFld...
 
+   /* Auxiliary Scalars and associated Frhs */
+   if(NhydroAuxScalars > 0){
+     hydroAuxScalars = memAllocateFloat4DField(NhydroAuxScalars, Nxp, Nyp, Nzp, Nh, "hydroAuxScalars");
+     hydroAuxScalarsFrhs = memAllocateFloat4DField(NhydroAuxScalars, Nxp, Nyp, Nzp, Nh, "hydroAuxScalarsFrhs");
+     for(iFld = 0; iFld < NhydroAuxScalars; iFld ++){
+        sprintf(&AuxScName[0],"AuxScalar_%d",iFld);
+        errorCode = ioRegisterVar(&AuxScName[0], "float", 4, dims4d, &hydroAuxScalars[iFld*fldStride]);
+        printf("hydro_coreInit:hydroAuxScalars[%d] = %s stored at %p, has been registered with IO.\n",
+               iFld,&AuxScName[0],&hydroAuxScalars[iFld*fldStride]);
+        fflush(stdout);
+     } //end for iFld...
+   } //end if NhydroAuxScalars
+       
    /* Prognostic SGSTKE equation and associated Frhs */ 
    if(TKESelector > 0){
      sgstkeScalars = memAllocateFloat4DField(TKESelector, Nxp, Nyp, Nzp, Nh, "sgstkeScalars");
@@ -1496,7 +1654,19 @@ int hydro_coreStateLogDump(){
        errorCode = hydro_coreFldStateLogEntry(fldBase, 1);
      } //end for iFld
    }
-    
+   //Auxiliary Scalars
+   for(iFld=0; iFld < NhydroAuxScalars; iFld++){    //Run through (hydroAuxScalars)    
+     MPI_Barrier(MPI_COMM_WORLD);
+     if((mpi_rank_world == 0)&&(iFld>0)){
+       printf("-----\n");
+       fflush(stdout);
+     } //end if mpi_rank_world==0
+     fldBase = &hydroAuxScalars[iFld*fldStride];
+     errorCode = sprintf(&fldName[0],"AuxSc_%d",iFld);
+     printf("%s\t", &fldName[0]);
+     errorCode = hydro_coreFldStateLogEntry(fldBase, 1);
+   } //end for iFld
+ 
    /* Log the Frhs fields */
    if(hydroForcingLog == 1){
      MPI_Barrier(MPI_COMM_WORLD);
@@ -1547,8 +1717,22 @@ int hydro_coreStateLogDump(){
          }
          printf("%s\t", &fldName[0]);
          errorCode = hydro_coreFldStateLogEntry(fldBase, 1);
+         MPI_Barrier(MPI_COMM_WORLD);
        } //end for iFld
      }
+     //Auxiliary Scalars
+     for(iFld=0; iFld < NhydroAuxScalars; iFld++){  //Run through (hydroAuxScalarsFrhs)
+       MPI_Barrier(MPI_COMM_WORLD);
+       if((mpi_rank_world == 0)&&(iFld>0)){
+         printf("-----\n");
+         fflush(stdout);
+       } //end if mpi_rank_world==0
+       fldBase = &hydroAuxScalarsFrhs[iFld*fldStride];
+       errorCode = sprintf(&fldName[0],"F_AS_%d",iFld);
+       printf("%s\t", &fldName[0]);
+       errorCode = hydro_coreFldStateLogEntry(fldBase, 1);
+       MPI_Barrier(MPI_COMM_WORLD);
+     } //end for iFld
    }//end if (hydroForcingLog == 1)
 
    MPI_Barrier(MPI_COMM_WORLD); 
@@ -1663,6 +1847,280 @@ int hydro_coreFldStateLogEntry(float * Fld, int fluxConservativeFlag){
   }//end for iRank
   return(errorCode);
 }//end hydro_coreFldStateLogEntry()
+/*----->>>>> int srcAuxScConstructor();   ----------------------------------------------------------------------
+* This function constructs the srcAuxScalar instance by reading a srcAuxScFile (netCDF) input configuration file,
+* allocating CPU-level memory for srcAuxScalar arrays, and initializing these arrays with values specified in 
+* the inputs file.
+*/
+int srcAuxScConstructor(){
+  int errorCode = HYDRO_CORE_SUCCESS;
+  int ncid;
+  int ncfldid;
+  int dimids[64];
+  size_t count[64];
+  size_t start[64];
+  char fldName[64];
+  int dim0;
+  int dim1;
+
+  //Root-rank should read the netcdf turbineSpecsFile
+  if(mpi_rank_world == 0){
+//#define DEBUG_SASCONSTRUCTOR
+#ifdef DEBUG_SASCONSTRUCTOR
+    printf("Attempting to open srcAuxScFile = %s\n",srcAuxScFile);
+    fflush(stdout);
+#endif
+
+    //Open the netcdf file
+    errorCode = ioOpenNetCDFinFile(srcAuxScFile, &ncid);
+    if(errorCode > 0){
+      printf("Failed to open srcAuxScFile = %s EXITING NOW!!!!\n",srcAuxScFile);
+      fflush(stdout);
+      exit(0);
+    }
+#ifdef DEBUG_SASCONSTRUCTOR
+    printf("Opened srcAuxScFile = %s with ncid = %d\n",srcAuxScFile,ncid);
+    fflush(stdout);
+#endif
+
+    //Inquire for the dimID of the fundamental parameter, NhydroAuxScalars
+    if((errorCode = nc_inq_dimid(ncid, "NhydroAuxScalars", &dimids[0]))){
+      ERR(errorCode);
+    }
+    //Inquire for the value of NhydroAuxScalars
+    if((errorCode = nc_inq_dimlen(ncid, dimids[0], &count[dimids[0]]))){
+      ERR(errorCode);
+    }
+    //Inquire for the dimID of the fundamental parameter, locDim (should be equal to 3 always!)
+    if((errorCode = nc_inq_dimid(ncid, "locDim", &dimids[1]))){
+      ERR(errorCode);
+    }
+    //Inquire for the value of NhydroAuxScalars
+    if((errorCode = nc_inq_dimlen(ncid, dimids[1], &count[dimids[1]]))){
+      ERR(errorCode);
+    }
+    dim0 = (int)count[dimids[0]];
+    dim1 = (int)count[dimids[1]];
+  }//end if mpi_rank == 0 
+  MPI_Bcast(&dim0, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&dim1, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  /*Assert that the value of the dimension in the file matches the value from the FastEddy parameters file*/
+  if(dim0 != NhydroAuxScalars){
+    printf("%d/%d: ERROR!! srcAuxScFile dimension (NhydroAuxScalars) %d does not match NhydroAuxScalars=%d from the parameter file. EXITING NOW!!!!\n",mpi_rank_world,mpi_size_world,dim0,NhydroAuxScalars);
+    fflush(stdout);
+    exit(0);
+  }//end if dimid[0] != NhydroAuxScalars 
+
+  if(mpi_rank_world == 0){
+    //Read in vector of srcAuxScTemporalTypes (integers)
+    sprintf(fldName,"srcAuxScTemporalType");
+    start[0] = 0;
+    if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
+       ERR(errorCode);
+       printf("Error srcAuxScConstructor(): field = %s was not found in this file,!\n",fldName);
+       fflush(stdout);
+    } //if nc_inq_varid
+    if ((errorCode = nc_get_vara_int(ncid, ncfldid, &start[0], &count[dimids[0]], &srcAuxScTemporalType[0] )) ){
+       ERR(errorCode);
+    }
+    //Read in vector of srcAuxScStartSeconds (floats)
+    sprintf(fldName,"srcAuxScStartSeconds");
+    start[0] = 0;
+    if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
+       ERR(errorCode);
+       printf("Error srcAuxScConstructor(): field = %s was not found in this file,!\n",fldName);
+       fflush(stdout);
+    } //if nc_inq_varid
+    if ((errorCode = nc_get_vara_float(ncid, ncfldid, &start[0], &count[dimids[0]], &srcAuxScStartSeconds[0] )) ){
+       ERR(errorCode);
+    }
+    //Read in vector of srcAuxScDurationSeconds (floats)
+    sprintf(fldName,"srcAuxScDurationSeconds");
+    start[0] = 0;
+    if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
+       ERR(errorCode);
+       printf("Error srcAuxScConstructor(): field = %s was not found in this file,!\n", fldName);
+       fflush(stdout);
+    } //if nc_inq_varid
+    if ((errorCode = nc_get_vara_float(ncid, ncfldid, &start[0], &count[dimids[0]], &srcAuxScDurationSeconds[0] )) ){
+       ERR(errorCode);
+    }
+    //Read in vector of srcAuxScGeometryTypes (integers)
+    sprintf(fldName,"srcAuxScGeometryType");
+    start[0] = 0;
+    if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
+       ERR(errorCode);
+       printf("Error srcAuxScConstructor(): field = %s was not found in this file,!\n",fldName);
+       fflush(stdout);
+    } //if nc_inq_varid
+    if ((errorCode = nc_get_vara_int(ncid, ncfldid, &start[0], &count[dimids[0]], &srcAuxScGeometryType[0] )) ){
+       ERR(errorCode);
+    }
+    //Read in vector of srcAuxScLocations (floats)
+    sprintf(fldName,"srcAuxScLocation");
+    start[0] = 0;
+    start[1] = 0;
+    if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
+       ERR(errorCode);
+       printf("Error srcAuxScConstructor(): field = %s was not found in this file,!\n", fldName);
+       fflush(stdout);
+    } //if nc_inq_varid
+    if ((errorCode = nc_get_vara_float(ncid, ncfldid, &start[0], &count[dimids[0]], &srcAuxScLocation[0] )) ){
+       ERR(errorCode);
+    }
+    //Read in vector of srcAuxScMassSpecTypes (integers)
+    sprintf(fldName,"srcAuxScMassSpecType");
+    start[0] = 0;
+    if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
+       ERR(errorCode);
+       printf("Error srcAuxScConstructor(): field = %s was not found in this file,!\n",fldName);
+       fflush(stdout);
+    } //if nc_inq_varid
+    if ((errorCode = nc_get_vara_int(ncid, ncfldid, &start[0], &count[dimids[0]], &srcAuxScMassSpecType[0] )) ){
+       ERR(errorCode);
+    }
+    //Read in vector of srcAuxScMassSpecValues (floats)
+    sprintf(fldName,"srcAuxScMassSpecValue");
+    start[0] = 0;
+    if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
+       ERR(errorCode);
+       printf("Error srcAuxScConstructor(): field = %s was not found in this file,!\n", fldName);
+       fflush(stdout);
+    } //if nc_inq_varid
+    if ((errorCode = nc_get_vara_float(ncid, ncfldid, &start[0], &count[dimids[0]], &srcAuxScMassSpecValue[0] )) ){
+       ERR(errorCode);
+    }
+  }//end if mpi_rank == 0
+  //Broadcast values to all ranks
+  MPI_Bcast(&srcAuxScTemporalType[0], NhydroAuxScalars, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&srcAuxScGeometryType[0], NhydroAuxScalars, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&srcAuxScMassSpecType[0], NhydroAuxScalars, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&srcAuxScStartSeconds[0], NhydroAuxScalars, MPI_FLOAT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&srcAuxScDurationSeconds[0], NhydroAuxScalars, MPI_FLOAT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&srcAuxScLocation[0], NhydroAuxScalars*3, MPI_FLOAT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&srcAuxScMassSpecValue[0], NhydroAuxScalars, MPI_FLOAT, 0, MPI_COMM_WORLD);
+#ifdef DEBUG_SASCONSTRUCTOR
+  int iRank;
+  int iFld;
+  int i,j;
+  float *fldPtr;
+  int *intfldPtr;
+  for(iFld = 0; iFld < 3; iFld++){
+    switch (iFld){
+      case 0:
+        sprintf(fldName,"srcAuxScTemporalType");
+        intfldPtr = &srcAuxScTemporalType[0];
+        break;
+      case 1:
+        sprintf(fldName,"srcAuxScGeometryType");
+        intfldPtr = &srcAuxScGeometryType[0];
+        break;
+      case 2:
+        sprintf(fldName,"srcAuxScMassSpecType");
+        intfldPtr = &srcAuxScMassSpecType[0];
+        break;
+      default:
+        sprintf(fldName,"");
+        intfldPtr = NULL;
+        break;
+    }
+    for(iRank = 0; iRank < mpi_size_world; iRank++){
+      MPI_Barrier(MPI_COMM_WORLD);
+      if(iRank == mpi_rank_world){
+        printf("%d/%d %s:--------- \n[",mpi_rank_world,mpi_size_world,fldName);
+        for(i=0; i < NhydroAuxScalars; i++){
+          printf(" %d ",intfldPtr[i]);
+        }
+        printf("]\n");
+        fflush(stdout);
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+    }//end iRank
+  }//end for iFld
+  printf("\n");
+  fflush(stdout);
+  for(iFld = 0; iFld < 3; iFld++){
+    switch (iFld){
+      case 0:
+        sprintf(fldName,"srcAuxScStartSeconds");
+        fldPtr = &srcAuxScStartSeconds[0];
+        break;
+      case 1:
+        sprintf(fldName,"srcAuxScDurationSeconds");
+        fldPtr = &srcAuxScDurationSeconds[0];
+        break;
+      case 2:
+        sprintf(fldName,"srcAuxScMassSpecValue");
+        fldPtr = &srcAuxScMassSpecValue[0];
+        break;
+      default:
+        sprintf(fldName,"");
+        fldPtr = NULL;
+        break;
+    }
+    for(iRank = 0; iRank < mpi_size_world; iRank++){
+      MPI_Barrier(MPI_COMM_WORLD);
+      if(iRank == mpi_rank_world){
+        printf("%d/%d %s:--------- \n[",mpi_rank_world,mpi_size_world,fldName);
+        for(i=0; i < NhydroAuxScalars; i++){
+          printf(" %f ",fldPtr[i]);
+        }
+        printf("]\n");
+        fflush(stdout);
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+    }//end iRank
+  }//end for iFld
+  sprintf(fldName,"srcAuxScLocation");
+  fldPtr = &srcAuxScLocation[0];
+  for(iRank = 0; iRank < mpi_size_world; iRank++){
+      MPI_Barrier(MPI_COMM_WORLD);
+      if(iRank == mpi_rank_world){
+        printf("%d/%d %s:--------- \n[",mpi_rank_world,mpi_size_world,fldName);
+        for(i=0; i < NhydroAuxScalars; i++){
+          printf(" (%f, %f, %f) ",fldPtr[i*3+0],fldPtr[i*3+1],fldPtr[i*3+2]);
+        }
+        printf("]\n");
+        fflush(stdout);
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+  }//end iRank
+#endif
+  return(errorCode);
+}//end srcAuxScConstructor()
+
+/*----->>>>> int hydro_coreSetAuxScStartIteration();   ----------------------------------------------------------------------
+* This function sets a start timestep from a srcAuxScalar specification of an emission src start time and the model timestep 
+*/
+int hydro_coreSetAuxScStartIteration(float dt, int frqOutput, float simTime){
+   int errorCode = HYDRO_CORE_SUCCESS;
+   int iFld;
+   float minStartTime;
+   float tmpDuration;
+
+   minStartTime=10.0e6;
+   tmpDuration = 10.0e6;
+
+   if(NhydroAuxScalars > 0){
+      for(iFld=0; iFld < NhydroAuxScalars; iFld++){
+        if(srcAuxScStartSeconds[iFld]<minStartTime){
+          minStartTime = srcAuxScStartSeconds[iFld];
+          tmpDuration = srcAuxScDurationSeconds[iFld];
+        }
+      }//end for(iFld...
+      if(simTime<minStartTime){
+         srcAuxScStartIteration = (int)(floor(((minStartTime-simTime)-frqOutput*dt)/dt));
+      }else if(simTime<(minStartTime+tmpDuration)){
+         srcAuxScStartIteration = 0;
+      }
+   }
+   //printf("hydro_coreSetAuxScStartIteration: srcAuxScStartIteration = %d.\n", srcAuxScStartIteration);
+   //fflush(stdout);
+   //MPI_Barrier(MPI_COMM_WORLD); 
+
+   return(errorCode);
+}//end hydro_coreSetAuxScStartIteration()
+
 /*----->>>>> int hydro_coreCleanup();  ----------------------------------------------------------------------
 * Used to free all malloced memory by the HYDRO_CORE module.
 */
@@ -1714,6 +2172,17 @@ int hydro_coreCleanup(){
      memReleaseFloat(moistScalars);
      memReleaseFloat(moistScalarsFrhs);
    }
-   return(errorCode);
+   if(NhydroAuxScalars > 0){
+     free(srcAuxScTemporalType);
+     free(srcAuxScStartSeconds);
+     free(srcAuxScDurationSeconds);
+     free(srcAuxScGeometryType);
+     free(srcAuxScMassSpecType);
+     free(srcAuxScMassSpecValue);
+     free(srcAuxScLocation);
+     memReleaseFloat(hydroAuxScalars);
+     memReleaseFloat(hydroAuxScalarsFrhs);
+   } //end if NhydroAuxScalars
 
+   return(errorCode);
 }//end hydro_coreCleanup()

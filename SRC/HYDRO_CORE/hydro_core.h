@@ -29,7 +29,7 @@
 #define THETA_INDX_BS         1
 
 #define MAX_HC_FLDNAME_LENGTH 256
-
+#define MAX_AUXSC_SRC         20
 /*#################------------------- HYDRO_CORE module variable declarations ---------------------#################*/
 /* Parameters */
 extern int Nhydro;          /*Number of prognostic variable fields under hydro_core */
@@ -180,6 +180,27 @@ extern int filter_divdamp;               /* divergence damping selector: 0=off, 
 /*---RAYLEIGH DAMPING LAYER*/
 extern int dampingLayerSelector;       // Rayleigh Damping Layer selector
 extern float dampingLayerDepth;       // Rayleigh Damping Layer Depth
+				      //
+/*---AUX_SCALARS*/
+/*Auxiliary Scalar Fields*/
+extern int NhydroAuxScalars;    /*Number of prognostic auxiliary scalar variable fields */
+extern int AuxScAdvSelector;    /*Advection Scheme to use for auxiliary scalar variable fields */
+extern float AuxScAdvSelector_b_hyb; /* hybrid advection scheme parameter */
+extern float *hydroAuxScalars;  /*Base Adress of memory containing all prognostic auxiliary scalar variable fields */
+extern float *hydroAuxScalarsFrhs; /*Base Adress of memory containing all prognostic auxiliary scalar variable fields */
+extern int AuxScSGSturb;           /* selector to apply sub-grid scale diffusion to auxiliary scalar fields */
+
+/*Auxiliary Scalar Sources*/
+extern char *srcAuxScFile;        /* The path+filename to an Auxilliary Scalar Sources specification file*/
+extern int *srcAuxScTemporalType;     /*Temporal characterization of source (0 = instantaneous, 1 = continuous) */
+extern float *srcAuxScStartSeconds;     /*Source start time in seconds */
+extern float *srcAuxScDurationSeconds;  /*Source duration in seconds */
+extern int *srcAuxScGeometryType;         /*0 = point (single cell volume), 1 = line (line of surface cells) */
+extern float *srcAuxScLocation;      /*Cartesian coordinate tuple 'center' of the source*/
+extern float *srcAuxScGeometryBounds;      /*Cartesian coordinate tuple 'center' of the source*/
+extern int *srcAuxScMassSpecType; /*Mass specification type 0 = strict mass in kg, 1 = mass source rate in kg/s,  */
+extern float *srcAuxScMassSpecValue; /*Mass specification value in kg or kg/s given by srcAuxScMassSpecType 0 or 1 */
+extern int srcAuxScStartIteration; /*Source start time in iterations from simulation start under prescribed dt */
  
 /*---BASE_STATE*/
 extern int stabilityScheme;  /*Base-State stability setup scheme, (0 = none, 1 = profile, 2 = linear in theta)*/
@@ -216,8 +237,8 @@ int hydro_coreGetParams();
 int hydro_coreInit();
 
 /*----->>>>> int hydro_corePrepareFromInitialConditions();   -------------------------------------------------
- * * Used to undertake the sequence of steps to build the Frhs of all hydro_core prognostic variable fields.
- * */
+* Used to undertake the sequence of steps to build the Frhs of all hydro_core prognostic variable fields.
+*/
 int hydro_corePrepareFromInitialConditions();
 
 /*----->>>>> int hydro_coreGetFieldName();   ----------------------------------------------------------------------
@@ -226,8 +247,8 @@ int hydro_corePrepareFromInitialConditions();
 int hydro_coreGetFieldName(char * fldName, int iFld);
 
 /*----->>>>> int hydro_coreSetBaseState();   -----------------------------------------------------------
- *  * Used to set the Base-State fields for all prognostic variables and pressure.
- *  */
+* Used to set the Base-State fields for all prognostic variables and pressure.
+*/
 int hydro_coreSetBaseState();
 
 /*----->>>>> int hydro_coreFldStateLogDump(float * Fld);  --------------------------------------------------------
@@ -246,6 +267,18 @@ int hydro_coreFldStateLogEntry(float* Fld, int fluxConservativeFlag);
 * e.g. [ max(loc) min(loc) mean, variance, isNan(loc), is Inf(loc) ]
 */
 int hydro_coreFldStateLogEntry(float * Fld, int fluxConservativeFlag);
+
+/*----->>>>> int srcAuxScConstructor();   ----------------------------------------------------------------------
+* This function constructs a srcAuxScalar instance by reading a srcAuxScFile (netCDF) input configuration file,
+* allocating CPU-level memory for srcAuxScalar arrays, and initializing these arrays with values specified in
+* the inputs file.
+*/
+int srcAuxScConstructor();
+
+/*----->>>>> int hydro_coreSetAuxScStartIteration();   ----------------------------------------------------------------------
+* This function sets a start timestep from a srcAuxScalar specification of an emission src start time and the model timestep 
+*/
+int hydro_coreSetAuxScStartIteration(float dt, int frqOutput, float simTime);
 
 /*----->>>>> int hydro_coreCleanup();     ----------------------------------------------------------------
 * Used to free all malloced memory by the HYDRO_CORE module.
