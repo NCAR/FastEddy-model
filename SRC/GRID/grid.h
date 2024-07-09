@@ -20,8 +20,8 @@
 #define GRID_SUCCESS               0
 #define TOPOFILE_GRID_FAIL         1
 #define GRID_DECOMPOSE_FAIL        2
-#define GRID_IO_CALL_FAIL          3
-
+#define GRID_CUDA_DECOMPOSE_FAIL   3
+#define GRID_IO_CALL_FAIL          4
 
 /*######################------------------- GRID module variable declarations ---------------------#################*/
 /* Parameters */

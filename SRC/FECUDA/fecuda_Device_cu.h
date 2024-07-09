@@ -18,6 +18,7 @@
 
 /*fecuda return codes */
 #define FECUDA_DEV_CU_SUCCESS               0
+#define FECUDA_THREADS_PER_BLOCK_FAILURE    1
 
 /*fecuda includes*/
 #include <cuda.h>

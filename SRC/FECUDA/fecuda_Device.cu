@@ -81,25 +81,49 @@ extern "C" int fecuda_DeviceSetup(int tBx, int tBy, int tBz){
    gpuErrchk( cudaDeviceSynchronize() );  
    
    MPI_Barrier(MPI_COMM_WORLD);  
-   printf("mpi_rank_world--%d/%d Assigning threadPerBlock.[xyz]\n",mpi_rank_world, mpi_size_world);
-   fflush(stdout);
-   tBlock.x = tBx;
-   tBlock.y = tBy;
-   tBlock.z = tBz;
-   printf("mpi_rank_world--%d/%d done!\n",mpi_rank_world, mpi_size_world);
-   fflush(stdout);
+   if((tBx*tBy*tBz > devProps[0].maxThreadsPerBlock)){
+     printf("CRITICAL ERROR: tBx*tBy*tBz = %d > max allowed on device = %d\n",tBx*tBy*tBz,devProps[0].maxThreadsPerBlock);
+     printf("RECOMMENDATION: Adjust threads per block in least contiguous dimension(s) such that total threads per block is less than the device limit.\n");
+     errorCode = FECUDA_THREADS_PER_BLOCK_FAILURE;
+   } //end if-else the user-parameter prescribed threads/block is greater than allowed by the device
+   if((tBz > devProps[0].maxThreadsDim[2])||(tBy > devProps[0].maxThreadsDim[1])||(tBx > devProps[0].maxThreadsDim[0])){
+     if(tBz > devProps[0].maxThreadsDim[2]){
+       printf("CRITICAL ERROR: tBz = %d > max allowed on device = %d\n",tBz,devProps[0].maxThreadsDim[2]);
+       printf("RECOMMENDATION: Adjust tBz to a value below the device limit.\n");
+       errorCode = FECUDA_THREADS_PER_BLOCK_FAILURE;
+     }
+     if(tBy > devProps[0].maxThreadsDim[1]){
+       printf("CRITICAL ERROR: tBy = %d > max allowed on device = %d\n",tBz,devProps[0].maxThreadsDim[0]);
+       printf("RECOMMENDATION: Adjust tBy to a value below the device limit.\n");
+       errorCode = FECUDA_THREADS_PER_BLOCK_FAILURE;
+     }
+     if(tBx > devProps[0].maxThreadsDim[0]){
+       printf("CRITICAL ERROR: tBx = %d > max allowed on device = %d\n",tBz,devProps[0].maxThreadsDim[0]);
+       printf("RECOMMENDATION: Adjust tBx to a value below the device limit.\n");
+       errorCode = FECUDA_THREADS_PER_BLOCK_FAILURE;
+     }
+   } //end if-else the user-parameter prescribed block-extents exceed values allowed by the device
+   if(errorCode == FECUDA_SUCCESS){
+     printf("mpi_rank_world--%d/%d Assigning threadPerBlock.[xyz]\n",mpi_rank_world, mpi_size_world);
+     fflush(stdout);
+     tBlock.x = tBx;
+     tBlock.y = tBy;
+     tBlock.z = tBz;
+     printf("mpi_rank_world--%d/%d done!\n",mpi_rank_world, mpi_size_world);
+     fflush(stdout);
 
-   cudaMemcpyToSymbol(mpi_size_world_d, &mpi_size_world, sizeof(int));      
-   cudaMemcpyToSymbol(mpi_rank_world_d, &mpi_rank_world, sizeof(int));      
-   cudaMemcpyToSymbol(numProcsX_d, &numProcsX, sizeof(int));      
-   cudaMemcpyToSymbol(numProcsY_d, &numProcsY, sizeof(int));      
-   cudaMemcpyToSymbol(rankXid_d, &rankXid, sizeof(int));      
-   cudaMemcpyToSymbol(rankYid_d, &rankYid, sizeof(int));
+     cudaMemcpyToSymbol(mpi_size_world_d, &mpi_size_world, sizeof(int));      
+     cudaMemcpyToSymbol(mpi_rank_world_d, &mpi_rank_world, sizeof(int));      
+     cudaMemcpyToSymbol(numProcsX_d, &numProcsX, sizeof(int));      
+     cudaMemcpyToSymbol(numProcsY_d, &numProcsY, sizeof(int));      
+     cudaMemcpyToSymbol(rankXid_d, &rankXid, sizeof(int));      
+     cudaMemcpyToSymbol(rankYid_d, &rankYid, sizeof(int));
 
-   //Setup for any reductions
-   tBlock_red.x = tBx_red;
-   tBlock_red.y = tBy_red;
-   tBlock_red.z = tBz_red;
+     //Setup for any reductions
+     tBlock_red.x = tBx_red;
+     tBlock_red.y = tBy_red;
+     tBlock_red.z = tBz_red;
+   } // end if errorCode indicates no errors thus far
 
    return(errorCode);
 } //end fecuda_DeviceSetup()

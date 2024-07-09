@@ -23,6 +23,7 @@
 #include <parameters.h>
 #include <mem_utils.h>
 #include <io.h>
+#include <fecuda.h>
 #include <grid.h>
 
 /*##################------------------- GRID module variable definitions ---------------------#################*/
@@ -166,7 +167,7 @@ int gridInit(){
    MPI_Bcast(&verticalDeformFactor, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&verticalDeformQuadCoeff, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-   /* Sanity check the implicit domain decomposition rules that numprocX/Y evenly divides Nx/y */
+   /* Parameter-check the implicit domain decomposition rules that numprocX/Y evenly divides Nx/y */
    if((Nx % numProcsX !=0)||(Ny % numProcsY !=0)){
      if(Nx % numProcsX !=0){
        printf("CRITICAL ERROR: Nx is not an exact multiple of numProcsX, Nx = %d, numProcsX = %d\n",Nx,numProcsX);
@@ -196,32 +197,55 @@ int gridInit(){
    printf("Nxp = %d, Nyp = %d, Nzp = %d\n",Nxp,Nyp,Nzp);
    fflush(stdout);
 #endif
-   /* Set the constant index bounds for i,j, and k */
-   iMin = Nh;
-   iMax = Nxp+Nh;
-   jMin = Nh;
-   jMax = Nyp+Nh;
-   kMin = Nh;
-   kMax = Nzp+Nh;
+   
+   /* Parameter-check the threads-per-block decomposition */
+   if(((Nzp+2*Nh) % tBz !=0)||((Nyp+2*Nh) % tBy !=0)||((Nxp+2*Nh) % tBx !=0)){
+     if((Nzp+2*Nh) % tBz !=0){
+       printf("CRITICAL ERROR: Nz+2*Nh is not an exact multiple of tBz, Nz+2*Nh = %d, tBz = %d\n",Nzp+2*Nh,tBz);
+       printf("RECOMMENDATION: Adjust Nz such that Nz+2*Nh is an exact multiple of tBz.\n");
+     }
+     if((Nyp+2*Nh) % tBy !=0){
+       printf("CRITICAL ERROR: Nyp+2*Nh is not an exact multiple of tBy, Nyp+2*Nh = %d, tBy = %d\n",Nyp+2*Nh,tBy);
+       printf("RECOMMENDATION: Adjust Ny such that Nyp+2*Nh is an exact multiple of tBy.\n");
+       printf("          NOTE: Nyp is the per-rank domain extent in the y-direction, Nyp = Ny/numProcsY (integer division).\n");
+     }
+     if((Nxp+2*Nh) % tBx !=0){
+       printf("CRITICAL ERROR: Nxp+2*Nh is not an exact multiple of tBx, Nxp+2*Nh = %d, tBx = %d\n",Nxp+2*Nh,tBx);
+       printf("RECOMMENDATION: Adjust Nx such that Nxp+2*Nh is an exact multiple of tBx.\n");
+       printf("          NOTE: Nxp is the per-rank domain extent in the x-direction, Nxp = Nx/numProcsx (integer division).\n");
+     }
+    fflush(stdout);
+    errorCode = GRID_CUDA_DECOMPOSE_FAIL;
+   }
+
+   if(errorCode == GRID_SUCCESS){ // Parameter-checks have passed, proceed with module initialization
+     /* Set the constant index bounds for i,j, and k */
+     iMin = Nh;
+     iMax = Nxp+Nh;
+     jMin = Nh;
+     jMax = Nyp+Nh;
+     kMin = Nh;
+     kMax = Nzp+Nh;
 //#ifdef DEBUG
 #if 1
-   printf("****Spatial loop-index Mins & Maxs ****  (i,j,k)-min = (%d,%d,%d) & (i,j,k)-max = (%d,%d,%d)\n",
-                                                                              iMin,jMin,kMin,iMax,jMax,kMax);
+     printf("****Spatial loop-index Mins & Maxs ****  (i,j,k)-min = (%d,%d,%d) & (i,j,k)-max = (%d,%d,%d)\n",
+                                                                                iMin,jMin,kMin,iMax,jMax,kMax);
 #endif
    
-   /* Allocate the GRID arrays */
+     /* Allocate the GRID arrays */
      /* Coordinate Arrays */
-   xPos = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "xPos");
-   yPos = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "yPos");
-   zPos = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "zPos");
-   topoPos = memAllocateFloat2DField(Nxp, Nyp, Nh, "topoPos");
-   topoPosGlobal = memAllocateFloat2DField(Nx, Ny, 0, "topoPos");
+     xPos = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "xPos");
+     yPos = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "yPos");
+     zPos = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "zPos");
+     topoPos = memAllocateFloat2DField(Nxp, Nyp, Nh, "topoPos");
+     topoPosGlobal = memAllocateFloat2DField(Nx, Ny, 0, "topoPos");
      /* Metric Tensors Fields */
-   J31 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J31");
-   J32 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J32");
-   J33 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J33");
-   D_Jac = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "D_Jac");
-   invD_Jac = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "invD_Jac");
+     J31 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J31");
+     J32 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J32");
+     J33 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J33");
+     D_Jac = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "D_Jac");
+     invD_Jac = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "invD_Jac");
+   } // end if errorCode indicates no errors thus far
 
    /*Register these fields with the IO module*/
    /********* FOR THE MOMENT THESE SHOULD BE STRICTLY GLOBAL DOMAIN VARIABLE FIELDS ********/
@@ -238,15 +262,15 @@ int gridInit(){
        fflush(stdout);
        errorCode = GRID_IO_CALL_FAIL;
      }
-   } // end if errorCode indicates no errors thus far
 #ifdef DEBUG
 //#if 1
-   errorCode = ioRegisterVar("D_Jac", "float", 4, dims4d, D_Jac);
-   errorCode = ioRegisterVar("invD_Jac", "float", 4, dims4d, invD_Jac);
-   errorCode = ioRegisterVar("J31", "float", 4, dims4d, J31);
-   errorCode = ioRegisterVar("J32", "float", 4, dims4d, J32);
-   errorCode = ioRegisterVar("J33", "float", 4, dims4d, J33);
+     errorCode = ioRegisterVar("D_Jac", "float", 4, dims4d, D_Jac);
+     errorCode = ioRegisterVar("invD_Jac", "float", 4, dims4d, invD_Jac);
+     errorCode = ioRegisterVar("J31", "float", 4, dims4d, J31);
+     errorCode = ioRegisterVar("J32", "float", 4, dims4d, J32);
+     errorCode = ioRegisterVar("J33", "float", 4, dims4d, J33);
 #endif 
+   } // end if errorCode indicates no errors thus far
   
 #ifdef DEBUG
 //#if 1

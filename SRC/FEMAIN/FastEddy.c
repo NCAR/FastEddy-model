@@ -113,17 +113,26 @@ int main(int argc, char **argv){
   /*** ---------------------------------------------------------------------------------------------- ***/
   /*Initialize the FEMPI module*/
   errorCode = fempi_Init();
+  MPI_Barrier(MPI_COMM_WORLD);  
   /*Initialize the MEM_UTILS module*/
   errorCode = mem_utilsInit();
+  MPI_Barrier(MPI_COMM_WORLD);  
   /*Initialize the IO module*/
   errorCode = ioInit();
+  MPI_Barrier(MPI_COMM_WORLD);  
   /*** ++++ Initialize the mixed (C & CUDA)-layer module for exposing device/GPU functionality  +++++ ***/
 #ifndef NOTCUDA 
   /*Initialize the FECUDA module*/
   errorCode = fecuda_Init();
+  MPI_Barrier(MPI_COMM_WORLD);  
+  if(errorCode != 0){
+    printf("mpi_rank_world--%d/%d: ABORTING SIMULATION due to error returned by fecuda_Init(): errorCode = %d\n", 
+           mpi_rank_world, mpi_size_world, errorCode);
+    fflush(stdout);
+    exit(errorCode);
+  } 
 #endif
   /*Initialize the GRID module*/
-  MPI_Barrier(MPI_COMM_WORLD);  
 #ifdef DEBUG_INITIALIZATION 
   printf("mpi_rank_world--%d/%d calling gridInit!\n",mpi_rank_world, mpi_size_world);
   fflush(stdout);
@@ -142,14 +151,13 @@ int main(int argc, char **argv){
   fflush(stdout);
 #endif
   errorCode = hydro_coreInit();
-  /*Initialize the TIME_INTEGRATION module*/
   MPI_Barrier(MPI_COMM_WORLD); 
+  /*Initialize the TIME_INTEGRATION module*/
 #ifdef DEBUG_INITIALIZATION 
   printf("mpi_rank_world--%d/%d calling timeInit!\n",mpi_rank_world, mpi_size_world);
   fflush(stdout);
 #endif
   errorCode = timeInit();
-
   MPI_Barrier(MPI_COMM_WORLD); 
 #ifdef DEBUG_INITIALIZATION 
   printf("mpi_rank_world--%d/%d Dumping parameter check results!\n",mpi_rank_world, mpi_size_world);
