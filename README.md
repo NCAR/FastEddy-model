@@ -23,10 +23,10 @@ Please submit all comments, feedback, suggestions, or questions by email to the 
 ## Citation
 FastEddy should be cited as follows:
 
-  | Sauer, J., and D. Muñoz-Esparza. "The FastEddy resident-GPU accelerated large-eddy
-  |   simulation framework: model formulation, dynamical-core validation and performance
-  |   benchmarks". *Journal of Advances in Modeling Earth Systems*, vol. 12 (2020)
-  |   https://doi.org/10.1029/2020MS002100
+Sauer, J., and D. Muñoz-Esparza. "The FastEddy resident-GPU accelerated large-eddy
+  simulation framework: model formulation, dynamical-core validation and performance
+  benchmarks". *Journal of Advances in Modeling Earth Systems*, vol. 12 (2020)
+  https://doi.org/10.1029/2020MS002100
 
 
 ## Documentation
@@ -36,4 +36,4 @@ FastEddy should be cited as follows:
 FastEddy tutorials for idealized cases are available in the [Tutorials](https://fasteddy-model.readthedocs.io/en/latest/Tutorials/index.html) section of the documentation.
 
 ## Publications
-FastEddy publications are available in the [Publications] section of the documentation.
+FastEddy publications are available in the [Publications](https://fasteddy-model.readthedocs.io/en/latest/publications.html) section of the documentation.
