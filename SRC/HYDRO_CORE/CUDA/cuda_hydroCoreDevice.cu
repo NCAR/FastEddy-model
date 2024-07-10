@@ -37,6 +37,7 @@
 #include "cuda_pressureDevice.cu" 
 #include "cuda_BCsDevice.cu"
 #include "cuda_rayleighDampingDevice.cu" 
+#include "cuda_auxScalarsDevice.cu" 
 #include "cuda_surfaceLayerDevice.cu"
 #include "cuda_sgsTurbDevice.cu"
 #include "cuda_molecularDiffDevice.cu" 

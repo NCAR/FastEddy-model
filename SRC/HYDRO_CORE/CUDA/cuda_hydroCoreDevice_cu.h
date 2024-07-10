@@ -48,6 +48,9 @@ extern float *hydroRhoInv_d;   //storage for 1.0/rho
 /*---RAYLEIGHDAMPING TERM*/
 #include <cuda_rayleighDampingDevice_cu.h>
 
+/*---AUXILIARY SCALARS*/
+#include <cuda_auxScalarsDevice_cu.h>
+
 /*---TURBULENCE*/
 #include <cuda_sgsTurbDevice_cu.h>
 
