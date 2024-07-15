@@ -284,7 +284,6 @@ Used to perform southern/northern device domain halo exchange for an arbitrary f
 */
 extern "C" int fecuda_SendRecvSouthNorth(float* sendFld_d, float* recvFld_d, int hydroBCs){
    int errorCode = FECUDA_SUCCESS;
-   int i;
 //#define NONOPTIMAL
 #if HALO_SNDRCV_FORM 
    MPI_Status status;
@@ -325,9 +324,10 @@ extern "C" int fecuda_SendRecvSouthNorth(float* sendFld_d, float* recvFld_d, int
      fecuda_UtilsUnpackHiSideHaloBuff<<<grid, tBlock>>>(recvFld_d,haloRecvBuff_d,Nxp,Nyp,Nzp,Nh);
      gpuErrchk( cudaGetLastError() );
      gpuErrchk( cudaDeviceSynchronize() );
-#endif
+#endif //end if-else NONOPTIMAL
    }else{
-     for(i=Nh; i<Nxp+Nh; i++){
+#ifdef NONOPTIMAL
+     for(int i=Nh; i<Nxp+Nh; i++){
        if(mpi_YloBndyRank != 1){
          errorCode=MPI_Isend(&sendFld_d[i*(Nyp+2*Nh)*(Nzp+2*Nh)+Nh*(Nzp+2*Nh)],
                              Nh*(Nzp+2*Nh),MPI_FLOAT,mpi_nbrYlo,789+i*mpi_rank_world,MPI_COMM_WORLD,&send_request);
@@ -338,14 +338,42 @@ extern "C" int fecuda_SendRecvSouthNorth(float* sendFld_d, float* recvFld_d, int
        } //if this is not a hi-boundary rank (implying no high neighbor)
        if(mpi_YloBndyRank != 1){
          errorCode=MPI_Wait(&send_request,&send_status);
-       } //if this is not a lower-boundary ranka (implying no low neighbor)
+       } //if this is not a lower-boundary rank (implying no low neighbor)
        if(mpi_YhiBndyRank != 1){ 
          errorCode=MPI_Wait(&recv_request,&recv_status);
        } //if this is not a hi-boundary rank (implying no high neighbor)
      }//end for i
+#else
+     //Pack the buffer
+     if(mpi_YloBndyRank != 1){
+       fecuda_UtilsPackLoSideHaloBuff<<<grid, tBlock>>>(sendFld_d,haloSendBuff_d,Nxp,Nyp,Nzp,Nh);
+     } //if this is not a lower-boundary rank (implying no low neighbor)
+     gpuErrchk( cudaGetLastError() );
+     gpuErrchk( cudaDeviceSynchronize() );
+     //Send/Recv the buffered halos 
+     if(mpi_YloBndyRank != 1){
+       errorCode=MPI_Isend(&haloSendBuff_d[0],
+                           (Nxp+2*Nh)*Nh*(Nzp+2*Nh),MPI_FLOAT,mpi_nbrYlo,789,MPI_COMM_WORLD,&send_request);
+     } //if this is not a lower-boundary rank (implying no low neighbor)
+     if(mpi_YhiBndyRank != 1){ 
+       errorCode=MPI_Irecv(&haloRecvBuff_d[0],
+                           (Nxp+2*Nh)*Nh*(Nzp+2*Nh),MPI_FLOAT,mpi_nbrYhi,789,MPI_COMM_WORLD,&recv_request);
+     } //if this is not a hi-boundary rank (implying no high neighbor)
+     if(mpi_YloBndyRank != 1){
+       errorCode=MPI_Wait(&send_request,&send_status);
+     } //if this is not a lower-boundary rank (implying no low neighbor)
+     if(mpi_YhiBndyRank != 1){ 
+       errorCode=MPI_Wait(&recv_request,&recv_status);
+     } //if this is not a hi-boundary rank (implying no high neighbor)
+     //Unpack the buffer
+     if(mpi_YhiBndyRank != 1){ 
+       fecuda_UtilsUnpackHiSideHaloBuff<<<grid, tBlock>>>(recvFld_d,haloRecvBuff_d,Nxp,Nyp,Nzp,Nh);
+     } //if this is not a hi-boundary rank (implying no high neighbor)
+     gpuErrchk( cudaGetLastError() );
+     gpuErrchk( cudaDeviceSynchronize() );
+#endif //end if-else NONOPTIMAL
    } //end if not periodic!
-#endif
-
+#endif //end if-else HALO_SNDRCV_FORM
    return(errorCode);
 }//end fecuda_SendRecvSouthNorth()
 
@@ -354,7 +382,6 @@ Used to perform northern/southern device domain halo exchange for an arbitrary f
 */
 extern "C" int fecuda_SendRecvNorthSouth(float* sendFld_d, float* recvFld_d, int hydroBCs){
    int errorCode = FECUDA_SUCCESS;
-   int i;
 #if HALO_SNDRCV_FORM 
    MPI_Status status;
    /*South-send to North-recv*/
@@ -370,7 +397,7 @@ extern "C" int fecuda_SendRecvNorthSouth(float* sendFld_d, float* recvFld_d, int
    MPI_Request recv_request;
    if(hydroBCs==2){ //if periodic, everyone exchange
 #ifdef NONOPTIMAL
-     for(i=Nh; i<Nxp+Nh; i++){
+     for(int i=Nh; i<Nxp+Nh; i++){
        errorCode=MPI_Isend(&sendFld_d[i*(Nyp+2*Nh)*(Nzp+2*Nh)+(Nyp)*(Nzp+2*Nh)],
                            Nh*(Nzp+2*Nh),MPI_FLOAT,mpi_nbrYhi,987,MPI_COMM_WORLD,&send_request);
        errorCode=MPI_Irecv(&recvFld_d[i*(Nyp+2*Nh)*(Nzp+2*Nh)],
@@ -394,17 +421,18 @@ extern "C" int fecuda_SendRecvNorthSouth(float* sendFld_d, float* recvFld_d, int
      fecuda_UtilsUnpackLoSideHaloBuff<<<grid, tBlock>>>(recvFld_d,haloRecvBuff_d,Nxp,Nyp,Nzp,Nh);
      gpuErrchk( cudaGetLastError() );
      gpuErrchk( cudaDeviceSynchronize() );
-#endif
+#endif //end if-else NONOPTIMAL
    }else{
+#ifdef NONOPTIMAL
      for(i=Nh; i<Nxp+Nh; i++){
        if(mpi_YhiBndyRank != 1){
          errorCode=MPI_Isend(&sendFld_d[i*(Nyp+2*Nh)*(Nzp+2*Nh)+(Nyp)*(Nzp+2*Nh)],
                              Nh*(Nzp+2*Nh),MPI_FLOAT,mpi_nbrYhi,987+i*mpi_rank_world,MPI_COMM_WORLD,&send_request);
-       } //if this is not a lower-boundary rank (implying no low neighbor)
+       } //if this is not a hi-boundary rank (implying no ihi neighbor)
        if(mpi_YloBndyRank != 1){
          errorCode=MPI_Irecv(&recvFld_d[i*(Nyp+2*Nh)*(Nzp+2*Nh)],
                              Nh*(Nzp+2*Nh),MPI_FLOAT,mpi_nbrYlo,987+i*mpi_nbrYlo,MPI_COMM_WORLD,&recv_request);
-       } //if this is not a hi-boundary rank (implying no high neighbor)
+       } //if this is not a lower-boundary rank (implying no low neighbor)
        if(mpi_YhiBndyRank != 1){
          errorCode=MPI_Wait(&send_request,&send_status);
        } //if this is not a hi-boundary rank (implying no high neighbor)
@@ -412,8 +440,37 @@ extern "C" int fecuda_SendRecvNorthSouth(float* sendFld_d, float* recvFld_d, int
          errorCode=MPI_Wait(&recv_request,&recv_status);
        } //if this is not a lower-boundary rank (implying no low neighbor)
      }//end for i
+#else
+     //Pack the buffer
+     if(mpi_YhiBndyRank != 1){
+       fecuda_UtilsPackHiSideHaloBuff<<<grid, tBlock>>>(sendFld_d,haloSendBuff_d,Nxp,Nyp,Nzp,Nh);
+     } //if this is not a lower-boundary rank (implying no low neighbor)
+     gpuErrchk( cudaGetLastError() );
+     gpuErrchk( cudaDeviceSynchronize() );
+     //Send/Recv the buffered halos
+     if(mpi_YhiBndyRank != 1){
+       errorCode=MPI_Isend(&haloSendBuff_d[0],
+                           (Nxp+2*Nh)*Nh*(Nzp+2*Nh),MPI_FLOAT,mpi_nbrYhi,987,MPI_COMM_WORLD,&send_request);
+     } //if this is not a hi-boundary rank (implying no ihi neighbor)
+     if(mpi_YloBndyRank != 1){
+       errorCode=MPI_Irecv(&haloRecvBuff_d[0],
+                           (Nxp+2*Nh)*Nh*(Nzp+2*Nh),MPI_FLOAT,mpi_nbrYlo,987,MPI_COMM_WORLD,&recv_request);
+     } //if this is not a lower-boundary rank (implying no low neighbor)
+     if(mpi_YhiBndyRank != 1){
+       errorCode=MPI_Wait(&send_request,&send_status);
+     } //if this is not a hi-boundary rank (implying no ihi neighbor)
+     if(mpi_YloBndyRank != 1){
+       errorCode=MPI_Wait(&recv_request,&recv_status);
+     } //if this is not a lower-boundary rank (implying no low neighbor)
+     //Unpack the buffer
+     if(mpi_YloBndyRank != 1){
+       fecuda_UtilsUnpackLoSideHaloBuff<<<grid, tBlock>>>(recvFld_d,haloRecvBuff_d,Nxp,Nyp,Nzp,Nh);
+     } //if this is not a lower-boundary rank (implying no low neighbor)
+     gpuErrchk( cudaGetLastError() );
+     gpuErrchk( cudaDeviceSynchronize() );
+#endif //end if-else NONOPTIMAL
    } //end if not periodic!   
-#endif
+#endif //end if-else HALO_SNDRCV_FORM
    return(errorCode);
 }//end fecuda_SendRecvNorthSouth()
 
