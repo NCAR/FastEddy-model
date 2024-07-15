@@ -209,7 +209,6 @@ float *srcAuxScLocation;      /*Cartesian coordinate tuple 'center' of the sourc
 float *srcAuxScGeometryBounds;      /*Cartesian coordinate tuple 'center' of the source*/
 int *srcAuxScMassSpecType; /*Mass specification type 0 = strict mass in kg, 1 = mass source rate in kg/s,  */
 float *srcAuxScMassSpecValue; /*Mass specification value in kg or kg/s given by srcAuxScMassSpecType 0 or 1 */
-int srcAuxScStartIteration = -1; /*Source start time in iterations from simulation start under prescribed dt */
 
 /*---BASE_STATE*/
 int stabilityScheme;  /*Base-State stability setup scheme, (0 = none, 1 = profile, 2 = linear in theta)*/
@@ -1865,7 +1864,7 @@ int srcAuxScConstructor(){
 
   //Root-rank should read the netcdf turbineSpecsFile
   if(mpi_rank_world == 0){
-//#define DEBUG_SASCONSTRUCTOR
+#define DEBUG_SASCONSTRUCTOR
 #ifdef DEBUG_SASCONSTRUCTOR
     printf("Attempting to open srcAuxScFile = %s\n",srcAuxScFile);
     fflush(stdout);
@@ -2002,7 +2001,7 @@ int srcAuxScConstructor(){
 #ifdef DEBUG_SASCONSTRUCTOR
   int iRank;
   int iFld;
-  int i,j;
+  int i;
   float *fldPtr;
   int *intfldPtr;
   for(iFld = 0; iFld < 3; iFld++){
@@ -2088,38 +2087,6 @@ int srcAuxScConstructor(){
 #endif
   return(errorCode);
 }//end srcAuxScConstructor()
-
-/*----->>>>> int hydro_coreSetAuxScStartIteration();   ----------------------------------------------------------------------
-* This function sets a start timestep from a srcAuxScalar specification of an emission src start time and the model timestep 
-*/
-int hydro_coreSetAuxScStartIteration(float dt, int frqOutput, float simTime){
-   int errorCode = HYDRO_CORE_SUCCESS;
-   int iFld;
-   float minStartTime;
-   float tmpDuration;
-
-   minStartTime=10.0e6;
-   tmpDuration = 10.0e6;
-
-   if(NhydroAuxScalars > 0){
-      for(iFld=0; iFld < NhydroAuxScalars; iFld++){
-        if(srcAuxScStartSeconds[iFld]<minStartTime){
-          minStartTime = srcAuxScStartSeconds[iFld];
-          tmpDuration = srcAuxScDurationSeconds[iFld];
-        }
-      }//end for(iFld...
-      if(simTime<minStartTime){
-         srcAuxScStartIteration = (int)(floor(((minStartTime-simTime)-frqOutput*dt)/dt));
-      }else if(simTime<(minStartTime+tmpDuration)){
-         srcAuxScStartIteration = 0;
-      }
-   }
-   //printf("hydro_coreSetAuxScStartIteration: srcAuxScStartIteration = %d.\n", srcAuxScStartIteration);
-   //fflush(stdout);
-   //MPI_Barrier(MPI_COMM_WORLD); 
-
-   return(errorCode);
-}//end hydro_coreSetAuxScStartIteration()
 
 /*----->>>>> int hydro_coreCleanup();  ----------------------------------------------------------------------
 * Used to free all malloced memory by the HYDRO_CORE module.

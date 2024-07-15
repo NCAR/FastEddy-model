@@ -200,7 +200,6 @@ extern float *srcAuxScLocation;      /*Cartesian coordinate tuple 'center' of th
 extern float *srcAuxScGeometryBounds;      /*Cartesian coordinate tuple 'center' of the source*/
 extern int *srcAuxScMassSpecType; /*Mass specification type 0 = strict mass in kg, 1 = mass source rate in kg/s,  */
 extern float *srcAuxScMassSpecValue; /*Mass specification value in kg or kg/s given by srcAuxScMassSpecType 0 or 1 */
-extern int srcAuxScStartIteration; /*Source start time in iterations from simulation start under prescribed dt */
  
 /*---BASE_STATE*/
 extern int stabilityScheme;  /*Base-State stability setup scheme, (0 = none, 1 = profile, 2 = linear in theta)*/
@@ -274,11 +273,6 @@ int hydro_coreFldStateLogEntry(float * Fld, int fluxConservativeFlag);
 * the inputs file.
 */
 int srcAuxScConstructor();
-
-/*----->>>>> int hydro_coreSetAuxScStartIteration();   ----------------------------------------------------------------------
-* This function sets a start timestep from a srcAuxScalar specification of an emission src start time and the model timestep 
-*/
-int hydro_coreSetAuxScStartIteration(float dt, int frqOutput, float simTime);
 
 /*----->>>>> int hydro_coreCleanup();     ----------------------------------------------------------------
 * Used to free all malloced memory by the HYDRO_CORE module.
