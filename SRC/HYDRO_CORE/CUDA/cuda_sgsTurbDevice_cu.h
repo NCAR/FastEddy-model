@@ -118,4 +118,21 @@ __device__ void cudaDevice_hydroCoreCalcTurbMixing(float* uFrhs, float* vFrhs, f
 __device__ void cudaDevice_hydroCoreCalcTurbMixingScalar(float* mFrhs, float* M1, float* M2, float* M3,
                                                          float* J31_d, float* J32_d, float* J33_d);
 
+/*----->>>>> __global__ void cudaDevice_TausScalar()  ---------------------------------------------
+* CUDA kernel for calculating SGS-Tau fields (intermediate calculation stress tensors) for a given "scalar" field.
+*/ 
+__global__ void cudaDevice_TausScalar(int iFld, float* hydroRhoInv_d, float* hydroFlds_d, float* hydroKappaM_d, float* sgstke_ls_d,
+                                      float* Scalars_d, float* ScalarsTauFlds_d,
+                                      float* J11_d, float* J12_d, float* J13_d,
+                                      float* J21_d, float* J22_d, float* J23_d,
+                                      float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
+
+/*----->>>>> __global__ void cudaDevice_SGSforcing() ---------------------------------------------
+* CUDA kernel for calculating SGS-Forcing (divergence of SGS-Tau fields)  for a given "scalar" field.
+*/ 
+__global__ void cudaDevice_SGSforcing(int iFld, float* ScalarsTauFlds_d, float* ScalarsFrhs_d,
+                                      float* J11_d, float* J12_d, float* J13_d,
+                                      float* J21_d, float* J22_d, float* J23_d,
+                                      float* J31_d, float* J32_d, float* J33_d);
+
 #endif // _SGSTURB_CUDADEV_CU_H

@@ -545,3 +545,60 @@ __device__ void cudaDevice_hydroCoreCalcTurbMixingScalar(float* mFrhs, float* M1
    }//end if in the range of non-halo cells
 
 } //end cudaDevice_hydroCoreCalcTurbMixingScalar()
+
+/*----->>>>> __global__ void cudaDevice_TausScalar()  ---------------------------------------------
+* CUDA kernel for calculating SGS-Tau fields (intermediate calculation stress tensors) for a given "scalar" field.
+*/
+__global__ void cudaDevice_TausScalar(int iFld, float* hydroRhoInv_d, float* hydroFlds_d, float* hydroKappaM_d, float* sgstke_ls_d,
+                                      float* Scalars_d, float* ScalarsTauFlds_d,
+                                      float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d){
+   int i,j,k;
+   int fldStride;
+
+   /*Establish necessary indices for spatial locality*/
+   i = (blockIdx.x)*blockDim.x + threadIdx.x;
+   j = (blockIdx.y)*blockDim.y + threadIdx.y;
+   k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+   fldStride = (Nx_d+2*Nh_d)*(Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+
+   if((i >= iMin_d)&&(i < iMax_d) &&
+      (j >= jMin_d)&&(j < jMax_d) &&
+      (k >= kMin_d)&&(k < kMax_d) ){
+
+      cudaDevice_GradScalarToFaces(&Scalars_d[fldStride*iFld], &hydroRhoInv_d[0], &ScalarsTauFlds_d[fldStride*0],
+                                   &ScalarsTauFlds_d[fldStride*1], &ScalarsTauFlds_d[fldStride*2],
+                                   &J31_d[0], &J32_d[0], &J33_d[0]);
+      cudaDevice_hydroCoreCalcTausScalar(&ScalarsTauFlds_d[fldStride*0], &ScalarsTauFlds_d[fldStride*1], &ScalarsTauFlds_d[fldStride*2],
+                                         &hydroFlds_d[fldStride*RHO_INDX], &hydroKappaM_d[0], &sgstke_ls_d[0], &D_Jac_d[0]); // calculate tau_sj
+
+   }//end if in the range of non-halo cells
+
+} // end cudaDevice_TausScalar()
+
+
+/*----->>>>> __global__ void cudaDevice_SGSforcing() ---------------------------------------------
+* CUDA kernel for calculating SGS-Forcing (divergence of SGS-Tau fields)  for a given "scalar" field.
+*/
+__global__ void cudaDevice_SGSforcing(int iFld, float* ScalarsTauFlds_d, float* ScalarsFrhs_d,
+                                      float* J31_d, float* J32_d, float* J33_d){
+   int i,j,k;
+   int fldStride;
+
+   /*Establish necessary indices for spatial locality*/
+   i = (blockIdx.x)*blockDim.x + threadIdx.x;
+   j = (blockIdx.y)*blockDim.y + threadIdx.y;
+   k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+   fldStride = (Nx_d+2*Nh_d)*(Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+
+   if((i >= iMin_d)&&(i < iMax_d) &&
+      (j >= jMin_d)&&(j < jMax_d) &&
+      (k >= kMin_d)&&(k < kMax_d) ){
+
+      cudaDevice_hydroCoreCalcTurbMixingScalar(&ScalarsFrhs_d[fldStride*iFld], &ScalarsTauFlds_d[fldStride*0],
+                                               &ScalarsTauFlds_d[fldStride*1], &ScalarsTauFlds_d[fldStride*2],
+                                               &J31_d[0], &J32_d[0], &J33_d[0]);
+
+   }//end if in the range of non-halo cells
+} // end cudaDevice_SGSforcing()

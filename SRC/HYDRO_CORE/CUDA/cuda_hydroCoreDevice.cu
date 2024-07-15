@@ -129,6 +129,41 @@ extern "C" int cuda_hydroCoreDeviceSetup(){
    fecuda_DeviceMalloc(Nelems*Nhydro*sizeof(float), &hydroFlds_d); /*Prognostic variable fields*/ 
    fecuda_DeviceMalloc(Nelems*Nhydro*sizeof(float), &hydroFldsFrhs_d); /*Prognostic variable field Frhs(s)*/ 
    fecuda_DeviceMalloc(Nelems*sizeof(float), &hydroRhoInv_d); 
+   
+   /*AUXILIARY SCALARS*/
+   if(NhydroAuxScalars > 0){
+     errorCode = cuda_auxScalarsDeviceSetup();
+   }//end if NhydroAuxScalars > 0
+
+   /*PRESSURE*/
+   if(pgfSelector > 0){
+     errorCode = cuda_pressureDeviceSetup();
+   }//end if pgfSelector > 0
+
+   /*BASESTATE*/
+   errorCode = cuda_BaseStateDeviceSetup();
+
+   /*SGSTURB*/
+   if(turbulenceSelector > 0){
+     errorCode = cuda_sgsTurbDeviceSetup();
+     /* SGSTKE */
+     if (TKESelector > 0) { 
+       errorCode = cuda_sgstkeDeviceSetup();
+     } // end if TKESelector > 0
+   }//end if turbulenceSelector > 0
+
+   if (diffusionSelector > 0) { 
+     errorCode = cuda_molecularDiffDeviceSetup();
+   }
+   if (surflayerSelector > 0) { 
+       errorCode = cuda_surfaceLayerDeviceSetup();
+   }
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
+
+   /* CANOPY */
+   if (canopySelector > 0){
+     errorCode = cuda_canopyDeviceSetup();
+   }
 
    /*ADVECTION*/
    if(advectionSelector >= 0){
@@ -184,6 +219,7 @@ extern "C" int cuda_hydroCoreDeviceSetup(){
    gpuErrchk( cudaDeviceSynchronize() );
    MPI_Barrier(MPI_COMM_WORLD);
    printf("cuda_hydroCoreDeviceSetup() complete.\n");
+   MPI_Barrier(MPI_COMM_WORLD);
 
 
    /* Done */
@@ -283,6 +319,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    double mpi_t1, mpi_t2, mpi_t3, mpi_t4;
    mpi_t1 = MPI_Wtime();    //Mark the walltime to measure duration of initializations.
 #endif
+   //Hydro-Core prognostic fields
    for(iFld=0; iFld < Nhydro; iFld++){   
      if(numProcsX>1){
        errorCode = fecuda_SendRecvWestEast(&hydroFlds_d[iFld*fldStride], &hydroFlds_d[iFld*fldStride],hydroBCs);
@@ -294,7 +331,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
      }//if multi-rank in Y-dir
    } //end for iFld
    gpuErrchk( cudaDeviceSynchronize() );
-
+   //Subgrid turbulence
    if((turbulenceSelector>0)&&(TKESelector>0)){
      for(iFld=0; iFld < TKESelector; iFld++){
        if(numProcsX>1){
@@ -308,7 +345,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
      }//end for iFld
      gpuErrchk( cudaDeviceSynchronize() );
    }
-
+   //Moist dynamics fields
    if((moistureSelector>0)&&(moistureNvars>0)){
      for(iFld=0; iFld < moistureNvars; iFld++){
        if(numProcsX>1){
@@ -322,6 +359,20 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
      }//end for iFld
      gpuErrchk( cudaDeviceSynchronize() );
    }
+   //Auxiliary scalar fields
+   if(NhydroAuxScalars>0){
+     for(iFld=0; iFld < NhydroAuxScalars; iFld++){
+       if(numProcsX>1){
+         errorCode = fecuda_SendRecvWestEast(&hydroAuxScalars_d[iFld*fldStride], &hydroAuxScalars_d[iFld*fldStride],0); //zero-value for hydroBCs 
+         errorCode = fecuda_SendRecvEastWest(&hydroAuxScalars_d[iFld*fldStride], &hydroAuxScalars_d[iFld*fldStride],0); // yields non-periodic (flushes out)
+       }//if multi-rank in X-dir
+       if(numProcsY>1){
+         errorCode = fecuda_SendRecvSouthNorth(&hydroAuxScalars_d[iFld*fldStride], &hydroAuxScalars_d[iFld*fldStride],0); //zero-value for hydroBCs 
+         errorCode = fecuda_SendRecvNorthSouth(&hydroAuxScalars_d[iFld*fldStride], &hydroAuxScalars_d[iFld*fldStride],0); // yields non-periodic (flushes out)
+       }//if multi-rank in Y-dir
+     } //end for iFld
+     gpuErrchk( cudaDeviceSynchronize() );
+   } //endif NhydroAuxScalars > 0
 
 #ifdef VERBOSE_HALO
    MPI_Barrier(MPI_COMM_WORLD);
@@ -336,7 +387,8 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
                                                           hydroBaseStateFlds_d,  
                                                           tskin_d, qskin_d,
                                                           sgstkeScalars_d,sgstkeScalarsFrhs_d, hydroKappaM_d,
-                                                          moistScalars_d, moistScalarsFrhs_d, zPos_d);
+                                                          moistScalars_d, moistScalarsFrhs_d,
+                                                          hydroAuxScalars_d, hydroAuxScalarsFrhs_d, zPos_d);
    gpuErrchk( cudaGetLastError() );
    gpuErrchk( cudaDeviceSynchronize() );
    cudaDevice_hydroCoreUnitTestCommenceRhoInvPresPert<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, 
@@ -372,7 +424,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    gpuErrchk( cudaPeekAtLastError() ); //Check for errors in the cudaMemCpy calls
    gpuErrchk( cudaDeviceSynchronize() );
 
-   /*Calculate the Frhs contributions for the advection and buoyancy terms*/
+   /*Calculate the Frhs contributions for the advection, buoyancy, and SGS-mixing terms on core+TKE+moistScalars fields*/
    createAndStartEvent(&startE, &stopE);
 #endif
    cudaDevice_hydroCoreUnitTestComplete<<<grid, tBlock>>>(simTime, simTime_it, dt, timeStage, numRKstages, hydroFlds_d, hydroFldsFrhs_d,
@@ -380,6 +432,35 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
                                                           sgstkeScalars_d, sgstkeScalarsFrhs_d, moistScalars_d, moistScalarsFrhs_d, moistTauFlds_d,
                                                           J31_d, J32_d, J33_d, invD_Jac_d, zPos_d);
 
+   /*Calculate the Frhs contributions for the advection and SGS-mixing terms on Auxiliary scalar fields*/
+   if(NhydroAuxScalars > 0){
+     cudaDevice_hydroCoreUnitTestCompleteAuxScalars<<<grid, tBlock>>>(simTime, hydroFlds_d,
+                                                          hydroAuxScalars_d, hydroAuxScalarsFrhs_d,
+                                                          hydroFaceVels_d,
+                                                          xPos_d, yPos_d, zPos_d, topoPos_d,
+                                                          J33_d, D_Jac_d, invD_Jac_d);
+     gpuErrchk( cudaGetLastError() );
+     gpuErrchk( cudaDeviceSynchronize() );
+     // SGS turbulence term to AuxScalars //
+     if ((physics_oneRKonly==0) || (timeStage==numRKstages)){
+       if ((turbulenceSelector > 0) && (AuxScSGSturb > 0)){
+         for (iFld = 0; iFld < NhydroAuxScalars; iFld++){
+            cudaDevice_TausScalar<<<grid, tBlock>>>(iFld, hydroRhoInv_d, hydroFlds_d, hydroKappaM_d, sgstke_ls_d,
+                                                    hydroAuxScalars_d, AuxScalarsTauFlds_d,
+                                                    J31_d, J32_d, J33_d, D_Jac_d); // compute taus
+            gpuErrchk( cudaGetLastError() );
+            gpuErrchk( cudaDeviceSynchronize() );
+
+            cudaDevice_SGSforcing<<<grid, tBlock>>>(iFld, AuxScalarsTauFlds_d, hydroAuxScalarsFrhs_d,
+                                                    J31_d, J32_d, J33_d); // compute/add SGS forcing
+            gpuErrchk( cudaGetLastError() );
+            gpuErrchk( cudaDeviceSynchronize() );
+         } //end for iFld
+       } // endif SGS turbulence is on
+     } //end if either compute at all RK stages, or last RK stage
+   } //end if NhydroAuxScalars > 0
+
+   //Carry out the following section of calculations only if either explcitly requested at every RK stage (physics_oneRKonly==0), or at the last RK stage (timeStage==numRKstages)
    if ((physics_oneRKonly==0) || (timeStage==numRKstages)) {
      if ((turbulenceSelector >0) && (TKESelector > 0)){
        cudaDevice_hydroCoreUnitTestCompleteSGSTKE<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, hydroTauFlds_d,
@@ -390,7 +471,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
          cudaDevice_hydroCoreUnitTestCompleteCanopy<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, canopy_lad_d, hydroFldsFrhs_d);
        }
      } // end if (turbSelector >0) && (TKESelector > 0)
-
+     //Moist species microphysics forcings 
      if ((moistureSelector > 0)&&(moistureCond > 0)&&(moistureNvars > 1)){ // (moisture condensation forcing)
        temp_freq = roundf(fmaxf(moistureMPcallTscale,dt)/dt); // ensure minimum is time step
        mp_update = simTime_it%temp_freq;
@@ -399,12 +480,14 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
                                                                     hydroRhoInv_d, hydroPres_d, fcond_d, dt, hydroBaseStateFlds_d);
        }
      }
-
+     //Molecular diffusion
      if (diffusionSelector == 1){  
        cudaDevice_hydroCoreUnitTestCompleteMolecularDiffusion<<<grid, tBlock>>>(hydroFlds_d, hydroFldsFrhs_d,
                                                                               hydroNuGradXFlds_d,hydroNuGradYFlds_d,hydroNuGradZFlds_d,
                                                                               J31_d, J32_d, J33_d, D_Jac_d, invD_Jac_d); // call to div of nugrad
      } // endif diffusionSelector == 1
+     //Auxiliary scalar  mixing (diffusion) from SGS-turbulence
+      
 
    } // endif ((physics_oneRKonly==0) || (timeStage==numRKstages))
 
@@ -420,15 +503,16 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 
    gpuErrchk( cudaGetLastError() );
    gpuErrchk( cudaDeviceSynchronize() );
-#ifdef TIMERS_LEVEL2
-   printf("cuda_hydroCoreUnitTestComplete()  Kernel execution time (ms): %12.8f\n", elapsedTime);
-#endif
-
+   //If included, apply 6th order filters as the final Frhs contribution only after all other Frhs components have been accumulated
    if ((filterSelector > 0) && ((physics_oneRKonly==0) || (timeStage==numRKstages))){ // explicit filters
      cudaDevice_hydroCoreUnitTestCompleteFilters<<<grid, tBlock>>>(hydroFlds_d,hydroFldsFrhs_d,dt,
                                                                    moistScalars_d,moistScalarsFrhs_d,hydroPres_d,
                                                                    hydroBaseStatePres_d,timeStage);
    }
+
+#ifdef TIMERS_LEVEL2
+   printf("cuda_hydroCoreUnitTestComplete()  Kernel execution time (ms): %12.8f\n", elapsedTime);
+#endif
 
 #ifdef TIMERS_LEVEL1
    stopSynchReportDestroyEvent(&startE, &stopE, &elapsedTime);
@@ -441,13 +525,14 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 }//end cuda_hydroCoreDeviceBuildFrhs()
 
 /*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCommence(); ---------------------------------------
-* This is the gloabl-entry kernel routine iused by the HYDRO_CORE module
+* This is the gloabl-entry kernel routine used by the HYDRO_CORE module
 */
 __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydroFlds_d, float* hydroFldsFrhs_d, 
                                                      float* hydroBaseStateFlds_d, 
                                                      float* tskin_d, float* qskin_d,
                                                      float* sgstkeScalars_d, float* sgstkeScalarsFrhs_d, float* Km_d,
-                                                     float* moistScalars_d, float* moistScalarsFrhs_d, float* zPos_d){
+                                                     float* moistScalars_d, float* moistScalarsFrhs_d, 
+                                                     float* hydroAuxScalars_d, float* hydroAuxScalarsFrhs_d, float* zPos_d){
    int iFld;
    int fldStride;
    float* fld;
@@ -521,6 +606,13 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
       fldFrhs = &hydroFldsFrhs_d[fldStride*iFld];
       cudaDevice_setToZero(fldFrhs);
    }//for iFld
+
+   // Re-initialization to zero of Frhs for for Auxiliary Scalar equations
+   for(iFld=0; iFld < NhydroAuxScalars_d; iFld++){
+      fldFrhs = &hydroAuxScalarsFrhs_d[fldStride*iFld];
+      cudaDevice_setToZero(fldFrhs);
+   }//for iFld
+
    // BCs and re-initializations for SGSTKE equations
    if ((turbulenceSelector_d > 0)&&(TKESelector_d == 0)){
      fldFrhs = &Km_d[fldStride*0];

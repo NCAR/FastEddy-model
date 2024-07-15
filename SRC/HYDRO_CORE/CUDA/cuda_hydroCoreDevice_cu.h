@@ -122,7 +122,8 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
                                                      float*  hydroBaseStateFlds_d,
                                                      float* tskin_d, float* qskin_d,
                                                      float* sgstkeScalars_d, float* sgstkeScalarsFrhs_d, float* Km_d, 
-                                                     float* moistScalars_d, float* moistScalarsFrhs_d, float* zPos_d);
+                                                     float* moistScalars_d, float* moistScalarsFrhs_d, 
+                                                     float* hydroAuxScalars_d, float* hydroAuxScalarsFrhs_d, float* zPos_d);
 __global__ void cudaDevice_hydroCoreUnitTestCommenceRhoInvPresPert(float* hydroFlds_d, float* hydroRhoInv_d,
                                                      float* hydroBaseStateFlds_d,
                                                      float* hydroPres_d, float* hydroBaseStatePres_d,

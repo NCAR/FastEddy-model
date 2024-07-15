@@ -117,14 +117,16 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteAuxScalars(float simTime, fl
          } else { // defaults to 1st-order upwinding
            cudaDevice_UpstreamDivAdvFlux(fld, fldFrhs, u_cf, v_cf, w_cf, invD_Jac_d);
          }
-         /*printf("%d/%d cudaDevice_hydroCoreUnitTestCompleteAuxScalars(): NhydroAuxScalars_d = %d, simTime = %f, srcAuxScStartSeconds_d[iFld] = %f, srcAuxScDurationSeconds_d[iFld] = %f.\n",
-                mpi_rank_world_d,mpi_size_world_d,NhydroAuxScalars_d,simTime,srcAuxScStartSeconds_d[iFld],srcAuxScDurationSeconds_d[iFld]);*/
-	 //
+#ifdef CUDA_DEBUG
+	 if(i == iMin_d && j == jMin_d && k == kMin_d){
+           printf("%d/%d cudaDevice_hydroCoreUnitTestCompleteAuxScalars(): NhydroAuxScalars_d = %d, iFld = %d, simTime = %f, srcAuxScStartSeconds_d[iFld] = %f, srcAuxScDurationSeconds_d[iFld] = %f.\n\t\t srcAuxScLocation_d[iFld*3+0] = %f, srcAuxScLocation_d[iFld*3+1] = %f, srcAuxScLocation_d[iFld*3+2] = %f.\n \t\t\t srcAuxScMassSpecValue_d[iFld] = %f\n",
+                mpi_rank_world_d,mpi_size_world_d,NhydroAuxScalars_d,iFld, simTime,srcAuxScStartSeconds_d[iFld],srcAuxScDurationSeconds_d[iFld],
+		srcAuxScLocation_d[iFld*3+0], srcAuxScLocation_d[iFld*3+1], srcAuxScLocation_d[iFld*3+2], srcAuxScMassSpecValue_d[iFld]);
+	 }
+#endif
          if((simTime >= srcAuxScStartSeconds_d[iFld])&&(simTime <= (srcAuxScStartSeconds_d[iFld] + srcAuxScDurationSeconds_d[iFld]) )){
            cudaDevice_calcAuxScalarSource(iFld, fldFrhs, &hydroFlds[fldStride*RHO_INDX],
                                           xPos_d, yPos_d, zPos_d, topoPos_d, J33_d, D_Jac_d);
-           /*printf("%d/%d cudaDevice_hydroCoreUnitTestCompleteAuxScalars(): Call to cudaDevice_calcAuxScalarSource() on iFld = %d complete.\n",
-                mpi_rank_world_d,mpi_size_world_d,iFld);*/
          } //end if simTime is within a source release time window.
       }//for iFld
    }//end if in the range of non-halo cells
