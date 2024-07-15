@@ -26,6 +26,7 @@
 __global__ void cudaDevice_timeIntegrationCommenceRK3_WS2002(int Nphi, float* phi_Flds, float* phi_Frhs,
                                                              int Nsgstke, float* sgstkeSc_Flds, float* sgstkeSc_Frhs,
                                                              int Nmoist, float* moistSc_Flds, float* moistSc_Frhs,
+							     int NauxSc, float* AuxSc_Flds, float* AuxSc_Frhs,
                                                              float* timeFlds0, int RKstage);
 
 /*----->>>>> __device__ void  cudaDevice_RungeKutta3WS02Stage1();  --------------------------------------------------

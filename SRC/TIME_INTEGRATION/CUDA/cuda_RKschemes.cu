@@ -21,6 +21,7 @@
 __global__ void cudaDevice_timeIntegrationCommenceRK3_WS2002(int Nphi, float* phi_Flds, float* phi_Frhs,
                                                              int Nsgstke, float* sgstkeSc_Flds, float* sgstkeSc_Frhs,
                                                              int Nmoist, float* moistSc_Flds, float* moistSc_Frhs,
+							     int NauxSc, float* AuxSc_Flds, float* AuxSc_Frhs,
                                                              float* timeFlds0, int RKstage){
    int i,j,k;
    int ijk;
@@ -100,6 +101,25 @@ __global__ void cudaDevice_timeIntegrationCommenceRK3_WS2002(int Nphi, float* ph
          }//end switch RKstage
          cudaDevice_PositiveDef(&moistSc_Flds[iFld*fldStride],0.0); // enforce positive definite moisture fields
       } // end iFld < Nsgstke
+
+      for(iFld=0; iFld < NauxSc; iFld++){
+         currFld = &AuxSc_Flds[iFld*fldStride];
+         currFrhs = &AuxSc_Frhs[iFld*fldStride];
+         currFld0 = &timeFlds0[(Nphi+iFld)*fldStride];
+         ijk =     i  *iStride +   j  *jStride +   k  *kStride;
+         switch(RKstage){    
+          case 0:
+            cudaDevice_RungeKutta3WS02Stage1(&currFld[ijk], &currFrhs[ijk], &currFld0[ijk]);
+            break;
+          case 1:
+            cudaDevice_RungeKutta3WS02Stage2(&currFld[ijk], &currFrhs[ijk], &currFld0[ijk]);
+            break;
+          case 2:
+            cudaDevice_RungeKutta3WS02Stage3(&currFld[ijk], &currFrhs[ijk], &currFld0[ijk]);
+            break;
+         }//end switch RKstage
+         cudaDevice_PositiveDef(&AuxSc_Flds[iFld*fldStride],0.0); // Enforce positive definite Aux Scalars 
+      } //end for iFld
 
     /* End the timestepping loop */
 

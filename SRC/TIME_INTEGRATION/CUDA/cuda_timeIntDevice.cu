@@ -71,7 +71,7 @@ extern "C" int cuda_timeIntDeviceSetup(){
    Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh); 
    /* Allocate the TIME_INTEGRATION arrays */
    /*TIME_INTEGRATION/CUDA internal device arrays*/
-   NtimeTotVars = 5 + TKESelector*turbulenceSelector + moistureNvars*moistureSelector; 
+   NtimeTotVars = 5 + TKESelector*turbulenceSelector + moistureNvars*moistureSelector + NhydroAuxScalars; 
    fecuda_DeviceMalloc(NtimeTotVars*Nelems*sizeof(float), &timeFlds0_d);
    
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
@@ -138,6 +138,7 @@ extern "C" int cuda_timeIntDeviceCommence(int it){
           cudaDevice_timeIntegrationCommenceRK3_WS2002<<<grid, tBlock>>>(Nhydro, hydroFlds_d, hydroFldsFrhs_d,
                                                 TKESelector*turbulenceSelector, sgstkeScalars_d, sgstkeScalarsFrhs_d,
                                                 moistureNvars*moistureSelector, moistScalars_d, moistScalarsFrhs_d,
+						NhydroAuxScalars, hydroAuxScalars_d, hydroAuxScalarsFrhs_d,
                                                 timeFlds0_d, RKstage);
           gpuErrchk( cudaGetLastError() );
 #ifdef TIMERS_LEVEL1
@@ -146,8 +147,8 @@ extern "C" int cuda_timeIntDeviceCommence(int it){
 #endif
        } //end for RKstage 
      } //end if(timeMethod == 0){...
-     simTime = simTime + dt;   //Increment the master simulation time*/
-     simTime_it = simTime_it + 1;   //Increment the master simulation time step*/
+     simTime = simTime + dt;   //Increment the master simulation time
+     simTime_it = simTime_it + 1;   //Increment the master simulation time step
    }//end for itBatch...
 
    //Retrieve desired HYDRO_CORE fields from device
@@ -186,6 +187,9 @@ extern "C" int cuda_timeIntHydroInitDevice(){
        cudaMemcpy(qFlux_d, qFlux, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
      }
    }// end if surflayerSelector > 0
+   if(NhydroAuxScalars > 0){ /*Copy any required host auxiliary sclar fields to the device */
+     cudaMemcpy(hydroAuxScalars_d, hydroAuxScalars, Nelems*NhydroAuxScalars*sizeof(float), cudaMemcpyHostToDevice);
+   }// end if hydroAuxScalars > 0
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    gpuErrchk( cudaDeviceSynchronize() );
    return(errorCode);
@@ -234,6 +238,12 @@ extern "C" int cuda_timeIntHydroSynchFromDevice(){
        gpuErrchk( cudaMemcpy(qskin, qskin_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
      }
    }//endif surflayerSelector > 0
+   if(NhydroAuxScalars > 0){
+     gpuErrchk( cudaMemcpy(hydroAuxScalars, hydroAuxScalars_d, Nelems*NhydroAuxScalars*sizeof(float), cudaMemcpyDeviceToHost) );
+     if((hydroForcingWrite==1)||(hydroForcingLog==1)){
+       gpuErrchk( cudaMemcpy(hydroAuxScalarsFrhs, hydroAuxScalarsFrhs_d, Nelems*NhydroAuxScalars*sizeof(float), cudaMemcpyDeviceToHost) );
+     } //endif we need to send up the Frhs
+   } //end if NhydroAuxScalars > 0
    if(hydroSubGridWrite==1){
      if(turbulenceSelector > 0){
        // The 6 Tau_i-j and 3 Tau_TH,j fields
