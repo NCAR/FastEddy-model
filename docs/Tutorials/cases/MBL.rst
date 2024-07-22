@@ -62,13 +62,12 @@ Visualize the output
 1. Open the Jupyter notebook entitled *FE_Postprocessing_Example04_BOMEX.ipynb*.
 2. Under the "Define parameters" section:
 
-   * Modify :code:`path_root`, specifying the full path to the **Example04_BOMEX** subdirectory, but don't include the **Example04_BOMEX** subdirectory. Be sure to include a trailing slash :code:`/`).
-   * Modify :code:`path_out_1` to include the **Example04_BOMEX** subdirectory before the **output/** subdirectory.  For example, :code:`path_out_1 = path_root + 'Example04_BOMEX/output/'`.
+   * Modify :code:`path_root`, specifying the full path up to and includeing the **Example04_BOMEX** subdirectory. Be sure to include a trailing slash :code:`/`).
    * Modify :code:`path_ini` changing **initial/** to **BOMEX_IC/**. For example, :code:`path_ini = path_root +  'BOMEX_IC/'`.
    * Modify :code:`path_sieb` changing its value to **BOMEX_Siebesma2003_models/**, if you unpacked the *Moist_BOMEX.tar.gz* file into the **Example04_BOMEX** subdirectory.  For example, :code:`path_sieb = path_root + 'BOMEX_Siebesma2003_models/'`.
 
 3. Run the Jupyter notebook.
-4. The resulting XY cross section png plots will be placed in a **FIGS** subdirectory of the **Example04_BOMEX** directory.
+4. The resulting XY cross section png plots will be placed in a **Figures_BOMEX** subdirectory of the **Example04_BOMEX** directory.
 
 
 Open the Jupyter notebook entitled *FE_Postrocessing_Example04_BOMEX.ipynb* and execute it.
