@@ -36,7 +36,7 @@ Note that this example moist dynamics validation case example requires an additi
 1. Create a working directory to run the FastEddy tutorials and change to that directory.
 2. Create a **Example04_BOMEX** subdirectory and change to that directory.
 3. Download and unpack *Moist_BOMEX.tar.gz*, which will create a **BOMEX_IC/** subdirectory containing *FE_BOMEX.0* and a **BOMEX_Siebesma2003_models/** subdirectory creating the above referenced NetCDF files.
-2. Run FastEddy using the input parameters file **/tutorials/examples/Example04_BOMEX.in**. Be sure to copy the extracted initial conditions file from the archived dataset into the subdirectory where you will run this case. 
+4. Run FastEddy using the input parameters file **/tutorials/examples/Example04_BOMEX.in**. Be sure to copy the extracted initial conditions file from the archived dataset into the subdirectory where you will run this case. 
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
 
@@ -65,7 +65,7 @@ Visualize the output
    * Modify :code:`path_root`, specifying the full path to the **Example04_BOMEX** subdirectory, but don't include the **Example04_BOMEX** subdirectory. Be sure to include a trailing slash :code:`/`).
    * Modify :code:`path_out_1` to include the **Example04_BOMEX** subdirectory before the **output/** subdirectory.  For example, :code:`path_out_1 = path_root + 'Example04_BOMEX/output/'`.
    * Modify :code:`path_ini` changing **initial/** to **BOMEX_IC/**. For example, :code:`path_ini = path_root +  'BOMEX_IC/'`.
-   * Modify :code:`path_sieb` changing it to an empty string, if you unpacked the *Moist_BOMEX.tar.gz* file into the **Example04_BOMEX** subdirectory.  For example, :code:`path_sieb = path_root + ''`.
+   * Modify :code:`path_sieb` changing its value to **BOMEX_Siebesma2003_models/**, if you unpacked the *Moist_BOMEX.tar.gz* file into the **Example04_BOMEX** subdirectory.  For example, :code:`path_sieb = path_root + 'BOMEX_Siebesma2003_models/'`.
 
 3. Run the Jupyter notebook.
 4. The resulting XY cross section png plots will be placed in a **FIGS** subdirectory of the **Example04_BOMEX** directory.
