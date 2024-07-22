@@ -37,14 +37,21 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Run FastEddy using the input parameters file **/tutorials/examples/Example02_CBL.in**. The FastEddy code will write its output to an *output* subdirectory. Please create an *output* directory, if one does not already exist.
+1. Create a working directory to run the FastEddy tutorials and change to that directory.
+2. Create a **Example02_CBL** subdirectory.
+3. The FastEddy code will write its output to an **output** subdirectory. Create an **output** directory, if one does not already exist.   
+4. Run FastEddy using the input parameters file *Example02_CBL.in* located in the **tutorials/examples/** subdirectory of the FastEddy repository. 
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
 
 Visualize the output
 --------------------
 
-Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb* and execute it using setting: :code:`case = 'convective'`.
+1. Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb*.
+2. Under the **Define parameters** section, modify :code:`path_base`, specifying the full path to the **Example02_CBL** subdirectory, but don't include the **Example02_CBL** subdirectory. Be sure to include a trailing slash :code:`/`).
+3. Under the **Define parameters** section, modify :code:`case` to set its value to :code:`convective`.
+4. Run the Jupyter notebook.
+5. The resulting XY cross section png plots will be placed in a **FIGS** subdirectory of the **Example02_CBL** directory.
 
 XY-plane views of instantaneous velocity components at :math:`t=4` h (FE_CBL.288000):
 
