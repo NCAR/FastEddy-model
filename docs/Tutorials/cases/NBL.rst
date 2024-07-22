@@ -42,9 +42,9 @@ Execute FastEddy
 ----------------
 
 1. Create a working directory to run the FastEddy tutorials and change to that directory.
-2. Create a *Example01_NBL* subdirectory.
-3. The FastEddy code will write its output to an *output* subdirectory. Please create an *output* directory, if one does not already exist.   
-4. Run FastEddy using the input parameters file *Example01_NBL.in* located in the **/tutorials/examples/** subdirectory of the FastEddy repository. 
+2. Create a **Example01_NBL** subdirectory.
+3. The FastEddy code will write its output to an **output** subdirectory. Create an **output** directory, if one does not already exist.   
+4. Run FastEddy using the input parameters file *Example01_NBL.in* located in the **tutorials/examples/** subdirectory of the FastEddy repository. 
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
 
@@ -52,10 +52,10 @@ Visualize the output
 --------------------
 
 1. Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb*.
-2. Under the **Define parameters** section, modify `path_base`, specifying the full path to the *Example01_NBL* subdirectory, but do not include the *Example01_NBL* subdirectory. Be sure to include a trailing slash `/`).
-3. Under the **Define parameters** section, modify `case` to set its value to `neutral`.
+2. Under the **Define parameters** section, modify :code:`path_base`, specifying the full path to the *Example01_NBL* subdirectory, but not including *Example01_NBL* subdirectory. Be sure to include a trailing slash :code:`/`).
+3. Under the **Define parameters** section, modify :code:`case` to set its value to :code:`neutral`.
 4. Run the Jupyter notebook.
-5. The XY cross section png plots will be placed in a *FIGS* subdirectory of the *Example01_NBL* directory.
+5. The resulting XY cross section png plots will be placed in a **FIGS** subdirectory of the **Example01_NBL** directory.
 
 XY-plane views of instantaneous velocity components at :math:`t=7` h (FE_NBL.630000):
 
