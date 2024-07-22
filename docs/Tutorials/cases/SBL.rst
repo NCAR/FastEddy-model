@@ -39,7 +39,7 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Run FastEddy using the input parameters file **/tutorials/examples/Example03_SBL.in**.
+Run FastEddy using the input parameters file **/tutorials/examples/Example03_SBL.in**. The FastEddy code will write its output to an *output* subdirectory. Please create an *output* directory, if one does not already exist.
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
 
