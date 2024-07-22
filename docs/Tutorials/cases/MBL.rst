@@ -36,7 +36,8 @@ Note that this example moist dynamics validation case example requires an additi
 1. Create a working directory to run the FastEddy tutorials and change to that directory.
 2. Create a **Example04_BOMEX** subdirectory and change to that directory.
 3. Download and unpack *Moist_BOMEX.tar.gz*, which will create a **BOMEX_IC/** subdirectory containing *FE_BOMEX.0* and a **BOMEX_Siebesma2003_models/** subdirectory creating the above referenced NetCDF files.
-4. Run FastEddy using the input parameters file **/tutorials/examples/Example04_BOMEX.in**. Be sure to copy the extracted initial conditions file from the archived dataset into the subdirectory where you will run this case. 
+4. Modify the **tutorials/examples/Example04_BOMEX.in** file to update the value of :code:`inPath` providing the full path to the *FE_BOMEX.0* file in the **BOMEX_IC/** subdirectory.
+5. Run FastEddy using the input parameters file **tutorials/examples/Example04_BOMEX.in**. 
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
 
@@ -68,7 +69,6 @@ Visualize the output
 
 3. Run the Jupyter notebook.
 4. The resulting XY cross section png plots will be placed in a **Figures_BOMEX** subdirectory of the **Example04_BOMEX** directory.
-
 
 Open the Jupyter notebook entitled *FE_Postrocessing_Example04_BOMEX.ipynb* and execute it.
 
