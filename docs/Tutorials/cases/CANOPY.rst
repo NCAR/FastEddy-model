@@ -50,7 +50,7 @@ Note that this example requires specification of a leaf area density (LAD) profi
    * Change :code:`Nt` from 1440000 to 1
    * Change :code:`NtBatch` from 30000 to 1
 
-3. After running for 1 timestep, run the Jupyter notebook to modify the CanopyLAD array to include the LAD profile instead of the initialized all zeros.
+3. After running for 1 timestep, run the Jupyter notebook *Canopy_Prep.ipynb* file modifying the CanopyLAD array to include the LAD profile instead of the initialized all zeros.
 
    * First, move the *FE_CANOPY.0* file from the *output* subdirectory to the *initial* subdirectory.
    * Then, modify :code:`inPath` and :code:`inFile` in **tutorials/examples/Example05_CANOPY.in**, specifying the path and the filename for the initial condition *FE_CANOPY.0* file.
