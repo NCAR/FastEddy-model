@@ -52,8 +52,8 @@ Visualize the output
 --------------------
 
 1. Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb*.
-2. Under the **Define parameters** section, modify :code:`path_base`, specifying the full path to the **Example01_NBL** subdirectory, but don't include **Example01_NBL** subdirectory. Be sure to include a trailing slash :code:`/`).
-3. Under the **Define parameters** section, modify :code:`case` to set its value to :code:`neutral`.
+2. Under the "Define parameters" section, modify :code:`path_base`, specifying the full path to the **Example01_NBL** subdirectory, but don't include **Example01_NBL** subdirectory. Be sure to include a trailing slash :code:`/`).
+3. Under the "Define parameters" section, modify :code:`case` to set its value to :code:`neutral`.
 4. Run the Jupyter notebook.
 5. The resulting XY cross section png plots will be placed in a **FIGS** subdirectory of the **Example01_NBL** directory.
 

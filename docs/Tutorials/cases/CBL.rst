@@ -48,8 +48,8 @@ Visualize the output
 --------------------
 
 1. Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb*.
-2. Under the **Define parameters** section, modify :code:`path_base`, specifying the full path to the **Example02_CBL** subdirectory, but don't include the **Example02_CBL** subdirectory. Be sure to include a trailing slash :code:`/`).
-3. Under the **Define parameters** section, modify :code:`case` to set its value to :code:`convective`.
+2. Under the "Define parameters" section, modify :code:`path_base`, specifying the full path to the **Example02_CBL** subdirectory, but don't include the **Example02_CBL** subdirectory. Be sure to include a trailing slash :code:`/`).
+3. Under the "Define parameters" section, modify :code:`case` to set its value to :code:`convective`.
 4. Run the Jupyter notebook.
 5. The resulting XY cross section png plots will be placed in a **FIGS** subdirectory of the **Example02_CBL** directory.
 
