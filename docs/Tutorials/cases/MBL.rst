@@ -31,13 +31,14 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Note that this example moist dynamics validation case example requires an additional dataset available as a gzip compressed tape archive file at this `Zenodo record <https://zenodo.org/records/10982246>`_. The contents of the archive include an initial conditions file **BOMEX_IC/FE_BOMEX.0** which is needed to run FastEddy for this case. The archive dataset also contains results from the 11 models that participated in the original Siebesma et al. 2003 model intercomparison as NetCDF files under **BOMEX_Siebesma2003_models/\*.nc**.  The FastEddy code will write its output to an *output* subdirectory. Please create an *output* directory, if one does not already exist.
+Note that this example moist dynamics validation case example requires an additional dataset available as a gzip compressed tape archive file, *Moist_BOMEX.tar.gz*, at this `Zenodo record <https://zenodo.org/records/10982246>`_. The contents of the archive include an initial conditions file *FE_BOMEX.0*, which is needed to run FastEddy for this case. The archive dataset also contains results from the 11 models that participated in the original Siebesma et al. 2003 model intercomparison as NetCDF files.  The FastEddy code will write its output to an *output* subdirectory. Please create an *output* directory, if one does not already exist.
 
-1. Download and unpack the gzip compressed tape archive file referenced above.
+1. Create a working directory to run the FastEddy tutorials and change to that directory.
+2. Create a **Example04_BOMEX** subdirectory and change to that directory.
+3. Download and unpack *Moist_BOMEX.tar.gz*, which will create a **BOMEX_IC/** subdirectory containing *FE_BOMEX.0* and a **BOMEX_Siebesma2003_models/** subdirectory creating the above referenced NetCDF files.
 2. Run FastEddy using the input parameters file **/tutorials/examples/Example04_BOMEX.in**. Be sure to copy the extracted initial conditions file from the archived dataset into the subdirectory where you will run this case. 
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
-
 
 Note that running this case requires using only 1 GPU instead of 4 GPUs. This requires modification of two lines in the scripts provided in :ref:`run_fasteddy`.
 The following:
@@ -57,6 +58,18 @@ And, any values of *4* in the last line of the script (the :code:`mpirun` line f
 
 Visualize the output
 --------------------
+
+1. Open the Jupyter notebook entitled *FE_Postprocessing_Example04_BOMEX.ipynb*.
+2. Under the "Define parameters" section:
+
+   * Modify :code:`path_root`, specifying the full path to the **Example04_BOMEX** subdirectory, but don't include the **Example04_BOMEX** subdirectory. Be sure to include a trailing slash :code:`/`).
+   * Modify :code:`path_out_1` to include the **Example04_BOMEX** subdirectory before the **output/** subdirectory.  For example, :code:`path_out_1 = path_root + 'Example04_BOMEX/output/'`.
+   * Modify :code:`path_ini` changing **initial/** to **BOMEX_IC/**. For example, :code:`path_ini = path_root +  'BOMEX_IC/'`.
+   * Modify :code:`path_sieb` changing it to an empty string, if you unpacked the *Moist_BOMEX.tar.gz* file into the **Example04_BOMEX** subdirectory.  For example, :code:`path_sieb = path_root + ''`.
+
+3. Run the Jupyter notebook.
+4. The resulting XY cross section png plots will be placed in a **FIGS** subdirectory of the **Example04_BOMEX** directory.
+
 
 Open the Jupyter notebook entitled *FE_Postrocessing_Example04_BOMEX.ipynb* and execute it.
 

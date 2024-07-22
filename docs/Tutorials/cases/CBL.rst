@@ -38,7 +38,7 @@ Execute FastEddy
 ----------------
 
 1. Create a working directory to run the FastEddy tutorials and change to that directory.
-2. Create a **Example02_CBL** subdirectory.
+2. Create a **Example02_CBL** subdirectory and change to that directory.
 3. The FastEddy code will write its output to an **output** subdirectory. Create an **output** directory, if one does not already exist.   
 4. Run FastEddy using the input parameters file *Example02_CBL.in* located in the **tutorials/examples/** subdirectory of the FastEddy repository. 
 
