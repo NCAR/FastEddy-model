@@ -41,7 +41,7 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Note that this example requires specification of a leaf area density (LAD) profile. A Jupyter notebook is provided in **tutorial/notebooks/Canopy_Prep.ipynb** that reads in an LAD profile in .csv format. The *LAD_profile.csv* file can be obtained at this `Zenodo record <https://zenodo.org/records/12610511>`_. The notebook also uses a FastEddy initial condition file to create a new initial condition file, *FE_CANOPY.0*, that includes de LAD information (CanopyLAD array). The notebook expects a canopy height value to be specified (:math:`h_c`), and that is currently set to 30.0 m. The FastEddy code will write its output to an *output* subdirectory. Please create an *output* directory, if one does not already exist.
+Note that this example requires specification of a leaf area density (LAD) profile. A Jupyter notebook is provided in **tutorial/notebooks/Canopy_Prep.ipynb** that reads in an LAD profile in .csv format. The *LAD_profile.csv* file can be obtained at this `Zenodo record <https://zenodo.org/records/12610511>`_. The notebook also uses a FastEddy initial condition file to create a new initial condition file, *FE_CANOPY.0*, that includes de LAD information (CanopyLAD array). The notebook expects a canopy height value to be specified (:math:`h_c`), and that is currently set to 30.0 m. 
 
 1. Create a working directory to run the FastEddy tutorials and change to that directory.
 2. Create a **Example05_CANOPY** subdirectory and change to that directory.
@@ -55,7 +55,7 @@ Note that this example requires specification of a leaf area density (LAD) profi
 
 6. After running for 1 timestep, run the Jupyter notebook *Canopy_Prep.ipynb* file modifying the CanopyLAD array to include the LAD profile instead of the initialized all zeros.
 
-   * First, move the *FE_CANOPY.0* file from the *output* subdirectory to the *initial* subdirectory.
+   * First, copy the *FE_CANOPY.0* file from the *output* subdirectory to the *initial* subdirectory. Note, do not move the file, simply copy it.
    * Also, modify `path_base` in the **tutorial/notebooks/Canopy_Prep.ipynb** file, specifying the path to the *LAD_profile.csv* file. Be sure to including the trailing slash :code: `/`.
 
 7. Then, run FastEddy for the :math:`4` h of the simulation by changing :code:`frqOutput`, :code:`Nt`, and :code:`NtBatch` back to their original values in **tutorials/examples/Example05_CANOPY.in**, and modify :code:`inPath` and :code:`inFile` in **tutorials/examples/Example05_CANOPY.in**, specifying the path and the filename for the initial condition *FE_CANOPY.0* file. Be sure to including the	trailing slash :code: `/` in the :code:`inPath`.
