@@ -53,8 +53,7 @@ Note that this example requires specification of a leaf area density (LAD) profi
    * Change :code:`Nt` from 1440000 to 1
    * Change :code:`NtBatch` from 30000 to 1
 
-6. After running for 1 timestep, run the Jupyter notebook *Canopy_Prep.ipynb* file modifying the CanopyLAD array to include the LAD profile instead of the initialized all zeros. Modify `path_base` in this notebook file, specifying the path to the **initial/** directory that contains the *LAD_profile.csv* file. Be sure to including the trailing slash :code: `/` in :code:`path_base`.
-
+6. After running for 1 timestep, run the Jupyter notebook *Canopy_Prep.ipynb* file modifying the CanopyLAD array to include the LAD profile instead of the initialized all zeros. Modify `path_base` in this notebook file, specifying the path to the **initial/** directory that contains the *LAD_profile.csv* file. Be sure to including the trailing slash :code:`/` in :code:`path_base`. Note that this run of the Jupyter notebook will write a *FE_CANOPY.0* in the **initial** subdirectory.
 7. Then, run FastEddy for the :math:`4` h of the simulation by changing :code:`frqOutput`, :code:`Nt`, and :code:`NtBatch` back to their original values in **tutorials/examples/Example05_CANOPY.in**, and modify :code:`inPath` and :code:`inFile` in **tutorials/examples/Example05_CANOPY.in**, specifying the path and the filename, respectively, for the newly written initial condition *FE_CANOPY.0* file in the **initial** directory. Be sure to including the	trailing slash :code:`/` in the :code:`inPath`.
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
