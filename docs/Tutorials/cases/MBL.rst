@@ -63,7 +63,7 @@ Visualize the output
 1. Open the Jupyter notebook entitled *FE_Postprocessing_Example04_BOMEX.ipynb*.
 2. Under the "Define parameters" section:
 
-   * Modify :code:`path_root`, specifying the full path up to and including the **Example04_BOMEX** subdirectory. Be sure to include a trailing slash :code:`/`).
+   * Modify :code:`path_root`, specifying the full path up to and including the **Example04_BOMEX** subdirectory. Be sure to include the trailing slash :code:`/`.
    * Modify :code:`path_ini` changing **initial/** to **BOMEX_IC/**. For example, :code:`path_ini = path_root +  'BOMEX_IC/'`.
    * Modify :code:`path_sieb` changing its value to **BOMEX_Siebesma2003_models/**, if you unpacked the *Moist_BOMEX.tar.gz* file into the **Example04_BOMEX** subdirectory.  For example, :code:`path_sieb = path_root + 'BOMEX_Siebesma2003_models/'`.
 
