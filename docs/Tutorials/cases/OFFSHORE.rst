@@ -40,19 +40,19 @@ Input parameters
 Execute FastEddy
 ----------------
 
-Note that this example requires customization of the initial condition file. A Jupyter notebook is provided in **/tutorial/notebooks/Offshore_Prep.ipynb** that assigns the SeaMask 2d array to 1.0 (required to activate the offshore parameterization), imposes a linear profile initial condition for water vapor mixing ratio and an initial time-invariant skin water vapor mixing ratio content. In addition, the initial condition for dry hydrostatic desnity is readjusted to account for the presence of water vapor.
+Note that this example requires customization of the initial condition file. A Jupyter notebook is provided in **tutorial/notebooks/Offshore_Prep.ipynb** that assigns the SeaMask 2d array to 1.0 (required to activate the offshore parameterization), imposes a linear profile initial condition for water vapor mixing ratio and an initial time-invariant skin water vapor mixing ratio content. In addition, the initial condition for dry hydrostatic desnity is readjusted to account for the presence of water vapor.
 
 1. Create a working directory to run the FastEddy tutorials and change to that directory.
 2. Create a **Example06_OFFSHORE** subdirectory and change to that directory.
 3. The FastEddy code will write its output to an **output** subdirectory. Create an **output** directory, if one does not already exist.   
-4. Run FastEddy using the input parameters file **/tutorials/examples/Example06_OFFSHORE.in** first for 1 timestep to create the *FE_OFFSHORE.0* file.  To run for 1 timestep, the following values need to be changed in the **/tutorials/examples/Example06_OFFSHORE.in** file:
+4. Run FastEddy using the input parameters file **tutorials/examples/Example06_OFFSHORE.in** first for 1 timestep to create the *FE_OFFSHORE.0* file.  To run for 1 timestep, the following values need to be changed in the **tutorials/examples/Example06_OFFSHORE.in** file:
 
   * Change :code:`frqOutput` from 7500 to 1
   * Change :code:`Nt` from 360000 to 1
   * Change :code:`NtBatch` from 7500 to 1
 
-5. Then, run the Jupyter notebook to produce a modified initial conditions file as describe in the first paragraph. Modify `path_base` in the **tutorial/notebooks/Canopy_Prep.ipynb** file, specifying the path to the **Example06_OFFSHORE** directory.
-6. Then, run FastEddy for the :math:`4` h of the simulation by changing :code:`frqOutput`, :code:`Nt`, and :code:`NtBatch` back to their original values.
+5. The run of the Jupyter notebook in the next step will write a *FE_OFFSHORE.0* in an **initial** subdirectory. Create an **initial** directory, if one does not already exist.
+6. Then, run the Jupyter notebook to produce a modified initial conditions file as describe in the first paragraph. Modify `path_base` in the **tutorial/notebooks/Canopy_Prep.ipynb** file, specifying the path to the **Example06_OFFSHORE** directory. Be sure to include the trailing slash :code:`/`.7. Then, run FastEddy for the :math:`4` h of the simulation by changing :code:`frqOutput`, :code:`Nt`, and :code:`NtBatch` back to their original values, and modify :code:`inPath` and :code:`inFile` in tutorials/example/Example06_OFFSHORE.in, specifying the path and the filename, respectively, for the newly written initial condition *FE_OFFSHORE.0* file in the initial directory.  Be sure to include the trailing slash :code:`/` in the :code:`inPath`.
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
 
