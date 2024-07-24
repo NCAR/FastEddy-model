@@ -7,8 +7,8 @@ tBx = 1 # Number of threads in x-dimension
 tBy = 8 # Number of threads in y-dimension
 tBz = 32 # Number of threads in z-dimension
 #--IO
-inPath = ./initial/ # Path where initial/restart file is read in from
-inFile = FE_OFFSHORE.0 # name of the input file for coordinate system and initial or restart conditions
+inPath = # ./initial/ # Path where initial/restart file is read in from
+inFile = # FE_OFFSHORE.0 # name of the input file for coordinate system and initial or restart conditions
 outPath = ./output/ # Path where output files are to be written
 outFileBase = FE_OFFSHORE # Base name of the output file series as in (outFileBase).element-in-series
 frqOutput = 7500 # frequency (in timesteps) at which to produce output
