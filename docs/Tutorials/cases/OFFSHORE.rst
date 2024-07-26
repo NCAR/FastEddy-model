@@ -60,7 +60,12 @@ See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF
 Visualize the output
 --------------------
 
-Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb* and execute it using setting: :code:`case = 'offshore'`.
+1. Open the Jupyter notebook entitled *MAKE_FE_TUTORIAL_PLOTS.ipynb*.
+2. Under the "Define parameters" section, modify :code:`path_base`, specifying the full path to the **Example06_OFFSHORE** subdirectory, but don't include **Example06_OFFSHORE** subdirectory. Be sure to include a trailing slash :code:`/`).
+3. Under the "Define parameters" section, modify :code:`case` to set its value to :code:`offshore`.
+4. Run the Jupyter notebook.
+5. The resulting XY cross section png plots will be placed in a **FIGS** subdirectory of the **Example06_OFFSHORE** directory.
+
 
 XY-plane views of instantaneous horizontal wind, vertical velocity, potential temperature and water vapor mixing ratio at :math:`t=4` h (FE_OFFSHORE.360000):
 
