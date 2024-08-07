@@ -1,6 +1,6 @@
 Description = This is an idealized SBL over terrain with T&D of a passive scalar.
 #--MPI_AALES
-numProcsX = 8 # Number of cores to be used for horizontal domain decomposition in X
+numProcsX = 4 # Number of cores to be used for horizontal domain decomposition in X
 numProcsY = 1 # Number of cores to be used for horizontal domain decomposition in Y
 #--CUDA_AALES
 tBx = 1 # Number of threads in x-dimension
