@@ -114,13 +114,6 @@ extern "C" int cuda_timeIntDeviceCommence(int it){
    /*Synchronize the Device*/
    gpuErrchk( cudaDeviceSynchronize() );
 
-   //If this is the very first batch timestep (initial condition or restart) then 
-   // make final preparations for simulation launch.
-   if(it==simTime_itRestart){
-      /*Copy in the master simulation time at simulation start*/
-      printf("cuda_hydroCoreUnitTestCommence()  it=simTime_itRestart.\n");
-      errorCode = cuda_timeIntHydroInitDevice();  //Transfer initial restart conditions to the device
-   }//end if it==0
    for(itBatch=0; itBatch < NtBatch; itBatch++){     //Batch timestepping loop
      if((lsfSelector == 1) && (lsf_horMnSubTerms == 1) && (simTime_it > simTime_itRestart) && (simTime_it%(int)roundf(lsf_freq/dt)==0)){
        errorCode = cuda_lsfSlabMeans();

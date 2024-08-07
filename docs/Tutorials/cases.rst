@@ -2,7 +2,7 @@
 Ideal Test Cases
 ****************
 
-Four test cases are described:
+Seven test cases are described:
 
 * Dry neutral boundary layer
 * Dry convective boundary layer
@@ -19,3 +19,4 @@ Required tutorial resources including python utilities and Jupyter Notebooks are
    cases/MBL.rst
    cases/CANOPY.rst
    cases/OFFSHORE.rst
+   cases/DISPERSION.rst

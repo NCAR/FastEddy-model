@@ -94,10 +94,66 @@ def compute_mean_profiles(FE_xr):
     
     return array_out
 
-def plot_XY_UVWTHETA(case, case_open, zChoose, save_plot_opt, path_figure, plot_qv_cont):
+def extractListedParamsFromFile(file, paramsList):
+    # open the sample file used 
+    file = open('/glade/derecho/scratch/jsauer/FE-model/Test/AuxSc/Example07_DISPERSION_releases.in') 
+  
+    # read the content of the file opened 
+    content = file.readlines() 
 
-    zVect = case_open.zPos.isel(time=0,xIndex=0,yIndex=0).values
-    z_diff = np.abs(zVect - zChoose)
+    #search each line for any of the parameters requested
+    paramsDict={}
+    for line in content:
+        for param in paramsList:
+            if param in line:
+                # The following should extract the non-comment protion to the 
+                # right of the equal sign in every "name = value" line of the file
+                s=line.split('=',maxsplit = 1)[-1].split('#',maxsplit = 1)[0].replace(" ", "")
+                #print(s, s.replace('.','',1).replace(" ", ""), s.replace('.','',1).replace(" ", "").isdigit())
+                if s.replace('.','',1).isdigit():
+                    #print(s)
+                    if '.' in s: #assume a float
+                        paramsDict[param]=float(s)
+                    else: #assume an integer
+                        paramsDict[param]=int(s)
+                else: #leave as string
+                    paramsDict[param]=line.split('=',maxsplit = 1)[-1].split('#',maxsplit = 1)[0].rstrip()
+    return paramsDict
+    
+def extractParamsFromFile(file):
+    # open the sample file used 
+    file = open('/glade/derecho/scratch/jsauer/FE-model/Test/AuxSc/Example07_DISPERSION_releases.in') 
+  
+    # read the content of the file opened 
+    content = file.readlines() 
+
+    #search each line for any of the parameters requested
+    paramsDict={}
+    for line in content:
+        param = line.split('=',maxsplit = 1)[0].replace(" ", "")
+        if "#" not in param and param != "":
+            # The following should extract the non-comment protion to the 
+            # right of the equal sign in every "name = value" line of the file
+            s=line.split('=',maxsplit = 1)[-1].split('#',maxsplit = 1)[0].replace(" ", "")
+            if s.replace('.','',1).isdigit():
+                #print(s)
+                if '.' in s: #assume a float
+                    paramsDict[param]=float(s)
+                else: #assume an integer
+                    paramsDict[param]=int(s)
+            else: #leave as string
+                paramsDict[param]=line.split('=',maxsplit = 1)[-1].split('#',maxsplit = 1)[0].rstrip()
+    return paramsDict
+
+def plot_XY_UVWTHETA(case, case_open, zChoose, save_plot_opt, path_figure, plot_qv_cont, plot_u_map):
+
+    zVect = case_open.zPos.isel(time=0).values
+    topoPos = case_open.topoPos.isel(time=0).values
+    zVect_rel = zVect - topoPos
+    zVect_1d = np.mean(zVect_rel,axis=(2,1))
+    # print('zVect_1d.shape=',zVect_1d.shape)
+    # print('zVect_1d=',zVect_1d)
+    z_diff = np.abs(zVect_1d - zChoose)
     zgp = np.where(z_diff==np.amin(z_diff))
     zgp = zgp[0]
     zChoose = zgp[0]
@@ -127,14 +183,26 @@ def plot_XY_UVWTHETA(case, case_open, zChoose, save_plot_opt, path_figure, plot_
     t_max = np.amax(np.amax(thetafield[zChoose,:,:]))
     
     fig_name = "UVWTHETA-XY-"+case+".png"
-    colormap1 = 'viridis'
-    colormap2 = 'seismic'
-    colormap3 = 'afmhot_r' # 'YlOrRd'
-    colormap4 = 'summer'
+    if (plot_u_map==1):
+        colormap1 = 'gist_ncar'
+        colormap2 = 'seismic'
+        colormap3 = 'viridis'
+        colormap4 = 'afmhot_r'
+    if (plot_qv_cont==1):
+        colormap1 = 'viridis' # 'gist_ncar'
+        colormap2 = 'seismic'
+        colormap3 = 'afmhot_r'
+        colormap4 = 'summer'  
+    if (plot_u_map==0 and plot_qv_cont==0):
+        colormap1 = 'viridis'
+        colormap2 = 'seismic'
+        colormap3 = 'viridis' # 'YlOrRd'
+        colormap4 = 'afmhot_r'
+    
     if (plot_qv_cont==1):
         FE_legend = [r'$U$ [m/s] at z='+str(np.amax(zPos))+' m',r'$\theta$ [K] at z='+str(np.amax(zPos))+' m',r'$w$ [m/s] at z='+str(np.amax(zPos))+' m', r'$q_v$ [g/kg] at z='+str(np.amax(zPos))+' m']  
     else:
-        FE_legend = [r'$u$ [m/s] at z='+str(np.amax(zPos))+' m',r'$v$ [m/s] at z='+str(np.amax(zPos))+' m',r'$w$ [m/s] at z='+str(np.amax(zPos))+' m', r'$\theta$ [K] at z='+str(np.amax(zPos))+' m']
+        FE_legend = [r'$u$ [m/s] at z='+str(round(zVect_1d[zChoose],1))+' m',r'$v$ [m/s] at z='+str(round(zVect_1d[zChoose],1))+' m',r'$w$ [m/s] at z='+str(round(zVect_1d[zChoose],1))+' m', r'$\theta$ [K] at z='+str(round(zVect_1d[zChoose],1))+' m']
     
     fntSize=20
     fntSize_title=22
@@ -155,6 +223,9 @@ def plot_XY_UVWTHETA(case, case_open, zChoose, save_plot_opt, path_figure, plot_
         im = ax.pcolormesh(xPos/1e3,yPos/1e3,wsfield[zChoose,:,:],cmap=colormap1,linewidth=0,rasterized=True,vmin=ws_min,vmax=ws_max)
     else:
         im = ax.pcolormesh(xPos/1e3,yPos/1e3,ufield[zChoose,:,:],cmap=colormap1,linewidth=0,rasterized=True,vmin=u_min,vmax=u_max)
+    if (plot_u_map==1):
+        im2 = ax.contour(xPos/1e3,yPos/1e3,topoPos)
+        
     ax.set_ylabel(r'$y$ $[\mathrm{km}]$',fontsize=fntSize)
     ax.set_xlabel(r'$x$ $[\mathrm{km}]$',fontsize=fntSize)
     cbar=fig.colorbar(im, ax=ax)
@@ -169,7 +240,7 @@ def plot_XY_UVWTHETA(case, case_open, zChoose, save_plot_opt, path_figure, plot_
     if (plot_qv_cont==1):
         im = ax.pcolormesh(xPos/1e3,yPos/1e3,thetafield[zChoose,:,:],cmap=colormap3,linewidth=0,rasterized=True,vmin=t_min,vmax=t_max)
     else:
-        im = ax.pcolormesh(xPos/1e3,yPos/1e3,vfield[zChoose,:,:],cmap=colormap1,linewidth=0,rasterized=True,vmin=v_min,vmax=v_max)
+        im = ax.pcolormesh(xPos/1e3,yPos/1e3,vfield[zChoose,:,:],cmap=colormap3,linewidth=0,rasterized=True,vmin=v_min,vmax=v_max)
     ax.set_ylabel(r'$y$ $[\mathrm{km}]$',fontsize=fntSize)
     ax.set_xlabel(r'$x$ $[\mathrm{km}]$',fontsize=fntSize)
     cbar=fig.colorbar(im, ax=ax)
@@ -197,7 +268,7 @@ def plot_XY_UVWTHETA(case, case_open, zChoose, save_plot_opt, path_figure, plot_
     if (plot_qv_cont==1):
         im = ax.pcolormesh(xPos/1e3,yPos/1e3,qvfield[zChoose,:,:],cmap=colormap4,linewidth=0,rasterized=True,vmin=qv_min,vmax=qv_max)
     else:    
-        im = ax.pcolormesh(xPos/1e3,yPos/1e3,thetafield[zChoose,:,:],cmap=colormap3,linewidth=0,rasterized=True,vmin=t_min,vmax=t_max)
+        im = ax.pcolormesh(xPos/1e3,yPos/1e3,thetafield[zChoose,:,:],cmap=colormap4,linewidth=0,rasterized=True,vmin=t_min,vmax=t_max)
     ax.set_ylabel(r'$y$ $[\mathrm{km}]$',fontsize=fntSize)
     ax.set_xlabel(r'$x$ $[\mathrm{km}]$',fontsize=fntSize)
     cbar=fig.colorbar(im, ax=ax)
@@ -787,7 +858,7 @@ def plot_pdfs(fig, axs, FE_xr, case, save_plot_opt, path_figure):
     
     ax = axs[0]
     im2 = ax.plot(bin_c,pdf_tmp/np.sum(pdf_tmp),lineas_v[0],color=colores_v[0],linewidth=2.5,label=case)
-    str_tmp = r"$z_{0,m}$ $\times$ 10$^{" + str(exp0) + "}$ $[$m$]$"
+    str_tmp = r"$z_{0,m}$ $\times$ 10$^{" + str(-exp0) + "}$ $[$m$]$"
     ax.set_xlabel(str_tmp,fontsize=fntSize)
     ax.set_ylabel(r"PDF $[$-$]$",fontsize=fntSize)
     ax.legend(loc=0,prop={'size': fntSize_legend},edgecolor='white')
@@ -800,7 +871,7 @@ def plot_pdfs(fig, axs, FE_xr, case, save_plot_opt, path_figure):
     
     ax = axs[1]
     im2 = ax.plot(bin_c,pdf_tmp/np.sum(pdf_tmp),lineas_v[0],color=colores_v[0],linewidth=2.5)
-    str_tmp = r"$z_{0,t}$ $\times$ 10$^{" + str(exp1) + "}$ $[$m$]$"
+    str_tmp = r"$z_{0,t}$ $\times$ 10$^{" + str(-exp1) + "}$ $[$m$]$"
     ax.set_xlabel(str_tmp,fontsize=fntSize)
     # ax.set_ylabel(r"PDF $[$-$]$",fontsize=fntSize)
     
@@ -961,3 +1032,113 @@ def adjustRhoQvInitial(z_prof, BS_Dict, qv_lev, zq_lev, dqdz):
             rhom_prof[k] = prnew_prof[k]/(Tm_prof[k]*R_gas)
 
     return rhom_prof, qv_prof
+
+def plot_XY_DISPERSION(case, case_open, zChoose, min_c_val, max_c_val, save_plot_opt, path_figure):
+
+    zVect = case_open.zPos.isel(time=0).values
+    topoPos = case_open.topoPos.isel(time=0).values
+    zVect_rel = zVect - topoPos
+    zVect_1d = np.mean(zVect_rel,axis=(2,1))
+    z_diff = np.abs(zVect_1d - zChoose)
+    zgp = np.where(z_diff==np.amin(z_diff))
+    zgp = zgp[0]
+    zChoose = zgp[0]
+    
+    AuxSc_t0 = case_open.AuxScalar_0.isel(time=0,zIndex=zChoose).values
+    AuxSc_t1 = case_open.AuxScalar_0.isel(time=1,zIndex=zChoose).values
+    AuxSc_t2 = case_open.AuxScalar_0.isel(time=2,zIndex=zChoose).values
+    AuxSc_all = np.dstack((AuxSc_t0, AuxSc_t1, AuxSc_t2))
+    
+    xPos = case_open.xPos.isel(time=0,zIndex=zChoose).values
+    yPos = case_open.yPos.isel(time=0,zIndex=zChoose).values
+    zPos = case_open.zPos.isel(time=0,zIndex=zChoose).values
+
+    AuxSc_all[np.where(AuxSc_all<=10.0**min_c_val)] = np.nan
+    
+    fig_name = "CONCENTRATION-XY-"+case+".png"
+    colormap1 = 'gist_stern_r' # 'gnuplot_r'
+
+    FE_legend = [r'$t$ = 50 min',r'$t$ = 55 min',r'$t$ = 60 min']
+    
+    fntSize=20
+    fntSize_title=22
+    plt.rcParams['xtick.labelsize']=fntSize
+    plt.rcParams['ytick.labelsize']=fntSize
+    plt.rcParams['axes.linewidth']=2.0
+    plt.rcParams['pcolor.shading']='auto'
+
+    numPlotsX=1
+    numPlotsY=3
+    fig,axs = plt.subplots(numPlotsX,numPlotsY,sharey=True,sharex=False,figsize=(26,6))
+
+    for tt in range(0, numPlotsY):
+        ax=axs[tt]
+        im = ax.pcolormesh(xPos/1e3,yPos/1e3,np.log10(AuxSc_all[:,:,tt]),cmap=colormap1,linewidth=0,rasterized=True,vmin=min_c_val,vmax=max_c_val)
+        ax.set_xlabel(r'$x$ $[\mathrm{km}]$',fontsize=fntSize)
+        if (tt==0):    
+            ax.set_ylabel(r'$y$ $[\mathrm{km}]$',fontsize=fntSize)
+    
+        title_fig_0 = FE_legend[tt]
+        ax.set_title(title_fig_0,fontsize=fntSize)
+
+    fig.colorbar(im, ax=axs.ravel().tolist())
+
+    if (save_plot_opt==1):
+        print(path_figure + fig_name)
+        plt.savefig(path_figure + fig_name,dpi=300,bbox_inches = "tight")
+
+def plot_YZ_DISPERSION(case, case_open, xDisper, min_c_val, max_c_val, save_plot_opt, path_figure):
+
+    xPos = case_open.xPos.isel(time=0).values
+    yPos = case_open.yPos.isel(time=0).values
+    zPos = case_open.zPos.isel(time=0).values
+
+    xPos_1d = xPos[0,0,:]
+    xChoose = np.zeros(len(xDisper),dtype=np.int32)
+
+    x_min = 0.5
+    x_max = 1.5
+    y_min = 0.0
+    y_max = 1.0
+
+    for xx in range(0,len(xDisper)):
+        xdiff_tmp = np.abs(xPos_1d - xDisper[xx])
+        ind_tmp = np.where(xdiff_tmp==np.min(xdiff_tmp))
+        xChoose[xx] = ind_tmp[0][0]
+  
+    AuxSc_t0 = case_open.AuxScalar_0.isel(time=0).values
+    AuxSc_t0[np.where(AuxSc_t0<=10.0**min_c_val)] = np.nan
+    
+    fig_name = "CONCENTRATION-YZ-"+case+".png"
+    colormap1 = 'gist_stern_r'
+    
+    fntSize=20
+    fntSize_title=22
+    plt.rcParams['xtick.labelsize']=fntSize
+    plt.rcParams['ytick.labelsize']=fntSize
+    plt.rcParams['axes.linewidth']=2.0
+    plt.rcParams['pcolor.shading']='auto'
+
+    numPlotsX=1
+    numPlotsY=len(xDisper)
+    fig,axs = plt.subplots(numPlotsX,numPlotsY,sharey=True,sharex=False,figsize=(26,6))
+
+    for xx in range(0, numPlotsY):
+        ax=axs[xx]
+        im = ax.pcolormesh(yPos[:,:,xChoose[xx]]/1e3,zPos[:,:,xChoose[xx]]/1e3,np.log10(AuxSc_t0[:,:,xChoose[xx]]),cmap=colormap1,linewidth=0,rasterized=True,vmin=min_c_val,vmax=max_c_val)
+        
+        ax.set_xlabel(r'$y$ $[\mathrm{km}]$',fontsize=fntSize)
+        if (xx==0):    
+            ax.set_ylabel(r'$z$ $[\mathrm{km}]$',fontsize=fntSize)
+    
+        title_fig_0 = r'$y=$' + str(int(xPos_1d[xChoose[xx]])) + ' m'
+        ax.set_title(title_fig_0,fontsize=fntSize)
+
+        ax.set_xlim([x_min,x_max])
+        ax.set_ylim([y_min,y_max])
+
+    fig.colorbar(im, ax=axs.ravel().tolist())
+
+    if (save_plot_opt==1):
+        print(path_figure + fig_name)
+        plt.savefig(path_figure + fig_name,dpi=300,bbox_inches = "tight")

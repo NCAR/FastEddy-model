@@ -11,7 +11,7 @@ Input parameters
 ----------------
 
 * Number of grid points: :math:`[N_x,N_y,N_z]=[252,250,90]`
-* Isotropic grid spacings in the horizontal directions: :math:`[dx,dy]=[4,4]` m, vertical grid is :math:`dz=4` m at the surface and stretched with verticalDeformFactor :math:`=0.25`
+* Isotropic grid spacings in the horizontal directions: :math:`[\Delta x,\Delta y]=[4,4]` m, vertical grid is :math:`\Delta z=4` m at the surface and stretched with verticalDeformFactor :math:`=0.25`
 * Domain size: :math:`[1.0 \times 1.0 \times 1.44]` km
 * Model time step: :math:`0.01` s
 * Advection scheme: 5th-order upwind

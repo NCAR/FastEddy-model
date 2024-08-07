@@ -11,7 +11,7 @@ Input parameters
 ----------------
 
 * Number of grid points: :math:`[N_x,N_y,N_z]=[360,362,90]`
-* Isotropic grid spacings in the horizontal directions: :math:`[dx,dy]=[15,15]` m, vertical grid is :math:`dz=15` m at the surface and stretched with verticalDeformFactor :math:`=0.50`
+* Isotropic grid spacings in the horizontal directions: :math:`[\Delta x,\Delta y]=[15,15]` m, vertical grid is :math:`\Delta z=15` m at the surface and stretched with verticalDeformFactor :math:`=0.50`
 * Domain size: :math:`[5.40 \times 5.43 \times 2.70]` km
 * Model time step: :math:`0.04` s
 * Advection scheme: 5th-order upwind
@@ -29,7 +29,7 @@ Input parameters
     \end{cases} 
 
 * Surface warming rate:  :math:`0.5` K/h
-* Surface roughness length: Donelan (1990) parameterization
+* Surface roughness length: Drennan (2003) parameterization
 * Rayleigh damping layer: uppermost :math:`400` m of the domain
 * Initial perturbations: :math:`\pm 0.50` K 
 * Depth of perturbations: :math:`825` m
