@@ -14,7 +14,7 @@ Publications
 .. _atmosphere_2024:
 
 | Welch, B.M.; Horel, J.D.; Sauer, J.A. "Application of the NCAR FastEddy\ :sup:`®`
-|   Microscale Model to a Lake Breeze Front". *Atmosphere*, 15, 809 (2024)
+|   Microscale Model to a Lake Breeze Front". *Atmosphere* 15, no.7 (2024) 809
 |   https://doi.org/10.3390/atmos15070809
 
 .. _geophysical_research_2022:
