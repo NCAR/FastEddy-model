@@ -39,7 +39,7 @@ The FastEddy code will write its output to an **output** directory. Please creat
 directory, if one does not already exist, in the same location as this script.
 
 Casper Sample Script
--------------
+--------------------
 
 .. note::
 
@@ -65,7 +65,7 @@ The FastEddy code will write its output to an `output` directory. Please create 
 directory, if one does not already exist, in the same location as this script.
 
 Derecho Sample Script
--------------
+---------------------
 
 .. note::
 
