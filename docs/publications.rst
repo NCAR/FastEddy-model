@@ -4,6 +4,19 @@
 Publications
 ************
 
+.. _wind_energy_2024:
+
+| Sanchez Gomez, M., D. Muñoz-Esparza, J.A. Sauer. "Implementation and Validation
+|   of a Generalized Actuator Disk Parameterization for Wind Turbine Simulations
+|   Within the FastEddy Model". *Wind Energy* (2024)
+|   http://doi.org/10.1002/we.2941
+
+.. _atmosphere_2024:
+
+| Welch, B.M.; Horel, J.D.; Sauer, J.A. "Application of the NCAR FastEddy\ :sup:`®`
+|   Microscale Model to a Lake Breeze Front". *Atmosphere*, 15, 809 (2024)
+|   https://doi.org/10.3390/atmos15070809
+
 .. _geophysical_research_2022:
 
 | Muñoz-Esparza, D., C. Becker, J.A. Sauer, D.J. Gagne II, J. Schreck, B. Kosović.
