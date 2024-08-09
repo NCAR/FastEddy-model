@@ -129,7 +129,7 @@ print('Writing full netCDF files to {:s}/{:s}.*'.format(netCDFpath,FEoutBase))
 Nh=3
 
 if(mpi_rank == 0):
-  if not(os.path.exists(netCDFpath)):
+  if not os.path.exists(netCDFpath):
     os.makedirs(netCDFpath)
 
 ts_list=np.arange(tstart,tstop+1,tstep,dtype=np.int32)
@@ -150,7 +150,7 @@ for iRank in range(mpi_size):
           myend = myend+(list_len-mpi_size*elems_perRank) ###Catch straggler files with the last rank
        mytslist = ts_list[mystart:myend]
        print("{:d}/{:d}: mytslist = ts_list({:d}:{:d})".format(mpi_rank, mpi_size, mystart, myend))
-       print("{:d}/{:d}: Converting {:s}.{:d} to {:s}.{:d})".format(mpi_rank, mpi_size, FEoutBase, mytslist[0], FEoutBase, mytslist[-1]))
+       print("{:d}/{:d}: Converting from {:s}.{:d} to {:s}.{:d}".format(mpi_rank, mpi_size, FEoutBase, mytslist[0], FEoutBase, mytslist[-1]))
        print("{:d}/{:d}: len(myfileslist) = {:d}".format(mpi_rank, mpi_size,len(mytslist)))
     MPI.COMM_WORLD.Barrier()
 

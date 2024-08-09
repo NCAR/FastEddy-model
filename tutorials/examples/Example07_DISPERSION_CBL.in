@@ -1,6 +1,6 @@
 Description = This is an idealized CBL over terrain with T&D of a passive scalar.
 #--MPI_AALES
-numProcsX = 8 # 4 # Number of cores to be used for horizontal domain decomposition in X
+numProcsX = 4 # Number of cores to be used for horizontal domain decomposition in X
 numProcsY = 1 # Number of cores to be used for horizontal domain decomposition in Y
 #--CUDA_AALES
 tBx = 1 # Number of threads in x-dimension
@@ -9,10 +9,10 @@ tBz = 32 # Number of threads in z-dimension
 #--IO
 inPath = ./initial/ # Path where initial/restart file is read in from
 inFile = FE_DISPERSION.0 # name of the input file for coordinate system and initial or restart conditions
-outPath = ./output/ # ./output/ # Path where output files are to be written
+outPath = ./output_binary/ # ./output/ # Path where output files are to be written
 outFileBase = FE_DISPERSION # Base name of the output file series as in (outFileBase).element-in-series
 frqOutput = 30000 # frequency (in timesteps) at which to produce output
-ioOutputMode = 0 # 0: N-to-1 gather and write to a netcdf file, 1:N-to-N writes of FastEddy binary files
+ioOutputMode = 1 # 0: N-to-1 gather and write to a netcdf file, 1:N-to-N writes of FastEddy binary files
 #--GRID
 Nx = 504 # 500 # Number of discretised domain elements in the x (zonal) direction
 Ny = 498 # Number of discretised domain elements in the y (meridional) direction

@@ -4,7 +4,6 @@
 #PBS -l select=1:ncpus=4:mpiprocs=4:ngpus=4:mem=100GB
 #PBS -l walltime=12:00:00
 #PBS -q casper
-#PBS -r n 
 #PBS -j oe
 #PBS -l job_priority=economy
 

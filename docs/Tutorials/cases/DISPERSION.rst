@@ -38,18 +38,18 @@ Input parameters
 Execute FastEddy
 ----------------
 
+See :ref:`run_fasteddy` for general instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
+
 Note that this example requires customization of the initial condition file. Follow the sequence of steps below.
 
 #. Exectue the Jupyer notebook provided in **/tutorial/notebooks/Dispersion_Prep1.ipynb** to create the topography file *Topography_504x498.dat*. 
 #. Run FastEddy for 1 timestep using the default state of the (*Example07_DISPERSION_SBL.in*) and required binary terrain file generated in the previous step, specified as input through the FastEddy parameter file (:code:`topoFile`). This step creates an output file *FE_DISPERSION.0* that includes the topography and establishes a terrain-following vertical coordinate grid. 
 #. Exectute the Jupyer notebook provided in **/tutorial/notebooks/Dispersion_Prep2.ipynb** to modify the surface roughness distribution over the hill. 
 #. Execute the Jupyer notebook provided in **/tutorial/notebooks/Dispersion_Prep3.ipynb** to create the source specification input file. 
-#. Adjust the (*Example07_DISPERSION_SBL.in*) file to specify the targeted initial condition file (:code:`inPath`, :code:`inFile`) by removing the (:code:`#`) just to the right of the equal sign ito uncomment these parameters values. Uncomment the pre-formed passive tracer source file (:code:`srcAuxScFile`). Remove the value of :math:`0` and uncomment the value of :math:`2` for the number of source emissions (:code:`NhydroAuxScalars`).
+#. Adjust the (*Example07_DISPERSION_SBL.in*) file to specify the targeted initial condition file (:code:`inPath`, :code:`inFile`) by removing the (:code:`#`) just to the right of the equal sign to uncomment these parameters values. Remove the value of :math:`0` and uncomment the value of :math:`2` for the number of source emissions (:code:`NhydroAuxScalars`). Uncomment the pre-formed passive tracer source file (:code:`srcAuxScFile`).
 #. Run FastEddy for :math:`1` h of the simulation by changing :code:`frqOutput`, :code:`Nt`, and :code:`NtBatch` removing the values of :math:`1` for each and the (:code:`#`) to uncomment appropriate full-simulation parameters values. The emissions begin :math:`45` min into the simulation.  
    
-Two FastEddy simulation setups are provided for this tutorial, corresponding to weakly stable (*Example07_DISPERSION_SBL.in*) and convective conditions (*Example07_DISPERSION_CBL.in*). The initial condition and terrain preparation steps only need to be carried out once for the stable case, then can be reused directly in the convective stability case.
-
-See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.
+Two FastEddy simulation setups are provided for this tutorial, corresponding to weakly stable (*Example07_DISPERSION_SBL.in*) and convective conditions (*Example07_DISPERSION_CBL.in*). The initial condition and terrain preparation steps only need to be carried out once for the stable case, then can be reused directly in the convective stability case. Additionally, the CBL case is set up to demonstrate the use of N-to-N binary outputs. To exercise this functionality, create an 'output_binary' sub-directory where binary fiels will be written during the simulation. Then personalize and use the batch submission script **/scripts/batch_jobs/fasteddy_convert_pbs_script_casper.sh** which will invoke a python script (**/scripts//python_utilities/post-processing/FEbinaryToNetCDF.py**) to convert the per-rank binary files from each output timestep into a single aggregate NetCDF output file per timestep analogous to those resulting from the SBL case.  
 
 Visualize the output
 --------------------

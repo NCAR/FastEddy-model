@@ -1,0 +1,10 @@
+{
+  "outpath": "INSERT_PATH_TO_YOUR_RUN_DIRECTORY/output_binary/",
+  "FEoutBase": "FE_DISPERSION",
+  "numOutRanks": 4,
+  "fileSetSize": 12,
+  "tstart": 0,
+  "tstep": 30000,
+  "netCDFpath": "INSERT_PATH_TO_YOUR_RUN_DIRECTORY/output_binary/NetCDF/",
+  "removeBinaries": true 
+}
