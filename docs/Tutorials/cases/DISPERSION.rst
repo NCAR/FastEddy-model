@@ -1,5 +1,5 @@
 ==================================================
-Transport and dispersion over idealized topography
+Passive scalar transport and dispersion over an idealized hill
 ==================================================
 
 Background

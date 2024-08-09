@@ -1,5 +1,5 @@
 =================================================
-Boundary layer in the presence of resolved canopy
+Canopy inclusive boundary layer
 =================================================
 
 Background
