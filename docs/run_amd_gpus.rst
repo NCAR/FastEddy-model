@@ -1,6 +1,6 @@
 .. _run_fasteddy_amdgpu:
 
-**************************
+**************************************************
 Building FastEddy on AMD GPU Accelerated platforms
 **************************
 
