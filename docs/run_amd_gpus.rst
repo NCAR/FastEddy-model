@@ -2,7 +2,7 @@
 
 **************************************************
 Building FastEddy on AMD GPU Accelerated platforms
-**************************
+**************************************************
 
 These instructions will help users get started with building FastEddy for systems with AMD GPU accelerators. This can be beneficial for users who have allocations on 
 
