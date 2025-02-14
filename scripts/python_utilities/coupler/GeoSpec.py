@@ -133,8 +133,8 @@ ds_data['z0t']= xr.DataArray(0.1*z0_tmp,dims=(['yIndex','xIndex']))
 ds_data['SeaMask']= xr.DataArray(SeaMask_tmp,dims=(['yIndex','xIndex']))
 ds_data['dx_inter']= xr.DataArray(np.array(dx,dtype=np.float32))
 ds_data['dy_inter']= xr.DataArray(np.array(dy,dtype=np.float32))
-ds_data['lat']= xr.DataArray(lat,dims=(['yIndex','xIndex']))
-ds_data['lon']= xr.DataArray(lon,dims=(['yIndex','xIndex']))
+ds_data['lat']= xr.DataArray(lat.astype(dtype=np.float64),dims=(['yIndex','xIndex']))
+ds_data['lon']= xr.DataArray(lon.astype(dtype=np.float64),dims=(['yIndex','xIndex']))
 
 ds_data.to_netcdf(FE_new_nc,format='NETCDF4')
 
