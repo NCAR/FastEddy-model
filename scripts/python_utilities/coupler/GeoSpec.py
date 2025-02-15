@@ -36,6 +36,7 @@ save_plot_opt = params["save_plot_opt"]
 file_nlcd = gis_root + nlcd_name
 FE_new_nc = FE_dataset_path + name_dom + name_dom_add + '.nc'
 FE_plot = FE_dataset_path + name_dom + name_dom_add + '.png'
+print('FE_new_nc:', FE_new_nc)
 
 # Calculate xPos2d, yPos2d
 
@@ -127,7 +128,7 @@ ds_data = xr.Dataset()
 ds_data['xPos2d']= xr.DataArray(xarr,dims=(['yIndex','xIndex']))
 ds_data['yPos2d']= xr.DataArray(yarr,dims=(['yIndex','xIndex']))
 ds_data['topoPos']= xr.DataArray(data_topo0,dims=(['yIndex','xIndex']))
-ds_data['LandCover']= xr.DataArray(data_land,dims=(['yIndex','xIndex']))
+ds_data['LandCover']= xr.DataArray(data_land.astype(dtype=np.int32),dims=(['yIndex','xIndex']))
 ds_data['z0m']= xr.DataArray(z0_tmp,dims=(['yIndex','xIndex']))
 ds_data['z0t']= xr.DataArray(0.1*z0_tmp,dims=(['yIndex','xIndex']))
 ds_data['SeaMask']= xr.DataArray(SeaMask_tmp,dims=(['yIndex','xIndex']))
