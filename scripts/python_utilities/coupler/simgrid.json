@@ -1,0 +1,10 @@
+{
+  "name_dom": "DomainName",
+  "FE_ref_GIS_nc": "gis_file.nc",
+  "FE_params_file": "FE_file.in",
+  "center_lat": 34.3348,
+  "center_lon": -87.3623,
+  "FE_new_nc_path": "/path_simgrid/",
+  "name_dom_add": "",
+  "save_plot_opt": 1
+}
