@@ -71,34 +71,16 @@ d_zeta = float(str(FE_params['d_zeta'][0]))
 
 print('Nx,Ny,d_xi,d_eta,d_zeta=',Nx,',',Ny,',',d_xi,',',d_eta,',',d_zeta)
 
-# old code
-#r_diss = np.sqrt(np.power(xPos_2d-bdy_x,2.0)+np.power(yPos_2d-bdy_y,2.0))
-#ind_closest = np.where(r_diss==np.amin(np.amin(r_diss)))
-#print('ind_closest=',ind_closest)
-#print('xPos_2d[ind_closest]=',xPos_2d[ind_closest])
-#print('yPos_2d[ind_closest]=',yPos_2d[ind_closest])
-#x_ind = ind_closest[1]
-#x_s = x_ind[0]
-#y_ind = ind_closest[0]
-#y_s = y_ind[0]
-#print('xPos_2d[y_s,x_s]=',xPos_2d[y_s,x_s],'m')
-#print('yPos_2d[y_s,x_s]=',yPos_2d[y_s,x_s],'m')
-#print('diff_x=',xPos_2d[y_s,x_s]-bdy_x,'m')
-#print('diff_y=',yPos_2d[y_s,x_s]-bdy_y,'m')
-
-# new code
 ll_diff = np.sqrt(np.power(lat-center_lat,2.0)+np.power(lon-center_lon,2.0))
 ind_center = np.where(ll_diff==np.min(ll_diff,axis=(1,0)))
 ind_cc_y = ind_center[0][0]
 ind_cc_x = ind_center[1][0]
-x_s = ind_cc_x - int(0.5*Nx)
-#Nx_e = Nx_s + Nx
-y_s = ind_cc_y - int(0.5*Ny)
-#Ny_e = Ny_s + Ny
+print('ind_cc_x,ind_cc_y=',ind_cc_x,',',ind_cc_y)
+
+x_s = ind_cc_x - int(0.5*Nx*d_xi/dx_inter)
+y_s = ind_cc_y - int(0.5*Ny*d_eta/dy_inter)
 print('xPos_2d[y_s,x_s]=',xPos_2d[y_s,x_s],'m')
 print('yPos_2d[y_s,x_s]=',yPos_2d[y_s,x_s],'m')
-#print('diff_x=',xPos_2d[y_s,x_s]-bdy_x,'m')
-#print('diff_y=',yPos_2d[y_s,x_s]-bdy_y,'m')
 
 ##
 
