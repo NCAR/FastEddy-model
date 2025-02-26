@@ -277,6 +277,9 @@ ds_data['SeaMask']= xr.DataArray(data_SeaMask.astype(dtype=np.float32),dims=(['y
 ds_data['LandCover']= xr.DataArray(data_landc.astype(dtype=np.int32),dims=(['yIndex','xIndex']))
 ds_data['lat']= xr.DataArray(lat_dom.astype(dtype=np.float64),dims=(['yIndex','xIndex']))
 ds_data['lon']= xr.DataArray(lon_dom.astype(dtype=np.float64),dims=(['yIndex','xIndex']))
+ds_data['xIndex']= xr.DataArray(np.arange(0,xarr.shape[2],dtype=np.int32),dims='xIndex')
+ds_data['yIndex']= xr.DataArray(np.arange(0,xarr.shape[1],dtype=np.int32),dims='yIndex')
+ds_data['zIndex']= xr.DataArray(np.arange(0,xarr.shape[0],dtype=np.int32),dims='zIndex')
 
 ds_data.to_netcdf(FE_new_nc,format='NETCDF4')
 
