@@ -204,7 +204,8 @@ def copyAndTranspose(dsWRF):
     return ds
 
 def interp2DForFE(ds,ds_FE,XvWRF,YvWRF,xVec,yVec):
-    k_val = 3 # 1
+    k_val = 1
+    k_val_surf = 3
     dsFENew=xr.Dataset()
     for var in ds.variables:
         t1s = time.perf_counter()
@@ -217,7 +218,7 @@ def interp2DForFE(ds,ds_FE,XvWRF,YvWRF,xVec,yVec):
                 tmpVar3d[k,:,:]=tmp
             dsFENew[var]=xr.DataArray(tmpVar3d,dims=('zIndex','yIndex','xIndex'))
         elif len(ds[var].sizes) == 2:
-            fInterp = RectBivariateSpline(YvWRF[:,0],XvWRF[0,:],ds[var].values.transpose(), kx=k_val, ky=k_val)
+            fInterp = RectBivariateSpline(YvWRF[:,0],XvWRF[0,:],ds[var].values.transpose(), kx=k_val_surf, ky=k_val_surf)
             tmp=fInterp(yVec,xVec)
             print(tmp.shape)
             dsFENew[var]=xr.DataArray(tmp,dims=('yIndex','xIndex'))
