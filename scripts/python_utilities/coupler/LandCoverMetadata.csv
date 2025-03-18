@@ -1,0 +1,18 @@
+Value,Type,z0
+0,Unclassified,0.03
+11,Open Water,0.001
+12,Perennial Snow/Ice,0.012
+21,"Developed, Open Space",0.05
+22,"Developed, Low Intensity",0.33
+23,"Developed, Medium Intensity",0.5
+24,Developed High Intensity,0.39
+31,Barren Land,0.09
+41,Deciduous Forest,0.65
+42,Evergreen Forest,0.72
+43,Mixed Forest,0.71
+52,Shrub/Scrub,0.12
+71,Herbaceous,0.04
+81,Hay/Pasture,0.06
+82,Cultivated Crops,0.05
+90,Woody Wetlands,0.55
+95,Emergent Herbaceous Wetlands,0.11
