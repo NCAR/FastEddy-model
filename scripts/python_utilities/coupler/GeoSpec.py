@@ -194,7 +194,7 @@ if (save_plot_opt==1):
     ax.set_aspect('equal', 'box')
     ax.set_ylabel(r'$y$ $[\mathrm{km}]$',fontsize=fntSize_labels)
     ax.set_xlabel(r'$x$ $[\mathrm{km}]$',fontsize=fntSize_labels)
-    ax.set_title('terrain elevation [m]',fontsize=fntSize_title)
+    ax.set_title('terrain elevation [m ASL]',fontsize=fntSize_title)
 
     ### land cover ###
 
