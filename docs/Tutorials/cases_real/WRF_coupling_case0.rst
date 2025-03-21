@@ -11,7 +11,7 @@ GeoSpec.py
 ----------
 The first preprocessing step is **GeoSpec**. The purpose of this step is to create a netCDF file of standard format that allows ingestion of the required GIS data into FastEddy later on. The following variable dimensions and naming convention is required for *GeoSpec.py* to execute properly.
 
-.. literalinclude:: ../variables_GISinput
+.. literalinclude:: ./variables_GISinput
 
 The two required fields are the terrain topography (:code:`topoPos`, in m above seal level) and the categorical land cover (:code:`LandCover`). Note that high-resolution fields are desirable as inputs, and that both need to have the same resolution (:code:`cellsize`, in m). Terrain can usually be obtained from lidar data at a few meters resolution, while land cover datasets are typically coarser. For U.S. locations we recommend using NLCD dataset, which provides a high resolution of 30 m. These fields need to come together with corresponding latitude and longitude 2d fileds (:code:`lat` and :code:`lon`), provided with double precision due to the high-resolution typically used in these FastEddy simulations.
 
@@ -23,7 +23,7 @@ Input parameters to **GeoSpec.py** are provided by the **geospec.json** file. Th
 
 After successful completion of the python code, a netCDF file (:code:`FortCollinsCO.nc`) with the following fields will be created:
 
-.. literalinclude:: ../variables_GeoSpec
+.. literalinclude:: ./variables_GeoSpec
 
 If the json file option *save_plot_opt* is set to 1, then a plot will be produced displaying the terrain elevation, land cover, and roughness length maps.
 
