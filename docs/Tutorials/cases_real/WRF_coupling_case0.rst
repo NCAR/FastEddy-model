@@ -8,7 +8,7 @@ GeoSpec
 -------
 The first preprocessing step is **GeoSpec.py**. The purpose of this step is to create a netCDF file of standard format that allows ingestion of the required GIS data into FastEddy later on. The following variable dimensions and naming convention is required for *GeoSpec.py* to execute properly.
 
-.. code-block::
+.. code-block:: none
 
    float x(x) ;
    float y(y) ;
@@ -22,13 +22,13 @@ The two required fields are the terrain topography (:code:`topoPos`, in m above 
 
 Input parameters to **GeoSpec.py** are provided by the **geospec.json** file. These include the path and file name of the input GIS data (*gis_root* and *gis_file*, respectively), together with other parameters like the output path of the output netCDF file of standard formant (*FE_dataset_path*). In order to convert the land cover class into a roughness length value, a look-up table has to be provided (*nlcd_name*). In this tutorial is based on the 16-class NLCD dataset (:code:`LandCoverMetadata.csv`). The json file entry *water_cats* needs to list all of the land cover categories that correspond to water bodies, so an appropriate roughness length parameterization can be used by FastEddy. Once all the required input files are ready, **GeoSpec.py** can be executed:
 
-.. code-block::
-   
+.. code-block:: none
+
    python ./GeoSpec.py -f geospec.json
 
 After successful completion of the python code, a netCDF file (:code:`FortCollinsCO.nc`) with the following fields will be created:
 
-.. code-block::
+.. code-block:: none
 
    float xPos2d(yIndex, xIndex) ;
    float yPos2d(yIndex, xIndex) ;
@@ -58,14 +58,14 @@ SimGrid
 -------
 The second preprocessing step is **SimGrid.py**. The purpose of this step is to set up a FastEddy grid utilizing over a domain located within the area covered by the GIS file generated with *GeoSpec.py*. The location of the center of the FastEddy domain is specified by the **simgrid.json** file parameters *center_lat* and *center_lon*. The number of points in each directions (:code:`Nx`, :code:`Ny`, :code:`Nz`), grid spacings (:code:`d_xi`, :code:`d_eta`, :code:`d_zeta`), and vertical stretching parameters (:code:`verticalDeformFactor`, :code:`verticalDeformQuadCoeff`) required to set up a grid are read in from a FastEddy parameters file (*FE_params_file*). *SimGrid.py* performs decimation or interpolation between the GIS file resolution and the grid spacing of the target FastEddy domain for surface fields, in addition to creating the vertical grid that incorporates compression effects originating from the presence of terrain. Once all the required input files are ready, **SimGrid.py** can be executed:
 
-.. code-block::
-   
+.. code-block:: none
+
    python ./SimGrid.py -f simgrid.json
 
 After successful completion of the python code, a netCDF file (:code:`FortCollinsCO.0`) with the following fields will be created:
 
-.. code-block::
-   
+.. code-block:: none
+
    float xPos(zIndex, yIndex, xIndex) ;
    float yPos(zIndex, yIndex, xIndex) ;
    float zPos(zIndex, yIndex, xIndex) ;
@@ -95,7 +95,7 @@ GenICBCs
 --------
 The third preprocessing step is **GenICBCs.py**. The purpose of this step is to create initial and boundary conditions (ICBCs) from the mesoscale WRF simulation results over the gridded domain created by *SimGrid.py*. The input parameters are specified in the corresponding *genicbcs.json* file. This step involves three-dimensional interpolation of prognostic equation variables (winds, density, potential temperature and water vapor) and two-dimensional interpolation of surface skin forcings (temperature and water vapor). In order for WRF to provide the required fields to drive a nested FastEddy simulation, a number of additional variables not present in WRF's default output are required. To save the necessary variables at a sufficiently high temporal fidelity in an efficient manner, it is recommended to create WRF auxiliary files. For that purpose, when running WRF, include the following lines in WRF's namelist.input.
 
-.. code-block::
+.. code-block:: none
 
    &time_control
    iofields_filename         = "vars_io.txt",
@@ -107,14 +107,14 @@ The third preprocessing step is **GenICBCs.py**. The purpose of this step is to 
 
 And include the file *vars_io.txt* containing the one line below in WRF's run directory.
 
-.. code-block::
+.. code-block:: none
 
    +:h:14:PH,PHB,U,V,W,T,QVAPOR,QCLOUD,ALT,TSK,Q2,HGT,PSFC,XLAT,XLONG,Z0,ZNT
 
 That will generate a set of time stampped *wrf_fasteddy_* files that will be utilized as basis for the interpolation to the FastEddy grid. In addition to these, a *wrfout_* file needs to be pointed at for reference (:code:`WRF_PrntRefOut` in **genicbcs.json**). Additional *GenICBCs.py* input parameters are meant to provide the starting date and time of the sequence of ICBCs to be created. Similarly to the other preprocessing python code, **GenICBCs.py** is executed as:
 
-.. code-block::
-   
+.. code-block:: none
+
    python ./GenICBCs.py -f genicbcs.json
 
 Successful completion will create an initial condition file (*FE_interp_1700UTC.0*) and a set of boundary condition files (*FE_Bndys.**) where the index indicates the number of minute increments from the initial time (frequency in minutes is specified by the parameter :code:`itInc` in *genicbcs.json*).
