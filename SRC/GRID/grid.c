@@ -54,6 +54,15 @@ float *zPos;  /* Cell-center position in z (meters) */
 float *topoPosGlobal; /*Topography elevation (z in meters) at the cell center position in x and y. (Global domain) */
 float *topoPos; /*Topography elevation (z in meters) at the cell center position in x and y. (per-rank domain) */
 
+//float *J11;      // dx/d_xi  -- assumed = 1.0
+//float *J12;      // dx/d_eta -- assumed = 1.0
+
+//float *J21;      // dy/d_xi  -- assumed = 1.0
+//float *J22;      // dy/d_eta -- assumed = 1.0
+
+float *J13;      // dx/d_zeta
+float *J23;      // dy/d_zeta
+
 float *J31;      // dz/d_xi
 float *J32;      // dz/d_eta
 float *J33;      // dz/d_zeta
@@ -240,6 +249,8 @@ int gridInit(){
      topoPos = memAllocateFloat2DField(Nxp, Nyp, Nh, "topoPos");
      topoPosGlobal = memAllocateFloat2DField(Nx, Ny, 0, "topoPos");
      /* Metric Tensors Fields */
+     J13 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J13");
+     J23 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J23");
      J31 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J31");
      J32 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J32");
      J33 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J33");
@@ -266,6 +277,8 @@ int gridInit(){
 //#if 1
      errorCode = ioRegisterVar("D_Jac", "float", 4, dims4d, D_Jac);
      errorCode = ioRegisterVar("invD_Jac", "float", 4, dims4d, invD_Jac);
+     errorCode = ioRegisterVar("J13", "float", 4, dims4d, J13);
+     errorCode = ioRegisterVar("J23", "float", 4, dims4d, J23);
      errorCode = ioRegisterVar("J31", "float", 4, dims4d, J31);
      errorCode = ioRegisterVar("J32", "float", 4, dims4d, J32);
      errorCode = ioRegisterVar("J33", "float", 4, dims4d, J33);
@@ -665,7 +678,11 @@ int calculateJacobians(){
          /* Set the determinant and inverse determinant for this ijk location */    
          D_Jac[ijk] = determinant;
          invD_Jac[ijk] = 1.0/determinant;
-         //d(x,y,z)/d_zeta
+         //dx/d_zeta
+	 J13[ijk] =  (T[0][1]*T[1][2] - T[0][2]*T[1][1])*invD_Jac[ijk];
+	 //dy/d_zeta
+	 J23[ijk] = -(T[0][0]*T[1][2] - T[0][2]*T[1][0])*invD_Jac[ijk];
+         //dz/d_(xi, eta, zeta)
          J31[ijk] =  (T[1][0]*T[2][1] - T[1][1]*T[2][0])*invD_Jac[ijk];
          J32[ijk] = -(T[0][0]*T[2][1] - T[0][1]*T[2][0])*invD_Jac[ijk];
          J33[ijk] =  (T[0][0]*T[1][1] - T[0][1]*T[1][0])*invD_Jac[ijk];
@@ -685,7 +702,7 @@ int calculateJacobians(){
    printf("mpi_rank_world--%d/%d coordHalos, calculateJacaobians()-Boundaries!\n",mpi_rank_world, mpi_size_world);
    fflush(stdout);
 #endif
-/* TODO technically these only work for periodic domain.  Since we currently use strictly constant horizontal and vertical spacing they work for now. */
+/* TODO technically these only work for horizontally iconstant resolution domain. */
    /*lower i-index halos*/
    for(iBnd=0; iBnd < 6; iBnd++){
 #ifdef DEBUG
@@ -755,7 +772,11 @@ int calculateJacobians(){
            /* Set the determinant and inverse determinant for this ijk location */    
            D_Jac[ijkDest] = D_Jac[ijkTarget];
            invD_Jac[ijkDest] = invD_Jac[ijkTarget];
-           //d(x,y,z)/d_zeta
+	   //dx/d_zeta
+           J13[ijkDest] = J13[ijkTarget];
+	   //dy/d_zeta
+           J23[ijkDest] = J23[ijkTarget];
+           //dz/d_(xi, eta, zeta)
            J31[ijkDest] = J31[ijkTarget];
            J32[ijkDest] = J32[ijkTarget];
            J33[ijkDest] = J33[ijkTarget];
@@ -789,6 +810,8 @@ int calculateJacobians(){
    printf("(xPos,yPos,zPos)[%d,%d,%d] = (%f,%f,%f)\n",i,j,k+1,xPos[ijkp1],yPos[ijkp1],zPos[ijkp1]);
    printf("D_Jac[%d] = %f\n",ijk,D_Jac[ijk]);
    printf("invD_Jac[%d] = %f\n",ijk,invD_Jac[ijk]);
+   printf("J13[%d] = %f\n",ijk,J13[ijk]);
+   printf("J23[%d] = %f\n",ijk,J23[ijk]);
    printf("J31[%d] = %f\n",ijk,J31[ijk]);
    printf("J32[%d] = %f\n",ijk,J32[ijk]);
    printf("J33[%d] = %f\n",ijk,J33[ijk]);
