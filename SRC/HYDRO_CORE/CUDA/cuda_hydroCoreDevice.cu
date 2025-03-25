@@ -486,7 +486,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
      if (diffusionSelector == 1){  
        cudaDevice_hydroCoreUnitTestCompleteMolecularDiffusion<<<grid, tBlock>>>(hydroFlds_d, hydroFldsFrhs_d,
                                                                               hydroNuGradXFlds_d,hydroNuGradYFlds_d,hydroNuGradZFlds_d,
-                                                                              J31_d, J32_d, J33_d, D_Jac_d, invD_Jac_d); // call to div of nugrad
+                                                                              J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d, invD_Jac_d); // call to div of nugrad
      } // endif diffusionSelector == 1
      //Auxiliary scalar  mixing (diffusion) from SGS-turbulence
       
@@ -923,7 +923,7 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
                                    &hydroNuGradYFlds_d[fldStride*(iFld-1)], 
                                    &hydroNuGradZFlds_d[fldStride*(iFld-1)], 
                                    inv_pr,
-                                   J31_d, J32_d, J33_d, D_Jac_d);
+                                   J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d);
      } // end for (iFld=1; iFld < Nhydro_d; iFld++){
    } // end if diffusionSelector_d > 0
 

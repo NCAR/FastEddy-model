@@ -55,9 +55,9 @@ float *topoPosGlobal; /*Topography elevation (z in meters) at the cell center po
 float *topoPos; /*Topography elevation (z in meters) at the cell center position in x and y. (per-rank domain) */
 
 //float *J11;      // dx/d_xi  -- assumed = 1.0
-//float *J12;      // dx/d_eta -- assumed = 1.0
+//float *J12;      // dx/d_eta -- assumed = 0.0
 
-//float *J21;      // dy/d_xi  -- assumed = 1.0
+//float *J21;      // dy/d_xi  -- assumed = 0.0
 //float *J22;      // dy/d_eta -- assumed = 1.0
 
 float *J13;      // dx/d_zeta
