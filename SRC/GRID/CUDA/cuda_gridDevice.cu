@@ -103,13 +103,13 @@ extern "C" int cuda_gridDeviceSetup(){
    Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh); 
    /* Allocate the GRID arrays */
    /* Coordinate Arrays */
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J13_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J23_d);
    fecuda_DeviceMalloc(Nelems*sizeof(float), &xPos_d);
    fecuda_DeviceMalloc(Nelems*sizeof(float), &yPos_d);
    fecuda_DeviceMalloc(Nelems*sizeof(float), &zPos_d);
    fecuda_DeviceMalloc(((Nxp+2*Nh)*(Nyp+2*Nh))*sizeof(float), &topoPos_d);
    /* Metric Tensors Fields */
+   fecuda_DeviceMalloc(Nelems*sizeof(float), &J13_d);
+   fecuda_DeviceMalloc(Nelems*sizeof(float), &J23_d);
    fecuda_DeviceMalloc(Nelems*sizeof(float), &J31_d);
    fecuda_DeviceMalloc(Nelems*sizeof(float), &J32_d);
    fecuda_DeviceMalloc(Nelems*sizeof(float), &J33_d);

@@ -40,6 +40,7 @@ extern "C" int cuda_advectionDeviceCleanup();
 * This device function calculates the cell face velocities to prepare for use in the chosen advection scheme
 */
 __device__ void cudaDevice_calcFaceVelocities(float* hydroFlds_d, float* hydroFaceVels_d,
+		                              float* J13_d, float* J23_d,
                                               float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
 
 /*----->>>>> __device__ void  cudaDevice_UpstreamDivAdvFlux();  --------------------------------------------------
