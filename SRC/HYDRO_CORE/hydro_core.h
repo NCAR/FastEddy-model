@@ -33,7 +33,8 @@
 /*#################------------------- HYDRO_CORE module variable declarations ---------------------#################*/
 /* Parameters */
 extern int Nhydro;          /*Number of prognostic variable fields under hydro_core */
-extern int hydroBCs;          /*selector for hydro BC set. 2= periodicHorizVerticalAbl */
+extern int hydroBCs;          /*selector for hydro BC set. 1= Dirichlet lateral, ceiling and surface boundary conditions (LAD),
+			                                   2= periodicHorizVerticalAbl */
 
 extern int hydroForcingWrite;   /*switch for dumping forcing fields of prognostic variables. 0-off (default), 1= on*/
 extern int hydroForcingLog;     /*switch for logging Frhs summary metrics. 0-off (default), 1= on*/
@@ -60,8 +61,33 @@ extern float refPressure;       /* Reference pressure set constant to 1e5 Pascal
 extern float kappa;             /* von Karman constant */
 extern float L_v;               /* latent heat of vaporization (J/kg) */
 
-
 /*HYDRO_CORE Submodule parameters*/ 
+/*HYDRO_CORE Limited Area Domain (LAD) Dirichlet boundary condition parameters and array pointers*/
+extern char *hydroBndysFileBase;   /*Base file name LAD BC set (hydroBCs = 1)*/
+extern char *hydroBndysFile;       /*File name for LAD BC set (hydroBCs = 1)*/
+extern int hydroBndysFileStart;    /*start counter value for LAD BC set files (hydroBCs = 1)*/
+extern int hydroBndysFileEnd;      /*end counter value for LAD BC set files (hydroBCs = 1)*/
+extern int hydroBndysFileCounter;  /*counter value for LAD BC set files (hydroBCs = 1)*/
+extern int nBndyVars;              /*Number of variable fields expected in Bdy-Planes input files*/
+extern int nSurfBndyVars;          /*Number of surface variable fields expected in Bdy-Planes input files*/
+
+extern float dtBdyPlaneBCs;         /*delta in time (seconds) between BdyPlane sets */
+extern float *XZBdyPlanesGlobal;    /*Base Adress of memory block for lateral-BC XZ-planes (Global domain)*/
+extern float *YZBdyPlanesGlobal;    /*Base Adress of memory block for lateral-BC YZ-planes (Global domain)*/
+extern float *XYBdyPlanesGlobal;    /*Base Adress of memory block for surface/ceiling-BC XY-planes (Global domain)*/
+extern float *XZBdyPlanes;          /*Base Adress of memory block for lateral-BC XZ-planes (per rank domain)*/
+extern float *YZBdyPlanes;          /*Base Adress of memory block for lateral-BC YZ-planes (per rank domain)*/
+extern float *XYBdyPlanes;          /*Base Adress of memory block for surface/ceiling-BC XY-planes (per rank domain)*/
+extern float *XZBdyPlanesPrev;      /*Base Adress of memory block for lateral-BC XZ-planes (per rank domain)*/
+extern float *YZBdyPlanesPrev;      /*Base Adress of memory block for lateral-BC YZ-planes (per rank domain)*/
+extern float *XYBdyPlanesPrev;      /*Base Adress of memory block for surface/ceiling-BC XY-planes (per rank domain)*/
+extern float *XZBdyPlanesNext;      /*Base Adress of memory block for lateral-BC XZ-planes (per rank domain)*/
+extern float *YZBdyPlanesNext;      /*Base Adress of memory block for lateral-BC YZ-planes (per rank domain)*/
+extern float *XYBdyPlanesNext;      /*Base Adress of memory block for surface/ceiling-BC XY-planes (per rank domain)*/
+extern float *SURFBdyPlanesGlobal;  /*Base Adress of memory block for surfaceVariable-BC XY-planes (Global domain)*/
+extern float *SURFBdyPlanes;        /*Base Adress of memory block for surfaceVariable-BC XY-planes (per rank domain)*/
+extern float *SURFBdyPlanesPrev;    /*Base Adress of memory block for surfaceVariable-BC XY-planes (per rank domain)*/
+extern float *SURFBdyPlanesNext;    /*Base Adress of memory block for surfaceVariable-BC XY-planes (per rank domain)*/
 
 /*---PRESSURE_GRADIENT_FORCE*/
 extern int pgfSelector;          /*Pressure Gradient Force (pgf) selector: 0=off, 1=on*/
@@ -72,6 +98,7 @@ extern int coriolisSelector;     /*coriolis Force selector: 0= none, 1= Horiz.-o
 extern float coriolisLatitude;   /*Charactersitc latitude in degrees from equator of the LES domain*/
 extern float corioConstHorz;     /*Latitude dependent horizontal Coriolis term constant */
 extern float corioConstVert;     /*Latitude dependent Vertical Coriolis term constant */
+extern int coriolis_LAD;         /*Coriolis force selector for LAD BC cases (hydroBCs==1): 0=off, 1=on*/
 extern float corioLS_fact;       /*large-scale factor on Coriolis term*/
 /*---TURBULENCE*/
 extern int turbulenceSelector;    /*turbulence scheme selector: 0= none, 1= Lilly/Smagorinsky */
@@ -248,7 +275,7 @@ int hydro_coreInit();
 /*----->>>>> int hydro_corePrepareFromInitialConditions();   -------------------------------------------------
 * Used to undertake the sequence of steps to build the Frhs of all hydro_core prognostic variable fields.
 */
-int hydro_corePrepareFromInitialConditions();
+int hydro_corePrepareFromInitialConditions(int simTime_itRestart, float dt);
 
 /*----->>>>> int hydro_coreGetFieldName();   ----------------------------------------------------------------------
 * Used to fill a caller-allocated character array with the i^(th) field name in the hydoFlds memory block .
@@ -259,6 +286,27 @@ int hydro_coreGetFieldName(char * fldName, int iFld);
 * Used to set the Base-State fields for all prognostic variables and pressure.
 */
 int hydro_coreSetBaseState();
+
+/*----->>>>> int hydro_coreSetupBndyPlanesAllRanks();   ---------------------------------------------------
+* Utility to read/scatter (across ranks as appropriate) the next set of BdyPlanes in the series
+*/
+int hydro_coreSetupBndyPlanesAllRanks();
+
+/*----->>>>> int hydro_coreReadFieldBndyPlanes();   ---------------------------------------------------
+* Utility to read all BdyPlanes of a given field
+*/
+int hydro_coreReadFieldBndyPlanes(int ncid, char* field, int fieldNum);
+
+/*----->>>>> int hydro_coreScatterFieldBndyPlanes();   ---------------------------------------------------
+* Utility to scatter (across appropriate ranks) all BdyPlanes of a given field
+*/
+int hydro_coreScatterFieldBndyPlanes(int Nfields);
+
+/*----->>>>> int hydro_coreReadNextBndyPlanesFile();   ----------------------------------------------------
+* Utility to increment the BdyPlanes files counter and invoke hydro_coreSetupBndyPlanesAllRanks()
+* to read/scatter the next set of BdyPlanes in the series
+*/
+int hydro_coreReadNextBndyPlanesFile();
 
 /*----->>>>> int hydro_coreFldStateLogDump(float * Fld);  --------------------------------------------------------
 * Utility function to carry out a log-dump summary of the hydro_core state

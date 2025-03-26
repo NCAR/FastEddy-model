@@ -387,6 +387,9 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 
    cudaDevice_hydroCoreUnitTestCommence<<<grid, tBlock>>>(simTime_it, hydroFlds_d, hydroFldsFrhs_d, 
                                                           hydroBaseStateFlds_d,  
+							  YZBdyPlanes_d, XZBdyPlanes_d, XYBdyPlanes_d,
+                                                          YZBdyPlanesNext_d, XZBdyPlanesNext_d, XYBdyPlanesNext_d,
+                                                          SURFBdyPlanes_d, SURFBdyPlanesNext_d,
                                                           tskin_d, qskin_d,
                                                           sgstkeScalars_d,sgstkeScalarsFrhs_d, hydroKappaM_d,
                                                           moistScalars_d, moistScalarsFrhs_d,
@@ -531,6 +534,9 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 */
 __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydroFlds_d, float* hydroFldsFrhs_d, 
                                                      float* hydroBaseStateFlds_d, 
+						     float* YZBdyPlanes_d, float* XZBdyPlanes_d, float* XYBdyPlanes_d,
+                                                     float* YZBdyPlanesNext_d, float* XZBdyPlanesNext_d, float* XYBdyPlanesNext_d,
+                                                     float* SURFBdyPlanes_d, float* SURFBdyPlanesNext_d,
                                                      float* tskin_d, float* qskin_d,
                                                      float* sgstkeScalars_d, float* sgstkeScalarsFrhs_d, float* Km_d,
                                                      float* moistScalars_d, float* moistScalarsFrhs_d, 
@@ -540,6 +546,9 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
    float* fld;
    float* fldBS;
    float* fldFrhs;
+   float timeWeight;
+   
+   
    fldStride = (Nx_d+2*Nh_d)*(Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
 
 
@@ -592,7 +601,23 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
          break;
       }
       /*Apply the appropriate boundary conditions*/
-      if(hydroBCs_d == 2){
+      if(hydroBCs_d == 1){ //Using LAD BCs
+        timeWeight = (__int2float_rz(simTime_it%BdyUpdateSteps_d))/(__int2float_rz(BdyUpdateSteps_d));
+        cudaDevice_VerticalAblBCs(iFld, fld, fldBS);
+        if(rankXid_d == 0){
+          cudaDevice_westBdyBCs(iFld, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
+        }
+        if(rankXid_d == numProcsX_d-1){
+          cudaDevice_eastBdyBCs(iFld, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
+        }
+        if(rankYid_d == 0){
+          cudaDevice_southBdyBCs(iFld, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
+        }
+        if(rankYid_d == numProcsY_d-1){
+          cudaDevice_northBdyBCs(iFld, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
+        }
+        cudaDevice_ceilingBdyBCs(iFld, timeWeight, fld, XYBdyPlanes_d, XYBdyPlanesNext_d);
+      }else if(hydroBCs_d == 2){
         if (iFld==1 || iFld==2 || iFld==3){
           cudaDevice_VerticalAblBCsMomentum(iFld, fld, fldBS, zPos_d);
         }else{
@@ -608,6 +633,11 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
       fldFrhs = &hydroFldsFrhs_d[fldStride*iFld];
       cudaDevice_setToZero(fldFrhs);
    }//for iFld
+   
+   /* If using LAD BCs, update the surface field, tskin */
+   if((hydroBCs_d == 1) && (surflayerSelector_d == 3)){    //Update tskin 
+     cudaDevice_surfaceVarBdyBCs(0, timeWeight, tskin_d, SURFBdyPlanes_d, SURFBdyPlanesNext_d);
+   }
 
    // Re-initialization to zero of Frhs for for Auxiliary Scalar equations
    for(iFld=0; iFld < NhydroAuxScalars_d; iFld++){
@@ -627,14 +657,28 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
        cudaDevice_setToZero(fldFrhs);
        fld = &sgstkeScalars_d[fldStride*iFld];
        fldBS = &sgstkeScalarsFrhs_d[fldStride*iFld]; // set rhs forcing to zero, so it can be used as zero base state
-       if (hydroBCs_d == 2){
+       if(hydroBCs_d == 1){ //Using LAD BCs
+        cudaDevice_VerticalAblBCs(iFld, fld, fldBS);
+	if(rankXid_d == 0){
+           cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 0);
+         }
+         if(rankXid_d == numProcsX_d-1){
+           cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 1);
+         }
+         if(rankYid_d == 0){
+           cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 2);
+         }
+         if(rankYid_d == numProcsY_d-1){
+           cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 3);
+         }
+       }else if (hydroBCs_d == 2){
          cudaDevice_VerticalAblBCs(1, fld, fldBS); // to apply zero-gradient lower boundary BCs
-        if(numProcsX_d==1){
-          cudaDevice_HorizontalPeriodicXdirBCs(iFld, fld);
-        }//periodic and single rank in X-dir --> implies no MPI exchanges made so perform on-device exchange
-        if(numProcsY_d==1){
-          cudaDevice_HorizontalPeriodicYdirBCs(iFld, fld);
-        }//endif periodic and single rank in Y-dir --> implies no MPI exchanges made so perform on-device exchange
+         if(numProcsX_d==1){
+           cudaDevice_HorizontalPeriodicXdirBCs(iFld, fld);
+         }//periodic and single rank in X-dir --> implies no MPI exchanges made so perform on-device exchange
+         if(numProcsY_d==1){
+           cudaDevice_HorizontalPeriodicYdirBCs(iFld, fld);
+         }//endif periodic and single rank in Y-dir --> implies no MPI exchanges made so perform on-device exchange
        } //end if hydroBCs == ...
      } // end for iFld=0; iFld < TKESelector_d; iFld++
    } // end else if (turbulenceSelector_d > 0) && (TKESelector_d > 0)
@@ -646,19 +690,39 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
        cudaDevice_setToZero(fldFrhs);
        fld = &moistScalars_d[fldStride*iFld];
        fldBS = &moistScalars_d[fldStride*iFld]; // set rhs forcing to zero, so it can be used as zero base state
-       if (hydroBCs_d == 2){
+       if(hydroBCs_d == 1){ //Using LAD BCs
+         cudaDevice_VerticalAblBCs(iFld, fld, fldBS);
+         if(rankXid_d == 0){
+           cudaDevice_westBdyBCs(iFld+Nhydro_d, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
+         }
+         if(rankXid_d == numProcsX_d-1){
+           cudaDevice_eastBdyBCs(iFld+Nhydro_d, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
+         }
+         if(rankYid_d == 0){
+           cudaDevice_southBdyBCs(iFld+Nhydro_d, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
+         }
+         if(rankYid_d == numProcsY_d-1){
+           cudaDevice_northBdyBCs(iFld+Nhydro_d, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
+         }
+         cudaDevice_ceilingBdyBCs(iFld+Nhydro_d, timeWeight, fld, XYBdyPlanes_d, XYBdyPlanesNext_d);
+       }else if (hydroBCs_d == 2){
          cudaDevice_VerticalAblZeroGradBCs(fld); // to apply zero-gradient bottom/top BCs
-        if(numProcsX_d==1){
-          cudaDevice_HorizontalPeriodicXdirBCs(iFld, fld);
-        }//endif periodic and single rank in X-dir --> implies no MPI exchanges made so perform on-device exchange
-        if(numProcsY_d==1){
-          cudaDevice_HorizontalPeriodicYdirBCs(iFld, fld);
-        }//endif periodic and single rank in Y-dir --> implies no MPI exchanges made so perform on-device exchange
+         if(numProcsX_d==1){
+           cudaDevice_HorizontalPeriodicXdirBCs(iFld, fld);
+         }//endif periodic and single rank in X-dir --> implies no MPI exchanges made so perform on-device exchange
+         if(numProcsY_d==1){
+           cudaDevice_HorizontalPeriodicYdirBCs(iFld, fld);
+         }//endif periodic and single rank in Y-dir --> implies no MPI exchanges made so perform on-device exchange
        } //end if hydroBCs == ...
      } // end for iFld=0; iFld < moistureNvars_d; iFld++
+
+     /* If using LAD BCs, update the surface field, qskin */
+     if((hydroBCs_d == 1) && (surflayerSelector_d == 3)){    //Update qskin
+       cudaDevice_surfaceVarBdyBCs(1, timeWeight, qskin_d, SURFBdyPlanes_d, SURFBdyPlanesNext_d);
+     }
    } // end if (moitureSelector_d > 0)&&(moistureNvars_d == 0)
 
-   //Make sure all threads in a block are synchornized, so halos are filled for core-fields.
+   //Make sure all threads in a block are synchronized, so halos are filled for core-fields.
    //subsequent function calls need value in halos to compute results from...
    __syncthreads();
 

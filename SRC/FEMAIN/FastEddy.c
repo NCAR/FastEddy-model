@@ -247,7 +247,7 @@ int main(int argc, char **argv){
 
   /* inFile exists, allow HYDRO_CORE to preparations specifically from initial conditions */
   if(inFile != NULL){
-    errorCode = hydro_corePrepareFromInitialConditions();
+    errorCode = hydro_corePrepareFromInitialConditions(simTime_itRestart, dt);
   }//end if inFile !=NULL
 
   /*** ---------------------------------------------------------------------------------------------- ***/
@@ -345,7 +345,20 @@ int main(int argc, char **argv){
        fflush(stdout);
      }//endif mpi_rank_world==0
 
-     itTmp = it; 
+     itTmp = it;
+     /*If appropriate timing to do so, update the nesting boundary conditions*/ 
+     if(hydroBCs == 1){
+       if((it%((int)roundf(dtBdyPlaneBCs/dt))==0)&&(it > simTime_itRestart)){    //If due for an update and after the simulation start
+         printf("FastEddy MAin timestepping loop: Reading new BdyPlanes at it=%d...\n",it);
+         fflush(stdout);
+         errorCode = timeIntBdyPlaneUpdates();
+         //if((cellpertSelector==1)&&(cellpert_tvcp==1)){ // DME update CP parameters with dynamic LBCs
+         //  errorCode = hydroCoreTVCP(dt,mpi_rank_world);
+         //} // end if((cellpertSelector==1)&&(cellpert_tvcp==1))
+       }//end if hydroBCs == 1
+     }
+     MPI_Barrier(MPI_COMM_WORLD);
+ 
      if(it%frqOutput == 0){
        MPI_Barrier(MPI_COMM_WORLD); 
        if(mpi_rank_world == 0){

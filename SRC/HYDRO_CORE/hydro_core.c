@@ -29,7 +29,8 @@
 
 /*##################------------------- HYDRO_CORE module variable definitions ---------------------#################*/
 int Nhydro = 5;              /*Number of prognostic variable fields under hydro_core */
-int hydroBCs;          /*selector for hydro BC set. 0 = triply periodic, 1=baseStateBox, 2= periodicHorizBSVertical */
+int hydroBCs;          /*selector for hydro BC set. 1= LAD, Dirichlet lateral, ceiling and surface boundary conditions,
+			                            2= periodicHorizBSVertical */
 
 int hydroForcingWrite;     /*switching for dumping forcing fields of prognostic variables. 0-off (default), 1= on*/
 int hydroForcingLog;     /*switch for logging Frhs summary metrics. 0-off (default), 1= on*/
@@ -56,6 +57,33 @@ float kappa;          /* von Karman constant */
 float L_v;            /* latent heat of vaporization (J/kg) */
 
 /*HYDRO_CORE Submodule parameters*/
+/*HYDRO_CORE Limited Area Domain (LAD) Dirichlet boundary condition parameters and array pointers*/
+char *hydroBndysFileBase;   /*Base file name LAD BC set (hydroBCs = 1)*/
+char *hydroBndysFile;       /*File name for LAD BC set (hydroBCs = 1)*/
+int hydroBndysFileStart;    /*start counter value for LAD BC set files (hydroBCs = 1)*/
+int hydroBndysFileEnd;      /*end counter value for LAD BC set files (hydroBCs = 1)*/
+int hydroBndysFileCounter;  /*counter value for LAD BC set files (hydroBCs = 1)*/
+int nBndyVars;              /*Number of variable fields expected in Bdy-Planes input files*/
+int nSurfBndyVars;          /*Number of surface variable fields expected in Bdy-Planes input files*/
+
+float dtBdyPlaneBCs;         /*delta in time (seconds) between BdyPlane sets */
+float *XZBdyPlanesGlobal;    /*Base Adress of memory block for lateral-BC XZ-planes (Global domain)*/
+float *YZBdyPlanesGlobal;    /*Base Adress of memory block for lateral-BC YZ-planes (Global domain)*/
+float *XYBdyPlanesGlobal;    /*Base Adress of memory block for surface/ceiling-BC XY-planes (Global domain)*/
+float *XZBdyPlanes;          /*Base Adress of memory block for lateral-BC XZ-planes (per rank domain)*/
+float *YZBdyPlanes;          /*Base Adress of memory block for lateral-BC YZ-planes (per rank domain)*/
+float *XYBdyPlanes;          /*Base Adress of memory block for surface/ceiling-BC XY-planes (per rank domain)*/
+float *XZBdyPlanesPrev;      /*Base Adress of memory block for lateral-BC XZ-planes (per rank domain)*/
+float *YZBdyPlanesPrev;      /*Base Adress of memory block for lateral-BC YZ-planes (per rank domain)*/
+float *XYBdyPlanesPrev;      /*Base Adress of memory block for surface/ceiling-BC XY-planes (per rank domain)*/
+float *XZBdyPlanesNext;      /*Base Adress of memory block for lateral-BC XZ-planes (per rank domain)*/
+float *YZBdyPlanesNext;      /*Base Adress of memory block for lateral-BC YZ-planes (per rank domain)*/
+float *XYBdyPlanesNext;      /*Base Adress of memory block for surface/ceiling-BC XY-planes (per rank domain)*/
+float *SURFBdyPlanesGlobal;  /*Base Adress of memory block for surfaceVariable-BC XY-planes (Global domain)*/
+float *SURFBdyPlanes;        /*Base Adress of memory block for surfaceVariable-BC XY-planes (per rank domain)*/
+float *SURFBdyPlanesPrev;    /*Base Adress of memory block for surfaceVariable-BC XY-planes (per rank domain)*/
+float *SURFBdyPlanesNext;    /*Base Adress of memory block for surfaceVariable-BC XY-planes (per rank domain)*/
+
 /*----Pressure Gradient Force*/ 
 int pgfSelector;          /*Pressure Gradient Force (pgf) selector: 0=off, 1=on*/
 
@@ -67,6 +95,7 @@ int coriolisSelector;   /* Coriolis selector, (0 = none, 1 = horizontal terms on
 float coriolisLatitude; /*Charactersitc latitude in degrees from equator of the LES domain*/
 float corioConstHorz;   /*Latitude dependent horizontal Coriolis term constant */
 float corioConstVert;   /*Latitude dependent Vertical Coriolis term constant */
+int coriolis_LAD = 0;       /*Coriolis force selector for LAD BC cases (hydroBCs==1): 0=off, 1=on*/
 float corioLS_fact;     /*large-scale factor on Coriolis term*/
 
 /*----Turbulence*/ 
@@ -253,7 +282,16 @@ int hydro_coreGetParams(){
 
    /*query for each HYDRO_CORE parameter */
    hydroBCs = 0; //Default to triply-periodic
-   errorCode = queryIntegerParameter("hydroBCs", &hydroBCs, 2, 2, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("hydroBCs", &hydroBCs, 1, 2, PARAM_MANDATORY);
+   if(hydroBCs==1){
+     errorCode = queryFileParameter("hydroBndysFileBase", &hydroBndysFileBase, PARAM_OPTIONAL);  
+     hydroBndysFileStart = 0;
+     errorCode = queryIntegerParameter("hydroBndysFileStart", &hydroBndysFileStart, 0, 500000, PARAM_MANDATORY);
+     hydroBndysFileEnd = 0;
+     errorCode = queryIntegerParameter("hydroBndysFileEnd", &hydroBndysFileEnd, 0, 500000, PARAM_MANDATORY);
+     dtBdyPlaneBCs = 0.0;
+     errorCode = queryFloatParameter("dtBdyPlaneBCs", &dtBdyPlaneBCs, 0.0, 6e5, PARAM_MANDATORY);
+   }
    hydroForcingWrite = 0; //Default to off
    errorCode = queryIntegerParameter("hydroForcingWrite", &hydroForcingWrite, 0, 1, PARAM_MANDATORY);
    hydroForcingLog = 0; //Default to off
@@ -289,7 +327,7 @@ int hydro_coreGetParams(){
    nu_0 = 1.0; //Default to 1.0 m/s^2
    errorCode = queryFloatParameter("nu_0", &nu_0, 0, FLT_MAX, PARAM_MANDATORY);
    surflayerSelector = 0; // Default to off
-   errorCode = queryIntegerParameter("surflayerSelector", &surflayerSelector, 0, 2, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("surflayerSelector", &surflayerSelector, 0, 3, PARAM_MANDATORY);
    surflayer_z0 = 0.1; // Default to 0.1 m 
    errorCode = queryFloatParameter("surflayer_z0", &surflayer_z0, 1e-12, 1e+0, PARAM_MANDATORY);
    surflayer_z0t = 0.1; // Default to 0.1 m 
@@ -609,7 +647,13 @@ int hydro_coreInit(){
       printComment("HYDRO_CORE parameters---");
       printComment("----------: HYDRO_CORE Submodule Selectors ---");
       printComment("----------: Boundary Conditions Set ---");
-      printParameter("hydroBCs", "Selector for hydro BC set. 2= periodicHorizVerticalAbl");
+      printParameter("hydroBCs", "Selector for hydro BC set. 1= LAD, Dirichlet lateral, ceiling and surface, 2 = periodic-horizontal & ABL-vertical");
+      if(hydroBCs==1){ // Using LAD BCs
+        printParameter("hydroBndysFileBase", "Basename of limited area domain boundary condition files.");
+        printParameter("hydroBndysFileStart", "start counter value for BdyPlane sets");
+        printParameter("hydroBndysFileEnd", "end counter value for BdyPlane sets");
+        printParameter("dtBdyPlaneBCs", "delta in time (seconds) between BdyPlane sets (default = 0.0)");
+      }
       printParameter("hydroForcingWrite", "Switch for dumping hydroFldsFrhs for prognositic fields. 0 = off, 1=on");
       printParameter("hydroSubGridWrite", "Switch for dumping Tauij fields. 0 = off, 1=on");
       printParameter("hydroForcingLog", "Switch for logging Frhs summary metrics. 0 = off, 1=on");
@@ -771,6 +815,31 @@ int hydro_coreInit(){
 
    /*Broadcast the parameters across mpi_ranks*/
    MPI_Bcast(&hydroBCs, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   if(hydroBCs==1){  // Using LAD BCs
+     /*Determine strLength of hydroBndysFile*/
+     if(mpi_rank_world == 0){
+       if(hydroBndysFileBase != NULL){
+         strLength = strlen(hydroBndysFileBase)+1;
+       }else{
+         strLength = 0;
+       }
+     } //end if(mpi_rank_world == 0)
+     MPI_Bcast(&strLength, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+     if(strLength > 0){
+       if(mpi_rank_world != 0){
+         hydroBndysFileBase = (char *) malloc(strLength*sizeof(char));
+       } //if a non-root mpi_rank
+       MPI_Bcast(hydroBndysFileBase, strLength, MPI_CHARACTER, 0, MPI_COMM_WORLD);
+     }
+     //Allocate for a full hydroBndysFile string (including up to 16 counter-digit characters)
+     hydroBndysFile = (char *) malloc(strLength+16*sizeof(char));
+     //Set coriolis_LAD switch to "on"
+     coriolis_LAD = 1;
+     //Broadcast remaining LAD BC set parameters     
+     MPI_Bcast(&hydroBndysFileStart, 1, MPI_INT, 0, MPI_COMM_WORLD);
+     MPI_Bcast(&hydroBndysFileEnd, 1, MPI_INT, 0, MPI_COMM_WORLD);
+     MPI_Bcast(&dtBdyPlaneBCs, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   } //end if hydroBCs == 1
    MPI_Bcast(&hydroForcingWrite, 1, MPI_INT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&hydroSubGridWrite, 1, MPI_INT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&hydroForcingLog, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -1190,8 +1259,8 @@ int hydro_coreInit(){
        }
      }
      if(surflayerSelector == 3){
-       if(hydroBCs != 5){
-         printf("\n\n\nERROR: hydro_coreInit: surflayerSelector = 3, but hydroBCs ~= 5... No surfVarBndy planes available for surflayerSelector = 3. \n\n\n\n");
+       if(hydroBCs!=1){
+         printf("\n\n\nERROR: hydro_coreInit: surflayerSelector = 3, but hydroBCs ~= 1... No surfVarBndy planes available for surflayerSelector = 3. \n\n\n\n");
          fflush(stdout);
        }
      }
@@ -1286,6 +1355,31 @@ int hydro_coreInit(){
 
    } // end of moistureSelector > 0
 
+   /* Allocate for LAD BCs (hydroBCs == 1)*/
+   if(hydroBCs==1){  // Using LAD BCs
+     if( moistureSelector > 0){
+       nBndyVars = Nhydro+moistureNvars;
+       nSurfBndyVars = 2;   //Only allows tskin and qskin
+     }else{
+       nBndyVars = Nhydro;
+       nSurfBndyVars = 1;   //Only allows tskin
+     } //end if moisture is on else not   //JAS NOTE: Doesn't handle any AuxScalars or TKE-related Prog. variables.
+     XZBdyPlanesGlobal = (float *) malloc( 2*(nBndyVars)*Nx*Nz*sizeof(float) );
+     YZBdyPlanesGlobal = (float *) malloc( 2*(nBndyVars)*Ny*Nz*sizeof(float) );
+     XYBdyPlanesGlobal = (float *) malloc( 2*(nBndyVars)*Nx*Ny*sizeof(float) );
+     XZBdyPlanes = (float *) malloc( 2*(nBndyVars)*(Nxp+2*Nh)*(Nzp+2*Nh)*sizeof(float) );
+     YZBdyPlanes = (float *) malloc( 2*(nBndyVars)*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float) );
+     XYBdyPlanes = (float *) malloc( 2*(nBndyVars)*(Nxp+2*Nh)*(Nyp+2*Nh)*sizeof(float) );
+     XZBdyPlanesNext = (float *) malloc( 2*(nBndyVars)*(Nxp+2*Nh)*(Nzp+2*Nh)*sizeof(float) );
+     YZBdyPlanesNext = (float *) malloc( 2*(nBndyVars)*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float) );
+     XYBdyPlanesNext = (float *) malloc( 2*(nBndyVars)*(Nxp+2*Nh)*(Nyp+2*Nh)*sizeof(float) );
+     if(surflayerSelector == 3){  //These BdyPlanes memory blocks are 1-sided (i.e. low-side, surface only)
+       SURFBdyPlanesGlobal = (float *) malloc( (nSurfBndyVars)*Nx*Ny*sizeof(float) );
+       SURFBdyPlanes = (float *) malloc( (nSurfBndyVars)*(Nxp+2*Nh)*(Nyp+2*Nh)*sizeof(float) );
+       SURFBdyPlanesNext = (float *) malloc( (nSurfBndyVars)*(Nxp+2*Nh)*(Nyp+2*Nh)*sizeof(float) );
+     }
+   } //end if hydroBCs == 1
+
    /* Set Constant values */
    accel_g = 9.81;           /* Acceleration of gravity 9.8 m/s^2 */
    R_gas = 287.04;          /* The ideal gas constant in J/(kg*K) */
@@ -1309,12 +1403,22 @@ int hydro_coreInit(){
      }else{
        corioConstVert = 0.0;
      } //end if vert
-     corioLS_fact = 1.0;
    }else{
      corioConstHorz = 0.0;
      corioConstVert = 0.0;
    } //end if coriolisSelector > 0... else
-
+   if(coriolis_LAD > 0){
+     corioLS_fact = 0.0;
+     if(hydroBCs != 1){
+       printf("*************************************************************************************\n");
+       printf("**** WARNING: coriolis_LAD = 1 SHOULD ONLY BE USED TOGETHER WITH hydroBCs == 1!!! ***\n");
+       printf("*************************************************************************************\n");
+       fflush(stdout);
+     }
+   }else{
+       corioLS_fact = 1.0;
+   }//end if coriolis_LAD > 0, else ...
+   
    /* If this is a periodic domain according to hydroBCs set up the rank neighbor topoloogy to be cyclic */
    if(hydroBCs == 0){
      errorCode = fempi_SetupPeriodicDomainDecompositionRankTopology(1, 1); //Periodic in x and y
@@ -1328,9 +1432,26 @@ int hydro_coreInit(){
 /*----->>>>> int hydro_corePrepareFromInitialConditions();   -------------------------------------------------
 * Used to undertake the sequence of steps to build the Frhs of all hydro_core prognostic variable fields.
 */
-int hydro_corePrepareFromInitialConditions(){
+int hydro_corePrepareFromInitialConditions(int simTime_itRestart, float dt){
   int errorCode = HYDRO_CORE_SUCCESS;
-  
+ 
+  if(hydroBCs==1){ //Using LAD BCs
+    printf("mpi_rank_world--%d/%d: Starting hydro_coreSetupBndyPlanesAllRanks() under restart\n",
+           mpi_rank_world,mpi_size_world);
+    fflush(stdout);
+    hydroBndysFileCounter=hydroBndysFileStart+(simTime_itRestart/((int)roundf(dtBdyPlaneBCs/dt)));
+    printf("mpi_rank_world--%d/%d: Re-starting with hydroBndysFileCounter = %d\n",
+           mpi_rank_world,mpi_size_world,hydroBndysFileCounter);
+    fflush(stdout);
+    sprintf(hydroBndysFile,"%s.%d",hydroBndysFileBase,hydroBndysFileCounter);
+    errorCode = hydro_coreSetupBndyPlanesAllRanks();
+    printf("mpi_rank_world--%d/%d: hydro_coreSetupBndyPlanesAllRanks() under restart completed!\n",
+            mpi_rank_world,mpi_size_world);
+    fflush(stdout);
+
+    errorCode = hydro_coreReadNextBndyPlanesFile();
+  }//end if hydroBCs==1
+ 
   if(surflayerSelector > 0){  
     ///Perform halo exchange for the 2-d fields associated with hydro_core(surface layer)
     errorCode=fempi_XdirHaloExchange2dXY(Nxp, Nyp, Nh, z0m);
@@ -1523,7 +1644,7 @@ int hydro_coreSetBaseState(){
      } // end for(i...
      printf("stabilityScheme == 2: Base State setup complete.\n");
    }else if(stabilityScheme == 3){ 
-     printf("stabilityScheme == 3: Using initial Conditions as BaseState if hydroBCs != 4!! \n");
+     printf("stabilityScheme == 3: ERROR: No scheme implemented for stabilityScheme == 3, use instead 1, 2, or 4!! \n");
    }else if(stabilityScheme == 4){ /*Experimental setup for constant rho and constant theta profiles.
                                      Use only for total domain vertical extent < 10m. */
       rho_grnd = 1.1;
@@ -1629,6 +1750,576 @@ int hydro_coreSetBaseState(){
    }//If no initial conditions were specified
    return(errorCode);
 }// end coreSetBaseState
+
+/*----->>>>> int hydro_coreSetupBndyPlanesAllRanks();   ---------------------------------------------------
+* Utility to read/scatter (across ranks as appropriate) the next set of BdyPlanes in the series
+*/
+int hydro_coreSetupBndyPlanesAllRanks(){
+   int errorCode = HYDRO_CORE_SUCCESS;
+   int ncid;
+
+   int fieldIndex;
+   char fieldName[256];
+
+   /* Boundary P Conditions */
+   if(hydroBndysFile != NULL){ /*If a Bndys file exists read it, else log an error.*/
+     if(mpi_rank_world == 0){
+       /*Open the File*/
+       printf("Attempting to open hydroBndysFile = %s\n",hydroBndysFile);
+       errorCode = ioOpenNetCDFinFile(hydroBndysFile, &ncid);
+       printf("Opened hydroBndysFile = %s with ncid = %d\n",hydroBndysFile,ncid);
+       fflush(stdout);
+       sprintf(fieldName,"rho");
+       fieldIndex = 0;
+       errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
+       sprintf(fieldName,"u");
+       fieldIndex = 1;
+       errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
+       sprintf(fieldName,"v");
+       fieldIndex = 2;
+       errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName,fieldIndex);
+       sprintf(fieldName,"w");
+       fieldIndex = 3;
+       errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
+       sprintf(fieldName,"theta");
+       fieldIndex = 4;
+       errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
+       if(moistureSelector > 0){
+         if(moistureNvars > 0){
+           sprintf(fieldName,"qv");
+           fieldIndex = 5;
+           errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
+         }
+         if(moistureNvars > 1){
+           sprintf(fieldName,"ql");
+           fieldIndex = 6;
+           errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
+         }
+         if(moistureNvars > 2){
+           sprintf(fieldName,"qr");
+           fieldIndex = 7;
+           errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
+         }
+       }//end if moistureSelector > 0
+       if(surflayerSelector == 3){     //Get any expected surface variable planes (skin-fields, e.g. tskin,qskin)
+         sprintf(fieldName,"tskin");
+         fieldIndex = nBndyVars+0;  //first of nSurfBndyVars = 1 or 2
+         errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
+         if(moistureSelector > 0){
+           sprintf(fieldName,"qskin");
+           fieldIndex = nBndyVars+1;  //second of nSurfBndyVars = 2
+           errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
+         }
+       }
+       printf("Done Reading Bndy-variables from hydroBndysFile = %s\n",hydroBndysFile);
+       fflush(stdout);
+       /* close the file */
+       errorCode = ioCloseNetCDFfile(ncid);
+     } //end if(mpi_rank_world == 0)
+   } //end if a hydroBndysFile was defined
+   printf("%d/%d: Waiting on root-rank reading Bndy-variables from hydroBndysFile = %s\n",mpi_rank_world,mpi_size_world,hydroBndysFile);
+   fflush(stdout);
+   MPI_Barrier(MPI_COMM_WORLD);
+
+   //Fields have been read, scatter them across ranks
+   errorCode = hydro_coreScatterFieldBndyPlanes(nBndyVars);
+
+   /*Cycle the BdyPlane pointers*/
+   XZBdyPlanesPrev = XZBdyPlanes;   //Prev are a temp pointer to the last used memory blocks
+   YZBdyPlanesPrev = YZBdyPlanes;
+   XYBdyPlanesPrev = XYBdyPlanes;
+   SURFBdyPlanesPrev = SURFBdyPlanes;
+   XZBdyPlanes = XZBdyPlanesNext;   //Move the last used to point at the Bdy planes that were just read in
+   YZBdyPlanes = YZBdyPlanesNext;
+   XYBdyPlanes = XYBdyPlanesNext;
+   SURFBdyPlanes = SURFBdyPlanesNext;
+   XZBdyPlanesNext = XZBdyPlanesPrev; //Next pointers inow use the last used memory blocks to read next time 
+   YZBdyPlanesNext = YZBdyPlanesPrev;
+   XYBdyPlanesNext = XYBdyPlanesPrev;
+   SURFBdyPlanesNext = SURFBdyPlanesPrev;
+   
+   return(errorCode);
+}//end hydro_coreSetupBndyPlanesAllRanks()
+
+/*----->>>>> int hydro_coreReadNextBndyPlanesFile();   ----------------------------------------------------
+* Utility to increment the BdyPlanes files counter and invoke hydro_coreSetupBndyPlanesAllRanks()
+* to read/scatter the next set of BdyPlanes in the series
+*/
+int hydro_coreReadNextBndyPlanesFile(){
+   int errorCode = HYDRO_CORE_SUCCESS;
+
+   hydroBndysFileCounter=hydroBndysFileCounter + 1;  //Increment the counter
+   sprintf(hydroBndysFile,"%s.%d",hydroBndysFileBase,hydroBndysFileCounter);
+   printf("mpi_rank_world--%d/%d: hydro_coreReadNextBndyPlanesFile() on %s.\n",
+          mpi_rank_world,mpi_size_world,hydroBndysFile);
+   fflush(stdout);
+   errorCode = hydro_coreSetupBndyPlanesAllRanks();
+   printf("mpi_rank_world--%d/%d: hydro_coreReadNextBndyPlanesFile() on %s complete.\n",
+          mpi_rank_world,mpi_size_world,hydroBndysFile);
+   fflush(stdout);
+   return(errorCode);
+}// end hydro_coreReadNextBndyPlanesFile()
+
+/*----->>>>> int hydro_coreReadFieldBndyPlanes();   ---------------------------------------------------
+*
+*/
+int hydro_coreReadFieldBndyPlanes(int ncid, char* field, int fieldNum){
+   int errorCode = HYDRO_CORE_SUCCESS;
+   int ncbndyfldid;
+
+   int dimids[16];
+   size_t count[16];
+   size_t countYZ[16];
+   size_t countXZ[16];
+   size_t countXY[16];
+   size_t *countPtr;
+   size_t start[16];
+
+   int i,j,k;
+   int fldBaseYZ;
+   int fldBaseXZ;
+   int fldBaseXY;
+
+   char varName[64];
+
+   printf("%d/%d: Working on the field --> %s\n",mpi_rank_world,mpi_size_world,field);
+   fflush(stdout);
+   /* Boundary Plane Conditions */
+   if(hydroBCs==1){    //If limited-area domain with 5-BC-planes for rho,u,v,w,theta+TKE(s)+moist(s)
+     if(hydroBndysFile != NULL){ /*If a Bndys file exists read it, else log an error.*/
+       if(mpi_rank_world == 0){
+         /* Inquire for the dimension-ids*/
+         if ((errorCode = nc_inq_dimid(ncid, "time", &dimids[0]))){
+           ERR(errorCode);
+         }
+         if ((errorCode = nc_inq_dimid(ncid, "zIndex", &dimids[1]))){
+           ERR(errorCode);
+         }
+         if ((errorCode = nc_inq_dimid(ncid, "yIndex", &dimids[2]))){
+           ERR(errorCode);
+         }
+         if ((errorCode = nc_inq_dimid(ncid, "xIndex", &dimids[3]))){
+           ERR(errorCode);
+         }
+#ifdef DEBUG
+         printf("Established BndyFile data dimension ids of xIndex,yIndex,zIndex,time = %d, %d, %d, %d\n",
+                dimids[3],dimids[2],dimids[1],dimids[0]);
+#endif
+         if ((errorCode = nc_inq_dimlen(ncid, dimids[0], &count[dimids[0]]))){
+           ERR(errorCode);
+         }
+         if ((errorCode = nc_inq_dimlen(ncid, dimids[1], &count[dimids[1]]))){
+           ERR(errorCode);
+         }
+         if ((errorCode = nc_inq_dimlen(ncid, dimids[2], &count[dimids[2]]))){
+           ERR(errorCode);
+         }
+         if ((errorCode = nc_inq_dimlen(ncid, dimids[3], &count[dimids[3]]))){
+           ERR(errorCode);
+         }
+#ifdef DEBUG
+         printf("Established BndyFile data dimensions of xIndex,yIndex,zIndex,time = %lu, %lu, %lu, %lu\n",
+                 count[dimids[3]],count[dimids[2]],count[dimids[1]],count[dimids[0]]);
+#endif
+         start[dimids[0]] = 0;   //Take the first record
+         start[dimids[1]] = 0;
+         start[dimids[2]] = 0;
+         start[dimids[3]] = 0;
+
+         if(fieldNum < nBndyVars){   //Non-surface variable Bdy planes (i.e. rho,u,v,w,theta,TKE_0,TKE_1,qv,ql)
+         //YZ planes
+         countYZ[0] = 1;
+         countYZ[1] = count[dimids[1]];
+         countYZ[2] = count[dimids[2]];
+         countPtr=countYZ;
+         fldBaseYZ = 2*Ny*Nz*fieldNum;
+         sprintf(varName,"%s_YZL",field);
+         if ( (errorCode = nc_inq_varid(ncid, varName, &ncbndyfldid)) ){
+             ERR(errorCode);
+             printf("Error hydro_coreReadFieldBndyPlane(): Variable field = %s was not found in this file,!\n",varName);
+             fflush(stdout);
+         } //if nc_inq_varid
+#ifdef DEBUG
+         if ((errorCode = nc_inq_varndims(ncid, ncbndyfldid, &nDimsBndy))){
+              ERR(errorCode);
+         }
+         printf("Variable field = %s has nDims = %d\n",varName,nDimsBndy);
+         if ((errorCode = nc_inq_vardimid(ncid, ncbndyfldid, tmpDimids))){
+            ERR(errorCode);
+         }
+#endif
+         if ((errorCode = nc_get_vara_float(ncid, ncbndyfldid, start, countPtr, &YZBdyPlanesGlobal[fldBaseYZ+0] ))){
+                ERR(errorCode);
+         }
+         sprintf(varName,"%s_YZH",field);
+         if ( (errorCode = nc_inq_varid(ncid, varName, &ncbndyfldid)) ){
+             ERR(errorCode);
+             printf("Error hydro_coreSetupBndyPlanesAllRanks(): Variable field = %s was not found in this file,!\n",
+                    varName);
+             fflush(stdout);
+         }
+         if ((errorCode = nc_get_vara_float(ncid, ncbndyfldid, start, countPtr, &YZBdyPlanesGlobal[fldBaseYZ+Ny*Nz] ))){
+                ERR(errorCode);
+         }
+         //If fieldNum == 1,2,3, or 4 muliply by rho for flux conservative form of the field quantity
+         if((fieldNum > 0) && (fieldNum < nBndyVars)){
+           for(j=0; j < Ny; j++){
+             for(k=0; k < Nz; k++){
+               YZBdyPlanesGlobal[fldBaseYZ+j*Nz+k] =  YZBdyPlanesGlobal[fldBaseYZ+j*Nz+k] //low-sided Bndy
+                                                     *YZBdyPlanesGlobal[0+j*Nz+k];  //This is the factor of rho
+               YZBdyPlanesGlobal[fldBaseYZ+Ny*Nz+j*Nz+k] =  YZBdyPlanesGlobal[fldBaseYZ+Ny*Nz+j*Nz+k] //high-sided Bndy
+                                                     *YZBdyPlanesGlobal[0+Ny*Nz+j*Nz+k];  //This is the factor of rho
+             } //end for k
+           } // end for j
+         } //end if fieldNum = 1,2,3 or 4
+
+         //XZ planes
+         countXZ[0] = 1;
+         countXZ[1] = count[dimids[1]];
+         countXZ[2] = count[dimids[3]];
+         countPtr=countXZ;
+         fldBaseXZ = 2*Nx*Nz*fieldNum;
+         sprintf(varName,"%s_XZL",field);
+         if ( (errorCode = nc_inq_varid(ncid, varName, &ncbndyfldid)) ){
+             ERR(errorCode);
+             printf("Error hydro_coreSetupBndyPlanesAllRanks(): Variable field = %s was not found in this file,!\n",
+                    varName);
+             fflush(stdout);
+         }
+         if ((errorCode = nc_get_vara_float(ncid, ncbndyfldid, start, countPtr, &XZBdyPlanesGlobal[fldBaseXZ+0] ))){
+                ERR(errorCode);
+         }
+         sprintf(varName,"%s_XZH",field);
+         if ( (errorCode = nc_inq_varid(ncid, varName, &ncbndyfldid)) ){
+             ERR(errorCode);
+             printf("Error hydro_coreSetupBndyPlanesAllRanks(): Variable field = %s was not found in this file,!\n",
+                    varName);
+             fflush(stdout);
+         }
+         if ((errorCode = nc_get_vara_float(ncid, ncbndyfldid, start, countPtr, &XZBdyPlanesGlobal[fldBaseXZ+Nx*Nz] ))){
+                ERR(errorCode);
+         }
+         //If fieldNum == 1,2,3, or 4 muliply by rho for flux conservative form of the field quantity
+         if((fieldNum > 0) && (fieldNum < nBndyVars)){
+           for(i=0; i < Nx; i++){
+             for(k=0; k < Nz; k++){
+               XZBdyPlanesGlobal[fldBaseXZ+i*Nz+k] =  XZBdyPlanesGlobal[fldBaseXZ+i*Nz+k] //low-sided Bndy
+                                                     *XZBdyPlanesGlobal[0+i*Nz+k];  //This is the factor of rho
+               XZBdyPlanesGlobal[fldBaseXZ+Nx*Nz+i*Nz+k] =  XZBdyPlanesGlobal[fldBaseXZ+Nx*Nz+i*Nz+k] //high-sided Bndy
+                                                     *XZBdyPlanesGlobal[0+Nx*Nz+i*Nz+k];  //This is the factor of rho
+             } //end for k
+           } // end for j
+         } //end if fieldNum = 1,2,3 or 4
+
+
+         //XY planes
+         countXY[0] = 1;
+         countXY[1] = count[dimids[2]];
+         countXY[2] = count[dimids[3]];
+         countPtr=countXY;
+         fldBaseXY = 2*Nx*Ny*fieldNum;
+         sprintf(varName,"%s_XYL",field);
+         if ( (errorCode = nc_inq_varid(ncid, varName, &ncbndyfldid)) ){
+             ERR(errorCode);
+             printf("Error hydro_coreSetupBndyPlanesAllRanks(): Variable field = %s was not found in this file,!\n",
+                    varName);
+             fflush(stdout);
+         }
+         if ((errorCode = nc_get_vara_float(ncid, ncbndyfldid, start, countPtr, &XYBdyPlanesGlobal[fldBaseXY+0] ))){
+                ERR(errorCode);
+         }
+         sprintf(varName,"%s_XYH",field);
+         if ( (errorCode = nc_inq_varid(ncid, varName, &ncbndyfldid)) ){
+             ERR(errorCode);
+             printf("Error hydro_coreSetupBndyPlanesAllRanks(): Variable field = %s was not found in this file,!\n",
+                    varName);
+             fflush(stdout);
+         }
+         if ((errorCode = nc_get_vara_float(ncid, ncbndyfldid, start, countPtr, &XYBdyPlanesGlobal[fldBaseXY+Nx*Ny] ))){
+                ERR(errorCode);
+         }
+         //If fieldNum == 1,2,3, or 4 muliply by rho for flux conservative form of the field quantity
+         if((fieldNum > 0) && (fieldNum < nBndyVars)){   //moist variables assumed to be rho_q(v,l) for now
+           for(i=0; i < Nx; i++){
+             for(j=0; j < Ny; j++){
+               XYBdyPlanesGlobal[fldBaseXY+i*Ny+j] =  XYBdyPlanesGlobal[fldBaseXY+i*Ny+j] //low-sided Bndy
+                                                     *XYBdyPlanesGlobal[0+i*Ny+j];  //This is the factor of rho
+               XYBdyPlanesGlobal[fldBaseXY+Nx*Ny+i*Ny+j] =  XYBdyPlanesGlobal[fldBaseXY+Nx*Ny+i*Ny+j] //high-sided Bndy
+                                                     *XYBdyPlanesGlobal[0+Nx*Ny+i*Ny+j];  //This is the factor of rho
+             } //end for k
+           } // end for j
+         } //end if fieldNum = 1,2,3 or 4
+
+//#ifdef BDYPLANE_DEBUG    
+#if 1
+         printf("Bdy_plane[0] = %f, Bdy_plane[Ny*Nz-1] = %f\n",YZBdyPlanesGlobal[fldBaseYZ+0],YZBdyPlanesGlobal[fldBaseYZ+Ny*Nz-1]);
+         printf("Bdy_plane[Ny*Nz] = %f, Bdy_plane[2*Ny*Nz-1] = %f\n",YZBdyPlanesGlobal[fldBaseYZ+Ny*Nz],YZBdyPlanesGlobal[fldBaseYZ+2*Ny*Nz-1]);
+
+         printf("Bdy_plane[0] = %f, Bdy_plane[Nx*Nz-1] = %f\n",XZBdyPlanesGlobal[fldBaseXZ+0],XZBdyPlanesGlobal[fldBaseXZ+Nx*Nz-1]);
+         printf("Bdy_plane[Nx*Nz] = %f, Bdy_plane[2*Nx*Nz-1] = %f\n",XZBdyPlanesGlobal[fldBaseXZ+Nx*Nz],XZBdyPlanesGlobal[fldBaseXZ+2*Nx*Nz-1]);
+
+         printf("Bdy_plane[0] = %f, Bdy_plane[Nx*Ny-1] = %f\n",XYBdyPlanesGlobal[fldBaseXY+0],XYBdyPlanesGlobal[fldBaseXY+Nx*Ny-1]);
+         printf("Bdy_plane[Nx*Ny] = %f, Bdy_plane[2*Nx*Ny-1] = %f\n",XYBdyPlanesGlobal[fldBaseXY+Nx*Ny],XYBdyPlanesGlobal[fldBaseXY+2*Nx*Ny-1]);
+         fflush(stdout);
+#endif
+
+         } else if(fieldNum >= nBndyVars){   //Surface variable Bdy planes (i.e. tskin, qskin) 
+           //SURF planes (XY-shaped)
+           countXY[0] = 1;
+           countXY[1] = count[dimids[2]];
+           countXY[2] = count[dimids[3]];
+           countPtr=countXY;
+           fldBaseXY = Nx*Ny*(fieldNum-nBndyVars);
+           sprintf(varName,"%s",field);
+           if ( (errorCode = nc_inq_varid(ncid, varName, &ncbndyfldid)) ){
+               ERR(errorCode);
+               printf("Error hydro_coreSetupBndyPlanesAllRanks(): Variable field = %s was not found in this file,!\n",
+                    varName);
+               fflush(stdout);
+           }
+           if ((errorCode = nc_get_vara_float(ncid, ncbndyfldid, start, countPtr, &SURFBdyPlanesGlobal[fldBaseXY] ))){
+                ERR(errorCode);
+           }
+         } //if(fieldNum >= nBndyVars)  //For surface variable Bdy Planes
+
+       } //end if(mpi_rank_world == 0)
+     } //end if a hydroBndysFile was defined
+   }//end if hydroBCs == 1
+   printf("%d/%d hydro_coreReadFieldBndyPlanes: Done, returning!\n",mpi_rank_world,mpi_size_world);
+   fflush(stdout);
+   return(errorCode);
+}//end hydro_coreReadFieldBndyPlanes()
+
+/*----->>>>> int hydro_coreScatterFieldBndyPlanes();   ---------------------------------------------------
+* 
+*/
+int hydro_coreScatterFieldBndyPlanes(int Nfields){
+   int errorCode = HYDRO_CORE_SUCCESS;
+   int i,j,k;
+   int ij,ik,jk;
+   int iGlobal,jGlobal,kGlobal;
+   int ijGlobal,ikGlobal,jkGlobal;
+   int iFld; //simple integer index for the ith Fld in the hydro_core memory block, hydroFlds.
+   int globalfldBaseYZ;
+   int globalfldBaseXZ;
+   int globalfldBaseXY;
+   int fldBaseYZ;
+   int fldBaseXZ;
+   int fldBaseXY;
+   int globalYZstride;
+   int globalXZstride;
+   int globalXYstride;
+   int YZstride;
+   int XZstride;
+   int XYstride;
+
+   globalYZstride = Ny*Nz;
+   globalXZstride = Nx*Nz;
+   globalXYstride = Nx*Ny;
+   YZstride = (Nyp+2*Nh)*(Nzp+2*Nh);
+   XZstride = (Nxp+2*Nh)*(Nzp+2*Nh);
+   XYstride = (Nxp+2*Nh)*(Nyp+2*Nh);
+
+   /* Broadcast the global domain BDY planes to all ranks for simplicity
+    * If necessary one could selectively communicate strictly with necessary mpi_ranks
+    * However, BDY-planes are for now assumed to be modest in terms of memory requirements.
+   */
+   MPI_Bcast(XZBdyPlanesGlobal, 2*(nBndyVars)*Nx*Nz, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(YZBdyPlanesGlobal, 2*(nBndyVars)*Ny*Nz, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(XYBdyPlanesGlobal, 2*(nBndyVars)*Nx*Ny, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   if(surflayerSelector==3){
+     MPI_Bcast(SURFBdyPlanesGlobal, (nSurfBndyVars)*Nx*Ny, MPI_FLOAT, 0, MPI_COMM_WORLD);
+   }
+
+   printf("hydro_coreScatterFieldBndyPlanes(): broadcasts complete \n");
+   fflush(stdout);
+
+   for(iFld = 0; iFld < nBndyVars; iFld ++){  //{rho, u, v, w, theta, z}
+     if(hydroBCs==1){    //If limited-area domain with 5-BC-planes for rho,u,v,w,theta+TKE(s)+moist(s)
+       if(hydroBndysFile != NULL){ /*If a Bndys file exists read it, else log an error.*/
+         /*Create mpi_rank local bdy plane copies as needed for mpi_rank subdomains*/
+         if(rankXid == 0){ //Western BDY plane
+           globalfldBaseYZ = 2*iFld*globalYZstride; // shape = 2*2*(Nfields)*Ny*Nz 
+           fldBaseYZ = 2*iFld*YZstride;
+           for(j=jMin-Nh; j < jMax+Nh; j++){
+             for(k=kMin-Nh; k < kMax+Nh; k++){
+              jk = (j)*(Nzp+2*Nh)+k;
+              kGlobal = k-Nh;
+              if(kGlobal < 0){
+                kGlobal=0;
+              }
+              if(kGlobal > Nz-1){
+                kGlobal=Nz-1;
+              }
+              jGlobal = rankYid*(Nyp)+j-Nh;
+              if(jGlobal < 0){
+                jGlobal=0;
+              }
+              if(jGlobal > Ny-1){
+                jGlobal=Ny-1;
+              }
+              jkGlobal = kGlobal*Ny+jGlobal;
+              YZBdyPlanesNext[fldBaseYZ + jk] = YZBdyPlanesGlobal[globalfldBaseYZ + jkGlobal];
+#ifdef DEBUG_YZPLANES
+              //if((j==jMin)&&(k==kMin)){
+              if((j==jMin)||(j==jMax-1)){
+                printf("%d/%d hydro_coreScatterFieldBndyPlanes(): iFld=%d, at (%d,%d), YZBdyPlanesGlobal[%d + %d] = %f and at (%d,%d), YZBdyPlanes[%d+%d] = %f \n",
+                        mpi_rank_world,mpi_size_world,iFld,jGlobal,kGlobal,globalfldBaseYZ,jkGlobal,YZBdyPlanesGlobal[globalfldBaseYZ + jkGlobal],
+                        j,k,fldBaseYZ,jk,YZBdyPlanesNext[fldBaseYZ+jk]);
+              }//end if j==jMin || j==jMax-1
+#endif
+             } //end for k
+           } //end for j
+         } //end if rankXid == 0  //Western BDY plane
+         if(rankXid == numProcsX-1){ //Eastern BDY plane
+           globalfldBaseYZ = (2*iFld+1)*globalYZstride;
+           fldBaseYZ = (2*iFld+1)*YZstride;
+           for(j=jMin-Nh; j < jMax+Nh; j++){
+             for(k=kMin-Nh; k < kMax+Nh; k++){
+              jk = (j)*(Nzp+2*Nh)+k;
+              kGlobal = k-Nh;
+              if(kGlobal < 0){
+                kGlobal=0;
+              }
+              if(kGlobal > Nz-1){
+                kGlobal=Nz-1;
+              }
+              jGlobal = rankYid*(Nyp)+j-Nh;
+              if(jGlobal < 0){
+                jGlobal=0;
+              }
+              if(jGlobal > Ny-1){
+                jGlobal=Ny-1;
+              }
+              jkGlobal = kGlobal*Ny+jGlobal;
+              YZBdyPlanesNext[fldBaseYZ + jk] = YZBdyPlanesGlobal[globalfldBaseYZ + jkGlobal];
+#ifdef DEBUG_YZPLANES
+              //if((j==jMin)&&(k==kMin)){
+              if((j==jMin)||(j==jMax-1)){
+                printf("%d/%d hydro_coreScatterFieldBndyPlanes(): iFld=%d, at (%d,%d), YZBdyPlanesGlobal[%d + %d] = %f and at (%d,%d), YZBdyPlanes[%d+%d] = %f \n",
+                        mpi_rank_world,mpi_size_world,iFld,jGlobal,kGlobal,globalfldBaseYZ,jkGlobal,YZBdyPlanesGlobal[globalfldBaseYZ + jkGlobal],
+                        j,k,fldBaseYZ,jk,YZBdyPlanesNext[fldBaseYZ+jk]);
+              }//end if j==jMin || j==jMax-1 
+#endif
+             } //end for k
+           } //end for j
+         } //end if rankXid == numProcsX-1  //Eastern BDY plane
+         if(rankYid == 0){ //Southern BDY plane
+           globalfldBaseXZ = 2*iFld*globalXZstride;
+           fldBaseXZ = 2*iFld*XZstride;
+           for(i=iMin-Nh; i < iMax+Nh; i++){
+             for(k=kMin-Nh; k < kMax+Nh; k++){
+              ik = (i)*(Nzp+2*Nh)+k;
+              kGlobal = k-Nh;
+              if(kGlobal < 0){
+                kGlobal=0;
+              }
+              if(kGlobal > Nz-1){
+                kGlobal=Nz-1;
+              }
+              iGlobal = rankXid*Nxp+i-Nh;
+              if(iGlobal < 0){
+                iGlobal=0;
+              }
+              if(iGlobal > Nx-1){
+                iGlobal=Nx-1;
+              }
+              ikGlobal = kGlobal*Nx+iGlobal;
+              XZBdyPlanesNext[fldBaseXZ + ik] = XZBdyPlanesGlobal[globalfldBaseXZ + ikGlobal];
+             } //end for k
+           } //end for i
+         }  //end if rankYid == 0 //Southern BDY plane
+         if(rankYid == numProcsY-1){ //Northern BDY plane
+           globalfldBaseXZ = (2*iFld+1)*globalXZstride;
+           fldBaseXZ = (2*iFld+1)*XZstride;
+           for(i=iMin-Nh; i < iMax+Nh; i++){
+             for(k=kMin-Nh; k < kMax+Nh; k++){
+              ik = (i)*(Nzp+2*Nh)+k;
+              kGlobal = k-Nh;
+              if(kGlobal < 0){
+                kGlobal=0;
+              }
+              if(kGlobal > Nz-1){
+                kGlobal=Nz-1;
+              }
+              iGlobal = rankXid*Nxp+i-Nh;
+              if(iGlobal < 0){
+                iGlobal=0;
+              }
+              if(iGlobal > Nx-1){
+                iGlobal=Nx-1;
+              }
+              ikGlobal = kGlobal*Nx+iGlobal;
+              XZBdyPlanesNext[fldBaseXZ + ik] = XZBdyPlanesGlobal[globalfldBaseXZ + ikGlobal];
+#ifdef DEBUG_XZPLANES
+              if((i==iMin)||(i==iMax-1)){
+                printf("%d/%d: hydro_coreScatterFieldBndyPlanes(): iFld=%d, at (%d,%d), XZBdyPlanesGlobal[%d + %d] = %f and at (%d,%d), XZBdyPlanes[%d+%d] = %f \n",
+                       mpi_rank_world,mpi_size_world,iFld,iGlobal,kGlobal,globalfldBaseXZ,ikGlobal,XZBdyPlanesGlobal[globalfldBaseXZ + ikGlobal],
+                       i,k,fldBaseXZ,ik,XZBdyPlanesNext[fldBaseXZ+ik]);
+              }//end if i==iMin || i==iMax-1 
+#endif
+             } //end for k
+           } //end for i
+         } //end if rankYid == numProcsY-1 //Northern BDY plane
+         //Finally set the ceiling boundary conditions
+         globalfldBaseXY = (2*iFld+1)*globalXYstride;
+         fldBaseXY = (2*iFld+1)*XYstride;
+         for(i=iMin-Nh; i < iMax+Nh; i++){
+           for(j=jMin-Nh; j < jMax+Nh; j++){
+              ij = (i)*(Nyp+2*Nh)+j;
+              iGlobal = rankXid*Nxp+i-Nh;
+              if(iGlobal < 0){
+                iGlobal=0;
+              }
+              if(iGlobal > Nx-1){
+                iGlobal=Nx-1;
+              }
+              jGlobal = rankYid*Nyp+j-Nh;
+              if(jGlobal < 0){
+                jGlobal=0;
+              }
+              if(jGlobal > Ny-1){
+                jGlobal=Ny-1;
+              }
+              ijGlobal = jGlobal*Nx+iGlobal;    //Note the implied transpose
+              XYBdyPlanesNext[fldBaseXY + ij] = XYBdyPlanesGlobal[globalfldBaseXY + ijGlobal];
+           } //end for i
+         } //end for j
+       } //end if a hydroBndysFile was defined
+     }//end if hydroBCs == 1
+   }//end for iFld 
+   if(surflayerSelector ==3){
+     for(iFld = 0; iFld < nSurfBndyVars; iFld ++){  //{tskin,qskin}
+        //Finally set the ceiling boundary conditions
+        globalfldBaseXY = (iFld)*globalXYstride;   //SurfBdys-planes are only low-sided so seperated strictly per field rather than 2*per field
+        fldBaseXY = (iFld)*XYstride;
+        for(i=iMin-Nh; i < iMax+Nh; i++){
+           for(j=jMin-Nh; j < jMax+Nh; j++){
+              ij = (i)*(Nyp+2*Nh)+j;
+              iGlobal = rankXid*Nxp+i-Nh;
+              if(iGlobal < 0){
+                iGlobal=0;
+              }
+              if(iGlobal > Nx-1){
+                iGlobal=Nx-1;
+              }
+              jGlobal = rankYid*Nyp+j-Nh;
+              if(jGlobal < 0){
+                jGlobal=0;
+              }
+              if(jGlobal > Ny-1){
+                jGlobal=Ny-1;
+              }
+              ijGlobal = jGlobal*Nx+iGlobal;    //Note the implied transpose
+              SURFBdyPlanesNext[fldBaseXY + ij] = SURFBdyPlanesGlobal[globalfldBaseXY + ijGlobal];
+           } //end for i
+        } //end for j
+     }//end for iFld 
+   } //end if surflayerSelector
+   printf("hydro_coreScatterFieldBndyPlanes(): Scatters to local bndy-array complete \n");
+   fflush(stdout);
+   return(errorCode);
+}//end hydro_coreScatterFieldBndyPlanes()
 
 /*----->>>>> int hydro_coreStateLogDump();  -------------------------------------------------------
 * Utility function to produce field state summaries for a desired set of hydro_core fields. 
@@ -2207,6 +2898,24 @@ int hydro_coreCleanup(){
      memReleaseFloat(hydroAuxScalars);
      memReleaseFloat(hydroAuxScalarsFrhs);
    } //end if NhydroAuxScalars
+
+   if(hydroBCs==1){
+     free(hydroBndysFile);
+     free(XZBdyPlanesGlobal);
+     free(YZBdyPlanesGlobal);
+     free(XYBdyPlanesGlobal);
+     free(XZBdyPlanes);
+     free(YZBdyPlanes);
+     free(XYBdyPlanes);
+     free(XZBdyPlanesNext);
+     free(YZBdyPlanesNext);
+     free(XYBdyPlanesNext);
+     if(surflayerSelector == 3){
+       free(SURFBdyPlanesGlobal);
+       free(SURFBdyPlanes);
+       free(SURFBdyPlanesNext);
+     }
+   } //end if hydroBCs==1
 
    return(errorCode);
 }//end hydro_coreCleanup()

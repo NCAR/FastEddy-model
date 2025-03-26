@@ -114,6 +114,18 @@ extern "C" int cuda_timeIntDeviceCommence(int it){
    /*Synchronize the Device*/
    gpuErrchk( cudaDeviceSynchronize() );
 
+   /*Update LAD BCs if appropriate*/
+   if(hydroBCs==1){ //Using LAD BCs
+     if((it%((int)roundf(dtBdyPlaneBCs/dt))==0)&&(it > simTime_itRestart)){
+       printf("cuda_timeIntDeviceCommence:Updating device-side BdyPlanes at it=%d...\n",it);
+       fflush(stdout);
+       errorCode = cuda_hydroCoreDeviceBdyPlanesUpdate();
+      // if((cellpertSelector==1)&&(cellpert_tvcp==1)){ // DME update CP parameters with dynamic LBCs
+      //   errorCode = cuda_hydroCoreTVCP(dt,mpi_rank_world);
+      // } // end if((cellpertSelector==1)&&(cellpert_tvcp==1))
+     }
+   }//end if hydroBCs==1
+
    for(itBatch=0; itBatch < NtBatch; itBatch++){     //Batch timestepping loop
      if((lsfSelector == 1) && (lsf_horMnSubTerms == 1) && (simTime_it > simTime_itRestart) && (simTime_it%(int)roundf(lsf_freq/dt)==0)){
        errorCode = cuda_lsfSlabMeans();
