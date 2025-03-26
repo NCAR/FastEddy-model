@@ -147,13 +147,13 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
                                                        float* sgstkeScalars_d, float* sgstke_ls_d,
                                                        float* dedxi_d, float* moistScalars_d,
                                                        float* moistTauFlds_d, float* moistScalarsFrhs_d,
-                                                       float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
+                                                       float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
 __global__ void cudaDevice_hydroCoreUnitTestComplete(float simTime, int simTime_it, float dt, int timeStage, int numRKstages,
                                                      float* hydroFlds,float* hydroFldsFrhs,
                                                      float* hydroFaceVels, float* hydroBaseStateFlds, float* hydroTauFlds, 
                                                      float* sgstkeScalars, float* sgstkeScalarsFrhs,
                                                      float* moistScalars, float* moistScalarsFrhs, float* moistTauFlds,
-                                                     float* J31_d, float* J32_d, float* J33_d, float* invD_Jac_d, float* zPos_d);
+                                                     float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* invD_Jac_d, float* zPos_d);
 /*----->>>>> __device__ void  cudaDevice_SetRhoInv();  --------------------------------------------------
 * This is the cuda version of the SetRhoInv routine from the HYDRO_CORE module
 */

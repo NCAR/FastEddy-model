@@ -49,6 +49,15 @@ extern float *zPos;  /* Cell-center position in z (meters) */
 extern float *topoPos; /*Topography elevation (z in meters) at the cell center position in x and y. */
 extern float *topoPosGlobal; /*Topography elevation (z in meters) at the cell center position in x and y. (Global domain) */
 
+//extern float *J11;      // dx/d_xi  -- assumed = 1.0
+//extern float *J12;      // dx/d_eta -- assumed = 0.0
+
+//extern float *J21;      // dy/d_xi  -- assumed = 0.0
+//extern float *J22;      // dy/d_eta -- assumed = 1.0
+
+extern float *J13;      // dx/d_zeta
+extern float *J23;      // dy/d_zeta
+
 extern float *J31;      // dz/d_xi
 extern float *J32;      // dz/d_eta
 extern float *J33;      // dz/d_zeta
