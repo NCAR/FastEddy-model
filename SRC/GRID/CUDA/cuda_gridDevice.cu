@@ -268,7 +268,7 @@ __global__ void cudaDevice_calculateJacobians(float *J13_d, float *J23_d, float 
      J23_d[ijk] = -(T[0]*T[5] - T[2]*T[3])*invD_Jac_d[ijk];
      /*dz/d_(xi, eta, zeta)*/
      J31_d[ijk] = (T[3]*T[7] - T[4]*T[6])*invD_Jac_d[ijk];
-     J32_d[ijk] = (T[0]*T[7] - T[1]*T[6])*invD_Jac_d[ijk];
+     J32_d[ijk] = -(T[0]*T[7] - T[1]*T[6])*invD_Jac_d[ijk];
      J33_d[ijk] = (T[0]*T[4] - T[1]*T[3])*invD_Jac_d[ijk];
 #ifdef DEBUG
    if((i==64)&&(j==64)&&(k==64)){
