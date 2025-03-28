@@ -155,8 +155,8 @@ extern "C" int cuda_timeIntDeviceCommence(int it){
 #endif
        } //end for RKstage 
      } //end if(timeMethod == 0){...
-     simTime = simTime + dt;   //Increment the master simulation time
      simTime_it = simTime_it + 1;   //Increment the master simulation time step
+     simTime = simTime_it * dt;   /*Increment the master simulation time*/
    }//end for itBatch...
 
    //Retrieve desired HYDRO_CORE fields from device
