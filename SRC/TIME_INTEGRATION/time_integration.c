@@ -117,6 +117,19 @@ int timeInit(){
    return(errorCode);
 } //end timeInit()
 
+/*----->>>>> int timeIntBdyPlaneUpdates();       ----------------------------------------------------------------------
+ * Used to broadcast and print parameters, allocate memory, and initialize configuration settings 
+ * for the TIME_INTEGRATION module.
+ */
+int timeIntBdyPlaneUpdates(){
+    int errorCode = TIME_INTEGRATION_SUCCESS;
+
+    //Time integration wrapped call to hydro_core BdyPlane BCs update
+    errorCode = hydro_coreReadNextBndyPlanesFile();
+
+    return(errorCode);
+} //end timeIntBdyPlaneUpdates(()
+  
 /*----->>>>> int timeCleanup();       ----------------------------------------------------------------------
 Used to free all malloced memory by the TIME_INTEGRATION module.
 */

@@ -221,8 +221,10 @@ __device__ void cudaDevice_calcPressureGradientForceMoist(float* Frhs_u, float* 
     }
     rhodm_ijk = 1.0/rhomd_ijk;
 
-    Frhs_u[ijk] = Frhs_u[ijk] -rhodm_ijk*0.5*dXi_d*(pres[ip1jk] - pres[im1jk]);
-    Frhs_v[ijk] = Frhs_v[ijk] -rhodm_ijk*0.5*dYi_d*(pres[ijp1k] - pres[ijm1k]);
+    Frhs_u[ijk] = Frhs_u[ijk] -rhodm_ijk*0.5*( dXi_d*(pres[ip1jk] - pres[im1jk])
+		                              +dZi_d*J13_d[ijk]*(pres[ijkp1] - pres[ijkm1]) );
+    Frhs_v[ijk] = Frhs_v[ijk] -rhodm_ijk*0.5*( dYi_d*(pres[ijp1k] - pres[ijm1k])
+		                              +dZi_d*J23_d[ijk]*(pres[ijkp1] - pres[ijkm1]) );
     Frhs_w[ijk] = Frhs_w[ijk] -rhodm_ijk*0.5*( dXi_d*J31_d[ijk]*(pres[ip1jk] - pres[im1jk])
                                               +dYi_d*J32_d[ijk]*(pres[ijp1k] - pres[ijm1k])
                                               +dZi_d*J33_d[ijk]*(pres[ijkp1] - pres[ijkm1]) );

@@ -22,7 +22,6 @@
 /*##############------------------- HYDRO_CORE module variable declarations ---------------------#################*/
 /* Parameters */
 extern __constant__ int Nhydro_d;       // Number of hydro_core prognostic variable fields
-extern __constant__ int hydroBCs_d;       // hydro_core BC set selector
 
 /* array fields */
 extern float *hydroFlds_d;     //Base Adress of memory containing all prognostic variable fields under hydro_core
@@ -123,6 +122,9 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 */
 __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydroFlds_d, float* hydroFldsFrhs_d, 
                                                      float*  hydroBaseStateFlds_d,
+						     float* YZBdyPlanes_d, float* XZBdyPlanes_d, float* XYBdyPlanes_d,
+                                                     float* YZBdyPlanesNext_d, float* XZBdyPlanesNext_d, float* XYBdyPlanesNext_d,
+                                                     float* SURFBdyPlanes_d, float* SURFBdyPlanesNext_d,
                                                      float* tskin_d, float* qskin_d,
                                                      float* sgstkeScalars_d, float* sgstkeScalarsFrhs_d, float* Km_d, 
                                                      float* moistScalars_d, float* moistScalarsFrhs_d, 

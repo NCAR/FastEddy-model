@@ -154,6 +154,7 @@ __device__ void cudaDevice_SurfaceLayerLSMdry(float simTime, int simTime_it, int
    float tsk_p,tsk_c;
    float tsk_inc,simTimePrev;
    float z0temp;
+   float constant_1;
 
    temp_freq = roundf(10.0/dt); // make it so temp_freq is ~ 10 seconds
    temp_freq_f = __int2float_rn(temp_freq); // make it so temp_freq is ~ 10 seconds
@@ -175,7 +176,8 @@ __device__ void cudaDevice_SurfaceLayerLSMdry(float simTime, int simTime_it, int
      *ch_iter = powf(kappa_d,2.0)/powf(logf(z1ozt0),2.0); // move this initialization to the CPU
    } else if((simTime_it==simTime_itRestart) && (simTime_it!=0)){ // restart
      *cd_iter = powf(*fricVel,2.0)/(powf(U1,2.0));
-     th0 = *tskin*powf((refPressure_d/pres_grnd_d),R_cp_d);
+     constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+     th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
      *ch_iter = *htFlux/(U1*(th0-th1));
    } // otherwise uses values from previous time step
 
@@ -218,9 +220,15 @@ __device__ void cudaDevice_SurfaceLayerLSMdry(float simTime, int simTime_it, int
      }else{ // keep skin temperature from previous time step
        tsk_c = *tskin;
      }
-     th0 = tsk_c*powf((refPressure_d/pres_grnd_d),R_cp_d);
+     constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+     th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
      *htFlux = *ch_iter*U1*(th0-th1);
-   }//end if (surflayerSelector_d==1), elseif (surflayerSelector_d==2) 
+   } else if (surflayerSelector_d==3){ // skin temperature supplied by BdyPlanes (i.e. hydroBCs_d == 1)
+     tsk_c = *tskin;
+     constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+     th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
+     *htFlux = *ch_iter*U1*(th0-th1);
+   }//end if (surflayerSelector_d==1), elseif (surflayerSelector_d==2), elseif (surflayerSelector_d==3)
 
 } //end cudaDevice_SurfaceLayerLSMdry(...
 
@@ -244,6 +252,7 @@ __device__ void cudaDevice_SurfaceLayerLSMmoist(float simTime, int simTime_it, i
    float z0temp;
    float qsk_p,qsk_c,qsk_inc;
    float q0,q1,qsk_input;
+   float constant_1;
 
    temp_freq = roundf(10.0/dt); // make it so temp_freq is ~ 10 seconds
    temp_freq_f = __int2float_rn(temp_freq); // make it so temp_freq is ~ 10 seconds
@@ -270,7 +279,8 @@ __device__ void cudaDevice_SurfaceLayerLSMmoist(float simTime, int simTime_it, i
      *cq_iter = powf(kappa_d,2.0)/powf(logf(z1ozt0),2.0); // move this initialization to the CPU
    } else if((simTime_it==simTime_itRestart) && (simTime_it!=0)){ // restart
      *cd_iter = powf(*fricVel,2.0)/(powf(U1,2.0));
-     th0 = *tskin*powf((refPressure_d/pres_grnd_d),R_cp_d);
+     constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+     th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
      *ch_iter = *htFlux/(U1*(th0-th1));
      q0 = *qskin;
      *cq_iter = *qFlux/(U1*(q0-q1));
@@ -336,14 +346,23 @@ __device__ void cudaDevice_SurfaceLayerLSMmoist(float simTime, int simTime_it, i
        tsk_c = *tskin;
        qsk_c = *qskin;
      }
-     th0 = tsk_c*powf((refPressure_d/pres_grnd_d),R_cp_d);
+     constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+     th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
      *htFlux = *ch_iter*U1*(th0-th1);
      q0 = qsk_c;
      *qFlux = *cq_iter*U1*(q0-q1); // M factor here as well
      if (surflayer_qskin_input_d == 1){
        *qskin = qsk_input;
      }
-   }//end if (surflayerSelector_d==1), elseif (surflayerSelector_d==2) 
+   } else if (surflayerSelector_d==3){ // skin temperature supplied by BdyPlanes (i.e. hydroBCs_d == 1)
+     tsk_c = *tskin;
+     constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+     th0 = tsk_c*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
+     *htFlux = *ch_iter*U1*(th0-th1);
+     qsk_c = *qskin;
+     q0 = qsk_c;
+     *qFlux = *cq_iter*U1*(q0-q1); // M factor here as well
+   }//end if (surflayerSelector_d==1), elseif (surflayerSelector_d==2), elseif (surflayerSelector_d==3) 
 
 } //end cudaDevice_SurfaceLayerLSMmoist(...
 
@@ -369,6 +388,8 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
    int it_n;
    float z0temp;
    float it_max;
+   float constant_1;
+
    if (surflayer_stab_d==0){
      it_max = 5;
    }else{
@@ -385,7 +406,8 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
    v1 = *v/ *rho;
    U1 = sqrtf(powf(u1,2.0)+powf(v1,2.0));
    th1 = (*theta)/(*rho);
-   th0 = (*tskin)*powf((refPressure_d/pres_grnd_d),R_cp_d);
+   constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+   th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
    cd_0 = *cd_iter;
 
    it_n = 0;
@@ -420,7 +442,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
      }
 
      cd_i = powf(kappa_d,2.0)/powf(logf(z1oz0)-psi_m,2.0);
-     ch_i = powf(kappa_d,2.0)/((logf(z1ozt0)-psi_m)*(logf(z1ozt0)-psi_h));
+     ch_i = powf(kappa_d,2.0)/((logf(z1oz0)-psi_m)*(logf(z1ozt0)-psi_h));
 
      if (surflayerSelector_d > 1){
         *htFlux = ch_i*U1*(th0-th1);
@@ -475,6 +497,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    float z0temp;
    float q0,q1,cq_i,psi_q,tauqz;
    int it_max;
+   float constant_1;
    if (surflayer_stab_d==0){
      it_max = 5;
    }else{
@@ -492,7 +515,8 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    U1 = sqrtf(powf(u1,2.0)+powf(v1,2.0));
    th1 = (*theta)/(*rho);
    q1 = (*qv)/(*rho);
-   th0 = (*tskin)*powf((refPressure_d/pres_grnd_d),R_cp_d);
+   constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+   th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
    q0 = *qskin;
    cd_0 = *cd_iter;
 
@@ -530,8 +554,8 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
      }
 
      cd_i = powf(kappa_d,2.0)/powf(logf(z1oz0)-psi_m,2.0);
-     ch_i = powf(kappa_d,2.0)/((logf(z1ozt0)-psi_m)*(logf(z1ozt0)-psi_h));
-     cq_i = powf(kappa_d,2.0)/((logf(z1ozt0)-psi_m)*(logf(z1ozt0)-psi_q));
+     ch_i = powf(kappa_d,2.0)/((logf(z1oz0)-psi_m)*(logf(z1ozt0)-psi_h));
+     cq_i = powf(kappa_d,2.0)/((logf(z1oz0)-psi_m)*(logf(z1ozt0)-psi_q));
 
      if (surflayerSelector_d > 1){
         *htFlux = ch_i*U1*(th0-th1);

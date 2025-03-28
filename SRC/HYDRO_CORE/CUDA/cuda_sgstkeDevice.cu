@@ -402,10 +402,10 @@ __device__ void cudaDevice_sgstkeTurbTransport(float* Km, float* dedx, float* de
 
     // -2.0*Km*de/dxi // 2.0 * 0.5 factor of the 2dx derivative cancel out
     term_x = -(dXi_d*(dedx[ip1jk]*Km[ip1jk]*rho[ip1jk]-dedx[im1jk]*Km[im1jk]*rho[im1jk])
-	       +J13_d[ijk]*dZi_d*(dedz[ijkp1]*Km[ijkp1]*rho[ijkp1]-dedz[ijkm1]*Km[ijkm1]*rho[ijkm1]));
+	       +J13_d[ijk]*dZi_d*(dedx[ijkp1]*Km[ijkp1]*rho[ijkp1]-dedx[ijkm1]*Km[ijkm1]*rho[ijkm1]));
 
     term_y = -(dYi_d*(dedy[ijp1k]*Km[ijp1k]*rho[ijp1k]-dedy[ijm1k]*Km[ijm1k]*rho[ijm1k])
-	      +J23_d[ijk]*dZi_d*(dedz[ijkp1]*Km[ijkp1]*rho[ijkp1]-dedz[ijkm1]*Km[ijkm1]*rho[ijkm1]));
+	      +J23_d[ijk]*dZi_d*(dedy[ijkp1]*Km[ijkp1]*rho[ijkp1]-dedy[ijkm1]*Km[ijkm1]*rho[ijkm1]));
 
     term_z = -(J31_d[ijk]*dXi_d*(dedz[ip1jk]*Km[ip1jk]*rho[ip1jk]-dedz[im1jk]*Km[im1jk]*rho[im1jk])
               +J32_d[ijk]*dYi_d*(dedz[ijp1k]*Km[ijp1k]*rho[ijp1k]-dedz[ijm1k]*Km[ijm1k]*rho[ijm1k])
