@@ -50,6 +50,7 @@ int ioPutBinaryoutFileVars(FILE *outptr, int Nx, int Ny, int Nz, int Nh){
    int rhoDivideSwitch = 0;
    int verbose_log = 0;
    float * rhofield;
+   int *intField;
    int typeLen;
 
    /* For each entry in the ioVarsList, "put" the var */
@@ -120,7 +121,7 @@ int ioPutBinaryoutFileVars(FILE *outptr, int Nx, int Ny, int Nz, int Nh){
            extent=Ny+2*Nh; 
            fwrite(&extent,sizeof(int),1,outptr); 
            fwrite(field,numElems*sizeof(float),1,outptr);
-         }else{
+         }else if((ptr->nDims == 2)&&(ptr->dimids[1] == 2)){
            numElems=(Nx+2*Nh)*(Ny+2*Nh);
            binary_nDims=2;
            fwrite(&binary_nDims,sizeof(int),1,outptr);
@@ -129,8 +130,25 @@ int ioPutBinaryoutFileVars(FILE *outptr, int Nx, int Ny, int Nz, int Nh){
            extent=Ny+2*Nh; 
            fwrite(&extent,sizeof(int),1,outptr);
            fwrite(field,numElems*sizeof(float),1,outptr);
-         }// end if ndims > 2  && ptr->dimids[1] == 1 -else 
-      }// if (ptr.type == "float") else ...
+	 }else if((ptr->nDims == 1)&&(ptr->dimids[0] == 0)){
+           numElems=1;
+           binary_nDims=1;
+           fwrite(&binary_nDims,sizeof(int),1,outptr);
+           extent=1;
+           fwrite(&extent,sizeof(int),1,outptr);
+           fwrite(field,numElems*sizeof(float),1,outptr);
+         }// end if ndims > 2  && ptr->dimids[1] == 1 -else
+      }else if (!strcmp(ptr->type,"int")){
+         intField = (int *) ptr->varMemAddress;
+         if((ptr->nDims == 1)&&(ptr->dimids[0] == 0)){
+           numElems=1;
+           binary_nDims=1;
+           fwrite(&binary_nDims,sizeof(int),1,outptr);
+           extent=1;
+           fwrite(&extent,sizeof(int),1,outptr);
+           fwrite(intField,numElems*sizeof(int),1,outptr);
+         }// end if ndims == 1  && ptr->dimids[0] == 0  
+      }// if (ptr.type == "float") else if (ptr.type == "int")...
       ptr = ptr->next;
    } //end while ptr != NULL
 

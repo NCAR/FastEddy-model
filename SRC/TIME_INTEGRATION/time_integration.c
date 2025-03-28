@@ -70,6 +70,7 @@ int timeInit(){
    int errorCode = TIME_INTEGRATION_SUCCESS;
    char *strelem;
    int strLength;
+   char varName[MAX_HC_FLDNAME_LENGTH];
 
    if(mpi_rank_world == 0){
       printComment("TIME_INTEGRATION parameters---");
@@ -106,6 +107,13 @@ int timeInit(){
    } //endif inFile==NULL.. else...
    printf("mpi_rank_world--%d/%d: in timeInit(), simTime_it = %d and simTime = %16.6f !\n",
           mpi_rank_world,mpi_size_world,simTime_it,simTime);
+   fflush(stdout);
+
+   /*Register a time variable holding "simTime" or the master simulation time*/
+   errorCode = sprintf(&varName[0],"time");
+   errorCode = ioRegisterVar(&varName[0], "float", 1, dims1dTD, &simTime);
+   printf(":Variable = %s stored at %p, has been registered with IO.\n",
+          &varName[0],&simTime);
    fflush(stdout);
 
    // assign numRKstages and bcast

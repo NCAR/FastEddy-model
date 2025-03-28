@@ -25,7 +25,7 @@ extern int dims4d[];
 extern int dims3d[];  
 extern int dims2dTD[];  
 extern int dims2d[];  
-
+extern int dims1dTD[];
 
 /*######################------------------- IO module function declarations ---------------------#################*/
 
