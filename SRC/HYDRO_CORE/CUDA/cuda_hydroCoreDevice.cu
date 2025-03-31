@@ -121,7 +121,7 @@ extern "C" int cuda_hydroCoreDeviceSetup(){
    cudaMemcpyToSymbol(corioConstHorz_d, &corioConstHorz, sizeof(float));
    cudaMemcpyToSymbol(corioConstVert_d, &corioConstVert, sizeof(float));
    cudaMemcpyToSymbol(corioLS_fact_d, &corioLS_fact, sizeof(float));
-   cudaMemcpyToSymbol(kappa_d, &kappa, sizeof(float)); // DME
+   cudaMemcpyToSymbol(kappa_d, &kappa, sizeof(float)); 
    cudaMemcpyToSymbol(L_v_d, &L_v, sizeof(float));
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
 
@@ -195,7 +195,11 @@ extern "C" int cuda_hydroCoreDeviceSetup(){
    if (surflayerSelector > 0) { 
        errorCode = cuda_surfaceLayerDeviceSetup();
    }
-   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
+
+   /* CELL PERTURBATION METHOD */
+   if (cellpertSelector > 0) { 
+      errorCode = cuda_cellpertDeviceSetup();
+   }
 
    /* CANOPY */
    if (canopySelector > 0){
@@ -270,6 +274,9 @@ extern "C" int cuda_hydroCoreDeviceCleanup(){
    } 
    if (surflayerSelector > 0) { 
      errorCode = cuda_surfaceLayerDeviceCleanup();
+   }
+   if (cellpertSelector > 0) {
+     errorCode = cuda_cellpertDeviceCleanup();
    }
    if (canopySelector > 0) {
      errorCode = cuda_canopyDeviceCleanup();

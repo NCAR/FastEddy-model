@@ -31,8 +31,13 @@ extern "C" int cuda_cellpertDeviceSetup();
 extern "C" int cuda_cellpertDeviceCleanup();
 
 /*----->>>>> extern "C" int cuda_hydroCoreDeviceBuildCPmethod();  -------------------------------------------------- 
- * * This routine provides the externally callable cuda-kernel call to perform a call to cell perturbation method */
+* This routine provides the externally callable cuda-kernel call to perform a call to cell perturbation method */
 extern "C" int cuda_hydroCoreDeviceBuildCPmethod(int simTime_it);
+
+/*----->>>>> extern "C" int cuda_hydroCoreTVCP();  -----------------------------------------------------------
+* Updates device-sided parameters used by the CELLPERT submodule from dynamic lateral BNDY conditions 
+*/
+extern "C" int cuda_hydroCoreTVCP();
 
 __global__ void cudaDevice_hydroCoreUnitTestCompleteCellPerturbation(float* hydroFlds, float* randcp_d, int my_mpi, int numpx, int numpy);
 

@@ -598,7 +598,7 @@ __device__ void cudaDevice_offshoreRoughness(float* z0m, float* z0t, float* fric
   float alpha_charnock = 0.018;
   float alpha_charnock_mod;
   float wspd_1;
-  float air_vis = 1.5e-5; // kinematic air viscosity (DME: make it T dependent ...)
+  float air_vis = 1.5e-5; // kinematic air viscosity (make it T dependent ...)
   float z0_m2t_fact = 0.1; // ratio of z0t/z0m
   int z0_m2t_opt = 1; // 0; // ==0 (constant), ==1 (roughness Re dependent)
   float Ren;

@@ -225,6 +225,9 @@ int cellpert_ndbc;        /* number of cells normal to domain lateral boundaries
 int cellpert_kbottom;     /* z-grid point where the perturbations start */
 int cellpert_ktop;        /* z-grid point where the perturbations end */
 int cellpert_ktop_prev[4];/* z-grid point where the perturbations end array previous time step */
+int cellpert_tvcp;        /* time-varying CP method selector: 0= off, 1= on (when hydroBCs == 1) */
+float cellpert_eckert;    /* Eckert number for the potential temperature perturbations (when hydroBCs == 1) */
+float cellpert_tsfact;    /* factor on the refreshing perturbation time scale (when hydroBCs == 1) */
 
 /*--- Rayleigh Damping Layer ---*/
 int dampingLayerSelector;       // Rayleigh Damping Layer selector
@@ -420,10 +423,12 @@ int hydro_coreGetParams(){
      errorCode = queryIntegerParameter("cellpert_kbottom", &cellpert_kbottom, 1, 10, PARAM_MANDATORY);
      cellpert_ktop = 20; // Default to 20th grid point above surface
      errorCode = queryIntegerParameter("cellpert_ktop", &cellpert_ktop, 0, 200, PARAM_MANDATORY);
-     cellpert_ktop_prev[0] = cellpert_ktop; // use params in as previous cellpert_ktop value
-     cellpert_ktop_prev[1] = cellpert_ktop; // use params in as previous cellpert_ktop value
-     cellpert_ktop_prev[2] = cellpert_ktop; // use params in as previous cellpert_ktop value
-     cellpert_ktop_prev[3] = cellpert_ktop; // use params in as previous cellpert_ktop value
+     cellpert_tvcp = 0; // Default to off 
+     errorCode = queryIntegerParameter("cellpert_tvcp", &cellpert_tvcp, 0, 1, PARAM_MANDATORY);
+     cellpert_eckert = 0.2; // Default to Ec = 0.2
+     errorCode = queryFloatParameter("cellpert_eckert", &cellpert_eckert, 0.0, 10.0, PARAM_MANDATORY);
+     cellpert_tsfact = 1.0; // Default to cellpert_tsfact = 1.0
+     errorCode = queryFloatParameter("cellpert_tsfact", &cellpert_tsfact, 0.0, 10.0, PARAM_MANDATORY);
    }
    //
    lsfSelector = 0; // Default to off 
@@ -757,6 +762,9 @@ int hydro_coreInit(){
         printParameter("cellpert_ndbc", "number of cells normal to domain lateral boundaries");
         printParameter("cellpert_kbottom", "z-grid point where the perturbations start");
         printParameter("cellpert_ktop", "z-grid point where the perturbations end");
+        printParameter("cellpert_tvcp", "time-varying CP method selector: 0= off, 1= on");
+        printParameter("cellpert_eckert", "Eckert number for the potential temperature perturbations (when hydroBCs == 1)");
+        printParameter("cellpert_tsfact", "factor on the refreshing perturbation time scale (when hydroBCs == 1)");
       }
       printComment("----------: RAYLEIGH DAMPING LAYER ---"); 
       printParameter("dampingLayerSelector", "Rayleigh damping layer selector: 0= off, 1= on.");
@@ -938,6 +946,14 @@ int hydro_coreInit(){
      MPI_Bcast(&cellpert_ndbc, 1, MPI_INT, 0, MPI_COMM_WORLD);
      MPI_Bcast(&cellpert_kbottom, 1, MPI_INT, 0, MPI_COMM_WORLD);
      MPI_Bcast(&cellpert_ktop, 1, MPI_INT, 0, MPI_COMM_WORLD);
+     //Initialize the ktop_prev vector on all ranks
+     cellpert_ktop_prev[0] = cellpert_ktop; // use params value as previous cellpert_ktop value
+     cellpert_ktop_prev[1] = cellpert_ktop; // use params value as previous cellpert_ktop value
+     cellpert_ktop_prev[2] = cellpert_ktop; // use params value as previous cellpert_ktop value
+     cellpert_ktop_prev[3] = cellpert_ktop; // use params value as previous cellpert_ktop value
+     MPI_Bcast(&cellpert_tvcp, 1, MPI_INT, 0, MPI_COMM_WORLD);
+     MPI_Bcast(&cellpert_eckert, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+     MPI_Bcast(&cellpert_tsfact, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    }
    MPI_Bcast(&dampingLayerSelector, 1, MPI_INT, 0, MPI_COMM_WORLD); 
    MPI_Bcast(&dampingLayerDepth, 1, MPI_FLOAT, 0, MPI_COMM_WORLD); 
@@ -1275,6 +1291,24 @@ int hydro_coreInit(){
      fflush(stdout);
    }
 
+   if(cellpertSelector>0){ //Cell Perturbation parameters (time-varying when cellpert_tvcp == 1 and hydroBCs==1)
+     errorCode = sprintf(&fldName[0],"cellpert_amp");
+     errorCode = ioRegisterVar(&fldName[0], "float", 1, dims1dTD, &cellpert_amp);
+     printf("cellpert:Variable = %s stored at %p, has been registered with IO.\n",
+            &fldName[0],&cellpert_amp);
+     fflush(stdout);
+     errorCode = sprintf(&fldName[0],"cellpert_nts");
+     errorCode = ioRegisterVar(&fldName[0], "int", 1, dims1dTD, &cellpert_nts);
+     printf("cellpert:Variable = %s stored at %p, has been registered with IO.\n",
+            &fldName[0],&cellpert_nts);
+     fflush(stdout);
+     errorCode = sprintf(&fldName[0],"cellpert_ktop");
+     errorCode = ioRegisterVar(&fldName[0], "int", 1, dims1dTD, &cellpert_ktop);
+     printf("cellpert:Variable = %s stored at %p, has been registered with IO.\n",
+            &fldName[0],&cellpert_ktop);
+     fflush(stdout);
+   } // end of cellpertSelector > 0
+     
    if(canopySelector>0){
      canopy_lad = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "canopy_lad");
      errorCode = sprintf(&fldName[0],"CanopyLAD");
@@ -1363,7 +1397,7 @@ int hydro_coreInit(){
      }else{
        nBndyVars = Nhydro;
        nSurfBndyVars = 1;   //Only allows tskin
-     } //end if moisture is on else not   //JAS NOTE: Doesn't handle any AuxScalars or TKE-related Prog. variables.
+     } //end if moisture is on else not   //NOTE: Doesn't handle any AuxScalars or TKE-related Prog. variables.
      XZBdyPlanesGlobal = (float *) malloc( 2*(nBndyVars)*Nx*Nz*sizeof(float) );
      YZBdyPlanesGlobal = (float *) malloc( 2*(nBndyVars)*Ny*Nz*sizeof(float) );
      XYBdyPlanesGlobal = (float *) malloc( 2*(nBndyVars)*Nx*Ny*sizeof(float) );
@@ -2320,6 +2354,209 @@ int hydro_coreScatterFieldBndyPlanes(int Nfields){
    fflush(stdout);
    return(errorCode);
 }//end hydro_coreScatterFieldBndyPlanes()
+
+/*----->>>>> int hydro_coreTVCP();  -----------------------------------------------------------
+* Updates model parameters used by the CELLPERT submodule from dynamic lateral BNDY conditions.
+*/
+int hydro_coreTVCP(float dt){
+    int errorCode = HYDRO_CORE_SUCCESS;
+
+    int bdy_id; // 0==North; 1==East; 2==South; 3==West;
+    float cellpert_amp_array[4];
+    int cellpert_ktop_array[4];
+    int cellpert_nts_array[4];
+    float cellpert_amp_aver;
+    int cellpert_ktop_aver;
+    int cellpert_nts_aver;
+
+    /*--- North boundary ---*/
+    bdy_id = 0;
+    hydro_coreTVCP_LBCparams(bdy_id, XZBdyPlanesGlobal, cellpert_amp_array, cellpert_ktop_array, cellpert_ktop_prev, cellpert_nts_array, dt);
+    /*--- East boundary ---*/
+    bdy_id = 1;
+    hydro_coreTVCP_LBCparams(bdy_id, YZBdyPlanesGlobal, cellpert_amp_array, cellpert_ktop_array, cellpert_ktop_prev, cellpert_nts_array, dt);
+    /*--- South boundary ---*/
+    bdy_id = 2;
+    hydro_coreTVCP_LBCparams(bdy_id, XZBdyPlanesGlobal, cellpert_amp_array, cellpert_ktop_array, cellpert_ktop_prev, cellpert_nts_array, dt);
+    /*--- West boundary ---*/
+    bdy_id = 3;
+    hydro_coreTVCP_LBCparams(bdy_id, YZBdyPlanesGlobal, cellpert_amp_array, cellpert_ktop_array, cellpert_ktop_prev, cellpert_nts_array, dt);
+
+    cellpert_amp_aver = 0.25*(cellpert_amp_array[0]+cellpert_amp_array[1]+cellpert_amp_array[2]+cellpert_amp_array[3]);
+    cellpert_ktop_aver = 0.25*(cellpert_ktop_array[0]+cellpert_ktop_array[1]+cellpert_ktop_array[2]+cellpert_ktop_array[3]);
+    cellpert_nts_aver = 0.25*(cellpert_nts_array[0]+cellpert_nts_array[1]+cellpert_nts_array[2]+cellpert_nts_array[3]);
+    cellpert_amp = cellpert_amp_aver;
+    cellpert_ktop = cellpert_ktop_aver;
+    cellpert_nts = cellpert_nts_aver;
+
+    cellpert_ktop_prev[0] = cellpert_ktop;
+    cellpert_ktop_prev[1] = cellpert_ktop;
+    cellpert_ktop_prev[2] = cellpert_ktop;
+    cellpert_ktop_prev[3] = cellpert_ktop;
+
+//#define TVCP_DEBUG
+#ifdef TVCP_DEBUG
+     printf("cellpert_amp_array[%d] = %f \n",0,cellpert_amp_array[0]);
+     printf("cellpert_amp_array[%d] = %f \n",1,cellpert_amp_array[1]);
+     printf("cellpert_amp_array[%d] = %f \n",2,cellpert_amp_array[2]);
+     printf("cellpert_amp_array[%d] = %f \n",3,cellpert_amp_array[3]);
+     printf("cellpert_ktop_array[%d] = %d \n",0,cellpert_ktop_array[0]);
+     printf("cellpert_ktop_array[%d] = %d \n",1,cellpert_ktop_array[1]);
+     printf("cellpert_ktop_array[%d] = %d \n",2,cellpert_ktop_array[2]);
+     printf("cellpert_ktop_array[%d] = %d \n",3,cellpert_ktop_array[3]);
+     printf("cellpert_nts_array[%d] = %d \n",0,cellpert_nts_array[0]);
+     printf("cellpert_nts_array[%d] = %d \n",1,cellpert_nts_array[1]);
+     printf("cellpert_nts_array[%d] = %d \n",2,cellpert_nts_array[2]);
+     printf("cellpert_nts_array[%d] = %d \n",3,cellpert_nts_array[3]);
+#endif
+if(mpi_rank_world == 0){
+     printf("---------------------- \n");
+     printf("Updating CP parameters \n");
+     printf("---------------------- \n");
+     printf("cellpert_amp = %f K \n",cellpert_amp);
+     printf("cellpert_ktop = %d grid points \n",cellpert_ktop);
+     printf("cellpert_nts = %d time steps \n",cellpert_nts);
+     fflush(stdout);
+}
+
+    return(errorCode);
+}//end hydro_coreTVCP()
+
+/*----->>>>> int hydro_coreTVCP_LBCparams();  -----------------------------------------------------------
+* Computes model parameters used by the CELLPERT submodule from dynamic lateral BNDY conditions.
+*/
+int hydro_coreTVCP_LBCparams(int bdy_id, float* var_LBCplane, float* cellpert_amp_array,
+                             int* cellpert_ktop_array, int* cellpert_ktop_prev, int* cellpert_nts_array, float dt){
+    int errorCode = HYDRO_CORE_SUCCESS;
+    int bndyfldStride_LZ;
+    int Nl, k, l, ind_lk;
+    int bdy_lh;
+    int ku_s, kv_s, krho_s, kth_s;
+    float u_tmp, v_tmp, rho_tmp, th_tmp, ws_tmp;
+    float uz_tmp[Nz];
+    float thz_tmp[Nz];
+    float ws_tmp_2, ws_diff, ws_abl;
+    float th_min, th_diff, th_diff_2;
+    float ntsf_tmp;
+    int ku_max;
+    int kth_zi;
+    int kzi_tmp, kzi_tmp_old;
+    int k_low = 3;
+    float dzidt_tend = 0.05;
+    int dzidt_max;
+    float dzi_tend_sign;
+
+    if(bdy_id==0 || bdy_id==2){ // N or S boundary planes
+      Nl = Nx;
+    }else{ // E or W boundary planes
+      Nl = Ny;
+    }
+    bndyfldStride_LZ = Nl*Nz;
+
+    bdy_lh = 0;  //Initialize for safety
+    if(bdy_id == 0){ // N
+      bdy_lh = 1;
+    } else if(bdy_id == 1){ // E
+      bdy_lh = 1;
+    } else if(bdy_id == 2){ // S
+      bdy_lh = 0;
+    } else if(bdy_id == 3){ // W
+      bdy_lh = 0;
+    }
+
+
+    //printf("bdy_id = %d Nl = %d \n",bdy_id, Nl);
+    //    //fflush(stdout);
+
+    ku_s = (U_INDX*2+bdy_lh)*bndyfldStride_LZ;
+    kv_s = (V_INDX*2+bdy_lh)*bndyfldStride_LZ;
+    krho_s = (RHO_INDX*2+bdy_lh)*bndyfldStride_LZ;
+    kth_s = (THETA_INDX*2+bdy_lh)*bndyfldStride_LZ;
+
+    for(k=0; k < Nz; k++){
+       uz_tmp[k] = 0.0;
+       thz_tmp[k] = 0.0;
+       for(l=0; l < Nl; l++){
+         ind_lk = l*Nz+k;
+         u_tmp = var_LBCplane[ku_s+ind_lk];
+         v_tmp = var_LBCplane[kv_s+ind_lk];
+         rho_tmp = var_LBCplane[krho_s+ind_lk];
+         th_tmp = var_LBCplane[kth_s+ind_lk];
+
+         u_tmp = u_tmp/rho_tmp;
+         v_tmp = v_tmp/rho_tmp;
+         th_tmp = th_tmp/rho_tmp;
+         ws_tmp = sqrt(pow(u_tmp,2.0)+pow(v_tmp,2.0));
+
+         uz_tmp[k] = uz_tmp[k] + ws_tmp;
+         thz_tmp[k] = thz_tmp[k] + th_tmp;
+       }
+       uz_tmp[k] = uz_tmp[k]/(float)(Nl);
+       thz_tmp[k] = thz_tmp[k]/(float)(Nl);
+     }
+
+     ws_tmp = 0.0;
+     th_min = 500.0;
+     for(k=0; k < Nz; k++){
+       // wind speed maximum //
+       ws_tmp_2 = uz_tmp[k];
+       ws_diff = ws_tmp_2 - ws_tmp;
+       if(ws_diff > 0.0){
+         ku_max = k;
+       }
+       ws_tmp = ws_tmp_2;
+       // min theta //
+       th_tmp = thz_tmp[k];
+       th_diff = th_tmp - th_min;
+       if (th_diff < 0.0){
+         th_min = th_tmp;
+       }
+     }
+
+     // closest level to min theta + 1.5 K //
+     th_diff_2 = 500.0;
+     for(k=0; k < Nz; k++){
+       th_diff = fabs(thz_tmp[k] - (th_min + 1.5));
+       if(th_diff < th_diff_2){
+         th_diff_2 = th_diff;
+         kth_zi = k;
+       }
+     }
+     kzi_tmp = floor(0.5*(ku_max+kth_zi));
+
+     // limit ABL rate of change //
+     kzi_tmp_old = cellpert_ktop_prev[bdy_id];
+     dzidt_max = dzidt_tend*kzi_tmp_old;
+     dzi_tend_sign = copysignf(1.0,kzi_tmp - kzi_tmp_old);
+
+     if(dzi_tend_sign >= 0.0){
+       if(kzi_tmp_old+dzidt_max < kzi_tmp){
+         kzi_tmp = kzi_tmp_old+dzidt_max;
+       }
+     } else{
+       if(kzi_tmp_old+dzidt_max > kzi_tmp){
+         kzi_tmp = kzi_tmp_old-dzidt_max;
+       }
+     }
+
+     // ABL wind speed //
+     ws_abl = 0.0;
+     for(k=k_low; k < kzi_tmp; k++){
+       ws_abl = ws_abl + uz_tmp[k];
+     }
+     ws_abl = ws_abl/(float)(kzi_tmp-k_low);
+
+     //printf("k_low = %d kzi_tmp = %d, ws_abl = %f\n",k_low,kzi_tmp,ws_abl);
+     //     //fflush(stdout);
+
+     cellpert_ktop_array[bdy_id] = kzi_tmp;
+     cellpert_amp_array[bdy_id] = pow(uz_tmp[kzi_tmp],2.0)/(cellpert_eckert*cp_gas);
+     ntsf_tmp = (float)(cellpert_gppc*cellpert_ndbc*cellpert_tsfact)*d_xi/ws_abl;
+     cellpert_nts_array[bdy_id] = floor(ntsf_tmp/dt);
+
+     return(errorCode);
+}//end hydro_coreTVCP_LBCparams()
+
 
 /*----->>>>> int hydro_coreStateLogDump();  -------------------------------------------------------
 * Utility function to produce field state summaries for a desired set of hydro_core fields. 
