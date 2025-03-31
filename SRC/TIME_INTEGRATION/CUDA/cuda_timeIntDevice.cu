@@ -120,9 +120,9 @@ extern "C" int cuda_timeIntDeviceCommence(int it){
        printf("cuda_timeIntDeviceCommence:Updating device-side BdyPlanes at it=%d...\n",it);
        fflush(stdout);
        errorCode = cuda_hydroCoreDeviceBdyPlanesUpdate();
-      // if((cellpertSelector==1)&&(cellpert_tvcp==1)){ // DME update CP parameters with dynamic LBCs
-      //   errorCode = cuda_hydroCoreTVCP(dt,mpi_rank_world);
-      // } // end if((cellpertSelector==1)&&(cellpert_tvcp==1))
+       if((cellpertSelector==1)&&(cellpert_tvcp==1)){ // update CP parameters with dynamic LBCs
+         errorCode = cuda_hydroCoreTVCP();
+       } // end if((cellpertSelector==1)&&(cellpert_tvcp==1))
      }
    }//end if hydroBCs==1
 

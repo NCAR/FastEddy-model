@@ -99,6 +99,19 @@ extern "C" int cuda_hydroCoreDeviceBuildCPmethod(int simTime_it){
    return(errorCode);
 }//end cuda_hydroCoreDeviceBuildCPmethod()
 
+/*----->>>>> extern "C" int cuda_hydroCoreTVCP();  -----------------------------------------------------------
+* Updates device-sided parameters used by the CELLPERT submodule from dynamic lateral BNDY conditions
+*/
+extern "C" int cuda_hydroCoreTVCP(){
+    int errorCode = CUDA_CELLPERT_SUCCESS;
+
+    cudaMemcpyToSymbol(cellpert_amp_d, &cellpert_amp, sizeof(float));
+    cudaMemcpyToSymbol(cellpert_ktop_d, &cellpert_ktop, sizeof(int));
+    cudaMemcpyToSymbol(cellpert_nts_d, &cellpert_nts, sizeof(int));
+
+    return(errorCode);
+} //end cuda_hydroCoreTVCP()
+
 __global__ void cudaDevice_hydroCoreUnitTestCompleteCellPerturbation(float* hydroFlds, float* randcp_d, int my_mpi, int numpx, int numpy){
 
    int i,j,k,ijk;

@@ -40,10 +40,10 @@ int mem_utilsInit();
  * Used to allocate memory for a 2-Dmensional field through the MEM_UTILS module. This field-memory space will
  * be aligned on ALIGN_SIZE bytes using posix_memalign.
  * */
-float * memAllocateFloat2DField(int iN, int jN, int halo_extent, char *fieldName); // DME
+float * memAllocateFloat2DField(int iN, int jN, int halo_extent, char *fieldName); 
 
 /*----->>>>> float * memAllocateFloat2DFieldN1D(nN, kN, halo_extent, fieldName); -------------------------------
- * Used to allocate memory for a 2-Dmensional field made of n vector of one spatial dimention through the MEM_UTILS module. This field-memory space will
+ * Used to allocate memory for a 2-Dmensional field made of n vector of one spatial dimension through the MEM_UTILS module. This field-memory space will
  * be aligned on ALIGN_SIZE bytes using posix_memalign.
  * */
 float * memAllocateFloat2DFieldN1D(int nN, int kN, int halo_extent, char *fieldName);

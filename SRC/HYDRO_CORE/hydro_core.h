@@ -33,7 +33,7 @@
 /*#################------------------- HYDRO_CORE module variable declarations ---------------------#################*/
 /* Parameters */
 extern int Nhydro;          /*Number of prognostic variable fields under hydro_core */
-extern int hydroBCs;          /*selector for hydro BC set. 1= Dirichlet lateral, ceiling and surface boundary conditions (LAD),
+extern int hydroBCs;          /*selector for hydro BC set. 1= Dirichlet lateral, ceiling and surface boundary conditions (Limited Area Domain -- LAD),
 			                                   2= periodicHorizVerticalAbl */
 
 extern int hydroForcingWrite;   /*switch for dumping forcing fields of prognostic variables. 0-off (default), 1= on*/
@@ -91,8 +91,10 @@ extern float *SURFBdyPlanesNext;    /*Base Adress of memory block for surfaceVar
 
 /*---PRESSURE_GRADIENT_FORCE*/
 extern int pgfSelector;          /*Pressure Gradient Force (pgf) selector: 0=off, 1=on*/
+
 /*---BUOYANCY*/
 extern int buoyancySelector;     /*buoyancy Force selector: 0=off, 1=on*/
+
 /*---CORIOLIS*/
 extern int coriolisSelector;     /*coriolis Force selector: 0= none, 1= Horiz.-only, 2=Horz. & Vert.*/
 extern float coriolisLatitude;   /*Charactersitc latitude in degrees from equator of the LES domain*/
@@ -100,6 +102,7 @@ extern float corioConstHorz;     /*Latitude dependent horizontal Coriolis term c
 extern float corioConstVert;     /*Latitude dependent Vertical Coriolis term constant */
 extern int coriolis_LAD;         /*Coriolis force selector for LAD BC cases (hydroBCs==1): 0=off, 1=on*/
 extern float corioLS_fact;       /*large-scale factor on Coriolis term*/
+
 /*---TURBULENCE*/
 extern int turbulenceSelector;    /*turbulence scheme selector: 0= none, 1= Lilly/Smagorinsky */
 extern int TKESelector;           /* Prognostic TKE selector: 0= none, 1= Prognostic */
@@ -109,6 +112,7 @@ extern float c_s;     /* Smagorinsky turbulence model constant used for turbulen
 extern float c_k;    /* Lilly turbulence model constant used for turbulenceSelector = 1 with TKESelector > 0 */
 extern float *sgstkeScalars;  /* Base Adress of memory containing all prognostic "sgstke" variable fields */ 
 extern float *sgstkeScalarsFrhs; /* Base Adress of memory containing all prognostic "sgstke" RHS forcing fields */ 
+
 /*---DIFFUSION*/
 extern int diffusionSelector;  /*diffusion Term-type selector: 0= none, 1= constant, 2= scalar turbulent-diffusivity*/
 extern float nu_0;            /* constant diffusivity used when diffusionSelector = 1 */
@@ -116,10 +120,12 @@ extern float *hydroTauFlds;      /*Base address for scratch/work Tau tensor arra
 extern float *hydroDiffTauXFlds; /*Base address for diffusion TauX arrays for all prognostic fields*/
 extern float *hydroDiffTauYFlds; /*Base address for diffusion TauY arrays for all prognostic fields*/
 extern float *hydroDiffTauZFlds; /*Base address for diffusion TauZ arrays for all prognostic fields*/
+
 /*---ADVECTION*/
 extern int advectionSelector;    /*advection scheme selector: 0= 1st-order upwind, 2= 3rd-order QUICK */
 extern float b_hyb; /*hybrid advection scheme parameter: 0.0= lower-order upwind, 
                              1.0=higher-order cetered, 0.0 < b_hyb < 1.0 = hybrid */
+
 /*---SURFACE LAYER*/
 extern int surflayerSelector;    /*Monin-Obukhov surface layer selector: 0= off, 1= on */
 extern float surflayer_z0;       /* roughness length (momentum) */
@@ -146,6 +152,7 @@ extern float surflayer_ideal_amp; /*maximum amplitude of the idealized sinusoida
 extern float surflayer_ideal_qts;  /*start time (seconds) for idealized sinusoidal surf. forcing of latent heat flux*/
 extern float surflayer_ideal_qte;  /*end time (seconds) for idealized sinusoidal surf. forcing of latent heat flux*/
 extern float surflayer_ideal_qamp; /*maximum amplitude of idealized sinusoidal surface forcing of latent heat flux*/
+
 /*OFFSHORE ROUGNESS PARAMETERS*/
 extern int surflayer_offshore;       /* offshore selector: 0=off, 1=on */
 extern int surflayer_offshore_opt;   /* offshore roughness parameterization: ==0 (Charnock), ==1 (Charnock with variable alpha), ==2 (Taylor & Yelland), ==3 (Donelan), ==4 (Drennan), ==5 (Porchetta) */
@@ -156,12 +163,14 @@ extern float surflayer_offshore_cp;    /* wave phase speed */
 extern float surflayer_offshore_theta; /* wave/wind angle */
 extern int surflayer_offshore_visc;    /* viscous term on z0m: 0=off, 1=on (default) */
 extern float* sea_mask;              /* Base Address of memory containing sea mask 0,1 field */
+
 /*---CANOPY*/
 extern int canopySelector;         /* canopy selector: 0=off, 1=on */
 extern int canopySkinOpt;          /* canopy selector to use additional skin friction effect on drag coefficient: 0=off, 1=on */
 extern float canopy_cd;            /* non-dimensional canopy drag coefficient */
 extern float canopy_lf;            /* representative canopy element length scale */
 extern float *canopy_lad;          /* Base Address of memory containing leaf area density (LAD) field [m^{-1}] */
+
 /*---LARGE SCALE FORCING*/ 
 extern int lsfSelector;         /* large-scale forcings selector: 0=off, 1=on */
 extern float lsf_w_surf;        /* lsf to w at the surface */
@@ -182,6 +191,7 @@ extern float lsf_qv_zlev2;      /* lsf to qv height 2 */
 extern int lsf_horMnSubTerms;   /* Switch 0=off, 1=on */
 extern int lsf_numPhiVars;      /* number of variables in the slabMeanPhiProfiles set (e.g. rho,u,v,theta,qv=5) */
 extern float lsf_freq;          /* large-scale forcing frequency (seconds) */
+
 /*---MOISTURE*/ 
 extern int moistureSelector;        /* moisture selector: 0=off, 1=on */
 extern int moistureNvars;           /* number of moisture species */
@@ -197,6 +207,7 @@ extern int moistureAdvSelectorQi; /* moisture advection scheme selector for non-
 extern float moistureCondTscale;  /* relaxation time in seconds */
 extern int moistureCondBasePres;  /* selector to use base pressure for microphysics */
 extern float moistureMPcallTscale;  /* time scale for microphysics to be called */
+
 /*---FILTERS*/
 extern int filterSelector;               /* explicit filter selector: 0=off, 1=on */
 extern int filter_6thdiff_vert;          /* vertical 6th-order filter on w selector: 0=off, 1=on */
@@ -204,6 +215,7 @@ extern float filter_6thdiff_vert_coeff;  /* vertical 6th-order filter w factor: 
 extern int filter_6thdiff_hori;          /* horizontal 6th-order filter on rho,theta,qv selector: 0=off, 1=on */
 extern float filter_6thdiff_hori_coeff;  /* horizontal 6th-order filter factor: 0.0=off, 1.0=full */
 extern int filter_divdamp;               /* divergence damping selector: 0=off, 1=on */
+
 /*---CELL PERTURBATION METHOD*/
 extern int cellpertSelector;     /* CP method selector: 0= off, 1= on */
 extern int cellpert_sw2b;        /* switch to do: 0= all four lateral boundaries, 1= only south & west boundaries, 2= only south boundary */
@@ -214,6 +226,10 @@ extern int cellpert_ndbc;        /* number of cells normal to domain lateral bou
 extern int cellpert_kbottom;     /* z-grid point where the perturbations start */
 extern int cellpert_ktop;        /* z-grid point where the perturbations end */
 extern int cellpert_ktop_prev[4];/* z-grid point where the perturbations end array previous time step */
+extern int cellpert_tvcp;        /* time-varying CP method selector: 0= off, 1= on (when hydroBCs == 1) */
+extern float cellpert_eckert;    /* Eckert number for the potential temperature perturbations (when hydroBCs == 1) */
+extern float cellpert_tsfact;    /* factor on the refreshing perturbation time scale (when hydroBCs == 1) */
+
 /*---RAYLEIGH DAMPING LAYER*/
 extern int dampingLayerSelector;       // Rayleigh Damping Layer selector
 extern float dampingLayerDepth;       // Rayleigh Damping Layer Depth
@@ -307,6 +323,17 @@ int hydro_coreScatterFieldBndyPlanes(int Nfields);
 * to read/scatter the next set of BdyPlanes in the series
 */
 int hydro_coreReadNextBndyPlanesFile();
+
+/*----->>>>> int hydroi_coreTVCP();  -----------------------------------------------------------
+ * Updates model parameters used by the CELLPERT submodule from dynamic lateral BNDY conditions.
+ */
+int hydro_coreTVCP(float dt);
+
+/*----->>>>> int hydro_coreTVCP_LBCparams();  -----------------------------------------------------------
+ * Computes model parameters used by the CELLPERT submodule from dynamic lateral BNDY conditions.
+ */
+int hydro_coreTVCP_LBCparams(int bdy_id, float* var_LBCplane, float* cellpert_amp_array,
+                             int* cellpert_ktop_array, int* cellpert_ktop_prev, int* cellpert_nts_array, float dt);
 
 /*----->>>>> int hydro_coreFldStateLogDump(float * Fld);  --------------------------------------------------------
 * Utility function to carry out a log-dump summary of the hydro_core state
