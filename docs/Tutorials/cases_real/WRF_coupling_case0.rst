@@ -109,7 +109,7 @@ And include the file *vars_io.txt* containing the one line below in WRF's run di
 
 .. code-block:: none
 
-   +:h:14:PH,PHB,U,V,W,T,QVAPOR,QCLOUD,ALT,TSK,Q2,HGT,PSFC,XLAT,XLONG,Z0,ZNT
+   +:h:14:PH,PHB,U,V,W,T,QVAPOR,QCLOUD,ALT,TSK,Q2,HGT,PSFC,XLAT,XLONG
 
 With these additions, WRF will generate a set of timestamped *wrf_fasteddy_* files that will be utilized as basis for the interpolation to the FastEddy grid. The rest of input parameters are meant to provide the starting date and time of the sequence of ICBCs to be created. Similarly to the other preprocessing python code, **GenICBCs.py** is executed as:
 
