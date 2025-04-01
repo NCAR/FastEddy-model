@@ -42,9 +42,8 @@ with open(args.file) as file:
 ICBC_dir = params["ICBC_dir"]
 FE_simGrid = params["FE_simGrid"]
 WRF_PrntDir = params["WRF_PrntDir"]
-WRF_PrntRefOut = params["WRF_PrntRefOut"]
 WRF_PrntOutPrefix = params["WRF_PrntOutPrefix"]
-dateString = params["dateString"]
+dateString = params["date0"]
 timeHour0 = params["timeHour0"]
 timeMinute0 = params["timeMinute0"]
 timeSecond0 = params["timeSecond0"]
@@ -53,7 +52,6 @@ secInc = params["secInc"]
 
 print(f"{mpi_rank}/{mpi_size}: Writing coupler outputs to {ICBC_dir}")
 print(f"{mpi_rank}/{mpi_size}: Interpolating to FE-domain from {FE_simGrid}")
-print(f"{mpi_rank}/{mpi_size}: Using WRF-reference from {WRF_PrntDir}{WRF_PrntRefOut}")
 print(f"{mpi_rank}/{mpi_size}: Processing of WRF-files {WRF_PrntDir}{WRF_PrntOutPrefix}*")
 print(f"{mpi_rank}/{mpi_size}: Date and times of WRF-files to process: {dateString}_{timeHour0:02}:{timeMinute0:02}:*, every {secInc} s for {secMax} total seconds.")
 
@@ -78,7 +76,7 @@ date_it = dt.datetime(year0,month0,day0,timeHour0,timeMinute0,timeSecond0)
 for it in range(0,secMax,secInc):
     dateString_it = str(date_it.year) + '-' + "{:02d}".format(date_it.month)  + '-' + "{:02d}".format(date_it.day) + '_'
     thistime = "{:s}{:02d}:{:02d}:{:02d}".format(dateString_it,date_it.hour,date_it.minute,date_it.second)
-    file_tmp = f'{WRF_PrntDir}/{WRF_PrntOutPrefix}{thistime}'
+    file_tmp = f'{WRF_PrntDir}{WRF_PrntOutPrefix}{thistime}'
     files_list.append(file_tmp)
     if(mpi_rank == 0):
        print(file_tmp)
@@ -93,7 +91,7 @@ nextExists = False
 listCntr=0
 list_StartOffset=0
 while (listCntr < list_len) and currentExists:
-  bdyFileName = "{:s}/FE_Bndys.{:d}".format(ICBC_dir,listCntr) 
+  bdyFileName = "{:s}FE_Bndys.{:d}".format(ICBC_dir,listCntr) 
   if (mpi_rank ==0):
     print("{:d}/{:d}: Checking for {:s}".format(mpi_rank, mpi_size,bdyFileName))
   currentExists = os.path.isfile(bdyFileName)
@@ -138,7 +136,7 @@ ds_FEGrid=xr.open_dataset(FE_simGrid)
 ########################################
 ### Load the reference WRF data file ###
 ########################################
-ds_WRFRef=xr.open_dataset(f'{WRF_PrntDir}/{WRF_PrntRefOut}')
+ds_WRFRef=xr.open_dataset(files_list[0])
 
 ############################################################################################
 ### Locate the FE-grid-bounding corners as index pairs (j,i) in the WRF-reference domain ###
@@ -305,8 +303,8 @@ cp_R = cp_gas/R_gas
 ### Define a rectilinear vertical coordinate basis for vertical interpolation between WRF and FE ###
 ####################################################################################################
 zBottom = 0.0
-zTop = ds_FEGrid['zPos'][-1,0,0].values+90.0 #500
-NzWRFInterp = 275 #125 #100
+zTop = ds_FEGrid['zPos'][-1,0,0].values+90.0
+NzWRFInterp = 275
 zRect = np.linspace(zBottom,zTop,NzWRFInterp)
 if(mpi_rank == 0) and DEBUG_COUPLER:
   print(zRect[0],zRect[-1])
@@ -329,9 +327,9 @@ it11=myend #rank-specific ending index in the files_list
 for Bdy_file_num in range(it00,it11):
   bdyFileName = "{:s}/FE_Bndys.{:d}".format(ICBC_dir,Bdy_file_num)
   if not(os.path.isfile(bdyFileName)):
-    print('{:d}/{:d}: {:s} does not exist, creating it...'.format(mpi_rank, mpi_size, bdyFileName))
+    print('{:d}{:d}: {:s} does not exist, creating it...'.format(mpi_rank, mpi_size, bdyFileName))
     if True:
-        print("{:d}/{:d}: Working on file {:s}".format(mpi_rank, mpi_size, files_list[Bdy_file_num]))
+        print("{:d}{:d}: Working on file {:s}".format(mpi_rank, mpi_size, files_list[Bdy_file_num]))
         ds_ref = xr.open_mfdataset(files_list[Bdy_file_num],combine='nested',concat_dim='Time')
 
         t0s = time.perf_counter()
