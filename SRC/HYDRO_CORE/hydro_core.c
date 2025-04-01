@@ -111,6 +111,7 @@ float *sgstkeScalarsFrhs; /* Base Adress of memory containing all prognostic "sg
 /*----Advection*/ 
 int advectionSelector;    /*advection scheme selector: 0= 1st-order upwind, 1= 3rd-order QUICK, 
                                               2= hybrid 3rd-4th order, 3= hybrid 5th-6th order */
+int ceilingAdvectionBC;   /*selector to enforce no normal advection at the domain ceiling 1=on (enforce w-ceiling = 0), 0=off*/
 float b_hyb;      /*hybrid advection scheme parameter: 0.0= lower-order upwind,
                                           1.0=higher-order cetered, 0.0 < b_hyb < 1.0 = hybrid */
 
@@ -323,6 +324,8 @@ int hydro_coreGetParams(){
    errorCode = queryFloatParameter("c_k", &c_k, 1e-6, 1e6, PARAM_MANDATORY);
    advectionSelector = 0; //Default to 0
    errorCode = queryIntegerParameter("advectionSelector", &advectionSelector, 0, 6, PARAM_MANDATORY);
+   ceilingAdvectionBC = 1;
+   errorCode = queryIntegerParameter("ceilingAdvectionBC", &ceilingAdvectionBC, 0, 1, PARAM_OPTIONAL);
    b_hyb = 0.8; //Default to 0.8
    errorCode = queryFloatParameter("b_hyb", &b_hyb, 0.0, 1.0, PARAM_MANDATORY);
    diffusionSelector = 0; //Default to off
@@ -678,6 +681,7 @@ int hydro_coreInit(){
       printParameter("c_k", "Lilly model constant used for turbulenceSelector = 1 and TKESelector > 0");
       printComment("----------: ADVECTION ---");
       printParameter("advectionSelector", "advection scheme selector: 0= 1st-order upwind, 1= 3rd-order QUICK, 2= hybrid 3rd-4th order, 3= hybrid 5th-6th order");
+      printParameter("ceilingAdvectionBC", "selector to enforce no normal advection at the domain ceiling 1=on (enforce w-ceiling = 0), 0=off");
       printParameter("b_hyb", "hybrid advection scheme parameter: 0.0= lower-order upwind, 1.0=higher-order cetered, 0.0 < b_hyb < 1.0 = hybrid");
       printComment("----------: DIFFUSION ---");
       printParameter("diffusionSelector", "diffusivity selector: 0= none, 1= const.");
@@ -862,6 +866,7 @@ int hydro_coreInit(){
    MPI_Bcast(&c_s, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&c_k, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&advectionSelector, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&ceilingAdvectionBC, 1, MPI_INT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&b_hyb, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&diffusionSelector, 1, MPI_INT, 0, MPI_COMM_WORLD);
    MPI_Bcast(&nu_0, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -1389,8 +1394,13 @@ int hydro_coreInit(){
 
    } // end of moistureSelector > 0
 
-   /* Allocate for LAD BCs (hydroBCs == 1)*/
+   /* Check related parameters and Allocate for LAD BCs (hydroBCs == 1)*/
    if(hydroBCs==1){  // Using LAD BCs
+     if(ceilingAdvectionBC==1){
+       printf("!!!! WARNING !!!!!-- The parameter ceilingAdvectionBC = 1 enforces rigid lid (w = 0 at ceiling), but hydroBCs == 1 implying Dirchlet boundary values are provided.\n");
+       printf("!!!! WARNING !!!!!-- When using hydroBCs == 1, ceilingAdvectionBC==0 is recommended.");
+       fflush(stdout);
+     }
      if( moistureSelector > 0){
        nBndyVars = Nhydro+moistureNvars;
        nSurfBndyVars = 2;   //Only allows tskin and qskin

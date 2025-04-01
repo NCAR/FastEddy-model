@@ -610,7 +610,11 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
       /*Apply the appropriate boundary conditions*/
       if(hydroBCs_d == 1){ //Using LAD BCs
         timeWeight = (__int2float_rz(simTime_it%BdyUpdateSteps_d))/(__int2float_rz(BdyUpdateSteps_d));
-        cudaDevice_VerticalAblBCs(iFld, fld, fldBS);
+        if (iFld==1 || iFld==2 || iFld==3){
+          cudaDevice_VerticalAblBCsMomentum(iFld, fld, fldBS, zPos_d);
+        }else{
+          cudaDevice_VerticalAblBCs(iFld, fld, fldBS);
+        }
         if(rankXid_d == 0){
           cudaDevice_westBdyBCs(iFld, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
         }
@@ -663,9 +667,9 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
        fldFrhs = &sgstkeScalarsFrhs_d[fldStride*iFld];
        cudaDevice_setToZero(fldFrhs);
        fld = &sgstkeScalars_d[fldStride*iFld];
-       fldBS = &sgstkeScalarsFrhs_d[fldStride*iFld]; // set rhs forcing to zero, so it can be used as zero base state
+       fldBS = &sgstkeScalarsFrhs_d[fldStride*iFld]; // Frhs forcing iwas set to zero, so it can be used here as zero-valued base state
        if(hydroBCs_d == 1){ //Using LAD BCs
-        cudaDevice_VerticalAblBCs(iFld, fld, fldBS);
+        cudaDevice_VerticalAblBCs(iFld, fld, fldBS); 
 	if(rankXid_d == 0){
            cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 0);
          }
@@ -679,7 +683,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
            cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 3);
          }
        }else if (hydroBCs_d == 2){
-         cudaDevice_VerticalAblBCs(1, fld, fldBS); // to apply zero-gradient lower boundary BCs
+         cudaDevice_VerticalAblBCs(iFld, fld, fldBS); // to apply zero-gradient lower boundary BCs
          if(numProcsX_d==1){
            cudaDevice_HorizontalPeriodicXdirBCs(iFld, fld);
          }//periodic and single rank in X-dir --> implies no MPI exchanges made so perform on-device exchange
@@ -696,7 +700,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
        fldFrhs = &moistScalarsFrhs_d[fldStride*iFld];
        cudaDevice_setToZero(fldFrhs);
        fld = &moistScalars_d[fldStride*iFld];
-       fldBS = &moistScalars_d[fldStride*iFld]; // set rhs forcing to zero, so it can be used as zero base state
+       fldBS = &moistScalars_d[fldStride*iFld]; //Using the progrnostic field itself as placeholder in fldBS
        if(hydroBCs_d == 1){ //Using LAD BCs
          cudaDevice_VerticalAblBCs(iFld, fld, fldBS);
          if(rankXid_d == 0){
