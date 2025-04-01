@@ -16,4 +16,4 @@ After initial and boundary conditions have been properly created, FastEddy can n
    hydroBndysFileEnd = 16
    dtBdyPlaneBCs = 300.0
 
-From the parameters above, :code:`hydroBCs = 1` is the main option to activate the coupling to a mesoscale model. Note that :code:`dtBdyPlaneBCs` is the frequency in seconds for boundary conditions to updte and that it needs to match the value of *secInc* specified in **genicbcs.json**. See Running under NSF NCAR HPC for instructions on how to build and run FastEddy on NSF NCAR’s High Performance Computing machines.
+From the parameters above, :code:`hydroBCs = 1` is the main option to activate the coupling to a mesoscale model. Note that :code:`dtBdyPlaneBCs` is the frequency in seconds for boundary conditions to update and that it needs to match the value of *secInc* specified in **genicbcs.json**. See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR’s High Performance Computing machines.
