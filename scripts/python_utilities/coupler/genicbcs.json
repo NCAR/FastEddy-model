@@ -7,6 +7,7 @@
   "dateString": "2024-03-20",
   "timeHour0": 1,
   "timeMinute0": 30,
-  "itMax": 120,
-  "itInc": 5 
+  "timeSecond0": 0,
+  "secMax": 7200,
+  "secInc": 300
 }

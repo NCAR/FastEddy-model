@@ -39,23 +39,23 @@ args = parse_args()
 with open(args.file) as file:
     params = json.loads(file.read())
 
-if True:
-  ICBC_dir = params["ICBC_dir"]
-  FE_simGrid = params["FE_simGrid"]
-  WRF_PrntDir = params["WRF_PrntDir"]
-  WRF_PrntRefOut = params["WRF_PrntRefOut"]
-  WRF_PrntOutPrefix = params["WRF_PrntOutPrefix"]
-  dateString = params["dateString"]
-  timeHour0 = params["timeHour0"]
-  timeMinute0 = params["timeMinute0"]
-  itMax = params["itMax"]
-  itInc = params["itInc"]
+ICBC_dir = params["ICBC_dir"]
+FE_simGrid = params["FE_simGrid"]
+WRF_PrntDir = params["WRF_PrntDir"]
+WRF_PrntRefOut = params["WRF_PrntRefOut"]
+WRF_PrntOutPrefix = params["WRF_PrntOutPrefix"]
+dateString = params["dateString"]
+timeHour0 = params["timeHour0"]
+timeMinute0 = params["timeMinute0"]
+timeSecond0 = params["timeSecond0"]
+secMax = params["secMax"]
+secInc = params["secInc"]
 
-  print(f"{mpi_rank}/{mpi_size}: Writing coupler outputs to {ICBC_dir}")
-  print(f"{mpi_rank}/{mpi_size}: Interpolating to FE-domain from {FE_simGrid}")
-  print(f"{mpi_rank}/{mpi_size}: Using WRF-reference from {WRF_PrntDir}{WRF_PrntRefOut}")
-  print(f"{mpi_rank}/{mpi_size}: Processing of WRF-files {WRF_PrntDir}{WRF_PrntOutPrefix}*")
-  print(f"{mpi_rank}/{mpi_size}: Date and times of WRF-files to process: {dateString}_{timeHour0:02}:{timeMinute0:02}:*, every {itInc} minutes for {itMax} total minutes.")
+print(f"{mpi_rank}/{mpi_size}: Writing coupler outputs to {ICBC_dir}")
+print(f"{mpi_rank}/{mpi_size}: Interpolating to FE-domain from {FE_simGrid}")
+print(f"{mpi_rank}/{mpi_size}: Using WRF-reference from {WRF_PrntDir}{WRF_PrntRefOut}")
+print(f"{mpi_rank}/{mpi_size}: Processing of WRF-files {WRF_PrntDir}{WRF_PrntOutPrefix}*")
+print(f"{mpi_rank}/{mpi_size}: Date and times of WRF-files to process: {dateString}_{timeHour0:02}:{timeMinute0:02}:*, every {secInc} s for {secMax} total seconds.")
 
 ################################################################################################
 ### Create a coupler output directory for initial and boundary conditions if necessary
@@ -69,48 +69,20 @@ if(mpi_rank == 0):
 ################################################################################################
 files_list=[]
 times=[]
-if False:
-    timeHour = timeHour0  
-    timeMinute = timeMinute0
-    hourIncFlag = True
-    for it in range(0,itMax,itInc):
-        if (it > 0) and ((it+timeMinute0)%60 < itInc) and hourIncFlag :
-            timeHour+=1  
-            hourIncFlag = False
-        else:
-            hourIncFlag = True
-        thistime = "{:s}{:02d}:{:02d}:{:s}".format(dateString,timeHour,(timeMinute+it)%60,"00")
-        times.append(thistime)
-    for eachtime in times:
-       file_tmp = f'{WRF_PrntDir}/{WRF_PrntOutPrefix}{eachtime}'
-       files_list.append(file_tmp)
-       if(mpi_rank == 0):
-          print(file_tmp)
-    #print(files_list)
 
-if True: # DME
-    year0 = int(dateString[0:4])
-    month0 = int(dateString[5:7])
-    day0 = int(dateString[8:10])
+year0 = int(dateString[0:4])
+month0 = int(dateString[5:7])
+day0 = int(dateString[8:10])
 
-    date_it = dt.datetime(year0,month0,day0,timeHour0,timeMinute0)
-    for it in range(0,itMax,itInc):
-        dateString_it = str(date_it.year) + '-' + "{:02d}".format(date_it.month)  + '-' + "{:02d}".format(date_it.day) + '_'
-        thistime = "{:s}{:02d}:{:02d}:{:s}".format(dateString_it,date_it.hour,date_it.minute,"00")
-        file_tmp = f'{WRF_PrntDir}/{WRF_PrntOutPrefix}{thistime}'
-        files_list.append(file_tmp)
-        if(mpi_rank == 0):
-           print(file_tmp)
-        date_it = date_it + dt.timedelta(minutes=itInc)
-
-it00=0
-for Bdy_file_num in range(it00,len(files_list)):
-    if Bdy_file_num%(60/itInc) == 0:
-        timeHour=int(Bdy_file_num/(60/itInc))+timeHour0
-        timeLabel="{:02d}{:02d}UTC".format(timeHour,timeMinute0)
-        print('timeLabel for IC file:',timeLabel)
-        if(mpi_rank == 0):
-           print("{:s} at Bdy_file_num = {:d}".format(timeLabel,Bdy_file_num))
+date_it = dt.datetime(year0,month0,day0,timeHour0,timeMinute0,timeSecond0)
+for it in range(0,secMax,secInc):
+    dateString_it = str(date_it.year) + '-' + "{:02d}".format(date_it.month)  + '-' + "{:02d}".format(date_it.day) + '_'
+    thistime = "{:s}{:02d}:{:02d}:{:02d}".format(dateString_it,date_it.hour,date_it.minute,date_it.second)
+    file_tmp = f'{WRF_PrntDir}/{WRF_PrntOutPrefix}{thistime}'
+    files_list.append(file_tmp)
+    if(mpi_rank == 0):
+       print(file_tmp)
+    date_it = date_it + dt.timedelta(seconds=secInc)
 
 ################################################################################################
 ### Setup mpi task decomposition over the set of files to process
@@ -383,10 +355,9 @@ for Bdy_file_num in range(it00,it11):
     verticalInterpFinal(ds_FEGrid,dsFENew,dsFEFinal,zRect)
     t3e = time.perf_counter()
     print('{:d}/{:d}: t3_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t3e-t3s))
-    addTimeDim_FEfinal(dsFEFinal) # DME
-    if Bdy_file_num%(60/itInc) == 0:
-        timeHour=int(Bdy_file_num/(60/itInc))+timeHour0
-        timeLabel="{:02d}{:02d}UTC".format(timeHour,timeMinute0)
+    addTimeDim_FEfinal(dsFEFinal)
+    if Bdy_file_num == 0:
+        timeLabel="{:02d}{:02d}{:02d}UTC".format(timeHour0,timeMinute0,timeSecond0)
         dsFEFinal.to_netcdf(ICBC_dir+'FE_interp_{:s}.{:d}'.format(timeLabel,0),format='NETCDF4',
                             encoding={'xIndex': {'dtype': 'i4'},'yIndex': {'dtype': 'i4'},'zIndex': {'dtype': 'i4'}})
     t4s = time.perf_counter()
