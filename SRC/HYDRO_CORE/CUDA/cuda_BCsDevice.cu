@@ -256,7 +256,7 @@ __device__ void cudaDevice_HorizontalPeriodicYdirBCs(int fldIndx, float* scalarF
 __device__ void cudaDevice_VerticalAblBCs(int fldIndx, float* scalarField, float* scalarBaseStateField){
 
   int i,j,k;
-  int ijk,ijkTarg;
+  int ijk;
   int iStride,jStride,kStride;
 
   /*Establish necessary indices for spatial locality*/
@@ -271,15 +271,9 @@ __device__ void cudaDevice_VerticalAblBCs(int fldIndx, float* scalarField, float
   if((i >= iMin_d-Nh_d)&&(i < iMax_d+Nh_d) &&
      (j >= jMin_d-Nh_d)&&(j < jMax_d+Nh_d) ){
      if((k >= kMin_d-Nh_d)&&(k < kMin_d)){
-        if((fldIndx == U_INDX)||(fldIndx == V_INDX)){
-          ijkTarg = i*iStride + j*jStride + (kMin_d)*kStride;
-          scalarField[ijk] = scalarField[ijkTarg];
-        }else {
-          scalarField[ijk] = scalarBaseStateField[ijk];
-        } //end if fldIndx
+       scalarField[ijk] = scalarBaseStateField[ijk];
      }else if((k >= kMax_d)&&(k<kMax_d+Nh_d)){
-           ijkTarg = i*iStride + j*jStride + (kMax_d-1)*kStride;
-           scalarField[ijk] = scalarBaseStateField[ijk];
+       scalarField[ijk] = scalarBaseStateField[ijk];
      }//end if(k>=kMin_d-Nh_d...) else if k>-kMax_d...
   }//end if i>=...j>= 
 
@@ -305,7 +299,11 @@ __device__ void cudaDevice_VerticalAblBCsMomentum(int fldIndxMom, float* scalarF
      (j >= jMin_d-Nh_d)&&(j < jMax_d+Nh_d) ){
      if((k >= kMin_d-Nh_d)&&(k < kMin_d)){
         ijkTarg = i*iStride + j*jStride + (kMin_d)*kStride;
-        scalarField[ijk] = scalarField[ijkTarg];
+	if(fldIndxMom==3){
+          scalarField[ijk] = 0.0; //Setting below-ground halo cells to 0 for w-velocity component
+	}else{
+          scalarField[ijk] = scalarField[ijkTarg];
+	}
      }else if((k >= kMax_d)&&(k<kMax_d+Nh_d)){
         ijkTarg = i*iStride + j*jStride + (kMax_d-1)*kStride;
         zPos_ijk = zPos_d[ijkTarg];

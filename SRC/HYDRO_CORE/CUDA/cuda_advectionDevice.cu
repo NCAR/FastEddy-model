@@ -16,6 +16,7 @@
 /*---ADVECTION*/ 
 float *hydroFaceVels_d; //cell face velocities
 __constant__ int advectionSelector_d;          /*advection scheme selector: 0= 1st-order upwind, 2= 3rd-order QUICK, 2= hybrid 3rd-4th order, 3= hybrid 5th-6th order */
+__constant__ int ceilingAdvectionBC_d; //selector to enforce no normal advection at the domain ceiling
 __constant__ float b_hyb_d;                      /*hybrid advection scheme parameter: 0.0= higer-order upwind, 1.0=lower-order cetered, 0.0 < b_hyb < 1.0 = hybrid */
 
 /*#################------------ ADVECTION submodule function definitions ------------------#############*/
@@ -27,6 +28,7 @@ extern "C" int cuda_advectionDeviceSetup(){
    int Nelems;
    
    cudaMemcpyToSymbol(advectionSelector_d, &advectionSelector, sizeof(int));
+   cudaMemcpyToSymbol(ceilingAdvectionBC_d, &ceilingAdvectionBC, sizeof(int));
    cudaMemcpyToSymbol(b_hyb_d, &b_hyb, sizeof(float));
 
    /*Set the full memory block number of elements for hydroCore fields*/
@@ -102,7 +104,7 @@ __device__ void cudaDevice_calcFaceVelocities(float* hydroFlds_d, float* hydroFa
                   +(D_Jac_d[ijkm1]/rho[ijkm1])*(u[ijkm1]*J13_d[ijkm1] + v[ijkm1]*J23_d[ijkm1] + w[ijkm1]*J33_d[ijkm1]));
 
       //Ensure ground and ceiling face vertical velocity component is set to 0
-      if((k==kMin_d)||((k>=kMax_d))){
+      if((k==kMin_d)||((k>=kMax_d)&&(ceilingAdvectionBC_d==0))){
          w_cf[ijk] = 0.0;
       }//end if k==kMin_d || k>=kMax_d
 #ifdef CUDA_DEBUG
