@@ -2,11 +2,11 @@
 Setting up a real-world downscaled simulation
 =============================================
 
-This is an example of a dynamically downscaled FastEddy simulation over Fort Collins (CO) driven by WRF mesoscale weahter. This tutorial introduces the 3 preprocessing steps required to run mesoscale coupled real cases: GeoSpec, SimGrid, and GenICBCs, all of which are implemented using python scripts. The required datasets to run this tutorial are provided at this `Zenodo record <https://zenodo.org/records/Blahblah>`_.
+This is an example of a dynamically downscaled FastEddy simulation over Fort Collins (CO) driven by WRF mesoscale weather. This tutorial introduces the 3 preprocessing steps required to run mesoscale coupled real cases: GeoSpec, SimGrid, and GenICBCs, all of which are implemented using python scripts (**scripts/python_utilities/coupler/**). The required datasets to run this tutorial are provided at this `Zenodo record <https://zenodo.org/records/Blahblah>`_.
 
 GeoSpec
 -------
-The first preprocessing step is **GeoSpec.py**. The purpose of this step is to create a netCDF file of standard format that allows ingestion of the required GIS data into FastEddy later on. The following variable dimensions and naming convention is required for *GeoSpec.py* to execute properly.
+The first preprocessing step is **GeoSpec.py**. The purpose of this step is to create a netCDF file of standard format that allows ingestion of the required GIS data into a gridded FastEddy domain later on. The following variable dimensions and naming convention of the input netCDF file is required for *GeoSpec.py* to execute properly (see provided example input netCDF file: :code:`ftCollins_inputs_gis.nc`).
 
 .. code-block:: none
 
@@ -18,9 +18,9 @@ The first preprocessing step is **GeoSpec.py**. The purpose of this step is to c
    int LandCover(y, x) ;
    float cellsize ;
 
-The two required fields are the terrain topography (:code:`topoPos`, in m above seal level) and the categorical land cover (:code:`LandCover`). Note that high-resolution fields are desirable as inputs, and that both need to have the same resolution (:code:`cellsize`, in m). Terrain can usually be obtained from lidar data at a few meters resolution, while land cover datasets are typically coarser. For U.S. locations we recommend using NLCD dataset, which provides a high resolution of 30 m. These fields need to come together with corresponding latitude and longitude 2d fileds (:code:`lat` and :code:`lon`), provided with double precision due to the high-resolution typically used in these FastEddy simulations.
+The two required fields are the terrain topography (:code:`topoPos`, in m above seal level) and the categorical land cover (:code:`LandCover`). Note that high-resolution fields are desirable as inputs, and that both fields need to have the same resolution (:code:`cellsize`, in m). Terrain can usually be obtained from lidar data at a few meters resolution, while land cover datasets are typically coarser. For U.S. locations we recommend using NLCD dataset that comes at a high resolution of 30 m. These fields need to come together with the corresponding latitude and longitude 2d fileds (:code:`lat` and :code:`lon`) provided with double precision due to the high-resolution typically used in these FastEddy simulations.
 
-Input parameters to **GeoSpec.py** are provided by the **geospec.json** file. These include the path and file name of the input GIS data (*gis_root* and *gis_file*, respectively), together with other parameters like the output path of the output netCDF file of standard formant (*FE_dataset_path*). In order to convert the land cover class into a roughness length value, a look-up table has to be provided (*nlcd_name*). In this tutorial is based on the 16-class NLCD dataset (:code:`LandCoverMetadata.csv`). The json file entry *water_cats* needs to list all of the land cover categories that correspond to water bodies, so an appropriate roughness length parameterization can be used by FastEddy. Once all the required input files are ready, **GeoSpec.py** can be executed:
+Input parameters to **GeoSpec.py** are specified in the **geospec.json** file. These include the path and file name of the input GIS data (*gis_root* and *gis_file*, respectively), together with other parameters like the output path of the output netCDF file of standard formant (*FE_dataset_path*). In order to convert the land cover class into a roughness length value, a look-up table has to be provided (*nlcd_name*). In this tutorial is based on the 16-class NLCD dataset (:code:`LandCoverMetadata_NLCD16.csv`). The json file entry *water_cats* needs to list all of the land cover categories that correspond to water bodies, so an appropriate roughness length parameterization can be used by FastEddy. Once all the required input files are ready, **GeoSpec.py** can be executed:
 
 .. code-block:: none
 
@@ -56,7 +56,7 @@ If the json file option *save_plot_opt* is set to 1, then a plot will be produce
 
 SimGrid
 -------
-The second preprocessing step is **SimGrid.py**. The purpose of this step is to set up a FastEddy grid utilizing over a domain located within the area covered by the GIS file generated with *GeoSpec.py*. The location of the center of the FastEddy domain is specified by the **simgrid.json** file parameters *center_lat* and *center_lon*. The number of points in each directions (:code:`Nx`, :code:`Ny`, :code:`Nz`), grid spacings (:code:`d_xi`, :code:`d_eta`, :code:`d_zeta`), and vertical stretching parameters (:code:`verticalDeformFactor`, :code:`verticalDeformQuadCoeff`) required to set up a grid are read in from a FastEddy parameters file (*FE_params_file*). *SimGrid.py* performs decimation or interpolation between the GIS file resolution and the grid spacing of the target FastEddy domain for surface fields, in addition to creating the vertical grid that incorporates compression effects originating from the presence of terrain. Once all the required input files are ready, **SimGrid.py** can be executed:
+The second preprocessing step is **SimGrid.py**. The purpose of this step is to set up a FastEddy grid over a domain located within the area covered by the GIS file generated with *GeoSpec.py*. The location of the center of the FastEddy domain is specified in the **simgrid.json** file by the parameters *center_lat* and *center_lon*. The number of points in each directions (:code:`Nx`, :code:`Ny`, :code:`Nz`), grid spacings (:code:`d_xi`, :code:`d_eta`, :code:`d_zeta`), and vertical stretching parameters (:code:`verticalDeformFactor`, :code:`verticalDeformQuadCoeff`) required to set up a grid are read in from a FastEddy parameters file (*FE_params_file*). *SimGrid.py* performs decimation or interpolation between the GIS file resolution and the grid spacing of the target FastEddy domain for surface fields, in addition to creating the vertical grid that incorporates compression effects originating from the presence of terrain. Once all the required input files are ready, **SimGrid.py** can be executed:
 
 .. code-block:: none
 
@@ -83,7 +83,7 @@ After successful completion of the python code, a netCDF file (:code:`FortCollin
 A binary file containing the terrain elevation information will also be generated (:code:`FortCollinsCO_Topography_448x450.dat`) and that needs to be pointed to in the :code:`topoFile` entry of FastEddy's parameters file. If the json file option *save_plot_opt* is set to 1, then a plot will be produced displaying the vertical distribution of height and grid spacing at the lowest and highest terrain elevation points in the domain: 
 
 .. image:: ../images/FortCollinsCO_simgrid.png
-  :width: 900
+  :width: 675
   :alt: Alternative text
 
 .. note::
@@ -111,15 +111,10 @@ And include the file *vars_io.txt* containing the one line below in WRF's run di
 
    +:h:14:PH,PHB,U,V,W,T,QVAPOR,QCLOUD,ALT,TSK,Q2,HGT,PSFC,XLAT,XLONG,Z0,ZNT
 
-That will generate a set of time stampped *wrf_fasteddy_* files that will be utilized as basis for the interpolation to the FastEddy grid. In addition to these, a *wrfout_* file needs to be pointed at for reference (:code:`WRF_PrntRefOut` in **genicbcs.json**). Additional *GenICBCs.py* input parameters are meant to provide the starting date and time of the sequence of ICBCs to be created. Similarly to the other preprocessing python code, **GenICBCs.py** is executed as:
+With these additions, WRF will generate a set of timestamped *wrf_fasteddy_* files that will be utilized as basis for the interpolation to the FastEddy grid. The rest of input parameters are meant to provide the starting date and time of the sequence of ICBCs to be created. Similarly to the other preprocessing python code, **GenICBCs.py** is executed as:
 
 .. code-block:: none
 
    python ./GenICBCs.py -f genicbcs.json
 
-Successful completion will create an initial condition file (*FE_interp_1700UTC.0*) and a set of boundary condition files (*FE_Bndys.**) where the index indicates the number of minute increments from the initial time (frequency in minutes is specified by the parameter :code:`itInc` in *genicbcs.json*).
-
-FastEddy run
-------------
-
-Aaaaa
+Successful completion will create an initial condition file (*FE_interp_170000UTC.0*) and a set of boundary condition files (*FE_Bndys.**) where the index indicates the number of second increments from the initial time (frequency in seconds is specified by the parameter :code:`secInc` in *genicbcs.json*).

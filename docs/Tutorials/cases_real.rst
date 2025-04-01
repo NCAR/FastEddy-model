@@ -2,7 +2,7 @@
 Real Test Cases
 ***************
 
-Real cases are dynamically downscaled from a mesoscale model such as WRF that provides initial and boundary conditions for the one-way nested FastEddy simulation. These mesoscale-LES coupled simulations require the following preprocessing steps:
+Real cases are performed via dynamically downscaling from a mesoscale model such as WRF that provides initial and boundary conditions for a one-way nested FastEddy simulation. These mesoscale-LES coupled simulations require the following preprocessing steps:
 
 * Step 1: **GeoSpec**. Reads in GIS information about terrain elevation and land cover and creates a reference netCDF file.
 * Step 2: **SimGrid**. Defines a FastEddy domain of a specificed grid spacing, location and extentent using GeoSpec file and a FastEddy parameters file as inputs.
@@ -13,3 +13,4 @@ The following tutorial provides a practical example of how to run the 3 preproce
 .. toctree::
 
    cases_real/WRF_coupling_case0.rst
+   cases_real/WRF_coupling_case0_FE.rst
