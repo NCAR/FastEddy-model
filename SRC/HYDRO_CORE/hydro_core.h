@@ -123,7 +123,7 @@ extern float *hydroDiffTauZFlds; /*Base address for diffusion TauZ arrays for al
 
 /*---ADVECTION*/
 extern int advectionSelector;    /*advection scheme selector: 0= 1st-order upwind, 2= 3rd-order QUICK */
-extern int ceilingAdvectionBC;   /*selector to enforce no normal advection at the domain ceiling 1=on (enforce w-ceiling = 0), 0=off*/
+extern int ceilingAdvectionBC;   /*selector to allow advection through the domain ceiling 1=on, 0=off (w-ceiling = 0)*/
 extern float b_hyb; /*hybrid advection scheme parameter: 0.0= lower-order upwind, 
                              1.0=higher-order cetered, 0.0 < b_hyb < 1.0 = hybrid */
 

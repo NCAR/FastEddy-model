@@ -111,7 +111,7 @@ float *sgstkeScalarsFrhs; /* Base Adress of memory containing all prognostic "sg
 /*----Advection*/ 
 int advectionSelector;    /*advection scheme selector: 0= 1st-order upwind, 1= 3rd-order QUICK, 
                                               2= hybrid 3rd-4th order, 3= hybrid 5th-6th order */
-int ceilingAdvectionBC;   /*selector to enforce no normal advection at the domain ceiling 1=on (enforce w-ceiling = 0), 0=off*/
+int ceilingAdvectionBC;   /*selector to allow advection through the domain ceiling 1=on, 0=off (w-ceiling = 0)*/
 float b_hyb;      /*hybrid advection scheme parameter: 0.0= lower-order upwind,
                                           1.0=higher-order cetered, 0.0 < b_hyb < 1.0 = hybrid */
 
@@ -324,7 +324,7 @@ int hydro_coreGetParams(){
    errorCode = queryFloatParameter("c_k", &c_k, 1e-6, 1e6, PARAM_MANDATORY);
    advectionSelector = 0; //Default to 0
    errorCode = queryIntegerParameter("advectionSelector", &advectionSelector, 0, 6, PARAM_MANDATORY);
-   ceilingAdvectionBC = 1;
+   ceilingAdvectionBC = 0;
    errorCode = queryIntegerParameter("ceilingAdvectionBC", &ceilingAdvectionBC, 0, 1, PARAM_OPTIONAL);
    b_hyb = 0.8; //Default to 0.8
    errorCode = queryFloatParameter("b_hyb", &b_hyb, 0.0, 1.0, PARAM_MANDATORY);
@@ -681,7 +681,7 @@ int hydro_coreInit(){
       printParameter("c_k", "Lilly model constant used for turbulenceSelector = 1 and TKESelector > 0");
       printComment("----------: ADVECTION ---");
       printParameter("advectionSelector", "advection scheme selector: 0= 1st-order upwind, 1= 3rd-order QUICK, 2= hybrid 3rd-4th order, 3= hybrid 5th-6th order");
-      printParameter("ceilingAdvectionBC", "selector to enforce no normal advection at the domain ceiling 1=on (enforce w-ceiling = 0), 0=off");
+      printParameter("ceilingAdvectionBC", "selector to allow advection through the domain ceiling 1=on, 0=off (w-ceiling = 0)");
       printParameter("b_hyb", "hybrid advection scheme parameter: 0.0= lower-order upwind, 1.0=higher-order cetered, 0.0 < b_hyb < 1.0 = hybrid");
       printComment("----------: DIFFUSION ---");
       printParameter("diffusionSelector", "diffusivity selector: 0= none, 1= const.");
