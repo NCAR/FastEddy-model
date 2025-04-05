@@ -946,6 +946,8 @@ int gridCleanup(){
 
    /* Free any GRID module arrays */
     /* metric tensor fields */
+   memReleaseFloat(J13); 
+   memReleaseFloat(J23); 
    memReleaseFloat(J31); 
    memReleaseFloat(J32); 
    memReleaseFloat(J33); 

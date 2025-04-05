@@ -292,18 +292,22 @@ int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
                 ERR(errorCode);
              }
              printf("Variable field = %s has nDims = %d\n",ptr->name,nDims);
+             fflush(stdout);
              if ((errorCode = nc_inq_vardimid(ncid, ptr->ncvarid, tmpDimids))){
                 ERR(errorCode);
              }
              for(i = 0; i< nDims; i++){
-               printf("Variable field = %s has dimid(%d) = %d\n",ptr->name,i,tmpDimids[i]);
+               //printf("Variable field = %s has dimid(%d) = %d\n",ptr->name,i,tmpDimids[i]);
+	       printf("Variable field = %s has dimid(%d) = %d: start, count => %lu, %lu\n",ptr->name,i,tmpDimids[i],start[tmpDimids[i]],countPtr[tmpDimids[i]]);
              }
+	     fflush(stdout);
              //Read in the field
              printf("Attempting for field = %s with start = %lu,%lu,%lu,%lu and count = %lu,%lu,%lu,%lu\n",
                     ptr->name,start[0],start[1],start[2],start[3],countPtr[0],countPtr[1],countPtr[2],countPtr[3]);
              if ((errorCode = nc_get_vara_float(ncid, ptr->ncvarid, start, countPtr, ioBuffField))){
                   ERR(errorCode);
              }
+	     fflush(stdout);
              /* Transpose the data */
              if((nDims == 2)||(nDims == 3)){
                for(i=0; i < Nx; i++){
@@ -335,8 +339,13 @@ int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
            //Now scatter the field across ranks
            if((nDims == 2)||(nDims == 3)){
              errorCode = fempi_ScatterVariable(Nx,Ny,1,Nxp,Nyp,1,Nh,ioBuffFieldTransposed2D,field);
-           }else{
+           }else if(nDims == 4){
              errorCode = fempi_ScatterVariable(Nx,Ny,Nz,Nxp,Nyp,Nzp,Nh,ioBuffFieldTransposed,field);
+           }else if(nDims == 1){  // A scalar float variable was read, it shoud be simply broadcast to all ranks rather than "scattered"
+             if(mpi_rank_world==0){
+               *field=ioBuffField[0];
+             }
+             MPI_Bcast(field, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
            }//end if(nDims==2)-else
            //Now multiply by rho for flux conservative when appropriate for registered variable field...
 #define NORHO    //TODO define another attribute of the ioVarsList struictures that indicates whether the variable is "flux-conservative form"

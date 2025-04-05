@@ -448,6 +448,7 @@ int main(int argc, char **argv){
     errorCode = ioWriteBinaryoutFileSingleTime(it, Nxp, Nyp, Nzp, Nh);
   }
 #endif
+  MPI_Barrier(MPI_COMM_WORLD); 
   mpi_t4 = MPI_Wtime();    //Mark the walltime to measure IO duration
   mpi_t2 = MPI_Wtime();    //Mark the walltime to measure final timestep summary and performance.
   if(mpi_rank_world == 0){
