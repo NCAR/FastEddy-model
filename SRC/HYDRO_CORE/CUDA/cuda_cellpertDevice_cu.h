@@ -39,7 +39,7 @@ extern "C" int cuda_hydroCoreDeviceBuildCPmethod(int simTime_it);
 */
 extern "C" int cuda_hydroCoreTVCP();
 
-__global__ void cudaDevice_hydroCoreUnitTestCompleteCellPerturbation(float* hydroFlds, float* randcp_d, int my_mpi, int numpx, int numpy);
+__global__ void cudaDevice_hydroCoreCompleteCellPerturbation(float* hydroFlds, float* randcp_d, int my_mpi, int numpx, int numpy);
 
 /*----->>>>> __device__ void  cudaDevice_CellPerturbation();  --------------------------------------------------
  *  */ // This cuda kerne lsets up the cells and their id in the CP method

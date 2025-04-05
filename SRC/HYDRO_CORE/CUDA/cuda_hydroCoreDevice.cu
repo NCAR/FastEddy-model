@@ -392,7 +392,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    } //if mpi_rank_world
 #endif
 
-   cudaDevice_hydroCoreUnitTestCommence<<<grid, tBlock>>>(simTime_it, hydroFlds_d, hydroFldsFrhs_d, 
+   cudaDevice_hydroCoreCommence<<<grid, tBlock>>>(simTime_it, hydroFlds_d, hydroFldsFrhs_d, 
                                                           hydroBaseStateFlds_d,  
 							  YZBdyPlanes_d, XZBdyPlanes_d, XYBdyPlanes_d,
                                                           YZBdyPlanesNext_d, XZBdyPlanesNext_d, XYBdyPlanesNext_d,
@@ -403,7 +403,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
                                                           hydroAuxScalars_d, hydroAuxScalarsFrhs_d, zPos_d);
    gpuErrchk( cudaGetLastError() );
    gpuErrchk( cudaDeviceSynchronize() );
-   cudaDevice_hydroCoreUnitTestCommenceRhoInvPresPert<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, 
+   cudaDevice_hydroCoreCommenceRhoInvPresPert<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, 
                                                           hydroBaseStateFlds_d, 
                                                           hydroPres_d, hydroBaseStatePres_d,
                                                           moistScalars_d, zPos_d);
@@ -411,7 +411,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    gpuErrchk( cudaDeviceSynchronize() );
 #ifdef TIMERS_LEVEL2
    stopSynchReportDestroyEvent(&startE, &stopE, &elapsedTime);
-   printf("cuda_hydroCoreUnitTestCommence()  Kernel execution time (ms): %12.8f\n", elapsedTime);
+   printf("cuda_hydroCoreCommence()  Kernel execution time (ms): %12.8f\n", elapsedTime);
    gpuErrchk( cudaDeviceSynchronize() );
 
    /*Calculate cell-face Velocites, and PGF terms that involve the J** metric tensor arrays*/
@@ -439,14 +439,14 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    /*Calculate the Frhs contributions for the advection, buoyancy, and SGS-mixing terms on core+TKE+moistScalars fields*/
    createAndStartEvent(&startE, &stopE);
 #endif
-   cudaDevice_hydroCoreUnitTestComplete<<<grid, tBlock>>>(simTime, simTime_it, dt, timeStage, numRKstages, hydroFlds_d, hydroFldsFrhs_d,
+   cudaDevice_hydroCoreComplete<<<grid, tBlock>>>(simTime, simTime_it, dt, timeStage, numRKstages, hydroFlds_d, hydroFldsFrhs_d,
                                                           hydroFaceVels_d, hydroBaseStateFlds_d, hydroTauFlds_d,
                                                           sgstkeScalars_d, sgstkeScalarsFrhs_d, moistScalars_d, moistScalarsFrhs_d, moistTauFlds_d,
                                                           J13_d, J23_d, J31_d, J32_d, J33_d, invD_Jac_d, zPos_d);
 
    /*Calculate the Frhs contributions for the advection and SGS-mixing terms on Auxiliary scalar fields*/
    if(NhydroAuxScalars > 0){
-     cudaDevice_hydroCoreUnitTestCompleteAuxScalars<<<grid, tBlock>>>(simTime, hydroFlds_d,
+     cudaDevice_hydroCoreCompleteAuxScalars<<<grid, tBlock>>>(simTime, hydroFlds_d,
                                                           hydroAuxScalars_d, hydroAuxScalarsFrhs_d,
                                                           hydroFaceVels_d,
                                                           xPos_d, yPos_d, zPos_d, topoPos_d,
@@ -475,12 +475,12 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    //Carry out the following section of calculations only if either explcitly requested at every RK stage (physics_oneRKonly==0), or at the last RK stage (timeStage==numRKstages)
    if ((physics_oneRKonly==0) || (timeStage==numRKstages)) {
      if ((turbulenceSelector >0) && (TKESelector > 0)){
-       cudaDevice_hydroCoreUnitTestCompleteSGSTKE<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, hydroTauFlds_d,
+       cudaDevice_hydroCoreCompleteSGSTKE<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, hydroTauFlds_d,
                                                                     hydroKappaM_d, dedxi_d, sgstke_ls_d,
                                                                     sgstkeScalars_d, sgstkeScalarsFrhs_d, canopy_lad_d,
                                                                     J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d); //call to prognostic TKE equation
        if (canopySelector==1){ // canopy drag term to forcing of momentum
-         cudaDevice_hydroCoreUnitTestCompleteCanopy<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, canopy_lad_d, hydroFldsFrhs_d);
+         cudaDevice_hydroCoreCompleteCanopy<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, canopy_lad_d, hydroFldsFrhs_d);
        }
      } // end if (turbSelector >0) && (TKESelector > 0)
      //Moist species microphysics forcings 
@@ -488,13 +488,13 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
        temp_freq = roundf(fmaxf(moistureMPcallTscale,dt)/dt); // ensure minimum is time step
        mp_update = simTime_it%temp_freq;
        if (mp_update==0){
-         cudaDevice_hydroCoreUnitTestCompleteMP<<<grid, tBlock>>>(hydroFlds_d, hydroFldsFrhs_d, moistScalars_d, moistScalarsFrhs_d,
+         cudaDevice_hydroCoreCompleteMP<<<grid, tBlock>>>(hydroFlds_d, hydroFldsFrhs_d, moistScalars_d, moistScalarsFrhs_d,
                                                                     hydroRhoInv_d, hydroPres_d, fcond_d, dt, hydroBaseStateFlds_d);
        }
      }
      //Molecular diffusion
      if (diffusionSelector == 1){  
-       cudaDevice_hydroCoreUnitTestCompleteMolecularDiffusion<<<grid, tBlock>>>(hydroFlds_d, hydroFldsFrhs_d,
+       cudaDevice_hydroCoreCompleteMolecularDiffusion<<<grid, tBlock>>>(hydroFlds_d, hydroFldsFrhs_d,
                                                                               hydroNuGradXFlds_d,hydroNuGradYFlds_d,hydroNuGradZFlds_d,
                                                                               J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d, invD_Jac_d); // call to div of nugrad
      } // endif diffusionSelector == 1
@@ -510,20 +510,20 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    ldf_itNum = (int)roundf(lsf_freq/dt);
    if ((lsfSelector==1) && (timeStage==numRKstages) && (simTime_it > simTime_itRestart) && (simTime_diff >= ldf_itNum) && (simTime_it%(int)roundf(lsf_freq/dt)==0)){ // (large-scale forcing)
      temp_freq_fac = (float)roundf(lsf_freq/dt);
-     cudaDevice_hydroCoreUnitTestCompleteLSF<<<grid, tBlock>>>(temp_freq_fac, hydroBaseStateFlds_d, lsf_slabMeanPhiProfiles_d, hydroFldsFrhs_d, moistScalarsFrhs_d, zPos_d);
+     cudaDevice_hydroCoreCompleteLSF<<<grid, tBlock>>>(temp_freq_fac, hydroBaseStateFlds_d, lsf_slabMeanPhiProfiles_d, hydroFldsFrhs_d, moistScalarsFrhs_d, zPos_d);
    }
 
    gpuErrchk( cudaGetLastError() );
    gpuErrchk( cudaDeviceSynchronize() );
    //If included, apply 6th order filters as the final Frhs contribution only after all other Frhs components have been accumulated
    if ((filterSelector > 0) && ((physics_oneRKonly==0) || (timeStage==numRKstages))){ // explicit filters
-     cudaDevice_hydroCoreUnitTestCompleteFilters<<<grid, tBlock>>>(hydroFlds_d,hydroFldsFrhs_d,dt,
+     cudaDevice_hydroCoreCompleteFilters<<<grid, tBlock>>>(hydroFlds_d,hydroFldsFrhs_d,dt,
                                                                    moistScalars_d,moistScalarsFrhs_d,hydroPres_d,
                                                                    hydroBaseStatePres_d,timeStage);
    }
 
 #ifdef TIMERS_LEVEL2
-   printf("cuda_hydroCoreUnitTestComplete()  Kernel execution time (ms): %12.8f\n", elapsedTime);
+   printf("cuda_hydroCoreComplete()  Kernel execution time (ms): %12.8f\n", elapsedTime);
 #endif
 
 #ifdef TIMERS_LEVEL1
@@ -536,10 +536,10 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    return(errorCode);
 }//end cuda_hydroCoreDeviceBuildFrhs()
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCommence(); ---------------------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreCommence(); ---------------------------------------
 * This is the gloabl-entry kernel routine used by the HYDRO_CORE module
 */
-__global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydroFlds_d, float* hydroFldsFrhs_d, 
+__global__ void cudaDevice_hydroCoreCommence(int simTime_it, float* hydroFlds_d, float* hydroFldsFrhs_d, 
                                                      float* hydroBaseStateFlds_d, 
 						     float* YZBdyPlanes_d, float* XZBdyPlanes_d, float* XYBdyPlanes_d,
                                                      float* YZBdyPlanesNext_d, float* XZBdyPlanesNext_d, float* XYBdyPlanesNext_d,
@@ -572,7 +572,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
    jStride = (Nz_d+2*Nh_d);
    kStride = 1;
 //      if((iMin_d!=Nh_d)||(iMax_d!=130)||(jMin_d!=Nh_d)||(jMax_d!=66)||(kMin_d!=Nh_d)||(kMax_d!=34)){
-        printf("cudaDevice_hydroCoreUnitTestCommence: (i,j,k)Min_d = (%d,%d,%d) and  (i,j,k)Max_d = (%d,%d,%d)\n",
+        printf("cudaDevice_hydroCoreCommence: (i,j,k)Min_d = (%d,%d,%d) and  (i,j,k)Max_d = (%d,%d,%d)\n",
                 iMin_d,jMin_d,kMin_d,iMax_d,jMax_d,kMax_d);
 //      }
 /*      if( ((i < iMin_d+5)||(i>iMax_d-5))&&((j < jMin_d+5)||(j>jMax_d-5))&&((k < kMin_d+5)||(k>kMax_d-5))){
@@ -737,9 +737,9 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
    //subsequent function calls need value in halos to compute results from...
    __syncthreads();
 
-} // end cudaDevice_hydroCoreUnitTestCommence()
+} // end cudaDevice_hydroCoreCommence()
 
-__global__ void cudaDevice_hydroCoreUnitTestCommenceRhoInvPresPert(float* hydroFlds_d, float* hydroRhoInv_d, 
+__global__ void cudaDevice_hydroCoreCommenceRhoInvPresPert(float* hydroFlds_d, float* hydroRhoInv_d, 
                                                      float * hydroBaseStateFlds_d, 
                                                      float* hydroPres_d, float* hydroBaseStatePres_d,
                                                      float* moistScalars_d, float* zPos_d){
@@ -770,9 +770,9 @@ __global__ void cudaDevice_hydroCoreUnitTestCommenceRhoInvPresPert(float* hydroF
      cudaDevice_calcPerturbationPressure(&hydroPres_d[0], &hydroFlds_d[fldStride*THETA_INDX],
                                          &hydroBaseStateFlds_d[fldStride*THETA_INDX_BS], zPos_d);
    }
-} // end cudaDevice_hydroCoreUnitTestCommenceRhoInvPresPert()
+} // end cudaDevice_hydroCoreCommenceRhoInvPresPert()
 
-__global__ void cudaDevice_hydroCoreUnitTestComplete(float simTime, int simTime_it, float dt, int timeStage, int numRKstages,
+__global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, float dt, int timeStage, int numRKstages,
                                                      float* hydroFlds, float* hydroFldsFrhs, 
                                                      float* hydroFaceVels, float* hydroBaseStateFlds, 
                                                      float* hydroTauFlds,
@@ -959,7 +959,7 @@ __global__ void cudaDevice_hydroCoreUnitTestComplete(float simTime, int simTime_
      }
    }  //end if turbulenceSelector_d > 0
 
-} // end cudaDevice_hydroCoreUnitTestComplete()
+} // end cudaDevice_hydroCoreComplete()
 
 __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTime_it, int simTime_itRestart, 
                                                        float dt,int timeStage, int numRKstages,

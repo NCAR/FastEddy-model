@@ -24,10 +24,10 @@ extern "C" int cuda_canopyDeviceSetup();
 */
 extern "C" int cuda_canopyDeviceCleanup();
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCompleteCanopy();  ----------------------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreCompleteCanopy();  ----------------------------------------
  * Global Kernel for Canopy model
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteCanopy(float* hydroFlds_d, float* hydroRhoInv_d, float* canopy_lad_d, float* hydroFldsFrhs_d);
+__global__ void cudaDevice_hydroCoreCompleteCanopy(float* hydroFlds_d, float* hydroRhoInv_d, float* canopy_lad_d, float* hydroFldsFrhs_d);
 
 /*----->>>>> __device__ void  cudaDevice_canopyMomDrag();  --------------------------------------------------
 */ // This cuda kernel calculates the forcing term to the momentum equations due to canopy drag

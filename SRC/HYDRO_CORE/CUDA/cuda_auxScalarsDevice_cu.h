@@ -32,10 +32,10 @@ Used to free all malloced memory by the AUXSCALARS submodule.
 */
 extern "C" int cuda_auxScalarsDeviceCleanup();
 
-/*----->>>>> __global__ void cudaDevice_hydroCoreUnitTestCompleteAuxScalars();  ----------------------------------------------
+/*----->>>>> __global__ void cudaDevice_hydroCoreCompleteAuxScalars();  ----------------------------------------------
 * This device kernel for computing rhs forcing on auxiliary scalar fields.
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteAuxScalars(float simTime, float* hydroFlds,
+__global__ void cudaDevice_hydroCoreCompleteAuxScalars(float simTime, float* hydroFlds,
                                                      float* hydroAuxScalars, float* hydroAuxScalarsFrhs,
                                                      float* hydroFaceVels,
                                                      float* xPos_d, float* yPos_d, float* zPos_d, float* topoPos_d,

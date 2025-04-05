@@ -82,7 +82,7 @@ extern "C" int cuda_hydroCoreDeviceBuildCPmethod(int simTime_it){
    curandSetPseudoRandomGeneratorSeed(gen,simTime_it);
    curandGenerateUniform(gen,randcp_d,n_tot);
 
-   cudaDevice_hydroCoreUnitTestCompleteCellPerturbation<<<grid, tBlock>>>(hydroFlds_d,randcp_d,mpi_rank_world,numProcsX,numProcsY);
+   cudaDevice_hydroCoreCompleteCellPerturbation<<<grid, tBlock>>>(hydroFlds_d,randcp_d,mpi_rank_world,numProcsX,numProcsY);
 
 //#define TIMERS_LEVEL2
 #ifdef TIMERS_LEVEL2
@@ -112,7 +112,7 @@ extern "C" int cuda_hydroCoreTVCP(){
     return(errorCode);
 } //end cuda_hydroCoreTVCP()
 
-__global__ void cudaDevice_hydroCoreUnitTestCompleteCellPerturbation(float* hydroFlds, float* randcp_d, int my_mpi, int numpx, int numpy){
+__global__ void cudaDevice_hydroCoreCompleteCellPerturbation(float* hydroFlds, float* randcp_d, int my_mpi, int numpx, int numpy){
 
    int i,j,k,ijk;
    int fldStride;
@@ -137,7 +137,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteCellPerturbation(float* hydr
       }
    }//end if in the range of non-halo cells
 
-} // end cudaDevice_hydroCoreUnitTestCompleteCellPerturbation()
+} // end cudaDevice_hydroCoreCompleteCellPerturbation()
 
 /*----->>>>> __device__ void  cudaDevice_CellPerturbation();  --------------------------------------------------
 */

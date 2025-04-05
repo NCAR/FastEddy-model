@@ -66,7 +66,7 @@ extern "C" int cuda_auxScalarsDeviceCleanup(){
 
 }//end cuda_moistureDeviceCleanup()
 
-__global__ void cudaDevice_hydroCoreUnitTestCompleteAuxScalars(float simTime, float* hydroFlds,
+__global__ void cudaDevice_hydroCoreCompleteAuxScalars(float simTime, float* hydroFlds,
                                                               float* hydroAuxScalars, float* hydroAuxScalarsFrhs,
                                                               float* hydroFaceVels,
                                                               float* xPos_d, float* yPos_d, float* zPos_d, float* topoPos_d,
@@ -119,7 +119,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteAuxScalars(float simTime, fl
          }
 #ifdef CUDA_DEBUG
 	 if(i == iMin_d && j == jMin_d && k == kMin_d){
-           printf("%d/%d cudaDevice_hydroCoreUnitTestCompleteAuxScalars(): NhydroAuxScalars_d = %d, iFld = %d, simTime = %f, srcAuxScStartSeconds_d[iFld] = %f, srcAuxScDurationSeconds_d[iFld] = %f.\n\t\t srcAuxScLocation_d[iFld*3+0] = %f, srcAuxScLocation_d[iFld*3+1] = %f, srcAuxScLocation_d[iFld*3+2] = %f.\n \t\t\t srcAuxScMassSpecValue_d[iFld] = %f\n",
+           printf("%d/%d cudaDevice_hydroCoreCompleteAuxScalars(): NhydroAuxScalars_d = %d, iFld = %d, simTime = %f, srcAuxScStartSeconds_d[iFld] = %f, srcAuxScDurationSeconds_d[iFld] = %f.\n\t\t srcAuxScLocation_d[iFld*3+0] = %f, srcAuxScLocation_d[iFld*3+1] = %f, srcAuxScLocation_d[iFld*3+2] = %f.\n \t\t\t srcAuxScMassSpecValue_d[iFld] = %f\n",
                 mpi_rank_world_d,mpi_size_world_d,NhydroAuxScalars_d,iFld, simTime,srcAuxScStartSeconds_d[iFld],srcAuxScDurationSeconds_d[iFld],
 		srcAuxScLocation_d[iFld*3+0], srcAuxScLocation_d[iFld*3+1], srcAuxScLocation_d[iFld*3+2], srcAuxScMassSpecValue_d[iFld]);
 	 }
@@ -131,7 +131,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteAuxScalars(float simTime, fl
       }//for iFld
    }//end if in the range of non-halo cells
 
-} // end cudaDevice_hydroCoreUnitTestCompleteAuxScalars()
+} // end cudaDevice_hydroCoreCompleteAuxScalars()
 
 __device__ void cudaDevice_calcAuxScalarSource(int iFld, float *auxScFrhs, float *rhoFld,
                                                float* xPos_d, float* yPos_d, float* zPos_d,

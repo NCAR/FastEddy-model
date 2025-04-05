@@ -139,10 +139,10 @@ extern "C" int cuda_lsfSlabMeans(){
 
 } // cuda_lsfSlabMeans()
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestComplete();  ----------------------------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreComplete();  ----------------------------------------------
 * Global Kernel for calculating/accumulating large-scale forcing Frhs terms   
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteLSF(float temp_freq_fac, float* hydroFlds_d, float* lsf_slabMeanPhiProfiles_d, float* hydroFldsFrhs_d, float* moistScalarsFrhs_d, float* zPos_d){ 
+__global__ void cudaDevice_hydroCoreCompleteLSF(float temp_freq_fac, float* hydroFlds_d, float* lsf_slabMeanPhiProfiles_d, float* hydroFldsFrhs_d, float* moistScalarsFrhs_d, float* zPos_d){ 
 
    int fldStride;
 
@@ -151,7 +151,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteLSF(float temp_freq_fac, flo
    cudaDevice_lsfRHS(temp_freq_fac, &hydroFlds_d[fldStride*RHO_INDX],
                      &lsf_slabMeanPhiProfiles_d[0], &hydroFldsFrhs_d[0], &moistScalarsFrhs_d[0], zPos_d);
 
-} // end cudaDevice_hydroCoreUnitTestCompleteLSF()
+} // end cudaDevice_hydroCoreCompleteLSF()
 
 __device__ void cudaDevice_lsfRHS(float temp_freq_fac, float* rho,
                                   float* lsf_slabMeanPhiProfiles_d,float* Frhs_HC, float* Frhs_qv, float* zPos_d){

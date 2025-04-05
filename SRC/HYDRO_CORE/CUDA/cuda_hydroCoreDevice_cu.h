@@ -117,10 +117,10 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 
 /*#########--------------- HYDRO_CORE_CUDADEV module device function declarations ------------############*/
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCommence();  ------------------------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreCommence();  ------------------------------------------
 * This is the gloabl-entry kernel routine used by the HYDRO_CORE module
 */
-__global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydroFlds_d, float* hydroFldsFrhs_d, 
+__global__ void cudaDevice_hydroCoreCommence(int simTime_it, float* hydroFlds_d, float* hydroFldsFrhs_d, 
                                                      float*  hydroBaseStateFlds_d,
 						     float* YZBdyPlanes_d, float* XZBdyPlanes_d, float* XYBdyPlanes_d,
                                                      float* YZBdyPlanesNext_d, float* XZBdyPlanesNext_d, float* XYBdyPlanesNext_d,
@@ -129,7 +129,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydr
                                                      float* sgstkeScalars_d, float* sgstkeScalarsFrhs_d, float* Km_d, 
                                                      float* moistScalars_d, float* moistScalarsFrhs_d, 
                                                      float* hydroAuxScalars_d, float* hydroAuxScalarsFrhs_d, float* zPos_d);
-__global__ void cudaDevice_hydroCoreUnitTestCommenceRhoInvPresPert(float* hydroFlds_d, float* hydroRhoInv_d,
+__global__ void cudaDevice_hydroCoreCommenceRhoInvPresPert(float* hydroFlds_d, float* hydroRhoInv_d,
                                                      float* hydroBaseStateFlds_d,
                                                      float* hydroPres_d, float* hydroBaseStatePres_d,
                                                      float* moistScalars_d, float* zPos_d); 
@@ -148,7 +148,7 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
                                                        float* dedxi_d, float* moistScalars_d,
                                                        float* moistTauFlds_d, float* moistScalarsFrhs_d,
                                                        float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
-__global__ void cudaDevice_hydroCoreUnitTestComplete(float simTime, int simTime_it, float dt, int timeStage, int numRKstages,
+__global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, float dt, int timeStage, int numRKstages,
                                                      float* hydroFlds,float* hydroFldsFrhs,
                                                      float* hydroFaceVels, float* hydroBaseStateFlds, float* hydroTauFlds, 
                                                      float* sgstkeScalars, float* sgstkeScalarsFrhs,

@@ -76,10 +76,10 @@ extern "C" int cuda_moistureDeviceCleanup(){
 
 }//end cuda_moistureDeviceCleanup()
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCompleteMP(); ----------------------------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreCompleteMP(); ----------------------------------------------
 * Global Kernel for calculating/accumulating moisture (microphysics) forcing Frhs terms   
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteMP(float* hydroFlds_d, float* hydroFldsFrhs_d, float* moistScalars_d,
+__global__ void cudaDevice_hydroCoreCompleteMP(float* hydroFlds_d, float* hydroFldsFrhs_d, float* moistScalars_d,
                                                        float* moistScalarsFrhs_d, float* hydroRhoInv_d, 
                                                        float* hydroPres_d, float* fcond_d, float dt, float* hydroBaseStateFlds_d){ 
 
@@ -93,7 +93,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteMP(float* hydroFlds_d, float
    cudaDevice_thetaCondFrhs(&hydroPres_d[0], &hydroRhoInv_d[0],
                             &hydroFlds_d[fldStride*THETA_INDX], &fcond_d[0], &hydroFldsFrhs_d[fldStride*THETA_INDX]); // forcing to theta (energy exchange)
 
-} // end cudaDevice_hydroCoreUnitTestCompleteMP
+} // end cudaDevice_hydroCoreCompleteMP
 
 /*----->>>>> __device__ void cudaDevice_moistZerothOrder();  --------------------------------------------------
 */

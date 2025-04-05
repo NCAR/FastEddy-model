@@ -39,7 +39,7 @@ Used to free all malloced memory by the FILTERS submodule.
 */
 extern "C" int cuda_filtersDeviceCleanup();
 
-__global__ void cudaDevice_hydroCoreUnitTestCompleteFilters(float* hydroFlds_d, float* hydroFldsFrhs_d, float dt,
+__global__ void cudaDevice_hydroCoreCompleteFilters(float* hydroFlds_d, float* hydroFldsFrhs_d, float dt,
                                                             float* moistScalars_d, float* moistScalarsFrhs, float* hydroPres_d,
                                                             float* hydroBaseStatePres_d, int timeStage);
 

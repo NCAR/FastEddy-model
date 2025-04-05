@@ -40,10 +40,10 @@ extern "C" int cuda_molecularDiffDeviceSetup();
 */
 extern "C" int cuda_molecularDiffDeviceCleanup();
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCompleteMolecularDiffusion();  --------------------------------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreCompleteMolecularDiffusion();  --------------------------------------------------
 * Global Kernel for calculating/accumulating molecular diffusion Frhs terms   
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteMolecularDiffusion(float* hydroFlds, float* hydroFldsFrhs,
+__global__ void cudaDevice_hydroCoreCompleteMolecularDiffusion(float* hydroFlds, float* hydroFldsFrhs,
                                                                        float* hydroNuGradXFlds_d, float* hydroNuGradYFlds_d, float* hydroNuGradZFlds_d,
                                                                        float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d,
                                                                        float* D_Jac_d, float* invD_Jac_d);

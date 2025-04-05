@@ -44,10 +44,10 @@ extern "C" int cuda_sgstkeDeviceSetup();
 */
 extern "C" int cuda_sgstkeDeviceCleanup();
 
-/*----->>>>> __device__ void  cudaDevice_hydroCoreUnitTestCompleteSGSTKE();  ----------------------------------------
+/*----->>>>> __device__ void  cudaDevice_hydroCoreCompleteSGSTKE();  ----------------------------------------
  * Global Kernel for calculating/accumulating SGSTKE Frhs     
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteSGSTKE(float* hydroFlds_d, float* hydroRhoInv_d, float* hydroTauFlds_d,
+__global__ void cudaDevice_hydroCoreCompleteSGSTKE(float* hydroFlds_d, float* hydroRhoInv_d, float* hydroTauFlds_d,
                                                            float* hydroKappaM_d, float* dedxi_d, float* sgstke_ls_d,
                                                            float* sgstkeScalars_d, float* sgstkeScalarsFrhs_d,
                                                            float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
