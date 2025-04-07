@@ -79,7 +79,7 @@ AuxScSGSturb = 1 # selector to apply sub-grid scale diffusion to auxiliary scala
 ## ----------: AUXILIARY SCALAR SOURCES ---
 srcAuxScFile= #./Example07_sources.nc
 ##------------: EXPLICIT FILTERS ---
-filterSelector = 1 # explicit filter selector: 0=off, 1=on
+filterSelector = 0 # explicit filter selector: 0=off, 1=on
 filter_6thdiff_vert = 1
 filter_6thdiff_vert_coeff = 0.03 # vertical 6th-order filter factor: 0.0=off, 1.0=full
 ##----------: RAYLEIGH DAMPING LAYER ---
