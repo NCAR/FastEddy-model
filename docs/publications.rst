@@ -6,7 +6,7 @@ Publications
 
 .. _urban_climate_2025:
 
-| Munoz-Esparza, D., J. Sauer, P.A. Jimenez, J. Boehnert, D. Hahn, and M. Steiner.
+| Muñoz-Esparza, D., J. Sauer, P.A. Jimenez, J. Boehnert, D. Hahn, and M. Steiner.
 |   “Multiscale Weather Forecasting Sensitivities to Urban Characteristics and Atmospheric
 |   Conditions During a Cold Front Passage Over the Dallas-Fort Worth Metroplex”.
 |   *Urban Climate*, 60 (102334) 2025
