@@ -81,13 +81,13 @@ XY-plane views of instantaneous plume dispersion for the CBL case at :math:`z=30
   :width: 1200
   :alt: Alternative text
 
-YZ-plane views of instantaneous plume dispersion for the SBL case at several downstream distances (:math:`t=55` min, FE_DISPERSION.330000), corresponding to the windward release:
+YZ-plane views of instantaneous plume dispersion for the SBL case at several downstream distances (:math:`t=1` h, FE_DISPERSION.360000), corresponding to the windward release:
 
 .. image:: ../images/CONCENTRATION-YZ-dispersion_SBL.png
   :width: 1200
   :alt: Alternative text
 
-YZ-plane views of instantaneous plume dispersion for the CBL case at several downstream distances (:math:`t=55` min, FE_DISPERSION.330000), corresponding to the windward release:
+YZ-plane views of instantaneous plume dispersion for the CBL case at several downstream distances (:math:`t=1` h, FE_DISPERSION.360000), corresponding to the windward release:
 
 .. image:: ../images/CONCENTRATION-YZ-dispersion_CBL.png
   :width: 1200
