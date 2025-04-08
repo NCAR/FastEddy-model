@@ -262,8 +262,7 @@ YvWRF,XvWRF=np.meshgrid(yWRF,xWRF, sparse=False, indexing='ij')
 print(XvWRF.shape,XvWRF.shape)
 
 
-if True:
-    print(ds_WRFRef['HGT'][0,ll_jindx:ll_jindx+j_extent,ll_iindx:ll_iindx+i_extent].values)
+print(ds_WRFRef['HGT'][0,ll_jindx:ll_jindx+j_extent,ll_iindx:ll_iindx+i_extent].values)
 
 ####################################################################################
 ### Map the target FE domain into the WRF bounding-grid relative x,y coordinates ###
@@ -328,25 +327,20 @@ for Bdy_file_num in range(it00,it11):
   bdyFileName = "{:s}/FE_Bndys.{:d}".format(ICBC_dir,Bdy_file_num)
   if not(os.path.isfile(bdyFileName)):
     print('{:d}{:d}: {:s} does not exist, creating it...'.format(mpi_rank, mpi_size, bdyFileName))
-    if True:
-        print("{:d}{:d}: Working on file {:s}".format(mpi_rank, mpi_size, files_list[Bdy_file_num]))
-        ds_ref = xr.open_mfdataset(files_list[Bdy_file_num],combine='nested',concat_dim='Time')
+    print("{:d}{:d}: Working on file {:s}".format(mpi_rank, mpi_size, files_list[Bdy_file_num]))
+    ds_ref = xr.open_mfdataset(files_list[Bdy_file_num],combine='nested',concat_dim='Time')
 
-        t0s = time.perf_counter()
-        dsWRF=interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent)
-        t0e = time.perf_counter()
-        print('{:d}/{:d}: t0_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t0e-t0s))
-        t1s = time.perf_counter()
-        ds=copyAndTranspose(dsWRF)
-        t1e = time.perf_counter()
-        print('{:d}/{:d}: t1_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t1e-t1s))
-        t2s = time.perf_counter()
-        dsFENew=interp2DForFE(ds,ds_FEGrid,XvWRF,YvWRF,xVec,yVec)
-        t2e = time.perf_counter()
-    else:
-        t2s = time.perf_counter()
-        dsFENew=xr.open_dataset(FE_simGrid)
-        t2e = time.perf_counter()
+    t0s = time.perf_counter()
+    dsWRF=interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent)
+    t0e = time.perf_counter()
+    print('{:d}/{:d}: t0_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t0e-t0s))
+    t1s = time.perf_counter()
+    ds=copyAndTranspose(dsWRF)
+    t1e = time.perf_counter()
+    print('{:d}/{:d}: t1_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t1e-t1s))
+    t2s = time.perf_counter()
+    dsFENew=interp2DForFE(ds,ds_FEGrid,XvWRF,YvWRF,xVec,yVec)
+    t2e = time.perf_counter()
     print('{:d}/{:d}: t2_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t2e-t2s))
     t3s = time.perf_counter()
     dsFEFinal=create_dsFEFinal(ds_FEGrid)
