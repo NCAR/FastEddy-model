@@ -68,7 +68,7 @@ yarr[:,:] = np.transpose(np.matlib.repmat(yarr_1d,Nx,1))
 vars_gis_ref_v = ['lat','lon','data_topo0','data_land']
 
 if (gis_opt==0):
-    vars_gis_v = ['lat','lon','topoPos','LandCover']
+    vars_gis_v = ['lat','lon','elevation','LandCover']
 elif (gis_opt==1):
     vars_gis_v = ['XLAT','XLONG','HGT','LU_INDEX']
 
