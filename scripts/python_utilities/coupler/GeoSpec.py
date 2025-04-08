@@ -35,7 +35,7 @@ save_plot_opt = params["save_plot_opt"]
 
 file_nlcd = gis_root + nlcd_name
 FE_new_nc = FE_dataset_path + name_dom + name_dom_add + '.nc'
-FE_plot = FE_dataset_path + name_dom + name_dom_add + '.png'
+FE_plot = FE_dataset_path + name_dom + name_dom_add + '_geospec.png'
 print('FE_new_nc:', FE_new_nc)
 
 # Calculate xPos2d, yPos2d
@@ -68,7 +68,7 @@ yarr[:,:] = np.transpose(np.matlib.repmat(yarr_1d,Nx,1))
 vars_gis_ref_v = ['lat','lon','data_topo0','data_land']
 
 if (gis_opt==0):
-    vars_gis_v = ['lat','lon','topoPos','LandCover']
+    vars_gis_v = ['lat','lon','elevation','LandCover']
 elif (gis_opt==1):
     vars_gis_v = ['XLAT','XLONG','HGT','LU_INDEX']
 
@@ -167,7 +167,6 @@ if (save_plot_opt==1):
                          [0.43921569, 0.63921569, 0.72941176]]
 
     nlcd_color_map = ListedColormap(_nlcd_colors_1, name='nlcd_color_map')
-#    plt.register_cmap(name='nlcd_color_map', cmap=nlcd_color_map)
     matplotlib.colormaps.register(nlcd_color_map, name='nlcd_color_map', force=False)
 
     fntSize = 14.0
@@ -194,7 +193,7 @@ if (save_plot_opt==1):
     ax.set_aspect('equal', 'box')
     ax.set_ylabel(r'$y$ $[\mathrm{km}]$',fontsize=fntSize_labels)
     ax.set_xlabel(r'$x$ $[\mathrm{km}]$',fontsize=fntSize_labels)
-    ax.set_title('terrain elevation [m]',fontsize=fntSize_title)
+    ax.set_title('terrain elevation [m ASL]',fontsize=fntSize_title)
 
     ### land cover ###
 
@@ -221,8 +220,15 @@ if (save_plot_opt==1):
     ax.set_xlabel(r'$x$ $[\mathrm{km}]$',fontsize=fntSize_labels)
     ax.set_title('roughness length, z0m [m]',fontsize=fntSize_title)
 
-    ## make the 4th panel invisible ###
-    axs[1,1].set_visible(False)
+    ## SeaMask ###
+    ax=axs[1,1]
+
+    im = ax.pcolormesh(xarr/1e3,yarr/1e3,SeaMask_tmp,cmap='bwr_r',linewidth=0,rasterized=True,shading='nearest')
+    cbar=fig.colorbar(im, ax=ax, orientation='vertical')
+    ax.set_aspect('equal', 'box')
+    ax.set_ylabel(r'$y$ $[\mathrm{km}]$',fontsize=fntSize_labels)
+    ax.set_xlabel(r'$x$ $[\mathrm{km}]$',fontsize=fntSize_labels)
+    ax.set_title('sea mask [-]',fontsize=fntSize_title)
 
     # save figure
     CCC = FE_plot

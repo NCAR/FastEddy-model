@@ -127,18 +127,11 @@ def getFEProfileDS(dsWrf,varsList,surfVarsList,zFE): ##### Map (Interp/Extrap-ol
     surfVarDict = {'TSK':'tskin','Q2':'qskin','HGT':'topoWRF','T2':'t2','PSFC':'psfc'} #Note using Q2 instead of QVG since QVG not default in wrfout files
     for var in varsList:
         if var !=  'Z':
-            if True:  #JAS -testing check on lack of topoPos in FE for ATAC DFW...
-                f1=interpolate.interp1d(dsWrf['Z'],dsWrf[var],kind='linear',fill_value='extrapolate')
-            else:
-                f1=interpolate.interp1d(dsWrf['Z']-dsWrf['HGT'],dsWrf[var],kind='linear',fill_value='extrapolate')
+            f1=interpolate.interp1d(dsWrf['Z'],dsWrf[var],kind='linear',fill_value='extrapolate')
             if var != 'ALT' and var != 'ALB':
                 ds_ret[varDict[var]] = xr.DataArray(f1(zFE),dims=['zIndex']) #,coords={'zIndex':np.array0:zFE.size}
             else:
                 ds_ret[varDict[var]] = xr.DataArray(1.0/f1(zFE),dims=['zIndex']) #,coords={'zIndex':np.array0:zFE.size}
-    #Having done all of the 3-d vars, fix rho from modified-moist to dry if moist was included...
-    ###### THIS TESTED IF ALT WAS  LIKE A 1/RHO_M, but according to Klemp 2007 it wouldn't be, rather just 1/rho_d despite using theta_m in rho = P/R(T_m)
-    #####if 'QVAPOR' in list(dsWrf.keys()):
-        #####ds_ret['rho'] = ds_ret['rho']/(1.0 + ds_ret['qv']) # Leaving out cloud-water hydrometeor class for now... +ds_ret['ql'])
     for surfVar in surfVarsList:
         ds_ret[surfVarDict[surfVar]] = xr.DataArray(dsWrf[surfVar])
     return ds_ret
@@ -156,18 +149,12 @@ def getWRFProfileDS(it,j,i,dsWrf,varsList,surfVarsList): ##### Destagger and col
                 ds_ret[var] = xr.DataArray((0.5*(dsWrf.PH[it,0:-1,j,i]+dsWrf.PH[it,1:,j,i])
                                            +0.5*(dsWrf.PHB[it,0:-1,j,i]+dsWrf.PHB[it,1:,j,i]))/9.81,
                                            dims=(['bottom_top']))
-            #ds_ret[var] = xr.DataArray((0.5*(dsWrf.PH[it,0:-1,j,i]+dsWrf.PH[it,1:,j,i])
-            #                           +0.5*(dsWrf.PHB[it,0:-1,j,i]+dsWrf.PHB[it,1:,j,i]))/9.81-dsWrf.HGT[it,j,i],
-            #                           dims=(['bottom_top']))
-        #elif var == 'U':
         elif 'west_east_stag' in dsWrf[var].dims:
             ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,:,j,i]+dsWrf[var][it,:,j,i+1]),
                                        dims=(['bottom_top']))
-        #elif var == 'V':
         elif 'south_north_stag' in dsWrf[var].dims:
             ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,:,j,i]+dsWrf[var][it,:,j+1,i]),
                                        dims=(['bottom_top']))
-        #elif var == 'W':
         elif 'bottom_top_stag' in dsWrf[var].dims:
             ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,0:-1,j,i]+dsWrf[var][it,1:,j,i]),
                                        dims=(['bottom_top']))
@@ -177,30 +164,17 @@ def getWRFProfileDS(it,j,i,dsWrf,varsList,surfVarsList): ##### Destagger and col
         if var == 'T':
             ds_ret[var] = 300.0+ds_ret[var]
 
-        #elif var == 'QVAPOR':
-        #    ds_ret[var] = xr.DataArray(dsWrf[var][it,:,j,i],
-        #                               dims=(['bottom_top']))
-        #elif var == 'QCLOUD':
-        #    ds_ret[var] = xr.DataArray(dsWrf[var][it,:,j,i],
-        #                               dims=(['bottom_top']))
     for surfVar in surfVarsList:
         ds_ret[surfVar] = xr.DataArray(dsWrf[surfVar][it,j,i])#,
-                                       #dims=(['surface']))
-        #print('-skin[{:d},{:d},{:d}] = {:f}'.format(it,i,j,ds_ret[surfVar].values))
     return ds_ret
 
 def copyAndTranspose(dsWRF):
     ds=xr.Dataset()
     for var in dsWRF.variables:
         if len(dsWRF[var].dims) == 3:
-            #ds[var]=xr.DataArray(np.transpose(dsWRF[var].values,(2,1,0)),dims=('zIndex','yIndex','xIndex'))
-    # !!!!!! Hey !!!!!
-    #Looking closer at resulting theta fields, it looked a bit transposed so trying this new counter intuitive (2,0,1) ordering of the 3-D transpose...
             ds[var]=xr.DataArray(np.transpose(dsWRF[var].values,(2,0,1)),dims=('zIndex','yIndex','xIndex'))
-    #testing do not transpose 2-d fields
         elif len(dsWRF[var].dims) == 2:
             ds[var]=xr.DataArray(dsWRF[var].values,dims=('yIndex','xIndex'))  #Note no transpose needed here...
-        #    ds[var]=xr.DataArray(np.transpose(dsWRF[var].values,(1,0)),dims=('yIndex','xIndex'))
     return ds
 
 def interp2DForFE(ds,ds_FE,XvWRF,YvWRF,xVec,yVec):
@@ -244,12 +218,9 @@ def create_dsFEFinal(ds_FE):
 def verticalInterpFinal(ds_FE,dsFENew,dsFEFinal,zRect):
     z3d=ds_FE['zPos'][:,:,:].values.squeeze()
     for var in dsFENew.variables:
-        #if (var in FEvarsList or FEsurfVarsList) and var in dsFEFinal.variables:
-        #if var not in ['ql', 'XLAT','XLONG','topoWRF']:
         print(var)
         t1s = time.perf_counter()
         print(var,list(dsFENew[var].dims))
-        #if len(dsFENew[var].dims) == 3:
         if 'zIndex' in list(dsFENew[var].dims):
             if 'time' in list(dsFENew[var].dims):
                 fld3dRect=dsFENew[var][0,:,:,:].values.squeeze()
@@ -257,12 +228,10 @@ def verticalInterpFinal(ds_FE,dsFENew,dsFEFinal,zRect):
                 fld3dRect=dsFENew[var].values
             print(z3d.shape,fld3dRect.shape)
             tmpVar3d=interpolateIrregularVertical(zRect,fld3dRect,z3d)
-            #print(tmpVar3d.shape)
             if var in list(dsFEFinal.variables):
                 dsFEFinal[var][:,:,:]=tmpVar3d.astype(np.float32)
             else:
                 print('Omitting {:s} from dsFEFinal...'.format(var))
-        #elif len(dsFENew[var].dims) == 2:
         else:
             if 'time' in list(dsFENew[var].dims):
                 dsFEFinal[var][0,:,:]=dsFENew[var][0,:,:].values.astype(np.float32)
@@ -287,12 +256,8 @@ def interpolateIrregularVertical(zRect,fld3dRect,z3d):
     NzR,NyR,NxR = fld3dRect.shape
     Nz3,Ny3,Nx3 = z3d.shape
     tmpVar3d=np.zeros(z3d.shape)
-    #if not(NyR is Ny3) or not(NxR is Nx3):
-    #    print('Uh-oh, NyR,NxR = {:d},{:d} but Ny3,Nx3 = {:d},{:d}'.format(NyR,NxR,Ny3,Nx3))
     for j in range(NyR):
         for i in range(NxR):
-            #fInterp = interpolate.interp1d(zRect,fld3dRect[:,j,i], kind='linear')
-            #tmp=fInterp(z3d[:,j,i]) 
             tmp=np.interp(z3d[:,j,i],zRect,fld3dRect[:,j,i])
             tmpVar3d[:,j,i]=tmp
     return tmpVar3d
@@ -302,18 +267,13 @@ def create_dsBdy(ds_FE,FEvarsList,FEsurfVarsList):
     notit=0
     for var in FEvarsList:
         print(var)
-        ### JAS 12-13-2023 Removing the zeroing out ov qv and ql in the boundary planes
-        if False:
-        #if var == "qv" or var == "ql":
-            ds_Bdy[var+'_YZL']=xr.DataArray(0.0*ds_FE['rho'][:,:,:,0])
-        else:
-            if var in list(ds_FE.variables):
-               ds_Bdy[var+'_YZL']=xr.DataArray(ds_FE[var][:,:,:,0])
-               ds_Bdy[var+'_YZH']=xr.DataArray(ds_FE[var][:,:,:,ds_FE.sizes['xIndex']-1])
-               ds_Bdy[var+'_XZL']=xr.DataArray(ds_FE[var][:,:,0,:])
-               ds_Bdy[var+'_XZH']=xr.DataArray(ds_FE[var][:,:,ds_FE.sizes['yIndex']-1,:])
-               ds_Bdy[var+'_XYL']=xr.DataArray(ds_FE[var][:,0,:,:])
-               ds_Bdy[var+'_XYH']=xr.DataArray(ds_FE[var][:,ds_FE.sizes['zIndex']-1,:,:])
+        if var in list(ds_FE.variables):
+            ds_Bdy[var+'_YZL']=xr.DataArray(ds_FE[var][:,:,:,0])
+            ds_Bdy[var+'_YZH']=xr.DataArray(ds_FE[var][:,:,:,ds_FE.sizes['xIndex']-1])
+            ds_Bdy[var+'_XZL']=xr.DataArray(ds_FE[var][:,:,0,:])
+            ds_Bdy[var+'_XZH']=xr.DataArray(ds_FE[var][:,:,ds_FE.sizes['yIndex']-1,:])
+            ds_Bdy[var+'_XYL']=xr.DataArray(ds_FE[var][:,0,:,:])
+            ds_Bdy[var+'_XYH']=xr.DataArray(ds_FE[var][:,ds_FE.sizes['zIndex']-1,:,:])
     for surfVar in FEsurfVarsList:
         print('{:s}: notit={:d}'.format(surfVar,notit))
         if surfVar in ['topoWRF','t2','psfc','tskin','qskin']:
@@ -323,7 +283,6 @@ def create_dsBdy(ds_FE,FEvarsList,FEsurfVarsList):
     return ds_Bdy
 
 def createBdysFrom3D(ds_Bdy,ds3D,FEvarsList,FEsurfVarsList):
-    #ds_Bdy=xr.Dataset()
     for var in FEvarsList:
         if var in ds3D.variables:
             ds_Bdy[var+'_YZL']=ds3D[var][0,:,:,0].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)
@@ -347,7 +306,6 @@ def createBdysFrom3D(ds_Bdy,ds3D,FEvarsList,FEsurfVarsList):
     return ds_Bdy
 
 def writeBdyFile(path_out_analysis,fileName,ds_Bdy):
-    #Bdy_filename = path_out_analysis+"FE_Bndys_WRF_thetaDryRho_HSBal.{:d}".format(fileCounter)
     Bdy_filename = path_out_analysis+fileName #"FE_Bndys_WRF_PDG_w-rhoALT-moist_qv-gpkg.{:d}".format(fileCounter)
     print(Bdy_filename)
     ds_Bdy.isel(time = [0]).to_netcdf(Bdy_filename,format='NETCDF4')  #note the isel(time =[#]) preserves the time dimension

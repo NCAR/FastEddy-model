@@ -41,7 +41,7 @@ FE_params = get_params_FE(FE_params_file)
 start_code_all = time.perf_counter()
 
 FE_new_nc = FE_new_nc_path + name_dom + name_dom_add + '.0'
-FE_plot = FE_new_nc_path + name_dom + name_dom_add + '.png'
+FE_plot = FE_new_nc_path + name_dom + name_dom_add + '_simgrid.png'
 
 print('FE_ref_GIS_nc: ',FE_ref_GIS_nc)
 print('FE_new_nc: ',FE_new_nc)

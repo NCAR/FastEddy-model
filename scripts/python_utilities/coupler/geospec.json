@@ -1,8 +1,8 @@
 {
   "name_dom": "DomainName",
   "gis_root": "/path_gis/",
-  "gis_file": "gis.nc",
-  "nlcd_name": "LandCoverMetadata.csv",
+  "gis_file": "inputs_gis.nc",
+  "nlcd_name": "LandCoverMetadata_NLCD16.csv",
   "water_cats": [11],
   "FE_dataset_path": "/path_geospec/",
   "name_dom_add": "",

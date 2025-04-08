@@ -39,23 +39,21 @@ args = parse_args()
 with open(args.file) as file:
     params = json.loads(file.read())
 
-if True:
-  ICBC_dir = params["ICBC_dir"]
-  FE_simGrid = params["FE_simGrid"]
-  WRF_PrntDir = params["WRF_PrntDir"]
-  WRF_PrntRefOut = params["WRF_PrntRefOut"]
-  WRF_PrntOutPrefix = params["WRF_PrntOutPrefix"]
-  dateString = params["dateString"]
-  timeHour0 = params["timeHour0"]
-  timeMinute0 = params["timeMinute0"]
-  itMax = params["itMax"]
-  itInc = params["itInc"]
+ICBC_dir = params["ICBC_dir"]
+FE_simGrid = params["FE_simGrid"]
+WRF_PrntDir = params["WRF_PrntDir"]
+WRF_PrntOutPrefix = params["WRF_PrntOutPrefix"]
+dateString = params["date0"]
+timeHour0 = params["timeHour0"]
+timeMinute0 = params["timeMinute0"]
+timeSecond0 = params["timeSecond0"]
+secMax = params["secMax"]
+secInc = params["secInc"]
 
-  print(f"{mpi_rank}/{mpi_size}: Writing coupler outputs to {ICBC_dir}")
-  print(f"{mpi_rank}/{mpi_size}: Interpolating to FE-domain from {FE_simGrid}")
-  print(f"{mpi_rank}/{mpi_size}: Using WRF-reference from {WRF_PrntDir}{WRF_PrntRefOut}")
-  print(f"{mpi_rank}/{mpi_size}: Processing of WRF-files {WRF_PrntDir}{WRF_PrntOutPrefix}*")
-  print(f"{mpi_rank}/{mpi_size}: Date and times of WRF-files to process: {dateString}_{timeHour0:02}:{timeMinute0:02}:*, every {itInc} minutes for {itMax} total minutes.")
+print(f"{mpi_rank}/{mpi_size}: Writing coupler outputs to {ICBC_dir}")
+print(f"{mpi_rank}/{mpi_size}: Interpolating to FE-domain from {FE_simGrid}")
+print(f"{mpi_rank}/{mpi_size}: Processing of WRF-files {WRF_PrntDir}{WRF_PrntOutPrefix}*")
+print(f"{mpi_rank}/{mpi_size}: Date and times of WRF-files to process: {dateString}_{timeHour0:02}:{timeMinute0:02}:*, every {secInc} s for {secMax} total seconds.")
 
 ################################################################################################
 ### Create a coupler output directory for initial and boundary conditions if necessary
@@ -69,48 +67,20 @@ if(mpi_rank == 0):
 ################################################################################################
 files_list=[]
 times=[]
-if False:
-    timeHour = timeHour0  
-    timeMinute = timeMinute0
-    hourIncFlag = True
-    for it in range(0,itMax,itInc):
-        if (it > 0) and ((it+timeMinute0)%60 < itInc) and hourIncFlag :
-            timeHour+=1  
-            hourIncFlag = False
-        else:
-            hourIncFlag = True
-        thistime = "{:s}{:02d}:{:02d}:{:s}".format(dateString,timeHour,(timeMinute+it)%60,"00")
-        times.append(thistime)
-    for eachtime in times:
-       file_tmp = f'{WRF_PrntDir}/{WRF_PrntOutPrefix}{eachtime}'
-       files_list.append(file_tmp)
-       if(mpi_rank == 0):
-          print(file_tmp)
-    #print(files_list)
 
-if True: # DME
-    year0 = int(dateString[0:4])
-    month0 = int(dateString[5:7])
-    day0 = int(dateString[8:10])
+year0 = int(dateString[0:4])
+month0 = int(dateString[5:7])
+day0 = int(dateString[8:10])
 
-    date_it = dt.datetime(year0,month0,day0,timeHour0,timeMinute0)
-    for it in range(0,itMax,itInc):
-        dateString_it = str(date_it.year) + '-' + "{:02d}".format(date_it.month)  + '-' + "{:02d}".format(date_it.day) + '_'
-        thistime = "{:s}{:02d}:{:02d}:{:s}".format(dateString_it,date_it.hour,date_it.minute,"00")
-        file_tmp = f'{WRF_PrntDir}/{WRF_PrntOutPrefix}{thistime}'
-        files_list.append(file_tmp)
-        if(mpi_rank == 0):
-           print(file_tmp)
-        date_it = date_it + dt.timedelta(minutes=itInc)
-
-it00=0
-for Bdy_file_num in range(it00,len(files_list)):
-    if Bdy_file_num%(60/itInc) == 0:
-        timeHour=int(Bdy_file_num/(60/itInc))+timeHour0
-        timeLabel="{:02d}{:02d}UTC".format(timeHour,timeMinute0)
-        print('timeLabel for IC file:',timeLabel)
-        if(mpi_rank == 0):
-           print("{:s} at Bdy_file_num = {:d}".format(timeLabel,Bdy_file_num))
+date_it = dt.datetime(year0,month0,day0,timeHour0,timeMinute0,timeSecond0)
+for it in range(0,secMax,secInc):
+    dateString_it = str(date_it.year) + '-' + "{:02d}".format(date_it.month)  + '-' + "{:02d}".format(date_it.day) + '_'
+    thistime = "{:s}{:02d}:{:02d}:{:02d}".format(dateString_it,date_it.hour,date_it.minute,date_it.second)
+    file_tmp = f'{WRF_PrntDir}{WRF_PrntOutPrefix}{thistime}'
+    files_list.append(file_tmp)
+    if(mpi_rank == 0):
+       print(file_tmp)
+    date_it = date_it + dt.timedelta(seconds=secInc)
 
 ################################################################################################
 ### Setup mpi task decomposition over the set of files to process
@@ -121,7 +91,7 @@ nextExists = False
 listCntr=0
 list_StartOffset=0
 while (listCntr < list_len) and currentExists:
-  bdyFileName = "{:s}/FE_Bndys.{:d}".format(ICBC_dir,listCntr) 
+  bdyFileName = "{:s}FE_Bndys.{:d}".format(ICBC_dir,listCntr) 
   if (mpi_rank ==0):
     print("{:d}/{:d}: Checking for {:s}".format(mpi_rank, mpi_size,bdyFileName))
   currentExists = os.path.isfile(bdyFileName)
@@ -166,7 +136,7 @@ ds_FEGrid=xr.open_dataset(FE_simGrid)
 ########################################
 ### Load the reference WRF data file ###
 ########################################
-ds_WRFRef=xr.open_dataset(f'{WRF_PrntDir}/{WRF_PrntRefOut}')
+ds_WRFRef=xr.open_dataset(files_list[0])
 
 ############################################################################################
 ### Locate the FE-grid-bounding corners as index pairs (j,i) in the WRF-reference domain ###
@@ -292,8 +262,7 @@ YvWRF,XvWRF=np.meshgrid(yWRF,xWRF, sparse=False, indexing='ij')
 print(XvWRF.shape,XvWRF.shape)
 
 
-if True:
-    print(ds_WRFRef['HGT'][0,ll_jindx:ll_jindx+j_extent,ll_iindx:ll_iindx+i_extent].values)
+print(ds_WRFRef['HGT'][0,ll_jindx:ll_jindx+j_extent,ll_iindx:ll_iindx+i_extent].values)
 
 ####################################################################################
 ### Map the target FE domain into the WRF bounding-grid relative x,y coordinates ###
@@ -333,8 +302,8 @@ cp_R = cp_gas/R_gas
 ### Define a rectilinear vertical coordinate basis for vertical interpolation between WRF and FE ###
 ####################################################################################################
 zBottom = 0.0
-zTop = ds_FEGrid['zPos'][-1,0,0].values+90.0 #500
-NzWRFInterp = 275 #125 #100
+zTop = ds_FEGrid['zPos'][-1,0,0].values+90.0
+NzWRFInterp = 275
 zRect = np.linspace(zBottom,zTop,NzWRFInterp)
 if(mpi_rank == 0) and DEBUG_COUPLER:
   print(zRect[0],zRect[-1])
@@ -357,36 +326,30 @@ it11=myend #rank-specific ending index in the files_list
 for Bdy_file_num in range(it00,it11):
   bdyFileName = "{:s}/FE_Bndys.{:d}".format(ICBC_dir,Bdy_file_num)
   if not(os.path.isfile(bdyFileName)):
-    print('{:d}/{:d}: {:s} does not exist, creating it...'.format(mpi_rank, mpi_size, bdyFileName))
-    if True:
-        print("{:d}/{:d}: Working on file {:s}".format(mpi_rank, mpi_size, files_list[Bdy_file_num]))
-        ds_ref = xr.open_mfdataset(files_list[Bdy_file_num],combine='nested',concat_dim='Time')
+    print('{:d}{:d}: {:s} does not exist, creating it...'.format(mpi_rank, mpi_size, bdyFileName))
+    print("{:d}{:d}: Working on file {:s}".format(mpi_rank, mpi_size, files_list[Bdy_file_num]))
+    ds_ref = xr.open_mfdataset(files_list[Bdy_file_num],combine='nested',concat_dim='Time')
 
-        t0s = time.perf_counter()
-        dsWRF=interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent)
-        t0e = time.perf_counter()
-        print('{:d}/{:d}: t0_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t0e-t0s))
-        t1s = time.perf_counter()
-        ds=copyAndTranspose(dsWRF)
-        t1e = time.perf_counter()
-        print('{:d}/{:d}: t1_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t1e-t1s))
-        t2s = time.perf_counter()
-        dsFENew=interp2DForFE(ds,ds_FEGrid,XvWRF,YvWRF,xVec,yVec)
-        t2e = time.perf_counter()
-    else:
-        t2s = time.perf_counter()
-        dsFENew=xr.open_dataset(FE_simGrid)
-        t2e = time.perf_counter()
+    t0s = time.perf_counter()
+    dsWRF=interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent)
+    t0e = time.perf_counter()
+    print('{:d}/{:d}: t0_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t0e-t0s))
+    t1s = time.perf_counter()
+    ds=copyAndTranspose(dsWRF)
+    t1e = time.perf_counter()
+    print('{:d}/{:d}: t1_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t1e-t1s))
+    t2s = time.perf_counter()
+    dsFENew=interp2DForFE(ds,ds_FEGrid,XvWRF,YvWRF,xVec,yVec)
+    t2e = time.perf_counter()
     print('{:d}/{:d}: t2_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t2e-t2s))
     t3s = time.perf_counter()
     dsFEFinal=create_dsFEFinal(ds_FEGrid)
     verticalInterpFinal(ds_FEGrid,dsFENew,dsFEFinal,zRect)
     t3e = time.perf_counter()
     print('{:d}/{:d}: t3_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t3e-t3s))
-    addTimeDim_FEfinal(dsFEFinal) # DME
-    if Bdy_file_num%(60/itInc) == 0:
-        timeHour=int(Bdy_file_num/(60/itInc))+timeHour0
-        timeLabel="{:02d}{:02d}UTC".format(timeHour,timeMinute0)
+    addTimeDim_FEfinal(dsFEFinal)
+    if Bdy_file_num == 0:
+        timeLabel="{:02d}{:02d}{:02d}UTC".format(timeHour0,timeMinute0,timeSecond0)
         dsFEFinal.to_netcdf(ICBC_dir+'FE_interp_{:s}.{:d}'.format(timeLabel,0),format='NETCDF4',
                             encoding={'xIndex': {'dtype': 'i4'},'yIndex': {'dtype': 'i4'},'zIndex': {'dtype': 'i4'}})
     t4s = time.perf_counter()
