@@ -382,18 +382,21 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
    float xi;
    float psi_m;
    float psi_h;
-   float beta = 5.0;
+   float a_coeff = 6.1;
+   float b_coeff = 2.5;
+   float c_coeff = 5.3;
+   float d_coeff = 1.1;
    float pi = acosf(-1.0);
-   float ol_lim = 1.0; // limit Obukhov length (in meters)
+   float zol_lim = 2.5; // limit (z1+z0m)/L
    int it_n;
    float z0temp;
    float it_max;
    float constant_1;
 
    if (surflayer_stab_d==0){
-     it_max = 5;
-   }else{
      it_max = 1;
+   }else{
+     it_max = 5;
    }
 
    z0 = *z0m;
@@ -414,31 +417,21 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
    // iterative solve for exchange coefficients
    do {
 
-     tauxz = -cd_0*U1*u1;
-     tauyz = -cd_0*U1*v1;
-     *fricVel = powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25);
      it_n = it_n + 1;
 
-     if (surflayer_stab_d==0){
-       // calculate inverse Obukhov length
-       if (*fricVel > 0.0){
-          *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
-          *invOblen = fmaxf(fminf(*invOblen,ol_lim),-ol_lim);
-       }else{            //ust < 0.0...
-          *invOblen = -ol_lim;  //Technically this would be infinite, but we will use iol_fc...
-       }
-     }else{
-       *invOblen = 0.0;
-     }
-     zol = (*invOblen)*(z1+z0);
+     tauxz = -cd_0*U1*u1;
+     tauyz = -cd_0*U1*v1;
+     *fricVel = fmaxf(0.0001,powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25));
+     *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
+     zol = fmaxf(fminf((*invOblen)*(z1+z0),zol_lim),-zol_lim);
 
      if (zol < 0.0) { // convective ABL
        xi = powf(1.0-16.0*zol,0.25);
        psi_m = logf(0.5*(1.0+powf(xi,2.0))*powf(0.5*(1.0+xi),2.0)) - 2.0*atanf(xi)+0.5*pi;
        psi_h = 2.0*logf(0.5*(1.0+powf(xi,2.0)));
      } else { // stable ABL
-       psi_m = -beta*zol;
-       psi_h = -beta*zol;
+       psi_m = -a_coeff*logf(zol+powf(1.0+powf(zol,b_coeff),1.0/b_coeff));
+       psi_h = -c_coeff*logf(zol+powf(1.0+powf(zol,d_coeff),1.0/d_coeff));
      }
 
      cd_i = powf(kappa_d,2.0)/powf(logf(z1oz0)-psi_m,2.0);
@@ -490,18 +483,22 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    float xi;
    float psi_m;
    float psi_h;
-   float beta = 5.0;
+   float a_coeff = 6.1;
+   float b_coeff = 2.5;
+   float c_coeff = 5.3;
+   float d_coeff = 1.1;
    float pi = acosf(-1.0);
-   float ol_lim = 1.0; // limit Obukhov length (in meters)
+   float zol_lim = 2.5; // limit (z1+z0m)/L
    int it_n;
    float z0temp;
    float q0,q1,cq_i,psi_q,tauqz;
    int it_max;
    float constant_1;
+
    if (surflayer_stab_d==0){
-     it_max = 5;
-   }else{
      it_max = 1;
+   }else{
+     it_max = 5;
    }
 
    z0 = *z0m;
@@ -524,23 +521,13 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    // iterative solve for exchange coefficients
    do {
 
-     tauxz = -cd_0*U1*u1;
-     tauyz = -cd_0*U1*v1;
-     *fricVel = powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25);
      it_n = it_n + 1;
 
-     if (surflayer_stab_d==0){
-       // calculate inverse Obukhov length
-       if (*fricVel > 0.0){
-          *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
-          *invOblen = fmaxf(fminf(*invOblen,ol_lim),-ol_lim);
-       }else{            //ust < 0.0...
-          *invOblen = -ol_lim;  //Technically this would be infinite, but we will use iol_fc...
-       }
-     }else{
-       *invOblen = 0.0;
-     }
-     zol = (*invOblen)*(z1+z0);
+     tauxz = -cd_0*U1*u1;
+     tauyz = -cd_0*U1*v1;
+     *fricVel = fmaxf(0.0001,powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25));
+     *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
+     zol = fmaxf(fminf((*invOblen)*(z1+z0),zol_lim),-zol_lim);
 
      if (zol < 0.0) { // convective ABL
        xi = powf(1.0-16.0*zol,0.25);
@@ -548,8 +535,8 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
        psi_h = 2.0*logf(0.5*(1.0+powf(xi,2.0)));
        psi_q = psi_h;
      } else { // stable ABL
-       psi_m = -beta*zol;
-       psi_h = -beta*zol;
+       psi_m = -a_coeff*logf(zol+powf(1.0+powf(zol,b_coeff),1.0/b_coeff));
+       psi_h = -c_coeff*logf(zol+powf(1.0+powf(zol,d_coeff),1.0/d_coeff));
        psi_q = psi_h;
      }
 
