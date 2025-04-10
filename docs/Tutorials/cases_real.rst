@@ -2,13 +2,13 @@
 Real Test Cases
 ***************
 
-Real cases are performed via dynamically downscaling from a mesoscale model such as WRF that provides initial and boundary conditions for a one-way nested FastEddy simulation. These mesoscale-LES coupled simulations require the following preprocessing steps:
+Real cases are performed by dynamically downscaling from a mesoscale model such as WRF that can provide initial and boundary conditions for a one-way nested FastEddy simulation. These mesoscale-LES coupled simulations require the following preprocessing steps:
 
-* Step 1: **GeoSpec**. Reads in GIS information about terrain elevation and land cover and creates a reference netCDF file.
-* Step 2: **SimGrid**. Defines a FastEddy domain of a specificed grid spacing, location and extentent using GeoSpec file and a FastEddy parameters file as inputs.
-* Step 3: **GenICBCs**. Creates initial and boundary conditions (ICBCs) for FastEddy from a mesoscale run over the SimGrid generated domain. 
+* Step 1: **GeoSpec**. Georeference specification step. Expectss a NetCDF-formatted file of location-specific, georeferenceed coordinate frame (lat/lon), projected cartesian coordinate frame (x,y), elevation and land cover to establish a new NetCDF file of reference geolocated domain static characteristics specification including mapping of land cover category to roughness length.
+* Step 2: **SimGrid**. Simulation grid definition step. Defines a FastEddy gridded domain at a specificed grid spacing, location and extent using the file resulting from ther previous GeoSpec step and a FastEddy input parameters file (with targeted domain configuration parameters) as inputs.
+* Step 3: **GenICBCs**. Generate initial conditions/boundary (ICBCs) conditions step. Creates ICBCs for a targeted FastEddy domain (defined in the SimGrid step) from a set of mesoscale model results. 
 
-The following tutorial provides a practical example of how to run the 3 preprocessing steps and the corresponding weather-driven FastEddy simulation for a real case.
+The following tutorial provides a practical example of performing these preprocessing steps followed by a corresponding weather-driven FastEddy simulation for a real-world downscaled scenario.
 
 .. toctree::
 
