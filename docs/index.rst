@@ -20,7 +20,7 @@ Citations
 
 The FastEddy code is located in an open, public
 `GitHub FastEddy-model repository <https://github.com/NCAR/FastEddy-model>`_.
-Please cite FastEddy as:
+Please cite FastEddy as follows:
 
   | Sauer, J., and D. Muñoz-Esparza. "The FastEddy resident-GPU accelerated large-eddy
   |   simulation framework: model formulation, dynamical-core validation and performance
@@ -33,15 +33,17 @@ Contributing Authors
 
 The following authors have contributed to this documentation:
 
-FastEddy\ :sup:`®`: NSF-NCAR Research Applications Laboratory, https://ral.ucar.edu/, fasteddy@ucar.edu
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+FastEddy: NSF-NCAR Research Applications Laboratory
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+https://ral.ucar.edu/, fasteddy@ucar.edu
 * Jeremy Sauer 
 * Domingo Muñoz-Esparza
 * Julie Prestopnik
 * Eric Hendricks
 
-FastEddy\ :sup:`®`: on AMD GPUs: Fluid Numerics, https://fluidnumerics.com, support@fluidnumerics.com
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building FastEddy on AMD GPUs: Fluid Numerics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+https://fluidnumerics.com, support@fluidnumerics.com
 * Joe Schoonover 
 
   
