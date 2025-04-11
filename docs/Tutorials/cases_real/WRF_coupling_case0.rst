@@ -93,7 +93,7 @@ A binary file containing the terrain elevation information will also be generate
    
 GenICBCs
 --------
-The third preprocessing step is **GenICBCs.py**. The purpose of this step is to create initial and boundary conditions (ICBCs) from the mesoscale WRF simulation results specific to the domain created by *SimGrid.py*. The input parameters are specified in the corresponding *genicbcs.json* file. This step involves three-dimensional interpolation of prognostic equation variables (winds, density, potential temperature and water vapor) and two-dimensional interpolation of surface skin forcings (temperature and water vapor). In order for WRF to provide the required fields to drive a nested FastEddy simulation, a number of additional variables not present in WRF's default output are required. To save the necessary variables at a sufficiently high temporal fidelity in an efficient manner, it is recommended to create WRF auxiliary files. For that purpose, when running WRF, include the following lines in WRF's namelist.input.
+The third preprocessing step is **GenICBCs.py**. The purpose of this step is to create initial and boundary conditions (ICBCs) from the mesoscale WRF simulation results specific to the domain created by *SimGrid.py*. The input parameters are specified in the corresponding **genicbcs.json** file. This step involves three-dimensional interpolation of prognostic equation variables (winds, density, potential temperature and water vapor) and two-dimensional interpolation of surface skin forcings (temperature and water vapor). In order for WRF to provide the required fields to drive a nested FastEddy simulation, a number of additional variables not present in WRF's default output are required. To save the necessary variables at a sufficiently high temporal fidelity in an efficient manner, it is recommended to create WRF auxiliary files. For that purpose, when running WRF, include the following lines in WRF's namelist.input.
 
 .. code-block:: none
 
@@ -117,4 +117,4 @@ With these additions, WRF will generate a set of timestamped *wrf_fasteddy_* fil
 
    python ./GenICBCs.py -f genicbcs.json
 
-Successful completion will create an initial condition file (*FE_interp_170000UTC.0*) and a set of boundary condition files (*FE_Bndys.**) where the index indicates the number of second increments from the initial time (frequency in seconds is specified by the parameter :code:`secInc` in *genicbcs.json*).
+Successful completion will create an initial condition file (*FE_interp_170000UTC.0*) and a set of boundary condition files (*FE_Bndys.**) where the index indicates the number of second increments from the initial time (frequency in seconds is specified by the parameter :code:`secInc` in **genicbcs.json**).
