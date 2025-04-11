@@ -16,7 +16,24 @@ After initial and boundary conditions have been created, a FastEddy simulation c
    hydroBndysFileEnd = 16
    dtBdyPlaneBCs = 300.0
 
-From the parameters above, :code:`hydroBCs = 1` is the main option to activate the time-dependent limited area domain boundary condition coupling to a mesoscale model. Note that :code:`dtBdyPlaneBCs` is the frequency in seconds for boundary conditions to update and that it needs to match the value of *secInc* specified in **genicbcs.json**. See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR’s High Performance Computing machines.
+From the parameters above, :code:`hydroBCs = 1` is the main option to activate the time-dependent limited area domain boundary condition coupling to a mesoscale model. Note that :code:`dtBdyPlaneBCs` is the frequency in seconds for boundary conditions to update and it needs to match the value of *secInc* specified in **genicbcs.json**. See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR’s High Performance Computing machines.
+
+.. code-block:: none
+
+   #----------: CELL PERTURBATION METHOD ---
+   cellpertSelector = 1 
+   cellpert_sw2b = 0 
+   cellpert_amp = 2.5 
+   cellpert_nts = 250 
+   cellpert_gppc = 8 
+   cellpert_ndbc = 3 
+   cellpert_kbottom = 1 
+   cellpert_ktop = 40 
+   cellpert_tvcp = 1 
+   cellpert_eckert = 0.05 
+   cellpert_tsfact = 0.333 
+
+In order to instigate the rapid onset of turbulence with minimal distance (fetch) from the smooth mesoscale lateral boundary conditions, the Cell Perturbation (CP) method should be used by setting :code:`cellpertSelector = 1`. Time-varying cell perturbation (TVCP) can be included with `cellpert_tvcp = 1`. TVCP provides an automatic adjustment with time of the initial cell perturbation amplitude `cellpert_amp = 2.5`, the upper bound on vertical levels over which to apply perturbations `cellpert_ktop = 40`, and the initial perturbation seeding frequency in timesteps `cellpert_nts = 250`.  The internal mechanism implemented for determing time-varying adjustments to the CP parameters uses boundary condition mean state profile statistics and boundary layer height estimation, along with heuristic scaling based on a target Eckert number `cellpert_eckert = 0.05`, and a prescribed factor for adjusting refresh time for perturbations `cellpert_tsfact = 0.333`. Refer to **DME_BK_POF_PAPER_REF** for further details.
 
 The figure below shows several instantaneous fields corresponding to a 1h and 25min hindcast valid at 1825 UTC on Februray 16th 2024. These horizontal contours are from the model's second vertical level, located at approximately 25 m above ground level.
 
