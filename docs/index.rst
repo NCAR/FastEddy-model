@@ -36,6 +36,7 @@ The following authors have contributed to this documentation:
 FastEddy: NSF-NCAR Research Applications Laboratory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 https://ral.ucar.edu/, fasteddy@ucar.edu
+
 * Jeremy Sauer 
 * Domingo Muñoz-Esparza
 * Julie Prestopnik
@@ -44,6 +45,7 @@ https://ral.ucar.edu/, fasteddy@ucar.edu
 Building FastEddy on AMD GPUs: Fluid Numerics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 https://fluidnumerics.com, support@fluidnumerics.com
+
 * Joe Schoonover 
 
   
