@@ -9,7 +9,8 @@ FastEddy-model Version 3.0 Release Notes (20250415)
 .. dropdown:: Repository, build, and test
 
    * 1 new tutorial for coupled mesoscale-LES real-world case
-   * Additional makefile for building for AMD GPUs with hip and corresponding documentation
+   * Additional makefile for building for AMD GPUs with hip and corresponding documentation [Contributed by Dr. Joe Schoonover from Fluid Numerics]
+
 
 .. dropdown:: Bugfixes
 
