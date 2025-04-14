@@ -1396,9 +1396,9 @@ int hydro_coreInit(){
 
    /* Check related parameters and Allocate for LAD BCs (hydroBCs == 1)*/
    if(hydroBCs==1){  // Using LAD BCs
-     if(ceilingAdvectionBC==1){
-       printf("!!!! WARNING !!!!!-- The parameter ceilingAdvectionBC = 1 enforces rigid lid (w = 0 at ceiling), but hydroBCs == 1 implying Dirchlet boundary values are provided.\n");
-       printf("!!!! WARNING !!!!!-- When using hydroBCs == 1, ceilingAdvectionBC==0 is recommended.");
+     if(ceilingAdvectionBC==0){
+       printf("!!!! WARNING !!!!!-- The parameter ceilingAdvectionBC = 0 enforces rigid lid (w = 0 at ceiling), but currently hydroBCs = 1 implying Dirchlet boundary values are provided.\n");
+       printf("!!!! WARNING !!!!!-- When using hydroBCs = 1, ceilingAdvectionBC = 1 is recommended.");
        fflush(stdout);
      }
      if( moistureSelector > 0){
