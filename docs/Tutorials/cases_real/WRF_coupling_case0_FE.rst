@@ -45,4 +45,4 @@ The figure below shows several instantaneous fields corresponding to a 1h and 25
 
 .. [#f1] Muñoz-Esparza, D., Kosović, B., Mirocha, J., & van Beeck, J. (2014). Bridging the transition from mesoscale to microscale turbulence in numerical weather prediction models. Boundary-Layer Meteorology, 153(3), 409-440.
 
-.. [#f2] Muñoz-Esparza, D., Kosović, B., Van Beeck, J., & Mirocha, J. (2015). A stochastic perturbation method to generate inflow turbulence in large-eddy simulation models: Application to neutrally stratified atmospheric boundary layers. Physics of Fluids, 27(3), 035102.
+.. [#f2] Muñoz-Esparza, D., Kosović, B., van Beeck, J., & Mirocha, J. (2015). A stochastic perturbation method to generate inflow turbulence in large-eddy simulation models: Application to neutrally stratified atmospheric boundary layers. Physics of Fluids, 27(3), 035102.
