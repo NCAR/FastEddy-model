@@ -3,3 +3,6 @@
 
 # temp files surrounded by #
 *#*#
+
+# sphinx output
+docs/_build
