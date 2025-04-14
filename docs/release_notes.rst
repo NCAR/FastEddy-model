@@ -3,7 +3,7 @@ Release Notes
 *************
 
 
-FastEddy-model Version 3.0 Release Notes (20250414)
+FastEddy-model Version 3.0 Release Notes (20250415)
 ===================================================
 
 .. dropdown:: Repository, build, and test
