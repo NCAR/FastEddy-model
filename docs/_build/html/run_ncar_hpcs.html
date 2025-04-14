@@ -1,0 +1,238 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Running under NSF NCAR HPC &mdash; FastEddy 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+      <link rel="stylesheet" type="text/css" href="_static/theme_override.css?v=49be758f" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=110ea713"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/design-tabs.js?v=f930bc37"></script>
+      <script src="_static/pop_ver.js?v=5b0a3eec"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Building FastEddy on AMD GPU Accelerated platforms" href="run_amd_gpus.html" />
+    <link rel="prev" title="Release Notes" href="release_notes.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FastEddy
+              <img src="_static/fasteddy_logo_large_vertical_2024_06.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="release_notes.html">Release Notes</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Running under NSF NCAR HPC</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#compilation">Compilation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-pbs-job-script-for-casper">Example PBS job script for Casper</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#casper-sample-script">Casper Sample Script</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#example-pbs-job-script-for-derecho">Example PBS job script for Derecho</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#derecho-sample-script">Derecho Sample Script</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="run_amd_gpus.html">Building FastEddy on AMD GPU Accelerated platforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="downloads.html">Downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="publications.html">Publications</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FastEddy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Running under NSF NCAR HPC</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/run_ncar_hpcs.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="running-under-nsf-ncar-hpc">
+<span id="run-fasteddy"></span><h1>Running under NSF NCAR HPC<a class="headerlink" href="#running-under-nsf-ncar-hpc" title="Link to this heading"></a></h1>
+<p>These instructions will help users get started running FastEddy in the
+<a class="reference external" href="https://ncar-hpc-docs.readthedocs.io/en/latest/">NSF NCAR High Performance Computing (HPC) environment</a>,
+using <a class="reference external" href="https://arc.ucar.edu/knowledge_base/74317833">Derecho</a> and
+<a class="reference external" href="https://arc.ucar.edu/knowledge_base/70549550">Casper</a>.</p>
+<section id="compilation">
+<h2>Compilation<a class="headerlink" href="#compilation" title="Link to this heading"></a></h2>
+<p>The Makefile-based build system included here assumes deployment on the NSF
+NCAR HPCs. FastEddy requires a C-compiler, MPI, and CUDA. Currently, the
+default modules loaded at login suffice on Casper, however the <code class="code docutils literal notranslate"><span class="pre">cuda</span></code> module
+will need to be loaded on Derecho by running <code class="code docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span> <span class="pre">cuda</span></code>.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Download the source code from the <a class="reference external" href="https://github.com/NCAR/FastEddy-model/releases">Releases</a> page and unpack the release in the desired location or clone the <a class="reference external" href="https://github.com/NCAR/FastEddy-model">repository</a> in the desired location.</p></li>
+<li><p>Navigate to the <strong>SRC/FEMAIN</strong> directory.</p></li>
+<li><p>To build the FastEddy executable run <code class="code docutils literal notranslate"><span class="pre">make</span></code> (optionally run <code class="code docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean</span></code> first if appropriate).</p></li>
+</ol>
+</div></blockquote>
+<p>The <code class="code docutils literal notranslate"><span class="pre">FastEddy</span></code> executable will be located in the <strong>SRC/FEMAIN</strong> directory. To
+build on other HPC systems with NVIDIA GPUs, check for availability of the aformentioned
+modules/dependencies. Successful compilation may require modifications to shell environment
+variable include or library paths, or alternatively minor adjustments to the include or library
+flags in <strong>SRC/FEMAIN/Makefile</strong>.</p>
+</section>
+<section id="example-pbs-job-script-for-casper">
+<h2>Example PBS job script for Casper<a class="headerlink" href="#example-pbs-job-script-for-casper" title="Link to this heading"></a></h2>
+<p>Below is bash-based PBS job submission script for running the model on NSF NCAR’s Casper machine.
+This example script, <em>fasteddy_pbs_script_casper.sh</em>, can be found in the <strong>scripts/batch_jobs</strong>
+subdirectory of the <a class="reference external" href="https://github.com/NCAR/FastEddy-model">GitHub FastEddy-model repository</a>.
+The FastEddy code will write its output to an <strong>output</strong> directory. Please create an output
+directory, if one does not already exist, in the same location as this script.</p>
+<section id="casper-sample-script">
+<h3>Casper Sample Script<a class="headerlink" href="#casper-sample-script" title="Link to this heading"></a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Replace “&lt;ProjectAccount&gt;” below with a valid Project Account.</p></li>
+<li><p>Replace “&lt;path to code location&gt;” below with the location that contains the <strong>FastEddy-model</strong> directory from unpacking the release.</p></li>
+<li><p>Replace “&lt;example .in filename&gt;” below with the name of the example .in filename.  For example, <em>Example01_NBL.in</em>, <em>Example02_CBL.in</em>, etc.</p></li>
+</ul>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#!/bin/bash
+#PBS -A &lt;ProjectAccount&gt;
+#PBS -N FastEddy 
+#PBS -l select=1:ncpus=4:mpiprocs=4:ngpus=4:mem=100GB
+#PBS -l walltime=12:00:00
+#PBS -q casper
+#PBS -j oe
+#PBS -l job_priority=economy
+
+export BASEDIR=&lt;path to code location&gt;/FastEddy-model/
+export SRCDIR=${BASEDIR}/SRC/FEMAIN
+export TUTORIALDIR=${BASEDIR}/tutorials/
+export EXAMPLE=&lt;example .in filename&gt;
+
+hostname
+module -t list
+echo &quot; &quot;
+
+mpirun -np 4 ${SRCDIR}/FastEddy ${TUTORIALDIR}/examples/${EXAMPLE}
+</pre></div>
+</div>
+<p>The code will produce an log file with the name <em>FastEddy.o&lt;job_id&gt;</em>
+(for example, <em>FastEddy.o4960197</em>) in the current working directory.</p>
+<p>To submit the script for batch processing, run <cite>qsub fasteddy_pbs_script_casper.sh</cite>.</p>
+</section>
+</section>
+<section id="example-pbs-job-script-for-derecho">
+<h2>Example PBS job script for Derecho<a class="headerlink" href="#example-pbs-job-script-for-derecho" title="Link to this heading"></a></h2>
+<p>Below is bash-based PBS job submission script for running the model on NSF NCAR’s Derecho machine.
+This example script, <em>fasteddy_pbs_script_derecho.sh</em>, can be found in the <strong>scripts/batch_jobs</strong>
+subdirectory of the <a class="reference external" href="https://github.com/NCAR/FastEddy-model">GitHub FastEddy-model repository</a>.
+The FastEddy code will write its output to an <cite>output</cite> directory. Please create an output
+directory, if one does not already exist, in the same location as this script.</p>
+<section id="derecho-sample-script">
+<h3>Derecho Sample Script<a class="headerlink" href="#derecho-sample-script" title="Link to this heading"></a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Replace “&lt;ProjectAccount&gt;” below with a valid Project Account.</p></li>
+<li><p>Replace “&lt;path to code location&gt;” below with the location that contains the <cite>FastEddy-model</cite> directory from unpacking the release.</p></li>
+<li><p>Replace “&lt;example .in filename&gt;” below with the name of the example .in filename.  For example, Example01_NBL.in, Example02_CBL.in, etc.</p></li>
+</ul>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#!/bin/bash
+#PBS -A &lt;ProjectAccount&gt;
+#PBS -N FastEddy 
+#PBS -l select=1:ncpus=4:mpiprocs=4:ngpus=4:mem=100GB
+#PBS -l walltime=12:00:00
+#PBS -q main 
+#PBS -j oe
+#PBS -l job_priority=economy
+
+export BASEDIR=&lt;path to code location&gt;/FastEddy-model/
+export SRCDIR=${BASEDIR}/SRC/FEMAIN
+export TUTORIALDIR=${BASEDIR}/tutorials/
+export EXAMPLE=&lt;example .in filename&gt;
+
+hostname
+module -t list
+echo &quot; &quot;
+
+mpiexec -n 4 --ppn 4 set_gpu_rank ${SRCDIR}/FastEddy ${TUTORIALDIR}/examples/${EXAMPLE}
+</pre></div>
+</div>
+<p>The code will produce an log file with the name <em>FastEddy.o&lt;job_id&gt;</em>
+(for example, <em>FastEddy.o4960197</em>) in the current working directory.</p>
+<p>To submit the script for batch processing, run <cite>qsub fasteddy_pbs_script_derecho.sh</cite>.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="release_notes.html" class="btn btn-neutral float-left" title="Release Notes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="run_amd_gpus.html" class="btn btn-neutral float-right" title="Building FastEddy on AMD GPU Accelerated platforms" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, UCAR/NCAR.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

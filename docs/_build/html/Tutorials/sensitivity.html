@@ -1,0 +1,141 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3. Sensitivity Tests (Ideal) &mdash; FastEddy 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+      <link rel="stylesheet" type="text/css" href="../_static/theme_override.css?v=49be758f" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=110ea713"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/design-tabs.js?v=f930bc37"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="../_static/pop_ver.js?v=5b0a3eec"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="4. Real Test Cases" href="cases_real.html" />
+    <link rel="prev" title="2.7. Passive scalar transport and dispersion over an idealized hill" href="cases/DISPERSION.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            FastEddy
+              <img src="../_static/fasteddy_logo_large_vertical_2024_06.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../release_notes.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../run_ncar_hpcs.html">Running under NSF NCAR HPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../run_amd_gpus.html">Building FastEddy on AMD GPU Accelerated platforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../downloads.html">Downloads</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">1. Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cases.html">2. Ideal Test Cases</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3. Sensitivity Tests (Ideal)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#instructions">3.1. Instructions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cases_real.html">4. Real Test Cases</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../publications.html">Publications</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">FastEddy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Tutorials</a></li>
+      <li class="breadcrumb-item active"><span class="section-number">3. </span>Sensitivity Tests (Ideal)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/Tutorials/sensitivity.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sensitivity-tests-ideal">
+<h1><span class="section-number">3. </span>Sensitivity Tests (Ideal)<a class="headerlink" href="#sensitivity-tests-ideal" title="Link to this heading"></a></h1>
+<section id="instructions">
+<h2><span class="section-number">3.1. </span>Instructions<a class="headerlink" href="#instructions" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Re-run the neutral case with <span class="math notranslate nohighlight">\([N_x,N_y,N_z]=[400,400,122]\)</span> and isotropic grid spacings of <span class="math notranslate nohighlight">\([dx,dy,dz]=[10,10,10]\)</span>. Adjust the model time step accordingly. Re-make all plots and discuss the differences between the control case. How much longer did it take to complete the simulation?</p></li>
+<li><p>Re-run the convective case with a surface heat flux of <span class="math notranslate nohighlight">\(=+0.70\)</span> Km/s. Re-make all plots and discuss the differences between the control case.</p></li>
+<li><p>Re-run the neutral case with <span class="math notranslate nohighlight">\(z_0=0.3\)</span> m. Re-make all plots and discuss the differences between the control case.</p></li>
+<li><p>Re-run the neutral case with the first order upwind advection scheme. Re-make all plots and discuss the differences between the control case. Why is the first order scheme a bad choice?</p></li>
+<li><p>Re-run the stable case with a surface cooling rate of <span class="math notranslate nohighlight">\(-0.5\)</span> K/h. Re-make all plots and discuss the differences between the control case.</p></li>
+<li><p>Re-run the stable case using half of the GPUs used in the control simulation. How much slower does the case run?</p></li>
+<li><p>Re-run the BOMEX case with a higher-order advection for water vapor (moistureAdvSelectorQv = 3). What is the impact of the increased effective resolution on dynamical, thermodynamical and microphysical quantities, along with turbulence variability and fluxes? How does that change influce the comparison to the other BOMEX LES models?</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cases/DISPERSION.html" class="btn btn-neutral float-left" title="2.7. Passive scalar transport and dispersion over an idealized hill" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cases_real.html" class="btn btn-neutral float-right" title="4. Real Test Cases" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, UCAR/NCAR.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,28 @@
+/* Highlight color for hyperlinks (grayish) */
+div[class^="highlight"] a {
+    background-color: #E6E6E6;
+}
+
+/* Highlight color for hyperlinks when hovering (cyan) */
+div[class^="highlight"] a:hover {
+    background-color: #ABECFC;
+}
+
+/* Background highlight color (white) */
+div[class^="highlight"] {
+  background-color: #FFFFFF;
+}
+
+/* override table width restrictions */
+@media screen and (min-width: 767px) {
+
+    .wy-table-responsive table td {
+	      /* !important prevents the common CSS stylesheets from overriding
+         this as on RTD they are loaded after this stylesheet */
+	white-space: normal !important;
+    }
+
+    .wy-table-responsive {
+	overflow: visible !important;
+    }
+}
