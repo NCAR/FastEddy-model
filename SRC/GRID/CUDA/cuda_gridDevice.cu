@@ -176,14 +176,17 @@ extern "C" int cuda_gridDeviceCleanup(){
     /* metric tensor fields */
    cudaFree(J13_d); 
    cudaFree(J23_d); 
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    cudaFree(J31_d); 
    cudaFree(J32_d); 
    cudaFree(J33_d); 
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    cudaFree(D_Jac_d); 
    cudaFree(invD_Jac_d); 
     /* coordinate fields */
    cudaFree(xPos_d); 
    cudaFree(yPos_d); 
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    cudaFree(zPos_d); 
    cudaFree(topoPos_d); 
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
