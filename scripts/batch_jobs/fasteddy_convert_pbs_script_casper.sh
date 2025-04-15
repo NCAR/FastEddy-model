@@ -12,6 +12,7 @@ export SRCDIR=${BASEDIR}/scripts/python_utilities/post-processing/
 
 hostname
 module load conda
-conda activate npl-2023b
+conda activate npl-2025a
+which python
 
-mpirun -np 4 python -u ${SRCDIR}/FEbinaryToNetCDF.py ${SRCDIR}/convert.json
+mpiexec -n 4 --ppn 2 python -u ${SRCDIR}/FEbinaryToNetCDF.py -f ${SRCDIR}/convert.json
