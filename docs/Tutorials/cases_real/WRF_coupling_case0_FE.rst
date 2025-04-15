@@ -41,7 +41,7 @@ The figure below shows several instantaneous fields corresponding to a 1h and 25
   :width: 900
   :alt: Alternative text
 
-.. rubric:: Footnotes
+.. rubric:: References
 
 .. [#f1] Muñoz-Esparza, D., Kosović, B., Mirocha, J., & van Beeck, J. (2014). Bridging the transition from mesoscale to microscale turbulence in numerical weather prediction models. Boundary-Layer Meteorology, 153(3), 409-440.
 
