@@ -54,16 +54,4 @@ extern "C" int cuda_timeIntDeviceCleanup();
 */
 extern "C" int cuda_timeIntDeviceCommence(int it);
 
-/*----->>>>> extern "C" int cuda_timeIntHydroInitDevice();  -----------------------------------------------------------
-* This function handles the one-time initializations of on-device (GPU) memory by executing the appropriate sequence 
-* of cudaMemcpyHostToDevice data transfers.
-*/
-extern "C" int cuda_timeIntHydroInitDevice();
-
-/*----->>>>> extern "C" int cuda_timeIntHydroSynchFromDevice();  -----------------------------------------------------------
-* This function handles the synchronization to host of on-device (GPU) fields  by executing the appropriate sequence 
-* of cudaMemcpyDeviceiToHost data transfers.
-*/
-extern "C" int cuda_timeIntHydroSynchFromDevice();
-
 #endif // _TIME_INTEGRATION_CUDADEV_CU_H

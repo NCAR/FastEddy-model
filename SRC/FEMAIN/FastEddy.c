@@ -236,14 +236,15 @@ int main(int argc, char **argv){
   printf("mpi_rank_world--%d/%d Beginning secondary and CUDA preparations!\n",mpi_rank_world,mpi_size_world);
   fflush(stdout);
 #endif
-  /*Allow for Secondary Preparations*/
+  /*Allow for GRID Module Secondary Preparations*/
   errorCode = gridSecondaryPreparations();
+
 #ifdef DEBUG_INITIALIZATION 
   printf("mpi_rank_world--%d/%d Setting hydro_core Base State!\n",mpi_rank_world,mpi_size_world);
   fflush(stdout);
 #endif
-  /*Now that the grid is definitely defined, setup the base state  */
-  errorCode = hydro_coreSetBaseState();
+  /*Now that the grid is definitely defined, perform any secondary HYDRO_CORE module preparations  */
+  errorCode = hydro_coreSecondaryPreparations();
 
   /* inFile exists, allow HYDRO_CORE to preparations specifically from initial conditions */
   if(inFile != NULL){
