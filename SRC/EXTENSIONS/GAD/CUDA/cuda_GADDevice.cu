@@ -13,23 +13,38 @@ __constant__ int turbinePolyOrderMax_d; /* Maximum Polynomial order across all t
 __constant__ int turbinePolyClCdrNormSegments_d; /* Number of segments in the normalized radius for the lift and drag coefficient polynomial */
 __constant__ int alphaBounds_d;         /* Number of elements in the min/max angle of attack array for the lift/drag curves */
 
+__constant__ int GADsamplingAvgLength_d;   /*length of sampling average windows (averaging over fastest timescales)*/
+__constant__ float GADsamplingAvgWeight_d;   /*weight of instances in taking sampling average*/
+__constant__ int GADrefSeriesLength_d;   /*number of sample average windows to incorporate into full Reference average*/
+__constant__ float GADrefSeriesWeight_d; /*precalculated averaging weight for Reference average*/
+
 __constant__ int numgridCells_away_d; /*Halo-region of cells considered in rotor disk distance-wise smoothing function*/
 
-int* GAD_turbineType_d;    /* Integer class-label for turbine type*/
-float* GAD_Xcoords_d; /* turbine x-location [m] from SW domain corner */
-float* GAD_Ycoords_d; /* turbine y-location [m] from SW domain corner */
-float* GAD_rotorTheta_d; /* turbine yaw angle [deg. North] */
-float* GAD_hubHeights_d; /* turbine hub height [m AGL] */
-float* GAD_rotorD_d; /* turbine rotor diameter [m] */
-float* GAD_nacelleD_d; /* nacelle diameter [m] */
-float* turbinePolyTwist_d; /* turbine-type-specific twist polynomial coefficients*/
-float* turbinePolyChord_d; /* turbine-type-specific chord polynomial coefficients*/
-float* turbinePolyPitch_d; /* turbine-type-specific pitch polynomial coefficients*/
-float* turbinePolyOmega_d; /* turbine-type-specific omega polynomial coefficients*/
-float* rnorm_vect_d;       /* turbine-type-specific normalized radious segment limits*/
-float* alpha_minmax_vect_d;/* turbine-type-specific maximum and minimum angle of attack for the lift/drag curves*/
-float* turbinePolyCl_d;    /* turbine-type-specific lift coefficient polynomial coefficients*/
-float* turbinePolyCd_d;    /* turbine-type-specific drag coefficient polynomial coefficients*/
+int* GAD_turbineType_d;     /* Integer class-label for turbine type*/
+int* GAD_turbineRank_d;     /* Integer mpi-rank of nacelle center cell for each turbine reference velMag and velDir grid cell*/
+int* GAD_turbineRefi_d;     /* Integer i-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/
+int* GAD_turbineRefj_d;     /* Integer j-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/
+int* GAD_turbineRefk_d;     /* Integer k-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/
+float* GAD_Xcoords_d;       /* turbine x-location [m] from SW domain corner */
+float* GAD_Ycoords_d;       /* turbine y-location [m] from SW domain corner */
+float* GAD_turbineRefMag_d; /* Reference "ambient" velocity magnitude for yaw control and beta/omega [m/s]*/
+float* GAD_turbineRefDir_d; /* *Reference "ambient" velocity direction (horizontal, met. standard orientation) for yaw control and beta/omega [degrees]*/
+float* GAD_turbineUseries_d;/* uSeries of sample averages spanning the rolling-average reference period */
+float* GAD_turbineVseries_d;/* vSeries of sample averages spanning the rolling-average reference period */
+float* u_sampAvg_d;         /* u sample averages for each turbine */
+float* v_sampAvg_d;         /* v sample averages for each turbine */
+float* GAD_rotorTheta_d;    /* turbine yaw angle [deg. North] */
+float* GAD_hubHeights_d;    /* turbine hub height [m AGL] */
+float* GAD_rotorD_d;        /* turbine rotor diameter [m] */
+float* GAD_nacelleD_d;      /* nacelle diameter [m] */
+float* turbinePolyTwist_d;  /* turbine-type-specific twist polynomial coefficients*/
+float* turbinePolyChord_d;  /* turbine-type-specific chord polynomial coefficients*/
+float* turbinePolyPitch_d;  /* turbine-type-specific pitch polynomial coefficients*/
+float* turbinePolyOmega_d;  /* turbine-type-specific omega polynomial coefficients*/
+float* rnorm_vect_d;        /* turbine-type-specific normalized radious segment limits*/
+float* alpha_minmax_vect_d; /* turbine-type-specific maximum and minimum angle of attack for the lift/drag curves*/
+float* turbinePolyCl_d;     /* turbine-type-specific lift coefficient polynomial coefficients*/
+float* turbinePolyCd_d;     /* turbine-type-specific drag coefficient polynomial coefficients*/
 
 float* GAD_turbineVolMask_d; /* turbine Volume mask (0 if turbine free cell in domain, else turbine ID of cell in turbine yaw-swept volume*/
 float* GAD_forceX_d;         /* turbine forces in the x-direction */
@@ -59,19 +74,40 @@ extern "C" int cuda_GADDeviceSetup(){
     cudaMemcpyToSymbol(turbinePolyOrderMax_d, &turbinePolyOrderMax, sizeof(int));
     cudaMemcpyToSymbol(turbinePolyClCdrNormSegments_d, &turbinePolyClCdrNormSegments, sizeof(int));
     cudaMemcpyToSymbol(alphaBounds_d, &alphaBounds, sizeof(int));
+    cudaMemcpyToSymbol(GADsamplingAvgLength_d, &GADsamplingAvgLength, sizeof(int));
+    cudaMemcpyToSymbol(GADsamplingAvgWeight_d, &GADsamplingAvgWeight, sizeof(float));
+    cudaMemcpyToSymbol(GADrefSeriesLength_d, &GADrefSeriesLength, sizeof(int));
+    cudaMemcpyToSymbol(GADrefSeriesWeight_d, &GADrefSeriesWeight, sizeof(float));
     cudaMemcpyToSymbol(numgridCells_away_d, &numgridCells_away, sizeof(int));
 
     /*Device memory allocations and Host-to-Device memcopy for turbine arrays */
     fecuda_DeviceMallocInt(GADNumTurbines*sizeof(int), &GAD_turbineType_d);
+    fecuda_DeviceMallocInt(GADNumTurbines*sizeof(int), &GAD_turbineRank_d);
+    fecuda_DeviceMallocInt(GADNumTurbines*sizeof(int), &GAD_turbineRefi_d);
+    fecuda_DeviceMallocInt(GADNumTurbines*sizeof(int), &GAD_turbineRefj_d);
+    fecuda_DeviceMallocInt(GADNumTurbines*sizeof(int), &GAD_turbineRefk_d);
     cudaMemcpy(GAD_turbineType_d, GAD_turbineType, GADNumTurbines*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(GAD_turbineRank_d, GAD_turbineRank, GADNumTurbines*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(GAD_turbineRefi_d, GAD_turbineRefi, GADNumTurbines*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(GAD_turbineRefj_d, GAD_turbineRefj, GADNumTurbines*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(GAD_turbineRefk_d, GAD_turbineRefk, GADNumTurbines*sizeof(int), cudaMemcpyHostToDevice);
 
+    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &GAD_turbineRefMag_d);
+    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &GAD_turbineRefDir_d);
     fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &GAD_Xcoords_d);
     fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &GAD_Ycoords_d);
     fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &GAD_rotorTheta_d);
+    cudaMemcpy(GAD_turbineRefMag_d, GAD_turbineRefMag, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(GAD_turbineRefDir_d, GAD_turbineRefDir, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_Xcoords_d, GAD_Xcoords, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_Ycoords_d, GAD_Ycoords, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_rotorTheta_d, GAD_rotorTheta, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     
+    fecuda_DeviceMalloc(GADNumTurbines*GADrefSeriesLength*sizeof(float), &GAD_turbineUseries_d);
+    fecuda_DeviceMalloc(GADNumTurbines*GADrefSeriesLength*sizeof(float), &GAD_turbineVseries_d);
+    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &u_sampAvg_d);
+    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &v_sampAvg_d);
+
     fecuda_DeviceMalloc(GADNumTurbineTypes*sizeof(float), &GAD_hubHeights_d);
     fecuda_DeviceMalloc(GADNumTurbineTypes*sizeof(float), &GAD_rotorD_d);
     fecuda_DeviceMalloc(GADNumTurbineTypes*sizeof(float), &GAD_nacelleD_d);
@@ -126,6 +162,16 @@ extern "C" int cuda_GADDeviceCleanup(){
    /* Free any GAD submodule arrays */
    if(GADSelector > 0){
      cudaFree(GAD_turbineType_d);
+     cudaFree(GAD_turbineRank_d);
+     cudaFree(GAD_turbineRefi_d);
+     cudaFree(GAD_turbineRefj_d);
+     cudaFree(GAD_turbineRefk_d);
+     cudaFree(GAD_turbineRefMag_d);
+     cudaFree(GAD_turbineRefDir_d);
+     cudaFree(GAD_turbineUseries_d);
+     cudaFree(GAD_turbineVseries_d);
+     cudaFree(u_sampAvg_d);
+     cudaFree(v_sampAvg_d);
      cudaFree(GAD_Xcoords_d);
      cudaFree(GAD_Ycoords_d);
      cudaFree(GAD_rotorTheta_d);
@@ -154,7 +200,8 @@ extern "C" int cuda_GADDeviceCleanup(){
 /*----->>>>> __global__ void  cudaDevice_GADComputeFrhs();  --------------------------------------------------
 * This function is the global entry kernel for computing GAD forcing from turbines
 */
-__global__ void cudaDevice_GADComputeFrhs(float* xPos_d, float* yPos_d, float* zPos_d, float* topoPos_d, 
+__global__ void cudaDevice_GADComputeFrhs(int simTime_it, int timeStage,
+		                          float* xPos_d, float* yPos_d, float* zPos_d, float* topoPos_d, 
                                           float* hydroFlds_d, float* hydroFldsFrhs_d, 
                                           int* GAD_turbineType_d, float* GAD_turbineVolMask_d,
                                           float* GAD_Xcoords_d, float* GAD_Ycoords_d, float* GAD_rotorTheta_d,
@@ -163,12 +210,17 @@ __global__ void cudaDevice_GADComputeFrhs(float* xPos_d, float* yPos_d, float* z
                                           float* turbinePolyPitch_d, float* turbinePolyOmega_d,
                                           float* rnorm_vect_d, float* alpha_minmax_vect_d,
                                           float* turbinePolyCl_d, float* turbinePolyCd_d,
+					  int* GAD_turbineRank_d, int* GAD_turbineRefi_d, int* GAD_turbineRefj_d, int* GAD_turbineRefk_d,
+                                          float* u_sampAvg_d, float* v_sampAvg_d, 
+					  float* GAD_turbineUseries_d, float* GAD_turbineVseries_d,
+					  float* GAD_turbineRefMag_d, float* GAD_turbineRefDir_d,
                                           float* GAD_forceX_d, float* GAD_forceY_d, float* GAD_forceZ_d){
 
    int i,j,k,ijk,ij;
    int fldStride;
    int iStride,jStride,kStride;
    int iturb;
+   int sampleIndex;
    float cell_inRotor;
    float cell_rVector;
    float cell_twistAngle;
@@ -196,6 +248,29 @@ __global__ void cudaDevice_GADComputeFrhs(float* xPos_d, float* yPos_d, float* z
       ij = i*(Ny_d+2*Nh_d) + j*(1);
       if(GAD_turbineVolMask_d[ijk] > 0.0){
         iturb = __float2int_rn( GAD_turbineVolMask_d[ijk] ) - 1;
+	if((timeStage == 0) &&
+	   (mpi_rank_world_d == GAD_turbineRank_d[iturb]) &&
+	   (i == GAD_turbineRefi_d[iturb]) &&
+	   (j == GAD_turbineRefj_d[iturb]) &&
+	   (k == GAD_turbineRefk_d[iturb])){
+           if(simTime_it%GADsamplingAvgLength_d == 0){
+             sampleIndex = (simTime_it/GADsamplingAvgLength_d)%GADrefSeriesLength_d;
+             //update the corresponding series element and refMag and refDir values
+             update_turbineRefMagDir(sampleIndex, u_sampAvg_d[iturb],v_sampAvg_d[iturb], 
+			             &GAD_turbineUseries_d[iturb*GADrefSeriesLength_d], &GAD_turbineVseries_d[iturb*GADrefSeriesLength_d], &GAD_turbineRefMag_d[iturb], &GAD_turbineRefDir_d[iturb]);
+#if 1
+//#ifdef DEBUG_GAD
+             printf("%d/%d:simTime_it=%d, iturb--%d @ (%d,%d,%d): u_sA=%f, v_sA=%f, RefMag=%f, RefDir=%f \n",
+                mpi_rank_world_d,mpi_size_world_d,simTime_it,iturb,i,j,k,u_sampAvg_d[iturb],v_sampAvg_d[iturb],GAD_turbineRefMag_d[iturb],GAD_turbineRefDir_d[iturb]);
+#endif
+
+             //reset the sampleAVG values to zero
+             u_sampAvg_d[iturb] = 0.0;
+	     v_sampAvg_d[iturb] = 0.0;
+	   }//endif beginning/end of a sample window
+	   // accumulate this timestep instance into the sampling window average
+	   update_sampleRefVel(hydroFlds_d[fldStride*U_INDX+ijk], hydroFlds_d[fldStride*V_INDX+ijk], hydroFlds_d[fldStride*RHO_INDX+ijk], &u_sampAvg_d[iturb], &v_sampAvg_d[iturb]);  
+	} //end if this is the current turbine's mpi_rank-owned nacelle center cell 
 #ifdef ORIG_INROTOR
         cudaDevice_cellInRotorOrig(&cell_inRotor, &cell_rVector, iturb, GAD_Xcoords_d[iturb], GAD_Ycoords_d[iturb], 
                                GAD_rotorTheta_d[iturb], GAD_hubHeights_d[GAD_turbineType_d[iturb]], 
@@ -650,3 +725,39 @@ __device__ void distribute_GADforces(float xLoc, float yLoc, float x_turb, float
   *F_dist_fact = (1.0/a_coeff)*expf(-dist_grid_rotor*dist_grid_rotor/b_coeff);
 
 } // end distribute_GADforces()
+
+/*----->>>>> __device__ void update_sampleRefVel();  --------------------------------------------------
+*/
+__device__ void update_sampleRefVel(float u, float v, float rho, float* u_sampAvg, float* v_sampAvg){
+
+  *u_sampAvg = *u_sampAvg+GADsamplingAvgWeight_d*u/rho;
+  *v_sampAvg = *v_sampAvg+GADsamplingAvgWeight_d*v/rho;
+
+} // update_sampleRefVel()
+
+/*----->>>>> __device__ void update_turbineRefMagDir();  --------------------------------------------------
+*/
+__device__ void update_turbineRefMagDir(int sampleIndex, float u_sampAvg, float v_sampAvg,
+		                        float* uSeries, float* vSeries, float* turbineRefMag, float* turbineRefDir){
+  
+  int idx;
+  float u_seriesAvg;
+  float v_seriesAvg;
+  float pi = acosf(-1.0);
+
+  uSeries[sampleIndex] = u_sampAvg;
+  vSeries[sampleIndex] = v_sampAvg;
+  u_seriesAvg = 0.0;
+  v_seriesAvg = 0.0;
+
+  for(idx=0; idx < GADrefSeriesLength_d; idx++){
+    u_seriesAvg = u_seriesAvg + uSeries[idx];
+    v_seriesAvg = v_seriesAvg + vSeries[idx];
+  }
+  u_seriesAvg = u_seriesAvg*GADrefSeriesWeight_d;  
+  v_seriesAvg = v_seriesAvg*GADrefSeriesWeight_d;  
+
+  *turbineRefMag = sqrtf(powf(u_seriesAvg,2.0)+powf(v_seriesAvg,2.0));
+  *turbineRefDir = 180.0 + atan2f(u_seriesAvg,v_seriesAvg)*180.0/pi;
+
+} // update_turbineRefMagDir()

@@ -244,7 +244,7 @@ int main(int argc, char **argv){
   fflush(stdout);
 #endif
   /*Now that the grid is definitely defined, perform any secondary HYDRO_CORE module preparations  */
-  errorCode = hydro_coreSecondaryPreparations();
+  errorCode = hydro_coreSecondaryPreparations(dt);
 
   /* inFile exists, allow HYDRO_CORE to preparations specifically from initial conditions */
   if(inFile != NULL){

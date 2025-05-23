@@ -540,7 +540,8 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 
 #ifdef GAD_EXT
    if (GADSelector > 0){
-     cudaDevice_GADComputeFrhs<<<grid, tBlock>>>(xPos_d, yPos_d, zPos_d, topoPos_d, 
+     cudaDevice_GADComputeFrhs<<<grid, tBlock>>>(simTime_it, timeStage,
+		                                 xPos_d, yPos_d, zPos_d, topoPos_d, 
                                                  hydroFlds_d, hydroFldsFrhs_d,
                                                  GAD_turbineType_d, GAD_turbineVolMask_d,
                                                  GAD_Xcoords_d, GAD_Ycoords_d, GAD_rotorTheta_d,
@@ -549,6 +550,10 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
                                                  turbinePolyPitch_d, turbinePolyOmega_d,
                                                  rnorm_vect_d, alpha_minmax_vect_d,
                                                  turbinePolyCl_d, turbinePolyCd_d,
+						 GAD_turbineRank_d, GAD_turbineRefi_d, GAD_turbineRefj_d, GAD_turbineRefk_d,
+						 u_sampAvg_d, v_sampAvg_d,
+                                                 GAD_turbineUseries_d, GAD_turbineVseries_d,
+                                                 GAD_turbineRefMag_d, GAD_turbineRefDir_d,
                                                  GAD_forceX_d, GAD_forceY_d, GAD_forceZ_d);
    }
 #endif 
@@ -568,7 +573,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 }//end cuda_hydroCoreDeviceBuildFrhs()
 
 /*----->>>>> __global__ void  cudaDevice_hydroCoreCommence(); ---------------------------------------
-* This is the gloabl-entry kernel routine used by the HYDRO_CORE module
+* This is the global-entry kernel routine used by the HYDRO_CORE module
 */
 __global__ void cudaDevice_hydroCoreCommence(int simTime_it, float* hydroFlds_d, float* hydroFldsFrhs_d, 
                                                      float* hydroBaseStateFlds_d, 
@@ -1291,6 +1296,11 @@ extern "C" int cuda_hydroCoreSynchFieldsFromDevice(){
 
 #ifdef GAD_EXT
    if (GADSelector > 0){
+     // TODO-- AllGather the rank-dependent RefMag and RefDir values, all all turbine values for these should be 0.0 except when a 
+     // turbine is present in a given ranks subdomain, so MPI_SUM should do the trick to gather the refmag and refdir values 
+     // into a common pair of vectors 
+     //gpuErrchk( cudaMemcpy(GAD_turbineRefMag, GAD_turbineRefMag_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
+     //gpuErrchk( cudaMemcpy(GAD_turbineRefDir, GAD_turbineRefDir_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
      if (GADoutputForces == 1){
        gpuErrchk( cudaMemcpy(GAD_forceX, GAD_forceX_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );
        gpuErrchk( cudaMemcpy(GAD_forceY, GAD_forceY_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );

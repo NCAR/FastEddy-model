@@ -14,6 +14,11 @@ extern int GADaxialInduction;   /* Flag to compute axial induction factor: 0==of
 extern float GADaxialIndVal;    /* Prescribed constant axial induction factor when GADaxialInduction==1 */
 extern int GADrefSwitch;        /* Switch to use reference windspeed: 0=off, 1=on */
 extern float GADrefU;           /* Prescribed constant reference hub-height windspeed*/
+extern float GADrefSampWindow;  /* Sample duration over which to average per-timestep values (filtering out highest frequencies)*/
+extern int GADsamplingAvgLength;/* number of timestep in the prescribed sample window */
+extern float GADsamplingAvgWeight;/* sample window averaging weight*/
+extern int GADrefSeriesLength;  /* Number of sampling windows over which to average again for reference velocity magnitude and direction */
+extern float GADrefSeriesWeight;  /* ref Series averaging weight */
 extern int GADForcingSwitch;    /* Switch to use the GADrefU-based or local windspeed in computing GAD forces: 0=local, 1=ref */
 extern int GADNumTurbines;      /* Number of GAD Turbines */
 extern int GADNumTurbineTypes;  /* Number of GAD Turbine Types */
@@ -25,8 +30,14 @@ extern int numgridCells_away; /*Halo-region of cells considered in rotor disk di
 
 /*---GAD turbine characteristics arrays */
 extern int* GAD_turbineType;    /* Integer class-label for turbine type*/ 
+extern int* GAD_turbineRank;    /* Integer mpi-rank of nacelle center cell for each turbine reference velMag and velDir grid cell*/ 
+extern int* GAD_turbineRefi;    /* Integer i-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/ 
+extern int* GAD_turbineRefj;    /* Integer j-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/   
+extern int* GAD_turbineRefk;    /* Integer k-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/    
 extern float* GAD_Xcoords;      /* SW-corner (0,0)-relative x-coordinate of turbines [m]*/ 
 extern float* GAD_Ycoords;      /* SW-corner (0,0)-relative y-coordinate of turbines [m]*/
+extern float* GAD_turbineRefMag;/* Reference "ambient" velocity magnitude for yaw control and beta/omega [m/s]*/
+extern float* GAD_turbineRefDir;/* *Reference "ambient" velocity direction (horizontal, met. standard orientation) for yaw control and beta/omega [degrees]*/
 extern float* GAD_rotorTheta;   /* rotor-normal horizontal angle from North [degrees]*/
 extern float* GAD_hubHeights;   /* Above-ground-level hub-heights of turbines [m]*/
 extern float* GAD_rotorD;       /* turbine-specific rotor diameters  [m]*/
@@ -69,6 +80,11 @@ int GADInit();
 * the inputs file.
 */
 int GADConstructor();
+
+/*----->>>>> int GADInitTurbineRefChars();   ----------------------------------------------------------------------
+* This function iinitializes turbine reference location characteristic values (location mpi_rank and i,j,k indices).
+*/
+int GADInitTurbineRefChars(float dt);
 
 /*----->>>>> int GADCreateTurbineVolMask();   ----------------------------------------------------------------------
 * This function creates the swept-volume mask (of turbine IDs as floats) for the turbine array

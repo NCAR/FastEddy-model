@@ -10,6 +10,11 @@ int GADaxialInduction;   /* Flag to compute axial induction factor: 0==off (uses
 float GADaxialIndVal;    /* Prescribed constant axial induction factor when GADaxialInduction==1 */
 int GADrefSwitch;        /* Switch to use reference windspeed: 0=off, 1=on */
 float GADrefU;           /* Prescribed constant reference hub-height windspeed*/
+float GADrefSampleWindow;/* Sample duration over which to average per-timestep values (filtering out highest frequencies) */
+int GADsamplingAvgLength;/* number of timestep in the prescribed sample window */
+float GADsamplingAvgWeight;/* sample window averaging weight*/
+int GADrefSeriesLength;  /* Number of sampling windows over which to average again for reference velocity magnitude and direction */
+float GADrefSeriesWeight;  /* ref Series averaging weight */
 int GADForcingSwitch;    /* Switch to use the GADrefU-based or local windspeed in computing GAD forces: 0=local, 1=ref */
 int GADNumTurbines;      /* Number of GAD Turbines */
 int GADNumTurbineTypes;  /* Number of GAD Turbine Types */
@@ -20,8 +25,14 @@ int alphaBounds;         /* Number of elements in the min/max angle of attack ar
 int numgridCells_away; /*Halo-region of cells considered in rotor disk distance-wise smoothing function*/
 /*---GAD turbine characteristics arrays */
 int* GAD_turbineType;    /* Integer class-label for turbine type*/
+int* GAD_turbineRank;    /* Integer mpi-rank of nacelle center cell for each turbine reference velMag and velDir grid cell*/
+int* GAD_turbineRefi;    /* Integer i-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/
+int* GAD_turbineRefj;    /* Integer j-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/
+int* GAD_turbineRefk;    /* Integer k-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/
 float* GAD_Xcoords;      /* SW-corner (0,0)-relative x-coordinate of turbines [m]*/ 
 float* GAD_Ycoords;      /* SW-corner (0,0)-relative y-coordinate of turbines [m]*/
+float* GAD_turbineRefMag;/* Reference "ambient" velocity magnitude for yaw control and beta/omega [m/s]*/
+float* GAD_turbineRefDir;/* *Reference "ambient" velocity direction (horizontal, met. standard orientation) for yaw control and beta/omega [degrees]*/
 float* GAD_rotorTheta;   /* rotor-normal horizontal angle from North [degrees]*/
 float* GAD_hubHeights;   /* Above-ground-level hub-heights of turbines [m]*/
 float* GAD_rotorD;       /* turbine-specific rotor diameters [m]*/
@@ -64,6 +75,10 @@ int GADGetParams(){
      errorCode = queryIntegerParameter("GADrefSwitch", &GADrefSwitch, 0, 1, PARAM_OPTIONAL);
      GADrefU = 0.0; // default to 0.0 m/s
      errorCode = queryFloatParameter("GADrefU", &GADrefU, 0.0, 50.0, PARAM_OPTIONAL);
+     GADrefSampleWindow = 10.0; // default to 10.0 seconds, limit in range 1.0-60.0 seconds
+     errorCode = queryFloatParameter("GADrefSampleWindow", &GADrefSampleWindow, 1.0, 60.0, PARAM_OPTIONAL);
+     GADrefSeriesLength = 30; // default to a series length of 30 sample-window averaged values 
+     errorCode = queryIntegerParameter("GADrefSeriesLength", &GADrefSeriesLength, 1, 360, PARAM_OPTIONAL);
      GADForcingSwitch = 0; // default off
      errorCode = queryIntegerParameter("GADForcingSwitch", &GADForcingSwitch, 0, 1, PARAM_OPTIONAL);
    }//End if GADSelector > 0
@@ -87,6 +102,8 @@ int GADPrintParams(){
        printParameter("GADaxialIndVal", "Prescribed constant axial induction factor when GADaxialInduction==1");
        printParameter("GADrefSwitch", "Switch to use reference windspeed: 0=off, 1=on");
        printParameter("GADrefU", "Prescribed constant reference hub-height windspeed");
+       printParameter("GADrefSampleWindow", "Sample duration over which to average per-timestep values (filtering out highest frequencies)");
+       printParameter("GADrefSeriesLength", "Number of sampling windows over which to average again for reference velocity magnitude and direction");
        printParameter("GADForcingSwitch", "Switch to use the GADrefU-based or local windspeed in computing GAD forces: 0=local, 1=ref");
      }
    } //end if(mpi_rank_world == 0)
@@ -132,7 +149,7 @@ int GADInit(){
       MPI_Bcast(&GADForcingSwitch, 1, MPI_INT, 0, MPI_COMM_WORLD);
    } //end if GADSelector > 0
 
-
+   
    /*Could set this to be a runtime parameter at some point, setting constant for now.*/
    numgridCells_away = 3;
  
@@ -249,7 +266,8 @@ int GADConstructor(){
   printf("%d/%d alphaBounds = %d\n",mpi_rank_world,mpi_size_world, alphaBounds);
   fflush(stdout);
 #endif
-  
+    
+
   /*Allocate for the GAD_turbineType array*/
   sprintf(fldName,"GAD_turbineType");
   intfldPtr = &GAD_turbineType;
@@ -588,11 +606,99 @@ int GADConstructor(){
     }
   } //end if mpi_rank_world == 0
 
+  /*Allocate for other turbine-specific internal characteristics arrays*/
+  GAD_turbineRank = (int*) malloc(GADNumTurbines*sizeof(int));
+  GAD_turbineRefi = (int*) malloc(GADNumTurbines*sizeof(int));
+  GAD_turbineRefj = (int*) malloc(GADNumTurbines*sizeof(int));
+  GAD_turbineRefk = (int*) malloc(GADNumTurbines*sizeof(int));
+  GAD_turbineRefMag = (float*) malloc(GADNumTurbineTypes*sizeof(float));
+  GAD_turbineRefDir = (float*) malloc(GADNumTurbineTypes*sizeof(float));
+
   return(errorCode);
 } //end GADConstructor()
 
+/*----->>>>> int GADInitTurbineRefChars();   ----------------------------------------------------------------------
+* This function iinitializes turbine reference location characteristic values (location mpi_rank and i,j,k indices). 
+*/
+int GADInitTurbineRefChars(float dt){
+  int errorCode = GAD_SUCCESS;
+  int iturb,i,j,k;
+  int ijk;
+  int ij;
+  float rVec;
+  float rVec0;
+  float deltaz, deltaz0;
+  
+  /*Initialize requisite parameters for the RefMag and RefDir calculations*/
+  GADsamplingAvgLength = (int) floor(GADrefSampleWindow/dt);    //Determine the number of model timesteps in a sample window (high frequencies filter)
+  MPI_Bcast(&GADsamplingAvgLength, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  GADsamplingAvgWeight = 1.0/((float) GADsamplingAvgLength); //Precompute the averaging weight across instances in a sample window.
+  MPI_Bcast(&GADsamplingAvgWeight, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+  GADrefSeriesWeight = 1.0/((float) GADrefSeriesLength);  //Precompute the averaging weight across the full reference averaging period series of sample average values  
+  MPI_Bcast(&GADrefSeriesLength, 1, MPI_INT, 0, MPI_COMM_WORLD); //Broadcast the read-in parameter for series length to all ranks
+  MPI_Bcast(&GADrefSeriesWeight, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+#if 1
+//#ifdef DEBUG_TURBCHAR
+  printf("%d/%d: GADsamplingAvgLength=%d, GADsamplingAvgWeight=%f, GADrefSeriesLength=%d, GADrefSeriesWeight=%f\n",
+         mpi_rank_world,mpi_size_world,GADsamplingAvgLength,GADsamplingAvgWeight,GADrefSeriesLength,GADrefSeriesWeight);
+  fflush(stdout);
+#endif
+
+  for(iturb = 0; iturb < GADNumTurbines; iturb++){
+    rVec0 = 99999.9999;
+    deltaz0 = 99999.9999;
+    GAD_turbineRank[iturb] = -999;  //Initialize to special "absent" value of -999
+    GAD_turbineRefi[iturb] = -999;  //Initialize to special "absent" value of -999
+    GAD_turbineRefj[iturb] = -999;  //Initialize to special "absent" value of -999
+    GAD_turbineRefk[iturb] = -999;  //Initialize to special "absent" value of -999
+    GAD_turbineRefMag[iturb] = 0.0;  //Standard initialization to zero
+    GAD_turbineRefDir[iturb] = 0.0;  //Standard initialization to zero
+    for(i=iMin-Nh; i < iMax+Nh; i++){
+      for(j=jMin-Nh; j < jMax+Nh; j++){
+        for(k=kMin-Nh; k < kMax+Nh; k++){
+           ijk = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+k;
+           ij = i*(Nyp+2*Nh)+j;
+           rVec = sqrt( pow((GAD_Xcoords[iturb]-xPos[ijk]),2.0)
+                       +pow((GAD_Ycoords[iturb]-yPos[ijk]),2.0));
+           if(rVec <= sqrt(pow(dX,2.0)+pow(dY,2.0))){ //Should be a candiate gridcell for (nacelle center) reference location
+	     if(rVec <= rVec0){
+	       if(rVec < rVec0){
+	         rVec0 = rVec;
+	         GAD_turbineRank[iturb] = mpi_rank_world; 
+                 GAD_turbineRefi[iturb] = i;
+	         GAD_turbineRefj[iturb] = j;
+	       }
+	       deltaz = sqrt(pow((GAD_hubHeights[GAD_turbineType[iturb]]-(zPos[ijk]-topoPos[ij])),2.0));
+#ifdef DEBUG_TURBCHAR
+               printf("%d/%d: deltaz = %f, 0.5/(J33[ijk]*dZi)) = %f\n",
+                      mpi_rank_world,mpi_size_world, deltaz, 0.5/(J33[ijk]*dZi));
+#endif
+               if(deltaz <= 0.5/(J33[ijk]*dZi)){         // 1/(J33[ijk]*dZi)) = dz of cell
+		 deltaz0 = deltaz;      
+		 GAD_turbineRefk[iturb] = k;      
+               }//end if vertical delta < dz ...
+             }//end if rVec < rVec0...
+           }//end if rVec...
+        } //end for(k...
+      } // end for(j...
+    } // end for(i...
+    //dummy update here making use of deltaz0 avoiding compiler warning for an usused variable
+    deltaz = deltaz0;
+#ifdef DEBUG_TURBCHAR
+    if(GAD_turbineRank[iturb] == mpi_rank_world){
+      printf("%d/%d: Turbine %d has determined nacelle center cell @ %d,%d,%d with rVec0 = %f and deltaz0 = %f\n",
+             mpi_rank_world,mpi_size_world,iturb,GAD_turbineRefi[iturb],GAD_turbineRefj[iturb],GAD_turbineRefk[iturb],rVec0, deltaz0);
+      fflush(stdout);
+    }
+#endif
+  }// end for iturb...
+
+
+  return(errorCode);
+}//end int GADInitTurbineRefChars() 
+
 /*----->>>>> int GADCreateTurbineVolMask();   ----------------------------------------------------------------------
- * This function creates the swept-volume mask (of turbine IDs as floats) for the turbine array
+* This function creates the swept-volume mask (of turbine IDs as floats) for the turbine array
 */
 int GADCreateTurbineVolMask(){
   int errorCode = GAD_SUCCESS;
@@ -740,8 +846,14 @@ int GADDestructor(){
   int errorCode = GAD_SUCCESS;
 
   free(GAD_turbineType);
+  free(GAD_turbineRank);
+  free(GAD_turbineRefi);
+  free(GAD_turbineRefj);
+  free(GAD_turbineRefk);
   free(GAD_Xcoords);
   free(GAD_Ycoords);
+  free(GAD_turbineRefMag);
+  free(GAD_turbineRefDir);
   free(GAD_rotorTheta);
   free(GAD_hubHeights);
   free(GAD_rotorD);
