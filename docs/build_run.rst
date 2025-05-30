@@ -40,7 +40,7 @@ Derecho
   module use /glade/work/fasteddyrt/derecho/installations/modulefiles
   module load fasteddy/<version>
 
-  For additional information about Derecho, see the
+For additional information about Derecho, see the
 `NCAR HPC Derecho Documentation <https://ncar-hpc-docs.readthedocs.io/en/latest/compute-systems/derecho/>`_.
 
 Compilation
