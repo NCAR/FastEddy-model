@@ -29,10 +29,6 @@ Casper
   module use /glade/work/fasteddyrt/casper/installations/modulefiles
   module load fasteddy/<version>
 
-
-For additional information about Casper, see the
-`NCAR HPC Casper Documentation <https://ncar-hpc-docs.readthedocs.io/en/latest/compute-systems/casper/>`_.
-
 Derecho
 -------
 
@@ -40,10 +36,6 @@ Derecho
 
   module use /glade/work/fasteddyrt/derecho/installations/modulefiles
   module load fasteddy/<version>
-
-
-For additional information about Derecho, see the
-`NCAR HPC Derecho Documentation <https://ncar-hpc-docs.readthedocs.io/en/latest/compute-systems/derecho/>`_.
 
 Compilation
 ===========
