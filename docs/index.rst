@@ -53,8 +53,7 @@ web: https://fluidnumerics.com, email: support@fluidnumerics.com
    :hidden:
 
    release_notes.rst
-   run_ncar_hpcs.rst
-   run_amd_gpus.rst
+   build_run.rst
    downloads.rst
    Tutorials/index
    publications.rst
