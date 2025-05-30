@@ -16,9 +16,12 @@ The FastEddy team has installed the FastEddy software on both Casper and
 Derecho.
 
 If desired, users can skip the compilation step and run the following
-commands to load FastEddy, replacing *<version>* with the desired
-X.Y.Z version to load (e.g. 4.0.0, 3.0.0, etc.). Please note that the
-commands to load FastEddy assume the user is using bash.
+commands to load FastEddy. 
+
+.. note::
+
+   Users need to replace *<version>* with the desired X.Y.Z version to
+   load (e.g. 4.0.0, 3.0.0, etc.).** 
 
 
 Casper
