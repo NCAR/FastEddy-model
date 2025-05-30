@@ -24,10 +24,11 @@ commands to load FastEddy assume the user is using bash.
 Casper
 ------
 
-.. code_block:: ini
+.. code-block:: shell
 
   module use /glade/work/fasteddyrt/casper/installations/modulefiles
   module load fasteddy/<version>
+
 
 For additional information about Casper, see the
 `NCAR HPC Casper Documentation <https://ncar-hpc-docs.readthedocs.io/en/latest/compute-systems/casper/>`_.
@@ -35,10 +36,11 @@ For additional information about Casper, see the
 Derecho
 -------
 
-.. code_block:: ini
+.. code-block:: shell
 
   module use /glade/work/fasteddyrt/derecho/installations/modulefiles
   module load fasteddy/<version>
+
 
 For additional information about Derecho, see the
 `NCAR HPC Derecho Documentation <https://ncar-hpc-docs.readthedocs.io/en/latest/compute-systems/derecho/>`_.
