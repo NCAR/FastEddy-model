@@ -24,7 +24,7 @@ commands to load FastEddy assume the user is using bash.
 Casper
 ------
 
-..code_block:: ini
+.. code_block:: ini
 
   module use /glade/work/fasteddyrt/casper/installations/modulefiles
   module load fasteddy/<version>
@@ -35,7 +35,7 @@ For additional information about Casper, see the
 Derecho
 -------
 
-..code_block:: ini
+.. code_block:: ini
 
   module use /glade/work/fasteddyrt/derecho/installations/modulefiles
   module load fasteddy/<version>
