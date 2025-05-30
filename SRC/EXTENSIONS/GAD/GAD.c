@@ -29,10 +29,13 @@ int* GAD_turbineRank;    /* Integer mpi-rank of nacelle center cell for each tur
 int* GAD_turbineRefi;    /* Integer i-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/
 int* GAD_turbineRefj;    /* Integer j-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/
 int* GAD_turbineRefk;    /* Integer k-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/
+int* GAD_turbineYawing;  /* Integer indicating in a turbine is currently yawing ==1*/
 float* GAD_Xcoords;      /* SW-corner (0,0)-relative x-coordinate of turbines [m]*/ 
 float* GAD_Ycoords;      /* SW-corner (0,0)-relative y-coordinate of turbines [m]*/
 float* GAD_turbineRefMag;/* Reference "ambient" velocity magnitude for yaw control and beta/omega [m/s]*/
 float* GAD_turbineRefDir;/* *Reference "ambient" velocity direction (horizontal, met. standard orientation) for yaw control and beta/omega [degrees]*/
+float* GAD_yawError;     /* yaw error between the incoming wind and the turbine orientation */
+float* GAD_anFactor;     /* turbine axial induction factor at hub heigth*/
 float* GAD_rotorTheta;   /* rotor-normal horizontal angle from North [degrees]*/
 float* GAD_hubHeights;   /* Above-ground-level hub-heights of turbines [m]*/
 float* GAD_rotorD;       /* turbine-specific rotor diameters [m]*/
@@ -611,8 +614,11 @@ int GADConstructor(){
   GAD_turbineRefi = (int*) malloc(GADNumTurbines*sizeof(int));
   GAD_turbineRefj = (int*) malloc(GADNumTurbines*sizeof(int));
   GAD_turbineRefk = (int*) malloc(GADNumTurbines*sizeof(int));
+  GAD_turbineYawing = (int*) malloc(GADNumTurbines*sizeof(int));
   GAD_turbineRefMag = (float*) malloc(GADNumTurbineTypes*sizeof(float));
   GAD_turbineRefDir = (float*) malloc(GADNumTurbineTypes*sizeof(float));
+  GAD_yawError = (float*) malloc(GADNumTurbineTypes*sizeof(float));
+  GAD_anFactor = (float*) malloc(GADNumTurbineTypes*sizeof(float));
 
   return(errorCode);
 } //end GADConstructor()
@@ -651,8 +657,11 @@ int GADInitTurbineRefChars(float dt){
     GAD_turbineRefi[iturb] = -999;  //Initialize to special "absent" value of -999
     GAD_turbineRefj[iturb] = -999;  //Initialize to special "absent" value of -999
     GAD_turbineRefk[iturb] = -999;  //Initialize to special "absent" value of -999
-    GAD_turbineRefMag[iturb] = 0.0;  //Standard initialization to zero
-    GAD_turbineRefDir[iturb] = 0.0;  //Standard initialization to zero
+    GAD_turbineRefMag[iturb] = 0.0; //Standard initialization to zero
+    GAD_turbineRefDir[iturb] = 0.0; //Standard initialization to zero
+    GAD_turbineYawing[iturb] = 0;   //Initialize to all turbines not rotating
+    GAD_yawError[iturb] = 0.0;      //Initialize to zero yaw error
+    GAD_anFactor[iturb] = 0.0;      //Initialize to zero axial induction factor
     for(i=iMin-Nh; i < iMax+Nh; i++){
       for(j=jMin-Nh; j < jMax+Nh; j++){
         for(k=kMin-Nh; k < kMax+Nh; k++){
@@ -850,10 +859,13 @@ int GADDestructor(){
   free(GAD_turbineRefi);
   free(GAD_turbineRefj);
   free(GAD_turbineRefk);
+  free(GAD_turbineYawing);
   free(GAD_Xcoords);
   free(GAD_Ycoords);
   free(GAD_turbineRefMag);
   free(GAD_turbineRefDir);
+  free(GAD_yawError);
+  free(GAD_anFactor);
   free(GAD_rotorTheta);
   free(GAD_hubHeights);
   free(GAD_rotorD);

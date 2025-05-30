@@ -31,6 +31,7 @@ extern int* GAD_turbineRank_d;     /* Integer mpi-rank of nacelle center cell fo
 extern int* GAD_turbineRefi_d;     /* Integer i-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/
 extern int* GAD_turbineRefj_d;     /* Integer j-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/
 extern int* GAD_turbineRefk_d;     /* Integer k-index of nacelle center cell for each turbine reference velMag and velDir grid cell*/
+extern int* GAD_turbineYawing_d;   /* Integer indicating in a turbine is currently yawing ==1*/
 extern float* GAD_Xcoords_d;       /* turbine x-location [m] from SW domain corner */
 extern float* GAD_Ycoords_d;       /* turbine y-location [m] from SW domain corner */
 extern float* GAD_turbineRefMag_d; /* Reference "ambient" velocity magnitude for yaw control and beta/omega [m/s]*/
@@ -39,6 +40,8 @@ extern float* GAD_turbineUseries_d;/* uSeries of sample averages spanning the ro
 extern float* GAD_turbineVseries_d;/* vSeries of sample averages spanning the rolling-average reference period */
 extern float* u_sampAvg_d;         /* u sample averages for each turbine */
 extern float* v_sampAvg_d;         /* v sample averages for each turbine */
+extern float* GAD_yawError_d;      /* yaw error between the incoming wind and the turbine orientation */
+extern float* GAD_anFactor_d;     /* turbine axial induction factor at hub heigth*/
 extern float* GAD_rotorTheta_d;    /* turbine yaw angle [deg. North] */
 extern float* GAD_hubHeights_d;    /* turbine hub height [m AGL] */
 extern float* GAD_rotorD_d;        /* turbine rotor diameter [m] */
@@ -69,31 +72,38 @@ extern "C" int cuda_GADDeviceSetup();
 */
 extern "C" int cuda_GADDeviceCleanup();
 
-/*----->>>>> __global__ void  cudaDevice_GADComputeFrhs();  --------------------------------------------------
+/*----->>>>> __global__ void  cudaDevice_GADinter();  --------------------------------------------------
+* This function is the global entry kernel for computing reference values for GAD yawing and other turbine characteristics
+*/
+__global__ void cudaDevice_GADinter(float* xPos_d, float* yPos_d, float* zPos_d, float* topoPos_d,
+		                    int simTime_it, int timeStage, int numRKstages, float dt,
+		                    float* hydroFlds_d, int* GAD_turbineType_d, float* GAD_turbineVolMask_d,
+                                    float* GAD_Xcoords_d, float* GAD_Ycoords_d, float* GAD_rotorTheta_d,
+                                    float* GAD_hubHeights_d, float* GAD_rotorD_d, float* GAD_nacelleD_d,
+                                    float* turbinePolyTwist_d, float* turbinePolyChord_d,
+                                    float* turbinePolyPitch_d, float* turbinePolyOmega_d,
+                                    float* rnorm_vect_d, float* alpha_minmax_vect_d,
+                                    float* turbinePolyCl_d, float* turbinePolyCd_d,
+                                    int* GAD_turbineRank_d, int* GAD_turbineRefi_d, int* GAD_turbineRefj_d, int* GAD_turbineRefk_d,
+                                    float* u_sampAvg_d, float* v_sampAvg_d,
+                                    float* GAD_turbineUseries_d, float* GAD_turbineVseries_d,
+                                    float* GAD_turbineRefMag_d, float* GAD_turbineRefDir_d,
+				    int* GAD_turbineYawing_d, float* GAD_yawError_d, float* GAD_anFactor_d);
+
+/*----->>>>> __global__ void  cudaDevice_GADfinal();  --------------------------------------------------
 * This function is the global entry kernel for computing GAD forcing from turbines
 */
-__global__ void cudaDevice_GADComputeFrhs(int simTime_it, int timeStage,
-                                	  float* xPos_d, float* yPos_d, float* zPos_d, float* topoPos_d, 
-                                          float* hydroFlds_d, float* hydroFldsFrhs_d,
-                                          int* GAD_turbineType_d, float* GAD_turbineVolMask_d,
-                                          float* GAD_Xcoords_d, float* GAD_Ycoords_d, float* GAD_rotorTheta_d,
-                                          float* GAD_hubHeights_d, float* GAD_rotorD_d, float* GAD_nacelleD_d,
-                                          float* turbinePolyTwist_d, float* turbinePolyChord_d,
-                                          float* turbinePolyPitch_d, float* turbinePolyOmega_d,
-                                          float* rnorm_vect_d, float* alpha_minmax_vect_d,
-                                          float* turbinePolyCl_d, float* turbinePolyCd_d,
-					  int* GAD_turbineRank_d, int* GAD_turbineRefi_d, int* GAD_turbineRefj_d, int* GAD_turbineRefk_d,
-					  float* u_sampAvg_d, float* v_sampAvg_d,
-                                          float* GAD_turbineUseries_d, float* GAD_turbineVseries_d,
-                                          float* GAD_turbineRefMag_d, float* GAD_turbineRefDir_d,
-                                          float* GAD_forceX_d, float* GAD_forceY_d, float* GAD_forceZ_d);
-
-/*----->>>>> __device__ void  cudaDevice_cellInRotorOrig();  --------------------------------------------------
-* This functions calculates a radial vector and setes a flag to detrmine if a cell is in a rotor disk area
-*/
-__device__ void cudaDevice_cellInRotorOrig(float* cell_inRotor, float* cell_rVector,
-                                       int iturb, float turbX, float turbY, float turbTheta, float turbHubHgt, float turbD,
-                                       float xLoc, float yLoc, float zLoc, float dx, float dy);
+__global__ void cudaDevice_GADfinal(float* xPos_d, float* yPos_d, float* zPos_d, float* topoPos_d,
+                                    float* hydroFlds_d, float* hydroFldsFrhs_d, int simTime_it,
+                                    int* GAD_turbineType_d, float* GAD_turbineVolMask_d,
+                                    float* GAD_Xcoords_d, float* GAD_Ycoords_d, float* GAD_rotorTheta_d,
+                                    float* GAD_hubHeights_d, float* GAD_rotorD_d, float* GAD_nacelleD_d,
+                                    float* turbinePolyTwist_d, float* turbinePolyChord_d,
+                                    float* turbinePolyPitch_d, float* turbinePolyOmega_d,
+                                    float* rnorm_vect_d, float* alpha_minmax_vect_d,
+                                    float* turbinePolyCl_d, float* turbinePolyCd_d,
+				    float* GAD_turbineRefMag_d, float* GAD_anFactor_d,
+                                    float* GAD_forceX_d, float* GAD_forceY_d, float* GAD_forceZ_d);
 
 /*----->>>>> __device__ void  cudaDevice_cellInRotor();  --------------------------------------------------
  * This functions calculates a radial vector and setes a flag to detrmine if a cell is in a rotor disk area
@@ -111,7 +121,7 @@ __device__ void cudaDevice_GADtwistChord(float* turbinePolyTwist_d, float* turbi
 
 /*----->>>>> __device__ void cudaDevice_GADbetaOmega();  --------------------------------------------------
 */
-__device__ void cudaDevice_GADbetaOmega(float u, float v, float rho, float* turbinePolyPitch_d, float* turbinePolyOmega_d,
+__device__ void cudaDevice_GADbetaOmega(float turbineRefMag, float anFactor, float* turbinePolyPitch_d, float* turbinePolyOmega_d,
                                         float rotorD, float turbineRadius, float twist_angle, float* beta_angle, float* omega_rot);
 
 /*----->>>>> __device__ void cudaDevice_GADforcesCompute();  --------------------------------------------------
@@ -144,4 +154,21 @@ __device__ void update_sampleRefVel(float u, float v, float rho, float* u_sampAv
 */
 __device__ void update_turbineRefMagDir(int sampleIndex, float u_sampAvg, float v_sampAvg,
                                         float* uSeries, float* vSeries, float* turbineRefMag, float* turbineRefDir);
+
+/*----->>>>> __device__ void update_yawError();  --------------------------------------------------
+*/
+__device__ void update_yawError(float* turbineRefDir, float* rotorTheta, float* yawError, int* turbineYawing, float dt);
+
+/*----->>>>> __device__ void update_rotorTheta();  --------------------------------------------------
+*/
+__device__ void update_rotorTheta(float* turbineRefDir, float* rotorTheta, float* yawError, int* turbineYawing, float dt);
+/*----->>>>> __device__ void Angle_TurbWind();  --------------------------------------------------
+*/
+__device__ void Angle_TurbWind(float turbineRefDir, float rotorTheta, float* diff_angle);
+/*----->>>>> __device__ void compute_normalInduction();  --------------------------------------------------
+*/
+__device__ void compute_normalInduction(float turbineRefMag, float rotorD, float nacelleD,
+                                        float turbineRadius, float beta_angle, float omega_rot, float chord_length,
+                                        float *rnorm_vect, float *alpha_minmax_vect, float *turbinePolyCl, float *turbinePolyCd,
+					float *turbineRefAn);
 #endif // _GAD_CUDADEV_CU_H

@@ -35,6 +35,11 @@
 #include <time_integration.h>
 #include <cuda_timeInt.h>
 
+/*Model-Extensions includes*/
+#ifdef GAD_EXT
+  #include <GAD.h>
+#endif
+
 /***    main.c    ***/
 int main(int argc, char **argv){
   int errorCode;
@@ -399,6 +404,9 @@ int main(int argc, char **argv){
 #else  /* ---------------  CUDA FASTEDDY !!!!! -------------------------  */
      /*Launch the GPU batch timestep kernel*/
      errorCode = cuda_timeIntCommence(itTmp);
+#ifdef GAD_EXT
+     errorCode = GADUpdateTurbineRotorMask();
+#endif
            /*Build an Frhs*/
            /*Update the prognostic variables*/
            /*Do any necessary halo exchange*/
