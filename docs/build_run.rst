@@ -113,7 +113,7 @@ modules/dependencies. Successful compilation may require modifications to shell 
 variable include or library paths, or alternatively minor adjustments to the include or
 library flags in **SRC/FEMAIN/Makefile.hip**.
 
-Exmaple PBS Run Scripts
+Example PBS Run Scripts
 =======================
 
 Below is bash-based PBS job submission script for running the model on NSF NCAR's Casper
