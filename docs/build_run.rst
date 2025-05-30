@@ -20,8 +20,8 @@ commands to load FastEddy.
 
 .. note::
 
-   Users need to replace *<version>* with the desired X.Y.Z version to
-   load (e.g. 4.0.0, 3.0.0, etc.).** 
+   Users need to replace *<version>* below with the desired X.Y.Z
+   version to load (e.g. 4.0.0, 3.0.0, etc.).
 
 
 Casper
