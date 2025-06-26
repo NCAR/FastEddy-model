@@ -82,7 +82,13 @@ extern "C" int cuda_hydroCoreDeviceBuildCPmethod(int simTime_it){
    curandSetPseudoRandomGeneratorSeed(gen,simTime_it);
    curandGenerateUniform(gen,randcp_d,n_tot);
 
-   cudaDevice_hydroCoreCompleteCellPerturbation<<<grid, tBlock>>>(hydroFlds_d,randcp_d,mpi_rank_world,numProcsX,numProcsY);
+   if(urbanSelector==0){
+     cudaDevice_hydroCoreCompleteCellPerturbation<<<grid, tBlock>>>(hydroFlds_d,randcp_d,mpi_rank_world,numProcsX,numProcsY);
+   }else{
+#ifdef URBAN_EXT
+     cudaDevice_hydroCoreCompleteCellPerturbationMasked<<<grid, tBlock>>>(hydroFlds_d,randcp_d,mpi_rank_world,numProcsX,numProcsY,building_mask_d);
+#endif
+   }
 
 //#define TIMERS_LEVEL2
 #ifdef TIMERS_LEVEL2
@@ -138,6 +144,33 @@ __global__ void cudaDevice_hydroCoreCompleteCellPerturbation(float* hydroFlds, f
    }//end if in the range of non-halo cells
 
 } // end cudaDevice_hydroCoreCompleteCellPerturbation()
+
+__global__ void cudaDevice_hydroCoreCompleteCellPerturbationMasked(float* hydroFlds, float* randcp_d, int my_mpi, int numpx, int numpy, float* bdg_mask){
+
+   int i,j,k,ijk;
+   int fldStride;
+   int iStride,jStride,kStride;
+
+   /*Establish necessary indices for spatial locality*/
+   i = (blockIdx.x)*blockDim.x + threadIdx.x;
+   j = (blockIdx.y)*blockDim.y + threadIdx.y;
+   k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+   fldStride = (Nx_d+2*Nh_d)*(Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+   iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+   jStride = (Nz_d+2*Nh_d);
+   kStride = 1;
+
+   if((i >= iMin_d)&&(i < iMax_d) &&
+      (j >= jMin_d)&&(j < jMax_d) &&
+      (k >= kMin_d)&&(k < kMax_d) ){
+      if((k >= (cellpert_kbottom_d+Nh_d-1))&&(k <= (cellpert_ktop_d+Nh_d-1))){ // call to cell perturbation device kernel
+        ijk = i*iStride + j*jStride + k*kStride;
+        cudaDevice_CellPerturbationMasked(i,j,k,Nx_d,Ny_d,Nz_d,Nh_d,my_mpi,numpx,numpy,&hydroFlds[RHO_INDX*fldStride+ijk],&hydroFlds[THETA_INDX*fldStride+ijk],randcp_d,&bdg_mask[ijk]);
+      }
+   }//end if in the range of non-halo cells
+
+} // end cudaDevice_hydroCoreCompleteCellPerturbationMasked()
 
 /*----->>>>> __device__ void  cudaDevice_CellPerturbation();  --------------------------------------------------
 */

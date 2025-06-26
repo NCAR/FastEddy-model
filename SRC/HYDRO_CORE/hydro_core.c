@@ -26,6 +26,11 @@
 #include <grid.h>
 #include <hydro_core.h>
 
+/*Model-Extensions includes*/
+#ifdef URBAN_EXT
+  #include <urban.c>
+#endif
+
 
 /*##################------------------- HYDRO_CORE module variable definitions ---------------------#################*/
 int Nhydro = 5;              /*Number of prognostic variable fields under hydro_core */
@@ -275,6 +280,9 @@ float thetaHeight; /* Initial theta perturbations maximum height*/
 float thetaAmplitude; /* Initial theta perturbation (maximum amplitude in K)*/
 
 int physics_oneRKonly; /* selector to apply physics RHS forcing only at the latest RK stage */
+
+/*Other selectors*/
+int urbanSelector;          /* urban selector: 0=off, 1=on */
  
 /*###################------------------- HYDRO_CORE module function definitions ---------------------#################*/
 
@@ -623,6 +631,15 @@ int hydro_coreGetParams(){
    physics_oneRKonly = 1; //Default 1 (physics only at the last stage of RK scheme)
    errorCode = queryIntegerParameter("physics_oneRKonly", &physics_oneRKonly, 0, 1, PARAM_OPTIONAL);
 
+// Other selectors
+   urbanSelector = 0; // Default to off
+   errorCode = queryIntegerParameter("urbanSelector", &urbanSelector, 0, 2, PARAM_MANDATORY);
+
+#ifdef URBAN_EXT
+   /*New EXTENSIONS sub-module style call to get parameters for the URBAN sub-module*/
+   errorCode = URBANGetParams();
+#endif
+
    return(errorCode);
 } //end hydro_coreGetParams()
 
@@ -823,7 +840,13 @@ int hydro_coreInit(){
       printParameter("thetaHeight", "Height below which to include initial theta perturbations: (meters)");
       printParameter("thetaAmplitude", "Maximum amplitude for theta perturbations: thetaAmplitude*[-1,+1] K");
       printParameter("physics_oneRKonly", "selector to apply physics RHS forcing only at the latest RK stage: 0= off, 1= on");
+      printComment("----------: URBAN MODEL ---");
+      printParameter("urbanSelector", "urban selector: 0= off, 1= on");
    } //end if(mpi_rank_world == 0)
+#ifdef URBAN_EXT
+   /*New EXTENSIONS sub-module style call to print parameters for the URBAN sub-module*/
+   errorCode = URBANPrintParams();
+#endif
 
    /*Broadcast the parameters across mpi_ranks*/
    MPI_Bcast(&hydroBCs, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -1250,6 +1273,12 @@ int hydro_coreInit(){
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],z0t);
      fflush(stdout);
+
+     MPI_Bcast(&urbanSelector, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#ifdef URBAN_EXT
+     /*New sub-module style Init() call for URBAN initialization.*/
+     errorCode=URBANInit();
+#endif
 
      MPI_Barrier(MPI_COMM_WORLD);   
      
@@ -3163,6 +3192,12 @@ int hydro_coreCleanup(){
        free(SURFBdyPlanesNext);
      }
    } //end if hydroBCs==1
+
+#ifdef URBAN_EXT
+   if(urbanSelector > 0){
+     errorCode = URBANCleanup();
+   }
+#endif
 
    return(errorCode);
 }//end hydro_coreCleanup()

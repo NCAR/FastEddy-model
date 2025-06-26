@@ -16,6 +16,12 @@
 #ifndef _HYDRO_CORE_H
 #define _HYDRO_CORE_H
 
+/*Model-Extensions includes*/
+#define URBAN_EXT
+#ifdef URBAN_EXT
+  #include <urban.h>
+#endif
+
 /*hydro_core_ return codes */
 #define HYDRO_CORE_SUCCESS    0
 
@@ -276,6 +282,9 @@ extern float thetaPerturbationHeight; /* Initial theta perturbations maximum hei
 extern float thetaPerturbationAmplitude; /* Initial theta perturbations maximum amplitude*/
 
 extern int physics_oneRKonly; /* selector to apply physics RHS forcing only at the latest RK stage */
+
+/*Other selectors*/
+extern int urbanSelector;          /* urban selector: 0=off, 1=on */
 
 /*###################------------- HYDRO_CORE module function declarations ---------------------#################*/
 
