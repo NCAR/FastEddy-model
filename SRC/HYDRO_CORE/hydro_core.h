@@ -17,7 +17,6 @@
 #define _HYDRO_CORE_H
 
 /*Model-Extensions includes*/
-#define URBAN_EXT
 #ifdef URBAN_EXT
   #include <urban.h>
 #endif
