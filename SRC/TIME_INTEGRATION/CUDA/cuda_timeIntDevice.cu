@@ -79,7 +79,7 @@ extern "C" int cuda_timeIntDeviceSetup(){
    //Ensure secondary time-integration dependent hydro_core parameters get initialized
    errorCode = cuda_hydroCoreDeviceSecondaryStageSetup(dt);
    //Inital Host-to-Device field copies 
-   errorCode = cuda_timeIntHydroInitDevice();  //Transfer initial/restart conditions to the device
+   errorCode = cuda_hydroCoreInitFieldsDevice();  //Transfer initial/restart conditions to the device
    //printf("cuda_timeIntDeviceSetup() complete.\n");
 
    /* Done */
@@ -160,116 +160,8 @@ extern "C" int cuda_timeIntDeviceCommence(int it){
    }//end for itBatch...
 
    //Retrieve desired HYDRO_CORE fields from device
-   errorCode = cuda_timeIntHydroSynchFromDevice();
+   errorCode = cuda_hydroCoreSynchFieldsFromDevice();
    
    return(errorCode);
 }//end cuda_timeIntDeviceCommence()
 
-/*----->>>>> extern "C" int cuda_timeIntHydroInitDevice();  -----------------------------------------------------------
-* This function handles the one-time initializations of on-device (GPU) memory by executing the appropriate sequence 
-* of cudaMemcpyHostToDevice data transfers.
-*/
-extern "C" int cuda_timeIntHydroInitDevice(){
-   int errorCode = TIME_INTEGRATION_SUCCESS;
-   int Nelems;
-   int Nelems2d;
-   /*Set the full memory block number of elements for transfers of 2-d and 3-d fields*/
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   Nelems2d = (Nxp+2*Nh)*(Nyp+2*Nh);
-   /*Copy the host hydroFlds to the device */
-   cudaMemcpy(hydroFlds_d, hydroFlds, Nelems*Nhydro*sizeof(float), cudaMemcpyHostToDevice);
-   if(TKESelector > 0){ /*Copy any required SGS TKE equation fields to device */ 
-     cudaMemcpy(sgstkeScalars_d, sgstkeScalars, Nelems*TKESelector*sizeof(float), cudaMemcpyHostToDevice);
-   }
-   if(moistureSelector > 0){ /*Copy any required moisture fields to device */ 
-     cudaMemcpy(moistScalars_d, moistScalars, Nelems*moistureNvars*sizeof(float), cudaMemcpyHostToDevice);
-   }
-   if(surflayerSelector > 0){ /*Copy any required host auxiliary sclar fields to the device */
-     cudaMemcpy(tskin_d, tskin, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
-     cudaMemcpy(fricVel_d, fricVel, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
-     cudaMemcpy(htFlux_d, htFlux, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
-     cudaMemcpy(z0m_d, z0m, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
-     cudaMemcpy(z0t_d, z0t, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
-     if (moistureSelector > 0){
-       cudaMemcpy(qskin_d, qskin, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
-       cudaMemcpy(qFlux_d, qFlux, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
-     }
-   }// end if surflayerSelector > 0
-   if(NhydroAuxScalars > 0){ /*Copy any required host auxiliary sclar fields to the device */
-     cudaMemcpy(hydroAuxScalars_d, hydroAuxScalars, Nelems*NhydroAuxScalars*sizeof(float), cudaMemcpyHostToDevice);
-   }// end if hydroAuxScalars > 0
-   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
-   gpuErrchk( cudaDeviceSynchronize() );
-   return(errorCode);
-}//end cuda_timeIntHydroInitDevice()
-
-/*----->>>>> extern "C" int cuda_timeIntHydroSynchFromDevice();  --------------------------------------------------
-* This function handles the synchronization to host of on-device (GPU) fields  by executing the appropriate sequence 
-* of cudaMemcpyDeviceiToHost data transfers.
-*/
-extern "C" int cuda_timeIntHydroSynchFromDevice(){
-   int errorCode = TIME_INTEGRATION_SUCCESS;
-   int Nelems;
-   int Nelems2d;
-
-   /*Set the full memory block number of elements for transfers of 2-d and 3-d fields*/
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   Nelems2d = (Nxp+2*Nh)*(Nyp+2*Nh);
-
-   /* Send any desired GPU-computed HYDRO_CORE arrays from Device up to Host*/
-   gpuErrchk( cudaMemcpy(hydroPres, hydroPres_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );
-   gpuErrchk( cudaMemcpy(hydroFlds, hydroFlds_d, Nelems*Nhydro*sizeof(float), cudaMemcpyDeviceToHost) );
-   if((hydroForcingWrite==1)||(hydroForcingLog==1)){
-     gpuErrchk( cudaMemcpy(hydroFldsFrhs, hydroFldsFrhs_d, Nelems*Nhydro*sizeof(float), cudaMemcpyDeviceToHost) );
-   } //endif we need to send up the Frhs
-   if (TKESelector > 0){ 
-     gpuErrchk( cudaMemcpy(sgstkeScalars, sgstkeScalars_d, Nelems*TKESelector*sizeof(float), cudaMemcpyDeviceToHost) );
-     if ((hydroForcingWrite==1)||(hydroForcingLog==1)){
-       gpuErrchk( cudaMemcpy(sgstkeScalarsFrhs, sgstkeScalarsFrhs_d, Nelems*TKESelector*sizeof(float), cudaMemcpyDeviceToHost) );
-     }
-   }
-   if (moistureSelector > 0){ 
-     gpuErrchk( cudaMemcpy(moistScalars, moistScalars_d, Nelems*moistureNvars*sizeof(float), cudaMemcpyDeviceToHost) );
-     if ((hydroForcingWrite==1)||(hydroForcingLog==1)){
-       gpuErrchk( cudaMemcpy(moistScalarsFrhs, moistScalarsFrhs_d, Nelems*moistureNvars*sizeof(float), cudaMemcpyDeviceToHost) );
-     }
-   }
-   if(surflayerSelector > 0){
-     gpuErrchk( cudaMemcpy(fricVel, fricVel_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
-     gpuErrchk( cudaMemcpy(htFlux, htFlux_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
-     gpuErrchk( cudaMemcpy(tskin, tskin_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
-     gpuErrchk( cudaMemcpy(invOblen, invOblen_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
-     gpuErrchk( cudaMemcpy(z0m, z0m_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
-     gpuErrchk( cudaMemcpy(z0t, z0t_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
-     if (moistureSelector > 0){
-       gpuErrchk( cudaMemcpy(qFlux, qFlux_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
-       gpuErrchk( cudaMemcpy(qskin, qskin_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
-     }
-   }//endif surflayerSelector > 0
-   if(NhydroAuxScalars > 0){
-     gpuErrchk( cudaMemcpy(hydroAuxScalars, hydroAuxScalars_d, Nelems*NhydroAuxScalars*sizeof(float), cudaMemcpyDeviceToHost) );
-     if((hydroForcingWrite==1)||(hydroForcingLog==1)){
-       gpuErrchk( cudaMemcpy(hydroAuxScalarsFrhs, hydroAuxScalarsFrhs_d, Nelems*NhydroAuxScalars*sizeof(float), cudaMemcpyDeviceToHost) );
-     } //endif we need to send up the Frhs
-   } //end if NhydroAuxScalars > 0
-   if(hydroSubGridWrite==1){
-     if(turbulenceSelector > 0){
-       // The 6 Tau_i-j and 3 Tau_TH,j fields
-       gpuErrchk( cudaMemcpy(hydroTauFlds, hydroTauFlds_d, Nelems*9*sizeof(float), cudaMemcpyDeviceToHost) );
-     }//endif 
-     if(moistureSGSturb==1){
-       // The moistureNvars*3 tau moisture fields (3 spatial components per moist species)
-       gpuErrchk( cudaMemcpy(moistTauFlds, moistTauFlds_d, Nelems*moistureNvars*3*sizeof(float), cudaMemcpyDeviceToHost) );
-     }
-   } //endif hydroSubGridWrite==1 
-   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
-//#ifdef DEBUG
-#if 1
-   MPI_Barrier(MPI_COMM_WORLD);
-   printf("Rank %d/%d: Batch complete results sent via cudaMemcpyDeviceToHost.\n",mpi_rank_world, mpi_size_world);
-   fflush(stdout);
-   MPI_Barrier(MPI_COMM_WORLD);
-#endif
-
-   return(errorCode);
-}//end cuda_timeIntHydrosynchFromDevice()
