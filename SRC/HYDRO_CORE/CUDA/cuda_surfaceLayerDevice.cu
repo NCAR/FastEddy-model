@@ -392,6 +392,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
    float z0temp;
    float it_max;
    float constant_1;
+   float ci_ulim = 1.0;
 
    if (surflayer_stab_d==0){
      it_max = 1;
@@ -446,6 +447,13 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
    } while(it_n<=it_max);
    // end of iterative process
 
+   cd_i = fmaxf(fminf(cd_i,ci_ulim),0.0);
+   ch_i = fmaxf(fminf(ch_i,ci_ulim),0.0);
+   *cd_iter = cd_i;
+   *ch_iter = ch_i;
+   if (surflayerSelector_d > 1){
+        *htFlux = ch_i*U1*(th0-th1);
+   }//endif surflayerSelector_d==2
    *cd_iter = cd_i;
    *ch_iter = ch_i;
    tauxz = -cd_i*sqrtf(powf(*u/ *rho,2.0)+powf(*v/ *rho,2.0))*(*u);
@@ -490,6 +498,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    float q0,q1,cq_i,psi_q,tauqz;
    int it_max;
    float constant_1;
+   float ci_ulim = 1.0;
 
    if (surflayer_stab_d==0){
      it_max = 1;
@@ -550,9 +559,16 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    } while(it_n<=it_max);
    // end of iterative process
 
+   cd_i = fmaxf(fminf(cd_i,ci_ulim),0.0);
+   ch_i = fmaxf(fminf(ch_i,ci_ulim),0.0);
+   cq_i = fmaxf(fminf(cq_i,ci_ulim),0.0);
    *cd_iter = cd_i;
    *ch_iter = ch_i;
    *cq_iter = cq_i;
+   if (surflayerSelector_d > 1){
+        *htFlux = ch_i*U1*(th0-th1);
+        *qFlux = cq_i*U1*(q0-q1);
+   }//endif surflayerSelector_d==2
    tauxz = -cd_i*sqrtf(powf(*u/ *rho,2.0)+powf(*v/ *rho,2.0))*(*u);
    tauyz = -cd_i*sqrtf(powf(*u/ *rho,2.0)+powf(*v/ *rho,2.0))*(*v);
    *tau31 = tauxz;
