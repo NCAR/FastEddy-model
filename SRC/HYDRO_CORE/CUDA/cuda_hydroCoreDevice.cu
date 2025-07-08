@@ -315,6 +315,7 @@ extern "C" int cuda_hydroCoreDeviceCleanup(){
    /* URBAN */
    if (urbanSelector > 0){
      errorCode = cuda_urbanDeviceCleanup();
+   }
 #endif
 #ifdef GAD_EXT
    if (GADSelector > 0){
