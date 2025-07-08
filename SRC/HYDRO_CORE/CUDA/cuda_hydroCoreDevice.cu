@@ -52,6 +52,9 @@
 #ifdef URBAN_EXT
   #include "cuda_urbanDevice.cu"
 #endif
+#ifdef GAD_EXT
+  #include "cuda_GADDevice.cu"
+#endif
 
 /*#################------------- CUDA_HYDRO_CORE module variable definitions ------------------#############*/
 /*Parameters*/
@@ -238,6 +241,12 @@ extern "C" int cuda_hydroCoreDeviceSetup(){
    printf("cuda_hydroCoreDeviceSetup() complete.\n");
    MPI_Barrier(MPI_COMM_WORLD);
 
+#ifdef GAD_EXT
+   /* GAD */
+   if (GADSelector > 0){
+     errorCode = cuda_GADDeviceSetup();
+   }
+#endif 
 
    /* Done */
    return(errorCode);
@@ -306,6 +315,10 @@ extern "C" int cuda_hydroCoreDeviceCleanup(){
    /* URBAN */
    if (urbanSelector > 0){
      errorCode = cuda_urbanDeviceCleanup();
+#endif
+#ifdef GAD_EXT
+   if (GADSelector > 0){
+     errorCode = cuda_GADDeviceCleanup();
    }
 #endif
 
@@ -566,6 +579,35 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
      }
    }
 #endif
+#ifdef GAD_EXT
+   if (GADSelector > 0 && ((physics_oneRKonly==0) || (timeStage==numRKstages))){
+     cudaDevice_GADinter<<<grid, tBlock>>>(xPos_d, yPos_d, zPos_d, topoPos_d,
+		                           simTime_it, timeStage, numRKstages, dt,
+                                           hydroFlds_d, GAD_turbineType_d, GAD_turbineVolMask_d,
+                                           GAD_Xcoords_d, GAD_Ycoords_d, GAD_rotorTheta_d,
+                                           GAD_hubHeights_d, GAD_rotorD_d, GAD_nacelleD_d,
+                                           turbinePolyTwist_d, turbinePolyChord_d,
+                                           turbinePolyPitch_d, turbinePolyOmega_d,
+                                           rnorm_vect_d, alpha_minmax_vect_d,
+                                           turbinePolyCl_d, turbinePolyCd_d,
+                                           GAD_turbineRank_d, GAD_turbineRefi_d, GAD_turbineRefj_d, GAD_turbineRefk_d,
+                                           u_sampAvg_d, v_sampAvg_d,
+                                           GAD_turbineUseries_d, GAD_turbineVseries_d,
+                                           GAD_turbineRefMag_d, GAD_turbineRefDir_d,
+                                           GAD_turbineYawing_d, GAD_yawError_d, GAD_anFactor_d);
+     cudaDevice_GADfinal<<<grid, tBlock>>>(xPos_d, yPos_d, zPos_d, topoPos_d,
+                                           hydroFlds_d, hydroFldsFrhs_d,simTime_it,
+                                           GAD_turbineType_d, GAD_turbineVolMask_d,
+                                           GAD_Xcoords_d, GAD_Ycoords_d, GAD_rotorTheta_d,
+                                           GAD_hubHeights_d, GAD_rotorD_d, GAD_nacelleD_d,
+                                           turbinePolyTwist_d, turbinePolyChord_d,
+                                           turbinePolyPitch_d, turbinePolyOmega_d,
+                                           rnorm_vect_d, alpha_minmax_vect_d,
+                                           turbinePolyCl_d, turbinePolyCd_d,
+					   GAD_turbineRefMag_d, GAD_anFactor_d,
+                                           GAD_forceX_d, GAD_forceY_d, GAD_forceZ_d);
+   }
+#endif 
 
 #ifdef TIMERS_LEVEL2
    printf("cuda_hydroCoreComplete()  Kernel execution time (ms): %12.8f\n", elapsedTime);
@@ -582,7 +624,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 }//end cuda_hydroCoreDeviceBuildFrhs()
 
 /*----->>>>> __global__ void  cudaDevice_hydroCoreCommence(); ---------------------------------------
-* This is the gloabl-entry kernel routine used by the HYDRO_CORE module
+* This is the global-entry kernel routine used by the HYDRO_CORE module
 */
 __global__ void cudaDevice_hydroCoreCommence(int simTime_it, float* hydroFlds_d, float* hydroFldsFrhs_d, 
                                                      float* hydroBaseStateFlds_d, 
@@ -1204,3 +1246,129 @@ __device__ void cudaDevice_setToZero(float* fld){
   ijk = i*iStride + j*jStride + k*kStride;
   fld[ijk] = 0.0;
 } //end cudaDevice_setToZero
+
+/*----->>>>> extern "C" int cuda_hydroCoreInitFieldsDevice();  -----------------------------------------------------------
+* This function handles the one-time initializations of state fields on-device (GPU) memory by executing the appropriate sequence
+* of cudaMemcpyHostToDevice data transfers.
+*/
+extern "C" int cuda_hydroCoreInitFieldsDevice(){
+   int errorCode = CUDA_HYDRO_CORE_SUCCESS;
+   int Nelems;
+   int Nelems2d;
+   /*Set the full memory block number of elements for transfers of 2-d and 3-d fields*/
+   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
+   Nelems2d = (Nxp+2*Nh)*(Nyp+2*Nh);
+   /*Copy the host hydroFlds to the device */
+   cudaMemcpy(hydroFlds_d, hydroFlds, Nelems*Nhydro*sizeof(float), cudaMemcpyHostToDevice);
+   if(TKESelector > 0){ /*Copy any required SGS TKE equation fields to device */
+     cudaMemcpy(sgstkeScalars_d, sgstkeScalars, Nelems*TKESelector*sizeof(float), cudaMemcpyHostToDevice);
+   }
+   if(moistureSelector > 0){ /*Copy any required moisture fields to device */
+     cudaMemcpy(moistScalars_d, moistScalars, Nelems*moistureNvars*sizeof(float), cudaMemcpyHostToDevice);
+   }
+   if(surflayerSelector > 0){ /*Copy any required host auxiliary sclar fields to the device */
+     cudaMemcpy(tskin_d, tskin, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
+     cudaMemcpy(fricVel_d, fricVel, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
+     cudaMemcpy(htFlux_d, htFlux, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
+     cudaMemcpy(z0m_d, z0m, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
+     cudaMemcpy(z0t_d, z0t, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
+     if (moistureSelector > 0){
+       cudaMemcpy(qskin_d, qskin, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
+       cudaMemcpy(qFlux_d, qFlux, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
+     }
+   }// end if surflayerSelector > 0
+   if(NhydroAuxScalars > 0){ /*Copy any required host auxiliary sclar fields to the device */
+     cudaMemcpy(hydroAuxScalars_d, hydroAuxScalars, Nelems*NhydroAuxScalars*sizeof(float), cudaMemcpyHostToDevice);
+   }// end if hydroAuxScalars > 0
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
+   gpuErrchk( cudaDeviceSynchronize() );
+   return(errorCode);
+}//end cuda_hydroCoreInitFieldsDevice()
+
+/*----->>>>> extern "C" int cuda_hydroCoreSynchFieldsFromDevice();  --------------------------------------------------
+* This function handles the synchronization to host of on-device (GPU) fields  by executing the appropriate sequence
+* of cudaMemcpyDeviceiToHost data transfers.
+*/
+extern "C" int cuda_hydroCoreSynchFieldsFromDevice(){
+   int errorCode = CUDA_HYDRO_CORE_SUCCESS;
+   int Nelems;
+   int Nelems2d;
+
+   /*Set the full memory block number of elements for transfers of 2-d and 3-d fields*/
+   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
+   Nelems2d = (Nxp+2*Nh)*(Nyp+2*Nh);
+
+   /* Send any desired GPU-computed HYDRO_CORE arrays from Device up to Host*/
+   gpuErrchk( cudaMemcpy(hydroPres, hydroPres_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );
+   gpuErrchk( cudaMemcpy(hydroFlds, hydroFlds_d, Nelems*Nhydro*sizeof(float), cudaMemcpyDeviceToHost) );
+   if((hydroForcingWrite==1)||(hydroForcingLog==1)){
+     gpuErrchk( cudaMemcpy(hydroFldsFrhs, hydroFldsFrhs_d, Nelems*Nhydro*sizeof(float), cudaMemcpyDeviceToHost) );
+   } //endif we need to send up the Frhs
+   if (TKESelector > 0){
+     gpuErrchk( cudaMemcpy(sgstkeScalars, sgstkeScalars_d, Nelems*TKESelector*sizeof(float), cudaMemcpyDeviceToHost) );
+     if ((hydroForcingWrite==1)||(hydroForcingLog==1)){
+       gpuErrchk( cudaMemcpy(sgstkeScalarsFrhs, sgstkeScalarsFrhs_d, Nelems*TKESelector*sizeof(float), cudaMemcpyDeviceToHost) );
+     }
+   }
+   if (moistureSelector > 0){
+     gpuErrchk( cudaMemcpy(moistScalars, moistScalars_d, Nelems*moistureNvars*sizeof(float), cudaMemcpyDeviceToHost) );
+     if ((hydroForcingWrite==1)||(hydroForcingLog==1)){
+       gpuErrchk( cudaMemcpy(moistScalarsFrhs, moistScalarsFrhs_d, Nelems*moistureNvars*sizeof(float), cudaMemcpyDeviceToHost) );
+     }
+   }
+   if(surflayerSelector > 0){
+     gpuErrchk( cudaMemcpy(fricVel, fricVel_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(htFlux, htFlux_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(tskin, tskin_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(invOblen, invOblen_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(z0m, z0m_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(z0t, z0t_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
+     if (moistureSelector > 0){
+       gpuErrchk( cudaMemcpy(qFlux, qFlux_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
+       gpuErrchk( cudaMemcpy(qskin, qskin_d, Nelems2d*sizeof(float), cudaMemcpyDeviceToHost) );
+     }
+   }//endif surflayerSelector > 0
+   if(NhydroAuxScalars > 0){
+     gpuErrchk( cudaMemcpy(hydroAuxScalars, hydroAuxScalars_d, Nelems*NhydroAuxScalars*sizeof(float), cudaMemcpyDeviceToHost) );
+     if((hydroForcingWrite==1)||(hydroForcingLog==1)){
+       gpuErrchk( cudaMemcpy(hydroAuxScalarsFrhs, hydroAuxScalarsFrhs_d, Nelems*NhydroAuxScalars*sizeof(float), cudaMemcpyDeviceToHost) );
+     } //endif we need to send up the Frhs
+   } //end if NhydroAuxScalars > 0
+   if(hydroSubGridWrite==1){
+     if(turbulenceSelector > 0){
+       // The 6 Tau_i-j and 3 Tau_TH,j fields
+       gpuErrchk( cudaMemcpy(hydroTauFlds, hydroTauFlds_d, Nelems*9*sizeof(float), cudaMemcpyDeviceToHost) );
+     }//endif
+     if(moistureSGSturb==1){
+       // The moistureNvars*3 tau moisture fields (3 spatial components per moist species)
+       gpuErrchk( cudaMemcpy(moistTauFlds, moistTauFlds_d, Nelems*moistureNvars*3*sizeof(float), cudaMemcpyDeviceToHost) );
+     }
+   } //endif hydroSubGridWrite==1
+
+#ifdef GAD_EXT
+   if (GADSelector > 0){
+     // TODO-- AllGather the rank-dependent RefMag and RefDir values, all all turbine values for these should be 0.0 except when a 
+     // turbine is present in a given ranks subdomain, so MPI_SUM should do the trick to gather the refmag and refdir values 
+     // into a common pair of vectors 
+     //gpuErrchk( cudaMemcpy(GAD_turbineRefMag, GAD_turbineRefMag_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
+     //gpuErrchk( cudaMemcpy(GAD_turbineRefDir, GAD_turbineRefDir_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(GAD_rotorTheta, GAD_rotorTheta_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) ); // DME: needed to be able to update the rotor location...
+     if (GADoutputForces == 1){
+       gpuErrchk( cudaMemcpy(GAD_forceX, GAD_forceX_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );
+       gpuErrchk( cudaMemcpy(GAD_forceY, GAD_forceY_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );
+       gpuErrchk( cudaMemcpy(GAD_forceZ, GAD_forceZ_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );
+     }
+   }
+#endif 
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
+//#ifdef DEBUG
+#if 1
+   MPI_Barrier(MPI_COMM_WORLD);
+   printf("Rank %d/%d: Batch complete results sent via cudaMemcpyDeviceToHost.\n",mpi_rank_world, mpi_size_world);
+   fflush(stdout);
+   MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+   return(errorCode);
+}//end cuda_hydroCoreSynchFieldsFromDevice()
+

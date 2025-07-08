@@ -30,7 +30,9 @@
 #ifdef URBAN_EXT
   #include <urban.c>
 #endif
-
+#ifdef GAD_EXT
+  #include <GAD.c>
+#endif
 
 /*##################------------------- HYDRO_CORE module variable definitions ---------------------#################*/
 int Nhydro = 5;              /*Number of prognostic variable fields under hydro_core */
@@ -539,6 +541,10 @@ int hydro_coreGetParams(){
        errorCode = queryFloatParameter("filter_6thdiff_hori_coeff", &filter_6thdiff_hori_coeff, 0.0, 1.0, PARAM_MANDATORY);
      }
    }
+#ifdef GAD_EXT
+   /*New EXTENSIONS sub-module style call to get parameters for the GAD sub-module*/
+   errorCode = GADGetParams();
+#endif
    dampingLayerSelector = 0; // Default to off 
    errorCode = queryIntegerParameter("dampingLayerSelector", &dampingLayerSelector, 0, 1, PARAM_MANDATORY);
    dampingLayerDepth = 100.0; //Default to 100.0 (meters)  
@@ -847,7 +853,10 @@ int hydro_coreInit(){
    /*New EXTENSIONS sub-module style call to print parameters for the URBAN sub-module*/
    errorCode = URBANPrintParams();
 #endif
-
+#ifdef GAD_EXT
+   /*New EXTENSIONS sub-module style call to print parameters for the GAD sub-module*/
+   errorCode = GADPrintParams();
+#endif
    /*Broadcast the parameters across mpi_ranks*/
    MPI_Bcast(&hydroBCs, 1, MPI_INT, 0, MPI_COMM_WORLD);
    if(hydroBCs==1){  // Using LAD BCs
@@ -1273,13 +1282,15 @@ int hydro_coreInit(){
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],z0t);
      fflush(stdout);
-
      MPI_Bcast(&urbanSelector, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #ifdef URBAN_EXT
      /*New sub-module style Init() call for URBAN initialization.*/
      errorCode=URBANInit();
 #endif
-
+#ifdef GAD_EXT
+     /*New sub-module style Init() call for GAD initialization.*/
+     errorCode=GADInit();
+#endif
      MPI_Barrier(MPI_COMM_WORLD);   
      
      /* Provide intial approximation for the momentum and heat exchange coefficient at all surface locations*/
@@ -1501,6 +1512,30 @@ int hydro_coreInit(){
   
    return(errorCode);
 } //end hydro_coreInit()
+
+/*----->>>>> int hydro_coreSecondaryPrepariations();   -------------------------------------------------
+* Secondary preparations (initializations) in the HYDRO_CORE module following secondary
+* GRID module preparations  i.e. definition of the domain coordinate system and Jacobians
+* and TIME_INTEGRATION module initialization
+*/
+int hydro_coreSecondaryPreparations(float dt){
+  int errorCode;
+
+  /*Now that the grid module is completely defined, setup the base state*/
+  errorCode = hydro_coreSetBaseState();
+
+#ifdef GAD_EXT
+  /*If GAD is included, define the mask arrays from the turbine characteristics array inputs*/
+  if(GADSelector > 0){
+    /*Create the swept-volume mask for the turbine array read in through this constructor*/
+    errorCode = GADInitTurbineRefChars(dt);
+    errorCode = GADCreateTurbineVolMask();
+    errorCode = GADCreateTurbineRotorMask();
+  }//end if GADSelector > 0
+#endif
+
+  return(errorCode);
+} //end hydro_coreSecondaryPrepariations()
 
 /*----->>>>> int hydro_corePrepareFromInitialConditions();   -------------------------------------------------
 * Used to undertake the sequence of steps to build the Frhs of all hydro_core prognostic variable fields.
@@ -3174,6 +3209,12 @@ int hydro_coreCleanup(){
      memReleaseFloat(hydroAuxScalars);
      memReleaseFloat(hydroAuxScalarsFrhs);
    } //end if NhydroAuxScalars
+
+#ifdef GAD_EXT
+   if(GADSelector > 0){
+     errorCode = GADCleanup();
+   }
+#endif
 
    if(hydroBCs==1){
      free(hydroBndysFile);

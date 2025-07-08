@@ -21,6 +21,9 @@
 #ifdef URBAN_EXT
   #include <urban.h>
 #endif
+#ifdef GAD_EXT
+  #include <GAD.h>
+#endif
 
 /*hydro_core_ return codes */
 #define HYDRO_CORE_SUCCESS    0
@@ -297,6 +300,13 @@ int hydro_coreGetParams();
 * Used to broadcast and print parameters, allocate memory, and initialize configuration settings for HYDRO_CORE.
 */
 int hydro_coreInit();
+
+/*----->>>>> int hydro_coreSecondaryPrepariations();   -------------------------------------------------
+* Secondary preparations (initializations) in the HYDRO_CORE module following secondary
+* GRID module preparations i.e. definition of the domain coordinate system and Jacobians
+* and TIME_INTEGRATION module initialization
+*/
+int hydro_coreSecondaryPreparations(float dt);
 
 /*----->>>>> int hydro_corePrepareFromInitialConditions();   -------------------------------------------------
 * Used to undertake the sequence of steps to build the Frhs of all hydro_core prognostic variable fields.
