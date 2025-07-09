@@ -49,6 +49,9 @@
 #include "cuda_filtersDevice.cu" 
 #include "cuda_cellpertDevice.cu"
 
+#ifdef URBAN_EXT
+  #include "cuda_urbanDevice.cu"
+#endif
 #ifdef GAD_EXT
   #include "cuda_GADDevice.cu"
 #endif
@@ -225,6 +228,13 @@ extern "C" int cuda_hydroCoreDeviceSetup(){
      errorCode = cuda_filtersDeviceSetup();
    }
 
+#ifdef URBAN_EXT
+   /* URBAN */
+   if (urbanSelector > 0){
+     errorCode = cuda_urbanDeviceSetup();
+   }
+#endif
+
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
    gpuErrchk( cudaDeviceSynchronize() );
    MPI_Barrier(MPI_COMM_WORLD);
@@ -301,6 +311,12 @@ extern "C" int cuda_hydroCoreDeviceCleanup(){
      errorCode = cuda_filtersDeviceCleanup();
    }
 
+#ifdef URBAN_EXT
+   /* URBAN */
+   if (urbanSelector > 0){
+     errorCode = cuda_urbanDeviceCleanup();
+   }
+#endif
 #ifdef GAD_EXT
    if (GADSelector > 0){
      errorCode = cuda_GADDeviceCleanup();
@@ -445,6 +461,21 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
                                                             hydroRhoInv_d, hydroKappaM_d, sgstkeScalars_d, sgstke_ls_d,
                                                             dedxi_d, moistScalars_d, moistTauFlds_d, moistScalarsFrhs_d,
                                                             J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d);
+    if(urbanSelector ==0 && ((physics_oneRKonly==0) || (timeStage==numRKstages))){
+      cudaDevice_dynamicz0tLand<<<grid, tBlock>>>(z0m_d, z0t_d, fricVel_d, sea_mask_d);
+    }else{
+#ifdef URBAN_EXT
+    if(urbanSelector > 0 && ((physics_oneRKonly==0) || (timeStage==numRKstages))){
+      if(urban_heatRedis == 0){
+	cudaDevice_dynamicz0tLand<<<grid, tBlock>>>(z0m_d, z0t_d, fricVel_d, sea_mask_d);
+	cudaDevice_URBANinter<<<grid, tBlock>>>(hydroTauFlds_d, moistTauFlds_d, fricVel_d, htFlux_d, qFlux_d, invOblen_d, building_mask_d);
+      }else{
+	cudaDevice_dynamicz0tLandRedis<<<grid, tBlock>>>(z0m_d, z0t_d, fricVel_d, sea_mask_d, urban_heat_redis_d);
+	cudaDevice_URBANinterRedis<<<grid, tBlock>>>(hydroTauFlds_d, moistTauFlds_d, fricVel_d, htFlux_d, qFlux_d, invOblen_d, building_mask_d, urban_heat_redis_d);
+      }
+    }
+#endif
+    }
    gpuErrchk( cudaGetLastError() );
 #ifdef TIMERS_LEVEL2
    stopSynchReportDestroyEvent(&startE, &stopE, &elapsedTime);
@@ -538,6 +569,17 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
                                                                    hydroBaseStatePres_d,timeStage);
    }
 
+#ifdef URBAN_EXT
+   if (urbanSelector > 0 && ((physics_oneRKonly==0) || (timeStage==numRKstages))){
+     cudaDevice_URBANfinal<<<grid, tBlock>>>(hydroFlds_d, hydroFldsFrhs_d, hydroBaseStateFlds_d, building_mask_d);
+     if(NhydroAuxScalars > 0){
+       cudaDevice_URBANfinalAuxSc<<<grid, tBlock>>>(hydroAuxScalars_d, hydroAuxScalarsFrhs_d, building_mask_d);
+     }
+     if(moistureSelector > 0){
+       cudaDevice_URBANfinalMoist<<<grid, tBlock>>>(moistScalarsFrhs_d, building_mask_d);
+     }
+   }
+#endif
 #ifdef GAD_EXT
    if (GADSelector > 0 && ((physics_oneRKonly==0) || (timeStage==numRKstages))){
      cudaDevice_GADinter<<<grid, tBlock>>>(xPos_d, yPos_d, zPos_d, topoPos_d,

@@ -80,6 +80,10 @@ extern float *hydroRhoInv_d;   //storage for 1.0/rho
 /*---CELL PERTURBATION METHOD*/
 #include <cuda_cellpertDevice_cu.h>
 
+#ifdef URBAN_EXT
+  /*URBAN */
+  #include <cuda_urbanDevice_cu.h>
+#endif
 #ifdef GAD_EXT
   /*GENERALIZED ACTUATOR DISK */
   #include <cuda_GADDevice_cu.h>
