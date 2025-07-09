@@ -23,6 +23,7 @@ gis_root = params["gis_root"]
 gis_file = params["gis_file"]
 nlcd_name = params["nlcd_name"]
 water_cats = params["water_cats"]
+urban_opt = params["urban_opt"]
 
 FE_dataset_path = params["FE_dataset_path"]
 gis_opt = params["gis_opt"]
@@ -121,6 +122,14 @@ elif (gis_opt==1):
     SeaMask_tmp[ind_land_wrf] = 0.0
     SeaMask_tmp[ind_sea_wrf] = 1.0
 
+# Building height information
+
+if (gis_opt==0 and urban_opt==1):
+
+    bdg_height = ds_GIS.BuildingHeights.values
+    ind_missing = np.where(bdg_height==-9999)
+    bdg_height[ind_missing] = 0.0
+
 # Save to netcdf file
 
 ds_data = xr.Dataset()
@@ -134,6 +143,8 @@ ds_data['z0t']= xr.DataArray(0.1*z0_tmp,dims=(['yIndex','xIndex']))
 ds_data['SeaMask']= xr.DataArray(SeaMask_tmp,dims=(['yIndex','xIndex']))
 ds_data['dx_inter']= xr.DataArray(np.array(dx,dtype=np.float32))
 ds_data['dy_inter']= xr.DataArray(np.array(dy,dtype=np.float32))
+if (gis_opt==0 and urban_opt==1):
+    ds_data['BuildingHeights']= xr.DataArray(bdg_height,dims=(['yIndex','xIndex']))
 ds_data['lat']= xr.DataArray(lat.astype(dtype=np.float64),dims=(['yIndex','xIndex']))
 ds_data['lon']= xr.DataArray(lon.astype(dtype=np.float64),dims=(['yIndex','xIndex']))
 

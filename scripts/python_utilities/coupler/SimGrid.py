@@ -26,6 +26,7 @@ FE_ref_GIS_nc = params["FE_ref_GIS_nc"]
 FE_params_file = params["FE_params_file"]
 center_lat = params["center_lat"]
 center_lon = params["center_lon"]
+urban_opt = params["urban_opt"]
 FE_new_nc_path = params["FE_new_nc_path"]
 name_dom_add = params["name_dom_add"]
 save_plot_opt = params["save_plot_opt"]
@@ -216,6 +217,31 @@ print('dz_highTopo_v at the surface =',dz_highTopo_v[0],'m')
 print('dz_lowTopo_v at the top =',dz_lowTopo_v[-1],'m')
 print('dz_highTopo_v at the top =',dz_highTopo_v[-1],'m')
 
+# building mask
+if (urban_opt == 1):
+    print('Computing 3-d building mask...')
+
+    bdg_heights = ds_GIS.BuildingHeights.values
+    if (interp_flag==0):
+        data_bmask = bdg_heights[y_s:y_e:npy_inc,x_s:x_e:npx_inc]
+    else:
+        f_bdg = NearestNDInterpolator(list(zip(xPos_2d_dom_ori.flatten(), yPos_2d_dom_ori.flatten())), data_bmask[y_s:y_e,x_s:x_e].flatten())
+        data_bmask = f_bdg(xPos_2d_new, yPos_2d_new)
+
+    bdg3d_tmp = np.zeros((Nz,Ny,Nx),dtype=np.float32)
+
+    for j in range(Ny):
+        if(j%int(Ny/10)==0):
+          print('{:d}% complete...'.format(10*int(j/int(Ny/10))))
+        for i in range(Nx):
+            z_1d = zarr[:,j,i]
+            if (data_bmask[j,i]!=0.0):
+                z_diff = np.abs(z_1d-(data_bmask[j,i]+data_topo[j,i]))
+                ind_min = np.where(z_diff==np.amin(z_diff))
+                ind_min = ind_min[0]
+                ind_min = ind_min[0]
+                bdg3d_tmp[0:ind_min+1,j,i] = 1.0
+
 # xPos, yPos
 xarr = np.zeros((Nz,Ny,Nx),dtype=np.float32)
 if (interp_flag==0):
@@ -275,6 +301,9 @@ ds_data['z0m']= xr.DataArray(data_z0m.astype(dtype=np.float32),dims=(['yIndex','
 ds_data['z0t']= xr.DataArray(data_z0t.astype(dtype=np.float32),dims=(['yIndex','xIndex']))
 ds_data['SeaMask']= xr.DataArray(data_SeaMask.astype(dtype=np.float32),dims=(['yIndex','xIndex']))
 ds_data['LandCover']= xr.DataArray(data_landc.astype(dtype=np.int32),dims=(['yIndex','xIndex']))
+if (urban_opt == 1):
+    ds_data['BuildingMask']= xr.DataArray(bdg3d_tmp.astype(dtype=np.float32),dims=(['zIndex','yIndex','xIndex']))
+    ds_data['BuildingHeights']= xr.DataArray(data_bmask.astype(dtype=np.float32),dims=(['yIndex','xIndex']))
 ds_data['lat']= xr.DataArray(lat_dom.astype(dtype=np.float64),dims=(['yIndex','xIndex']))
 ds_data['lon']= xr.DataArray(lon_dom.astype(dtype=np.float64),dims=(['yIndex','xIndex']))
 ds_data['xIndex']= xr.DataArray(np.arange(0,xarr.shape[2],dtype=np.int32),dims='xIndex')

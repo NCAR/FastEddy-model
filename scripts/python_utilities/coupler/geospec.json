@@ -4,6 +4,7 @@
   "gis_file": "inputs_gis.nc",
   "nlcd_name": "LandCoverMetadata_NLCD16.csv",
   "water_cats": [11],
+  "urban_opt": 0,
   "FE_dataset_path": "/path_geospec/",
   "name_dom_add": "",
   "gis_opt": 0,
