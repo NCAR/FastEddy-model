@@ -226,6 +226,34 @@ __global__ void cudaDevice_URBANfinalMoist(float* hydroFldsFrhsMoist_d, float* b
 
 } // end cudaDevice_URBANfinalMoist()
 
+__global__ void cudaDevice_URBANdynamicz0tLandRedis(float* z0m, float* z0t, float* fricVel, float* sea_mask, float* urban_redis){
+
+   int i,j,k,ij;
+   int iStride2d,jStride2d;
+
+   /*Establish necessary indices for spatial locality*/
+   i = (blockIdx.x)*blockDim.x + threadIdx.x;
+   j = (blockIdx.y)*blockDim.y + threadIdx.y;
+   k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+   iStride2d = (Ny_d+2*Nh_d);
+   jStride2d = 1;
+
+   if((i >= iMin_d)&&(i < iMax_d) &&
+      (j >= jMin_d)&&(j < jMax_d) &&
+      (k == kMin_d) ){
+      ij = i*iStride2d + j*jStride2d; // 2-dimensional (horizontal index)
+
+      if ( (surflayer_z0tdyn_d>0) && ((surflayer_offshore_d==0) || ((surflayer_offshore_d==1) && (sea_mask[ij]<1e-4))) ){ // dynamic z0t calculation
+        if (urban_redis[ij] <= (1.0+1e-5)){
+          cudaDevice_z0tdyn(&z0m[ij], &z0t[ij], &fricVel[ij]);
+        }
+      }
+
+   }//end if in the range of non-halo cells
+
+} // end cudaDevice_URBANdynamicz0tLandRedis()
+
 /*----->>>>> __device__ void  cudaDevice_UrbanDragMethod();  --------------------------------------------------
 */
 __device__ void cudaDevice_UrbanDragMethod(float* rho, float* u, float* v, float* w, float* th, float* th_base, float* rho_base, float* Frhs_u, float* Frhs_v, float* Frhs_w, float* Frhs_th, float* Frhs_rho, float* bdg_mask){

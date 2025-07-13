@@ -130,7 +130,6 @@ int ioReadNetCDFinFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
   
    /*Attempt to read all of the variables in the IO Registry list*/
    /* These are precisely the same as Nxp, Nyp, and Nzp calculated in GRID/grid.c:grid_init(). */
-#define NOMPI
    count[dimids[0]] = 1;
    count[dimids[1]] = Nz;
    count[dimids[2]] = Ny;

@@ -285,9 +285,6 @@ extern float thetaPerturbationAmplitude; /* Initial theta perturbations maximum 
 
 extern int physics_oneRKonly; /* selector to apply physics RHS forcing only at the latest RK stage */
 
-/*Other selectors*/
-extern int urbanSelector;          /* urban selector: 0=off, 1=on */
-
 /*###################------------- HYDRO_CORE module function declarations ---------------------#################*/
 
 /*----->>>>> int hydro_coreGetParams();    ----------------------------------------------------------------------

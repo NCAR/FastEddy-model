@@ -691,13 +691,13 @@ __global__ void cudaDevice_dynamicz0tLand(float* z0m, float* z0t, float* fricVel
 
 } // end cudaDevice_dynamicz0tLand()
 
-__global__ void cudaDevice_dynamicz0tLandRedis(float* z0m, float* z0t, float* fricVel, float* sea_mask, float* urban_redis){
+/*__global__ void cudaDevice_dynamicz0tLandRedis(float* z0m, float* z0t, float* fricVel, float* sea_mask, float* urban_redis){
 
    int i,j,k,ij;
    int iStride2d,jStride2d;
 
-   /*Establish necessary indices for spatial locality*/
-   i = (blockIdx.x)*blockDim.x + threadIdx.x;
+*/   /*Establish necessary indices for spatial locality*/
+/*   i = (blockIdx.x)*blockDim.x + threadIdx.x;
    j = (blockIdx.y)*blockDim.y + threadIdx.y;
    k = (blockIdx.z)*blockDim.z + threadIdx.z;
 
@@ -718,6 +718,7 @@ __global__ void cudaDevice_dynamicz0tLandRedis(float* z0m, float* z0t, float* fr
    }//end if in the range of non-halo cells
 
 } // end cudaDevice_dynamicz0tLandRedis()
+*/
 
 /*----->>>>> __device__ void cudaDevice_z0tdyn();  --------------------------------------------------
 */
