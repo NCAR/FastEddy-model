@@ -354,6 +354,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    createAndStartEvent(&startE, &stopE);
 #endif
 
+/*********************************** build_Frhs "preparatory tasks" phase ************************************************************/
    fldStride = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
 //#define VERBOSE_HALO
 #ifdef VERBOSE_HALO
@@ -450,6 +451,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    createAndStartEvent(&startE, &stopE);
 #endif
   
+/*********************************** build_Frhs "intermediate tasks" phase ************************************************************/
    /*Advecting Velocities*/ 
     cudaDevice_hydroCoreCalcFaceVelocities<<<grid, tBlock>>>(simTime, simTime_it, simTime_itRestart, dt, timeStage, numRKstages,
                                                             hydroFlds_d, hydroFldsFrhs_d,
@@ -461,22 +463,6 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
                                                             hydroRhoInv_d, hydroKappaM_d, sgstkeScalars_d, sgstke_ls_d,
                                                             dedxi_d, moistScalars_d, moistTauFlds_d, moistScalarsFrhs_d,
                                                             J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d);
-#ifdef URBAN_EXT
-    if(urbanSelector > 0 && ((physics_oneRKonly==0) || (timeStage==numRKstages))){
-      if(urban_heatRedis == 0){
-	cudaDevice_dynamicz0tLand<<<grid, tBlock>>>(z0m_d, z0t_d, fricVel_d, sea_mask_d);
-	cudaDevice_URBANinter<<<grid, tBlock>>>(hydroTauFlds_d, moistTauFlds_d, fricVel_d, htFlux_d, qFlux_d, invOblen_d, building_mask_d);
-      }else{
-	cudaDevice_URBANdynamicz0tLandRedis<<<grid, tBlock>>>(z0m_d, z0t_d, fricVel_d, sea_mask_d, urban_heat_redis_d);
-	cudaDevice_URBANinterRedis<<<grid, tBlock>>>(hydroTauFlds_d, moistTauFlds_d, fricVel_d, htFlux_d, qFlux_d, invOblen_d, building_mask_d, urban_heat_redis_d);
-      }
-    }
-#else
-    if( (physics_oneRKonly==0) || (timeStage==numRKstages) ){
-      cudaDevice_dynamicz0tLand<<<grid, tBlock>>>(z0m_d, z0t_d, fricVel_d, sea_mask_d);
-    }
-#endif
-   gpuErrchk( cudaGetLastError() );
 #ifdef TIMERS_LEVEL2
    stopSynchReportDestroyEvent(&startE, &stopE, &elapsedTime);
    printf("cuda_hydroCoreCalcFaceVelocities()  Kernel execution time (ms): %12.8f\n", elapsedTime);
@@ -486,10 +472,27 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    /*Calculate the Frhs contributions for the advection, buoyancy, and SGS-mixing terms on core+TKE+moistScalars fields*/
    createAndStartEvent(&startE, &stopE);
 #endif
+#ifdef URBAN_EXT
+    if(urbanSelector > 0 && ((physics_oneRKonly==0) || (timeStage==numRKstages))){
+      cudaDevice_URBANinter<<<grid, tBlock>>>(z0m_d, z0t_d, hydroTauFlds_d, moistTauFlds_d, 
+		                              fricVel_d, htFlux_d, qFlux_d, invOblen_d, 
+			      	              building_mask_d, sea_mask_d, urban_heat_redis_d);
+    }
+#else
+    if( (physics_oneRKonly==0) || (timeStage==numRKstages) ){
+      cudaDevice_dynamicz0tLand<<<grid, tBlock>>>(z0m_d, z0t_d, fricVel_d, sea_mask_d);
+    }
+#endif
+   gpuErrchk( cudaGetLastError() );
+   gpuErrchk( cudaDeviceSynchronize() );
+   
+/*********************************** build_Frhs "final tasks" phase ************************************************************/
    cudaDevice_hydroCoreComplete<<<grid, tBlock>>>(simTime, simTime_it, dt, timeStage, numRKstages, hydroFlds_d, hydroFldsFrhs_d,
                                                           hydroFaceVels_d, hydroBaseStateFlds_d, hydroTauFlds_d,
                                                           sgstkeScalars_d, sgstkeScalarsFrhs_d, moistScalars_d, moistScalarsFrhs_d, moistTauFlds_d,
                                                           J13_d, J23_d, J31_d, J32_d, J33_d, invD_Jac_d, zPos_d);
+   gpuErrchk( cudaGetLastError() );
+   gpuErrchk( cudaDeviceSynchronize() );
 
    /*Calculate the Frhs contributions for the advection and SGS-mixing terms on Auxiliary scalar fields*/
    if(NhydroAuxScalars > 0){
@@ -507,51 +510,50 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
             cudaDevice_TausScalar<<<grid, tBlock>>>(iFld, hydroRhoInv_d, hydroFlds_d, hydroKappaM_d, sgstke_ls_d,
                                                     hydroAuxScalars_d, AuxScalarsTauFlds_d,
                                                     J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d); // compute taus
-            gpuErrchk( cudaGetLastError() );
-            gpuErrchk( cudaDeviceSynchronize() );
 
             cudaDevice_SGSforcing<<<grid, tBlock>>>(iFld, AuxScalarsTauFlds_d, hydroAuxScalarsFrhs_d,
                                                     J13_d, J23_d, J31_d, J32_d, J33_d); // compute/add SGS forcing
-            gpuErrchk( cudaGetLastError() );
-            gpuErrchk( cudaDeviceSynchronize() );
          } //end for iFld
        } // endif SGS turbulence is on
+       gpuErrchk( cudaGetLastError() );
+       gpuErrchk( cudaDeviceSynchronize() );
      } //end if either compute at all RK stages, or last RK stage
    } //end if NhydroAuxScalars > 0
 
    //Carry out the following section of calculations only if either explcitly requested at every RK stage (physics_oneRKonly==0), or at the last RK stage (timeStage==numRKstages)
    if ((physics_oneRKonly==0) || (timeStage==numRKstages)) {
+     //SGS-TKE forcings 
      if ((turbulenceSelector >0) && (TKESelector > 0)){
        cudaDevice_hydroCoreCompleteSGSTKE<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, hydroTauFlds_d,
-                                                                    hydroKappaM_d, dedxi_d, sgstke_ls_d,
-                                                                    sgstkeScalars_d, sgstkeScalarsFrhs_d, canopy_lad_d,
-                                                                    J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d); //call to prognostic TKE equation
+                                                            hydroKappaM_d, dedxi_d, sgstke_ls_d,
+                                                            sgstkeScalars_d, sgstkeScalarsFrhs_d, canopy_lad_d,
+                                                            J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d); //call to prognostic TKE equation
        if (canopySelector==1){ // canopy drag term to forcing of momentum
          cudaDevice_hydroCoreCompleteCanopy<<<grid, tBlock>>>(hydroFlds_d, hydroRhoInv_d, canopy_lad_d, hydroFldsFrhs_d);
        }
      } // end if (turbSelector >0) && (TKESelector > 0)
+     gpuErrchk( cudaGetLastError() );
+     gpuErrchk( cudaDeviceSynchronize() );
      //Moist species microphysics forcings 
      if ((moistureSelector > 0)&&(moistureCond > 0)&&(moistureNvars > 1)){ // (moisture condensation forcing)
        temp_freq = roundf(fmaxf(moistureMPcallTscale,dt)/dt); // ensure minimum is time step
        mp_update = simTime_it%temp_freq;
        if (mp_update==0){
          cudaDevice_hydroCoreCompleteMP<<<grid, tBlock>>>(hydroFlds_d, hydroFldsFrhs_d, moistScalars_d, moistScalarsFrhs_d,
-                                                                    hydroRhoInv_d, hydroPres_d, fcond_d, dt, hydroBaseStateFlds_d);
+                                                          hydroRhoInv_d, hydroPres_d, fcond_d, dt, hydroBaseStateFlds_d);
        }
      }
+     gpuErrchk( cudaGetLastError() );
+     gpuErrchk( cudaDeviceSynchronize() );
      //Molecular diffusion
      if (diffusionSelector == 1){  
        cudaDevice_hydroCoreCompleteMolecularDiffusion<<<grid, tBlock>>>(hydroFlds_d, hydroFldsFrhs_d,
-                                                                              hydroNuGradXFlds_d,hydroNuGradYFlds_d,hydroNuGradZFlds_d,
-                                                                              J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d, invD_Jac_d); // call to div of nugrad
+                                                                        hydroNuGradXFlds_d,hydroNuGradYFlds_d,hydroNuGradZFlds_d,
+                                                                        J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d, invD_Jac_d); // call to div of nugrad
      } // endif diffusionSelector == 1
-     //Auxiliary scalar  mixing (diffusion) from SGS-turbulence
-      
-
+     gpuErrchk( cudaGetLastError() );
+     gpuErrchk( cudaDeviceSynchronize() );
    } // endif ((physics_oneRKonly==0) || (timeStage==numRKstages))
-
-   gpuErrchk( cudaGetLastError() );
-   gpuErrchk( cudaDeviceSynchronize() );
 
    simTime_diff = simTime_it - simTime_itRestart;
    ldf_itNum = (int)roundf(lsf_freq/dt);
@@ -571,13 +573,10 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 
 #ifdef URBAN_EXT
    if (urbanSelector > 0 && ((physics_oneRKonly==0) || (timeStage==numRKstages))){
-     cudaDevice_URBANfinal<<<grid, tBlock>>>(hydroFlds_d, hydroFldsFrhs_d, hydroBaseStateFlds_d, building_mask_d);
-     if(NhydroAuxScalars > 0){
-       cudaDevice_URBANfinalAuxSc<<<grid, tBlock>>>(hydroAuxScalars_d, hydroAuxScalarsFrhs_d, building_mask_d);
-     }
-     if(moistureSelector > 0){
-       cudaDevice_URBANfinalMoist<<<grid, tBlock>>>(moistScalarsFrhs_d, building_mask_d);
-     }
+     cudaDevice_URBANfinal<<<grid, tBlock>>>(hydroFlds_d, hydroFldsFrhs_d, hydroBaseStateFlds_d, 
+		                             hydroAuxScalars_d, hydroAuxScalarsFrhs_d,
+					     moistScalarsFrhs_d,
+					     building_mask_d);
    }
 #endif
 #ifdef GAD_EXT

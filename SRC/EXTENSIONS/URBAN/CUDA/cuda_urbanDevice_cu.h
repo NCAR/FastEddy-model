@@ -27,18 +27,19 @@ extern "C" int cuda_urbanDeviceSetup();
 */
 extern "C" int cuda_urbanDeviceCleanup();
 
-__global__ void cudaDevice_URBANinter(float* hydroTauFlds, float* moistTauFlds, float* fricVel,float* htFlux,float* qFlux,float* invOblen,float* bdg_mask);
-__global__ void cudaDevice_URBANinterRedis(float* hydroTauFlds, float* moistTauFlds, float* fricVel,float* htFlux,float* qFlux,float* invOblen,float* bdg_mask, float* urban_redis);
-__global__ void cudaDevice_URBANfinal(float* hydroFlds_d, float* hydroFldsFrhs_d, float* hydroBaseStateFlds_d, float* building_mask_d);
-__global__ void cudaDevice_URBANfinalAuxSc(float* hydroAuxScalars_d, float* hydroAuxScalarsFrhs_d, float* building_mask_d);
-__global__ void cudaDevice_URBANfinalMoist(float* hydroFldsFrhsMoist_d, float* building_mask_d);
-__global__ void cudaDevice_URBANdynamicz0tLandRedis(float* z0m, float* z0t, float* fricVel, float* sea_mask, float* urban_redis);
+__global__ void cudaDevice_URBANinter(float* z0m, float* z0t, float* hydroTauFlds, float* moistTauFlds,
+                                      float* fricVel, float* htFlux, float* qFlux, float* invOblen,
+                                      float* bdg_mask, float* sea_mask, float* urban_redis);
+__global__ void cudaDevice_URBANfinal(float* hydroFlds_d, float* hydroFldsFrhs_d, float* hydroBaseStateFlds_d,
+	                              float* hydroAuxScalars_d, float* hydroAuxScalarsFrhs_d,
+                                      float* hydroFldsFrhsMoist_d,
+			      	      float* building_mask_d);
 
 /*----->>>>> __device__ void  cudaDevice_UrbanDragMethod();  --------------------------------------------------
 * This cuda kerne lsets up the cells and their id in the urban drag-based approach
 */
 __device__ void cudaDevice_UrbanDragMethod(float* rho, float* u, float* v, float* w, float* th, float* th_base, float* rho_base, float* Frhs_u, float* Frhs_v, float* Frhs_w, float* Frhs_th, float* Frhs_rho, float* bdg_mask);
-__device__ void cudaDevice_UrbanDragMethodMoist(float* Frhs_qv, float* bdg_mask);
+__device__ void cudaDevice_UrbanDragMethodMoist(float* Frhs_qMoistFld, float* bdg_mask);
 __device__ void cudaDevice_UrbanDragMethodAuxScalar(float* AuxScalar, float* Frhs_AuxScalar, float* bdg_mask);
 
 #endif // _URBAN_CUDADEV_CU_H
