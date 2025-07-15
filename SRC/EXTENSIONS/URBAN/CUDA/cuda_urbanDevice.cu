@@ -51,7 +51,9 @@ extern "C" int cuda_urbanDeviceCleanup(){
 
 }//end cuda_urbanDeviceCleanup()
 
-__global__ void cudaDevice_URBANinter(float* hydroTauFlds, float* moistTauFlds, float* fricVel,float* htFlux,float* qFlux,float* invOblen,float* bdg_mask){
+__global__ void cudaDevice_URBANinter(float* z0m, float* z0t, float* hydroTauFlds, float* moistTauFlds, 
+		                      float* fricVel, float* htFlux, float* qFlux, float* invOblen, 
+				      float* bdg_mask, float* sea_mask, float* urban_redis){
 
    int i,j,k,ijk,ij;
    int fldStride;
@@ -76,6 +78,18 @@ __global__ void cudaDevice_URBANinter(float* hydroTauFlds, float* moistTauFlds, 
       ijk = i*iStride + j*jStride + k*kStride;
       ij = i*iStride2d + j*jStride2d; // 2-dimensional (horizontal index)
 
+      //Standard dynamic z0t or redistribution adjustment z0t as appropriate
+      if ( (surflayer_z0tdyn_d>0) && ((surflayer_offshore_d==0) || ((surflayer_offshore_d==1) && (sea_mask[ij]<1e-4))) ){ // dynamic z0t calculation
+        if (urban_heatRedis_d > 0){ //Redistribution-aware dynamic z0t (Only compute in places where redistributed heat flux will NOT occur)
+           if (urban_redis[ij] <= (1.0+1e-5)){
+              cudaDevice_z0tdyn(&z0m[ij], &z0t[ij], &fricVel[ij]);
+           }
+        }else{ //standard dynamic z0t
+              cudaDevice_z0tdyn(&z0m[ij], &z0t[ij], &fricVel[ij]);
+        } //if-else urban_heatRedis_d > 0
+      }
+
+      //Intermediate-timestep stage calculations
       if (bdg_mask[ijk] > 0.0){
         hydroTauFlds[2*fldStride+ijk] = 0.0;
         hydroTauFlds[3*fldStride+ijk] = 0.0;
@@ -89,62 +103,26 @@ __global__ void cudaDevice_URBANinter(float* hydroTauFlds, float* moistTauFlds, 
         }
       }
 
+      if (urban_heatRedis_d > 0){ //Redistribution-aware dynamic z0t (Only compute in places where redistributed heat flux will NOT occur)
+         if (urban_redis[ij] > (1.0+1e-5)){ // urban heat redistribution
+            htFlux[ij] = urban_redis[ij]*htFlux[ij];
+    	    if (moistureSelector_d > 0){
+               qFlux[ij]  = urban_redis[ij]*qFlux[ij];
+	    }
+         }
+      } //if urban_heatRedis_d > 0
    }//end if in the range of non-halo cells
 
 } // end cudaDevice_URBANinter()
 
-__global__ void cudaDevice_URBANinterRedis(float* hydroTauFlds, float* moistTauFlds, float* fricVel,float* htFlux,float* qFlux,float* invOblen,float* bdg_mask, float* urban_redis){
-
-   int i,j,k,ijk,ij;
-   int fldStride;
-   int iStride,jStride,kStride;
-   int iStride2d,jStride2d;
-
-   /*Establish necessary indices for spatial locality*/
-   i = (blockIdx.x)*blockDim.x + threadIdx.x;
-   j = (blockIdx.y)*blockDim.y + threadIdx.y;
-   k = (blockIdx.z)*blockDim.z + threadIdx.z;
-
-   fldStride = (Nx_d+2*Nh_d)*(Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
-   iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
-   jStride = (Nz_d+2*Nh_d);
-   kStride = 1;
-   iStride2d = (Ny_d+2*Nh_d);
-   jStride2d = 1;
-
-   if((i >= iMin_d)&&(i < iMax_d) &&
-      (j >= jMin_d)&&(j < jMax_d) &&
-      (k == kMin_d)){
-      ijk = i*iStride + j*jStride + k*kStride;
-      ij = i*iStride2d + j*jStride2d; // 2-dimensional (horizontal index)
-
-      if (bdg_mask[ijk] > 0.0){
-        hydroTauFlds[2*fldStride+ijk] = 0.0;
-        hydroTauFlds[3*fldStride+ijk] = 0.0;
-        hydroTauFlds[8*fldStride+ijk] = 0.0;
-        fricVel[ij] = 0.0;
-        htFlux[ij] = 0.0;
-        invOblen[ij] = 0.0;
-        if (moistureSelector_d > 0){
-          moistTauFlds[2*fldStride+ijk] = 0.0;
-	  qFlux[ij] = 0.0;
-        }
-      }
-
-      if (urban_redis[ij] > (1.0+1e-5)){ // urban heat redistribution
-        htFlux[ij] = urban_redis[ij]*htFlux[ij];
-	if (moistureSelector_d > 0){
-          qFlux[ij]  = urban_redis[ij]*qFlux[ij];
-	}
-      }
-
-   }//end if in the range of non-halo cells
-
-} // end cudaDevice_URBANinterRedis()
-
-__global__ void cudaDevice_URBANfinal(float* hydroFlds_d, float* hydroFldsFrhs_d, float* hydroBaseStateFlds_d, float* building_mask_d){
+__global__ void cudaDevice_URBANfinal(float* hydroFlds_d, float* hydroFldsFrhs_d, float* hydroBaseStateFlds_d, 
+		                      float* hydroAuxScalars_d, float* hydroAuxScalarsFrhs_d,
+				      float* hydroFldsFrhsMoist_d,
+				      float* building_mask_d){
 
    int i,j,k,ijk;
+   int iFld;
+   int iFldMoist;
    int fldStride;
    int iStride,jStride,kStride;
 
@@ -167,64 +145,20 @@ __global__ void cudaDevice_URBANfinal(float* hydroFlds_d, float* hydroFldsFrhs_d
                                  &hydroFlds_d[fldStride*THETA_INDX+ijk],&hydroBaseStateFlds_d[fldStride*THETA_INDX+ijk],&hydroBaseStateFlds_d[fldStride*RHO_INDX+ijk],
                                  &hydroFldsFrhs_d[fldStride*U_INDX+ijk],&hydroFldsFrhs_d[fldStride*V_INDX+ijk],&hydroFldsFrhs_d[fldStride*W_INDX+ijk],
                                  &hydroFldsFrhs_d[fldStride*THETA_INDX+ijk],&hydroFldsFrhs_d[fldStride*RHO_INDX+ijk],&building_mask_d[ijk]);
+      if(NhydroAuxScalars_d > 0){
+        for(iFld=0; iFld < NhydroAuxScalars_d; iFld++){
+          cudaDevice_UrbanDragMethodAuxScalar(&hydroAuxScalars_d[fldStride*iFld+ijk], &hydroAuxScalarsFrhs_d[fldStride*iFld+ijk], &building_mask_d[ijk]);
+        }
+      }// end if NhydroAuxScalars_d > 0
 
+      if(moistureSelector_d > 0){
+        for(iFldMoist=0; iFldMoist < moistureNvars_d; iFldMoist++){
+	   cudaDevice_UrbanDragMethodMoist(&hydroFldsFrhsMoist_d[fldStride*iFldMoist+ijk],&building_mask_d[ijk]);
+        }
+      }// end if moistureSelector_d > 0
    }//end if in the range of non-halo cells
 
 } // end cudaDevice_URBANfinal()
-
-__global__ void cudaDevice_URBANfinalAuxSc(float* hydroAuxScalars_d, float* hydroAuxScalarsFrhs_d, float* building_mask_d){ 
-
-   int i,j,k,ijk;
-   int fldStride;
-   int iFld;
-   int iStride,jStride,kStride;
-
-   /*Establish necessary indices for spatial locality*/
-   i = (blockIdx.x)*blockDim.x + threadIdx.x;
-   j = (blockIdx.y)*blockDim.y + threadIdx.y;
-   k = (blockIdx.z)*blockDim.z + threadIdx.z;
-
-   fldStride = (Nx_d+2*Nh_d)*(Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
-   iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
-   jStride = (Nz_d+2*Nh_d);
-   kStride = 1;
-
-   if((i >= iMin_d)&&(i < iMax_d) &&
-      (j >= jMin_d)&&(j < jMax_d) &&
-      (k >= kMin_d)&&(k < kMax_d) ){
-      ijk = i*iStride + j*jStride + k*kStride;
-      for(iFld=0; iFld < NhydroAuxScalars_d; iFld++){ 
-        cudaDevice_UrbanDragMethodAuxScalar(&hydroAuxScalars_d[fldStride*iFld+ijk], &hydroAuxScalarsFrhs_d[fldStride*iFld+ijk], &building_mask_d[ijk]);
-      }
-   }//end if in the range of non-halo cells
-
-} // end cudaDevice_URBANfinalAuxSc()
-
-
-__global__ void cudaDevice_URBANfinalMoist(float* hydroFldsFrhsMoist_d, float* building_mask_d){
-
-   int i,j,k,ijk;
-   int fldStride;
-   int iStride,jStride,kStride;
-
-   /*Establish necessary indices for spatial locality*/
-   i = (blockIdx.x)*blockDim.x + threadIdx.x;
-   j = (blockIdx.y)*blockDim.y + threadIdx.y;
-   k = (blockIdx.z)*blockDim.z + threadIdx.z;
-
-   fldStride = (Nx_d+2*Nh_d)*(Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
-   iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
-   jStride = (Nz_d+2*Nh_d);
-   kStride = 1;
-
-   if((i >= iMin_d)&&(i < iMax_d) &&
-      (j >= jMin_d)&&(j < jMax_d) &&
-      (k >= kMin_d)&&(k < kMax_d) ){
-      ijk = i*iStride + j*jStride + k*kStride;
-      cudaDevice_UrbanDragMethodMoist(&hydroFldsFrhsMoist_d[fldStride*0+ijk],&building_mask_d[ijk]);
-   }//end if in the range of non-halo cells
-
-} // end cudaDevice_URBANfinalMoist()
 
 /*----->>>>> __device__ void  cudaDevice_UrbanDragMethod();  --------------------------------------------------
 */
@@ -268,9 +202,9 @@ __device__ void cudaDevice_UrbanDragMethod(float* rho, float* u, float* v, float
 
 } //end cudaDevice_UrbanDragMethod
 
-__device__ void cudaDevice_UrbanDragMethodMoist(float * Frhs_qv, float* bdg_mask){
+__device__ void cudaDevice_UrbanDragMethodMoist(float * Frhs_qMoistFld, float* bdg_mask){
 
-  *Frhs_qv = *Frhs_qv*(1.0-(*bdg_mask));
+  *Frhs_qMoistFld = *Frhs_qMoistFld*(1.0-(*bdg_mask));
 
 } //end cudaDevice_UrbanDragMethodMoist
 

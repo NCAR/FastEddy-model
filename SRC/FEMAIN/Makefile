@@ -133,8 +133,8 @@ endif
 WITH_URBAN = 0
 ifeq ($(WITH_URBAN),1)
  DEFINES+=-DURBAN_EXT
- INCLUDES+=-I../EXTENSIONS/urban/ \
-	   -I../EXTENSIONS/urban/CUDA/
+ INCLUDES+=-I../EXTENSIONS/URBAN/ \
+	   -I../EXTENSIONS/URBAN/CUDA/
  $(info WITH_URBAN=1)
  $(info ${DEFINES})
  $(info ${INCLUDES})
