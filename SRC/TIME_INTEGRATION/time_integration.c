@@ -112,6 +112,10 @@ int timeInit(){
    /*Register a time variable holding "simTime" or the master simulation time*/
    errorCode = sprintf(&varName[0],"time");
    errorCode = ioRegisterVar(&varName[0], "float", 1, dims1dTD, &simTime);
+   
+   /* Add NetCDF attributes for the time variable */
+   errorCode = timeAddTimeAttributes();
+   
    printf(":Variable = %s stored at %p, has been registered with IO.\n",
           &varName[0],&simTime);
    fflush(stdout);
@@ -124,6 +128,41 @@ int timeInit(){
    /* Done */
    return(errorCode);
 } //end timeInit()
+
+/*----->>>>> int timeAddTimeAttributes();       ----------------------------------------------------------------------
+* Add NetCDF attributes to time-related variables registered by the TIME_INTEGRATION module.
+*/
+int timeAddTimeAttributes(){
+   int errorCode = TIME_INTEGRATION_SUCCESS;
+
+   /* Add standard CF convention attributes for the time variable */
+   errorCode = ioAddStandardAttrs("time", "s", "simulation time", "time");
+   if(errorCode != TIME_INTEGRATION_SUCCESS){
+      printf("Error adding standard attributes to time variable: %d\n", errorCode);
+      return errorCode;
+   }
+
+   /* Add additional custom attributes for time variable */
+   errorCode = ioAddVarAttr("time", "comment", "text", "simulation time since model start");
+   if(errorCode != TIME_INTEGRATION_SUCCESS){
+      printf("Error adding comment attribute to time variable: %d\n", errorCode);
+      return errorCode;
+   }
+
+   errorCode = ioAddVarAttr("time", "_FillValue", "float", "-999.0");
+   if(errorCode != TIME_INTEGRATION_SUCCESS){
+      printf("Error adding _FillValue attribute to time variable: %d\n", errorCode);
+      return errorCode;
+   }
+
+   errorCode = ioAddVarAttr("time", "axis", "text", "T");
+   if(errorCode != TIME_INTEGRATION_SUCCESS){
+      printf("Error adding axis attribute to time variable: %d\n", errorCode);
+      return errorCode;
+   }
+
+   return errorCode;
+} //end timeAddTimeAttributes()
 
 /*----->>>>> int timeIntBdyPlaneUpdates();       ----------------------------------------------------------------------
  * Used to broadcast and print parameters, allocate memory, and initialize configuration settings 
