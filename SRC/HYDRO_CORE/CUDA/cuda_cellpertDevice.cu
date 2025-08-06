@@ -82,13 +82,15 @@ extern "C" int cuda_hydroCoreDeviceBuildCPmethod(int simTime_it){
    curandSetPseudoRandomGeneratorSeed(gen,simTime_it);
    curandGenerateUniform(gen,randcp_d,n_tot);
 
-   if(urbanSelector==0){
-     cudaDevice_hydroCoreCompleteCellPerturbation<<<grid, tBlock>>>(hydroFlds_d,randcp_d,mpi_rank_world,numProcsX,numProcsY);
-   }else{
 #ifdef URBAN_EXT
+   if(urbanSelector > 0){
      cudaDevice_hydroCoreCompleteCellPerturbationMasked<<<grid, tBlock>>>(hydroFlds_d,randcp_d,mpi_rank_world,numProcsX,numProcsY,building_mask_d);
-#endif
+   }else{
+     cudaDevice_hydroCoreCompleteCellPerturbation<<<grid, tBlock>>>(hydroFlds_d,randcp_d,mpi_rank_world,numProcsX,numProcsY);
    }
+#else
+     cudaDevice_hydroCoreCompleteCellPerturbation<<<grid, tBlock>>>(hydroFlds_d,randcp_d,mpi_rank_world,numProcsX,numProcsY);
+#endif
 
 //#define TIMERS_LEVEL2
 #ifdef TIMERS_LEVEL2
