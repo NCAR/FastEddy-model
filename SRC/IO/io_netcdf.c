@@ -800,19 +800,45 @@ int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
 int ioDefineNetCDFoutFileAttrs(int ncid){
    int errorCode = IO_SUCCESS;
    ioVar_t *ptr;
+   int i;
 
    /* For each entry in the ioVarsList, define attributes if they exist */
    ptr = getFirstVarFromList();
    while(ptr != NULL){
-      /* Check if variable has attributes defined */
-      if(ptr->attname != NULL && ptr->attval != NULL){
-         if(!strcmp(ptr->type,"float")){
-            if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, ptr->attname, strlen(ptr->attval), ptr->attval))){
-               ERR(errorCode);
+      /* Check if variable has attributes defined and loop through them */
+      for(i = 0; i < ptr->nAttrs; i++){
+         if(strlen(ptr->attrs[i].name) > 0 && strlen(ptr->attrs[i].value) > 0){
+            /* Determine the appropriate NetCDF function based on attribute type */
+            if(strcmp(ptr->attrs[i].type, "text") == 0){
+               if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, ptr->attrs[i].name,
+                                              strlen(ptr->attrs[i].value), ptr->attrs[i].value))){
+                  ERR(errorCode);
+               }
             }
-         }else if(!strcmp(ptr->type,"int")){
-            if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, ptr->attname, strlen(ptr->attval), ptr->attval))){
-               ERR(errorCode);
+            else if(strcmp(ptr->attrs[i].type, "float") == 0){
+               float val = atof(ptr->attrs[i].value);
+               if ((errorCode = nc_put_att_float(ncid, ptr->ncvarid, ptr->attrs[i].name, NC_FLOAT, 1, &val))){
+                  ERR(errorCode);
+               }
+            }
+            else if(strcmp(ptr->attrs[i].type, "double") == 0){
+               double val = atof(ptr->attrs[i].value);
+               if ((errorCode = nc_put_att_double(ncid, ptr->ncvarid, ptr->attrs[i].name, NC_DOUBLE, 1, &val))){
+                  ERR(errorCode);
+               }
+            }
+            else if(strcmp(ptr->attrs[i].type, "int") == 0){
+               int val = atoi(ptr->attrs[i].value);
+               if ((errorCode = nc_put_att_int(ncid, ptr->ncvarid, ptr->attrs[i].name, NC_INT, 1, &val))){
+                  ERR(errorCode);
+               }
+            }
+            else {
+               /* Default to text if type is unrecognized */
+               if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, ptr->attrs[i].name,
+                                              strlen(ptr->attrs[i].value), ptr->attrs[i].value))){
+                  ERR(errorCode);
+               }
             }
          }
       }
