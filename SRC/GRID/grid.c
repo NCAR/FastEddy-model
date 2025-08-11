@@ -273,20 +273,9 @@ int gridInit(){
        fflush(stdout);
        errorCode = GRID_IO_CALL_FAIL;
      }
-#ifdef DEBUG
-//#if 1
-     errorCode = ioRegisterVar("D_Jac", "float", 4, dims4d, D_Jac);
-     errorCode = ioRegisterVar("invD_Jac", "float", 4, dims4d, invD_Jac);
-     errorCode = ioRegisterVar("J13", "float", 4, dims4d, J13);
-     errorCode = ioRegisterVar("J23", "float", 4, dims4d, J23);
-     errorCode = ioRegisterVar("J31", "float", 4, dims4d, J31);
-     errorCode = ioRegisterVar("J32", "float", 4, dims4d, J32);
-     errorCode = ioRegisterVar("J33", "float", 4, dims4d, J33);
-#endif 
-   } // end if errorCode indicates no errors thus far
 
    /* Add NetCDF attributes for coordinate variables */
-   if(ioerrorCode == 0){
+   if(ioerrorCode == GRID_SUCCESS){
      ioerrorCode = ioAddStandardAttrs("xPos", "m", "x-coordinate of cell center", "projection_x_coordinate");
      ioerrorCode = ioAddStandardAttrs("yPos", "m", "y-coordinate of cell center", "projection_y_coordinate");
      ioerrorCode = ioAddStandardAttrs("zPos", "m", "z-coordinate of cell center", "height");
@@ -298,26 +287,26 @@ int gridInit(){
        errorCode = GRID_IO_CALL_FAIL;
      }
    }
-
+     
 #ifdef DEBUG
 //#if 1
-     /* Add attributes for Jacobian and metric tensor fields */
-     if(ioerrorCode == 0){
-       ioerrorCode = ioAddStandardAttrs("D_Jac", "1", "Jacobian determinant", NULL);
-       ioerrorCode = ioAddStandardAttrs("invD_Jac", "1", "inverse Jacobian determinant", NULL);
-       ioerrorCode = ioAddStandardAttrs("J13", "1", "metric tensor component dx/d_zeta", NULL);
-       ioerrorCode = ioAddStandardAttrs("J23", "1", "metric tensor component dy/d_zeta", NULL);
-       ioerrorCode = ioAddStandardAttrs("J31", "1", "metric tensor component dz/d_xi", NULL);
-       ioerrorCode = ioAddStandardAttrs("J32", "1", "metric tensor component dz/d_eta", NULL);
-       ioerrorCode = ioAddStandardAttrs("J33", "1", "metric tensor component dz/d_zeta", NULL);
+     errorCode = ioRegisterVar("D_Jac", "float", 4, dims4d, D_Jac);
+     errorCode = ioRegisterVar("invD_Jac", "float", 4, dims4d, invD_Jac);
+     errorCode = ioRegisterVar("J13", "float", 4, dims4d, J13);
+     errorCode = ioRegisterVar("J23", "float", 4, dims4d, J23);
+     errorCode = ioRegisterVar("J31", "float", 4, dims4d, J31);
+     errorCode = ioRegisterVar("J32", "float", 4, dims4d, J32);
+     errorCode = ioRegisterVar("J33", "float", 4, dims4d, J33);
 
-       if(ioerrorCode != 0){
-         printf("Error adding standard attributes to GRID metric tensor fields.\n");
-         fflush(stdout);
-         errorCode = GRID_IO_CALL_FAIL;
-       }
-     }
-#endif
+     /* Add attributes for Jacobian and metric tensor fields */
+     ioerrorCode = ioAddStandardAttrs("D_Jac", "1", "Jacobian determinant", NULL);
+     ioerrorCode = ioAddStandardAttrs("invD_Jac", "1", "inverse Jacobian determinant", NULL);
+     ioerrorCode = ioAddStandardAttrs("J13", "1", "metric tensor component dx/d_zeta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J23", "1", "metric tensor component dy/d_zeta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J31", "1", "metric tensor component dz/d_xi", NULL);
+     ioerrorCode = ioAddStandardAttrs("J32", "1", "metric tensor component dz/d_eta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J33", "1", "metric tensor component dz/d_zeta", NULL);
+#endif 
    } // end if errorCode indicates no errors thus far
 
 #ifdef DEBUG
