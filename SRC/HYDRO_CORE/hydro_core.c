@@ -1190,7 +1190,7 @@ int hydro_coreInit(){
         }//end switch(iFld)
         errorCode = ioRegisterVar(&TauScName[0], "float", 4, dims4d, &hydroTauFlds[iFld*fldStride]);
 	// Add NetCDF attributes for the registered variable
-	errorCode = hydro_coreAddFieldAttributesConsistent(&TauScName[0], 0);
+	errorCode = hydro_coreAddFieldAttributes(&TauScName[0], 0);
         printf("hydro_coreInit:hydroTauFlds[%d] = %s stored at %p, has been registered with IO.\n",
                iFld,&TauScName[0],&hydroTauFlds[iFld*fldStride]);
         fflush(stdout);
@@ -1198,19 +1198,19 @@ int hydro_coreInit(){
      sprintf(&TauScName[0],"TauTH%d",1);
      errorCode = ioRegisterVar(&TauScName[0], "float", 4, dims4d, &hydroTauFlds[6*fldStride]);
      // Add NetCDF attributes for TauTH1
-     errorCode = hydro_coreAddFieldAttributesConsistent(&TauScName[0], 0);
+     errorCode = hydro_coreAddFieldAttributes(&TauScName[0], 0);
      printf("hydro_coreInit:hydroTauFlds[6] = %s stored at %p, has been registered with IO.\n",
              &TauScName[0],&hydroTauFlds[6*fldStride]);
      sprintf(&TauScName[0],"TauTH%d",2);
      errorCode = ioRegisterVar(&TauScName[0], "float", 4, dims4d, &hydroTauFlds[7*fldStride]);
      // Add NetCDF attributes for TauTH2
-     errorCode = hydro_coreAddFieldAttributesConsistent(&TauScName[0], 0);
+     errorCode = hydro_coreAddFieldAttributes(&TauScName[0], 0);
      printf("hydro_coreInit:hydroTauFlds[7] = %s stored at %p, has been registered with IO.\n",
              &TauScName[0],&hydroTauFlds[7*fldStride]);
      sprintf(&TauScName[0],"TauTH%d",3);
      errorCode = ioRegisterVar(&TauScName[0], "float", 4, dims4d, &hydroTauFlds[8*fldStride]);
      // Add NetCDF attributes for TauTH3
-     errorCode = hydro_coreAddFieldAttributesConsistent(&TauScName[0], 0);
+     errorCode = hydro_coreAddFieldAttributes(&TauScName[0], 0);
      printf("hydro_coreInit:hydroTauFlds[8] = %s stored at %p, has been registered with IO.\n",
              &TauScName[0],&hydroTauFlds[8*fldStride]);
      fflush(stdout);
@@ -1235,28 +1235,28 @@ int hydro_coreInit(){
      errorCode = sprintf(&fldName[0],"tskin");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, tskin);
      // Add NetCDF attributes for the registered variable
-     errorCode = hydro_coreAddFieldAttributesConsistent(&fldName[0], 0);
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],tskin);
      fflush(stdout);
      errorCode = sprintf(&fldName[0],"fricVel");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, fricVel);
      // Add NetCDF attributes for the registered variable
-     errorCode = hydro_coreAddFieldAttributesConsistent(&fldName[0], 0);
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],fricVel);
      fflush(stdout);
      errorCode = sprintf(&fldName[0],"htFlux");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, htFlux);
      // Add NetCDF attributes for the registered variable
-     errorCode = hydro_coreAddFieldAttributesConsistent(&fldName[0], 0);
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],htFlux);
      fflush(stdout);
      errorCode = sprintf(&fldName[0],"invOblen");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, invOblen);
      // Add NetCDF attributes for the registered variable
-     errorCode = hydro_coreAddFieldAttributesConsistent(&fldName[0], 0);
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],invOblen);
      fflush(stdout);
@@ -1264,14 +1264,14 @@ int hydro_coreInit(){
        errorCode = sprintf(&fldName[0],"qskin");
        errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, qskin);
        // Add NetCDF attributes for the registered variable
-       errorCode = hydro_coreAddFieldAttributesConsistent(&fldName[0], 0);
+       errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
        printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
                &fldName[0],qskin);
        fflush(stdout);
        errorCode = sprintf(&fldName[0],"qFlux");
        errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, qFlux);
        // Add NetCDF attributes for the registered variable
-       errorCode = hydro_coreAddFieldAttributesConsistent(&fldName[0], 0);
+       errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
        printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
                &fldName[0],qFlux);
        fflush(stdout);
@@ -1279,14 +1279,14 @@ int hydro_coreInit(){
      errorCode = sprintf(&fldName[0],"z0m");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, z0m);
      // Add NetCDF attributes for the registered variable
-     errorCode = hydro_coreAddFieldAttributesConsistent(&fldName[0], 0);
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],z0m);
      fflush(stdout);
      errorCode = sprintf(&fldName[0],"z0t");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, z0t);
      // Add NetCDF attributes for the registered variable
-     errorCode = hydro_coreAddFieldAttributesConsistent(&fldName[0], 0);
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],z0t);
      fflush(stdout);
@@ -1332,7 +1332,7 @@ int hydro_coreInit(){
      errorCode = sprintf(&fldName[0],"SeaMask");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, sea_mask);
      // Add NetCDF attributes for the registered variable
-     errorCode = hydro_coreAddFieldAttributesConsistent(&fldName[0], 0);
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("surflayer_offshore:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],sea_mask);
      fflush(stdout);
@@ -1367,7 +1367,7 @@ int hydro_coreInit(){
      errorCode = sprintf(&fldName[0],"CanopyLAD");
      errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, canopy_lad);
      // Add NetCDF attributes for the registered variable
-     errorCode = hydro_coreAddFieldAttributesConsistent(&fldName[0], 0);
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("canopy:Field = %s stored at %p, has been registered with IO.\n",
             &fldName[0],canopy_lad);
      fflush(stdout);
@@ -1384,7 +1384,7 @@ int hydro_coreInit(){
         }
         errorCode = ioRegisterVar(&moistName[0], "float", 4, dims4d, &moistScalars[iFld*fldStride]);
 	// Add NetCDF attributes for the registered variable
-	errorCode = hydro_coreAddFieldAttributesConsistent(&moistName[0], 0);
+	errorCode = hydro_coreAddFieldAttributes(&moistName[0], 0);
         printf("hydro_coreInit:moistScalars[%d] = %s stored at %p, has been registered with IO.\n",
                iFld,&moistName[0],&moistScalars[iFld*fldStride]);
         fflush(stdout);
@@ -1398,7 +1398,7 @@ int hydro_coreInit(){
          }
          errorCode = ioRegisterVar(&moistName[0], "float", 4, dims4d, &moistScalarsFrhs[iFld*fldStride]);
 	 // Add NetCDF attributes for the registered variable
-	 errorCode = hydro_coreAddFieldAttributesConsistent(&moistName[0], 1);
+	 errorCode = hydro_coreAddFieldAttributes(&moistName[0], 1);
          printf("hydro_coreInit:moistScalarsFrhs[%d] = %s stored at %p, has been registered with IO.\n",
                 iFld,&moistName[0],&moistScalarsFrhs[iFld*fldStride]);
        }
@@ -3267,7 +3267,7 @@ int hydro_coreCleanup(){
 * Returns: error code (0 = success, non-zero = error)
 */
 
-int hydro_coreAddFieldAttributesConsistent(char *fieldName, int isForcing) {
+int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
     int errorCode = 0;
     char *baseFieldName = fieldName;
     
@@ -3355,7 +3355,7 @@ int hydro_coreAddFieldAttributesConsistent(char *fieldName, int isForcing) {
     }
  
     // For unrecognized fields, add generic attributes
-    printf("Warning: Unrecognized field '%s' in hydro_coreAddFieldAttributesConsistent, adding generic attributes\n", fieldName);
+    printf("Warning: Unrecognized field '%s' in hydro_coreAddFieldAttributes, adding generic attributes\n", fieldName);
     if(isForcing) {
         errorCode = ioAddStandardAttrs(fieldName, "1/s", "Generic field forcing", NULL);
     } else {
