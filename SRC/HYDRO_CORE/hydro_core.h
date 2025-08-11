@@ -289,6 +289,13 @@ int hydro_coreGetParams();
 */
 int hydro_coreInit();
 
+/*----->>>>> int hydro_coreSecondaryPrepariations();   -------------------------------------------------
+* Secondary preparations (initializations) in the HYDRO_CORE module following secondary
+* GRID module preparations i.e. definition of the domain coordinate system and Jacobians
+* and TIME_INTEGRATION module initialization
+*/
+int hydro_coreSecondaryPreparations(float dt);
+
 /*----->>>>> int hydro_corePrepareFromInitialConditions();   -------------------------------------------------
 * Used to undertake the sequence of steps to build the Frhs of all hydro_core prognostic variable fields.
 */

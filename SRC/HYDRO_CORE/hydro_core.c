@@ -1541,6 +1541,30 @@ int hydro_coreInit(){
    return(errorCode);
 } //end hydro_coreInit()
 
+/*----->>>>> int hydro_coreSecondaryPrepariations();   -------------------------------------------------
+* Secondary preparations (initializations) in the HYDRO_CORE module following secondary
+* GRID module preparations  i.e. definition of the domain coordinate system and Jacobians
+* and TIME_INTEGRATION module initialization
+*/
+int hydro_coreSecondaryPreparations(float dt){
+  int errorCode;
+
+  /*Now that the grid module is completely defined, setup the base state*/
+  errorCode = hydro_coreSetBaseState();
+
+#ifdef GAD_EXT
+  /*If GAD is included, define the mask arrays from the turbine characteristics array inputs*/
+  if(GADSelector > 0){
+    /*Create the swept-volume mask for the turbine array read in through this constructor*/
+    errorCode = GADInitTurbineRefChars(dt);
+    errorCode = GADCreateTurbineVolMask();
+    errorCode = GADCreateTurbineRotorMask();
+  }//end if GADSelector > 0
+#endif
+
+  return(errorCode);
+} //end hydro_coreSecondaryPrepariations()
+
 /*----->>>>> int hydro_corePrepareFromInitialConditions();   -------------------------------------------------
 * Used to undertake the sequence of steps to build the Frhs of all hydro_core prognostic variable fields.
 */
