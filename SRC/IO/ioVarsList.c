@@ -130,7 +130,7 @@ int addStandardAttrsToVar(char *varName, char *units, char *longName, char *stan
 } //end addStandardAttrsToVar
 
 int printList(){
-   int i;
+  int i, j;
    ioVar_t *tmp;
    /*print the contents of the list from beginning to end*/
    i = 0;
