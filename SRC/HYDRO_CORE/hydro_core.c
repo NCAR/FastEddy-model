@@ -3259,6 +3259,62 @@ int hydro_coreCleanup(){
    return(errorCode);
 }//end hydro_coreCleanup()
 
+/*----->>>>> helper functions to create forcing strings --------------------------------------------------*/
+
+// Increment the exponent of "s" if present, else append " s-1"
+static char* make_forcing_units(const char *units) {
+    if(units == NULL) return NULL;
+
+    const char *s_ptr = strstr(units, "s-");
+    if(s_ptr) {
+        // Found "s-" pattern, try to increment number after it
+        const char *exp_ptr = s_ptr + 2;
+        int exp = atoi(exp_ptr);   // atoi will return 0 if not a number
+        if(exp > 0) {
+            exp++; // increment existing exponent
+
+            // copy prefix (up to "s-")
+            size_t prefix_len = s_ptr - units + 2;
+            char prefix[prefix_len + 1];
+            strncpy(prefix, units, prefix_len);
+            prefix[prefix_len] = '\0';
+
+
+            // format new string
+            size_t buf_len = strlen(units) + 10; // extra space
+            char *result = (char*)malloc(buf_len);
+            if(!result) return NULL;
+
+            snprintf(result, buf_len, "%s%d", prefix, exp);
+            return result;
+        }
+    }
+
+    // If no "s-" pattern or exponent, just append " s-1"
+    size_t len = strlen(units);
+    const char *suffix = " s-1";
+    char *result = (char*)malloc(len + strlen(suffix) + 1);
+    if(!result) return NULL;
+
+    strcpy(result, units);
+    strcat(result, suffix);
+    return result;
+}
+
+// Allocates new string with " forcing" appended to long_name
+static char* make_forcing_long_name(const char *long_name) {
+    if(long_name == NULL) return NULL;
+
+    size_t len = strlen(long_name);
+    const char *suffix = " forcing";
+    char *result = (char*)malloc(len + strlen(suffix) + 1);
+    if(!result) return NULL;
+
+    strcpy(result, long_name);
+    strcat(result, suffix);
+    return result;
+}
+
 /*----->>>>> int hydro_coreAddFieldAttributes();  -----------------------------------------------
 * Utility function to add NetCDF attributes to hydro core fields based on field name
 * Parameters:
@@ -3270,79 +3326,84 @@ int hydro_coreCleanup(){
 int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
     int errorCode = 0;
     char *baseFieldName = fieldName;
-    
+
     // If this is a forcing field, skip the "F_" prefix to get the base field name
     if(isForcing && strncmp(fieldName, "F_", 2) == 0) {
-        baseFieldName = fieldName + 2; // Skip "F_" prefix
+        baseFieldName = fieldName + 2; // Skip "F_" prefix  
     }
 
-    // Define field metadata structure
+    // Define field metadata structure                                                                                                                              
     typedef struct {
         char *pattern;
         char *units;
-        char *forcing_units;
         char *long_name;
-        char *forcing_long_name;
         char *standard_name;
     } field_metadata_t;
 
     // Field metadata lookup table
     field_metadata_t field_metadata[] = {
-        {"rho", "kg m-3", "kg (m-3*s)", "Air density", "Air density forcing", "air_density"},
-        {"u", "m s-1", "m s-2", "Zonal wind velocity", "Zonal wind velocity forcing", "eastward_wind"},
-        {"v", "m s-1", "m s-2", "Meridional wind velocity", "Meridional wind velocity forcing", "northward_wind"},
-        {"w", "m s-1", "m s-2", "Vertical wind velocity", "Vertical wind velocity forcing", "upward_air_velocity"},
-        {"theta", "K", "K s-1", "Potential temperature", "Potential temperature forcing", "air_potential_temperature"},
-        {"pressure", "Pa", "Pa s-1", "Perturbation pressure", "Pressure forcing", "air_pressure"},
-        {"BS_pressure", "Pa", "Pa s-1", "Base state pressure", "Base state pressure forcing", "air_pressure"},
-        {"TKE", "m2 s-2", "m2 s-3", "Turbulent kinetic energy", "Turbulent kinetic energy forcing", "specific_turbulent_kinetic_energy_of_sea_water"},
-        {"AuxScalar", "1", "1 s-1", "Auxiliary scalar", "Auxiliary scalar forcing", NULL},
-        {"qv", "kg kg-1", "kg kg-1 s-1", "Water vapor mixing ratio", "Water vapor mixing ratio forcing", "humidity_mixing_ratio"},
-        {"moisture", "kg kg-1", "kg kg-1 s-1", "Water vapor mixing ratio", "Water vapor mixing ratio forcing", "humidity_mixing_ratio"},
-        {"qc", "kg kg-1", "kg kg-1 s-1", "Cloud water mixing ratio", "Cloud water mixing ratio forcing", "cloud_liquid_water_mixing_ratio"},
-        {"qi", "kg kg-1", "kg kg-1 s-1", "Ice water mixing ratio", "Ice water mixing ratio forcing", "cloud_ice_mixing_ratio"},
-        {"Tau", "m2 s-2", "m2 s-3", "Subgrid stress tensor component", "Subgrid stress tensor forcing", NULL},
-	{"TauTH", "K m s-1", "K m s-2", "Subgrid turbulent flux of potential temperature", "Subgrid turbulent flux of potential temperature forcing", NULL},	
-        {"fricVel", "m s-1", "m s-2", "Surface friction velocity", "Surface friction velocity forcing", "surface_friction_velocity"},
-        {"htFlux", "K m s-1", "K m s-2", "Surface sensible heat flux", "Surface sensible heat flux forcing", "surface_upward_sensible_heat_flux"},
-        {"qFlux", " kg (m2s)-1", "kg (m2s2)-1", "Surface latent heat flux", "Surface latent heat flux forcing", "surface_upward_latent_heat_flux"},
-        {"tskin", "K", "K s-1", "Surface skin temperature", "Surface skin temperature forcing", "surface_temperature"},
-        {"qskin", "kg kg-1", "kg kg-1 s-1", "Surface skin moisture", "Surface skin moisture forcing", "surface_specific_humidity"},
-        {"z0m", "m", "m s-1", "Roughness length for momentum", "Roughness length for momentum forcing", "surface_roughness_length_for_momentum_in_air"},
-        {"z0t", "m", "m s-1", "Roughness length for heat", "Roughness length for heat forcing", "surface_roughness_length_for_heat_in_air"},
-        {"invOblen", "1 m-1", "1 (m*s)-1", "Inverse Obukhov length", "Inverse Obukhov length forcing", "atmosphere_boundary_layer_thickness"},
-        {"CanopyLAD", "1 m-1", "1 (m*s)-1", "Leaf area density", "Leaf area density forcing", "leaf_area_density"},
-        {"SeaMask", "1", "1 s-1", "Sea mask", "Sea mask forcing", "sea_area_fraction"},
-        {NULL, NULL, NULL, NULL, NULL, NULL} // End marker
+        {"rho",       "kg m-3",     "Air density",                          "air_density"},
+        {"u",         "m s-1",      "Zonal wind velocity",                  "eastward_wind"},
+        {"v",         "m s-1",      "Meridional wind velocity",             "northward_wind"},
+        {"w",         "m s-1",      "Vertical wind velocity",               "upward_air_velocity"},
+        {"theta",     "K",          "Potential temperature",                "air_potential_temperature"},
+        {"pressure",  "Pa",         "Perturbation pressure",                "air_pressure"},
+        {"BS_pressure","Pa",        "Base state pressure",                  "air_pressure"},
+        {"TKE",       "m2 s-2",     "Turbulent kinetic energy",             "specific_turbulent_kinetic_energy_of_sea_water"},
+        {"AuxScalar", "1",          "Auxiliary scalar",                     NULL},
+        {"qv",        "kg kg-1",    "Water vapor mixing ratio",             "humidity_mixing_ratio"},
+        {"moisture",  "kg kg-1",    "Water vapor mixing ratio",             "humidity_mixing_ratio"},
+        {"qc",        "kg kg-1",    "Cloud water mixing ratio",             "cloud_liquid_water_mixing_ratio"},
+        {"qi",        "kg kg-1",    "Ice water mixing ratio",               "cloud_ice_mixing_ratio"},
+        {"Tau",       "m2 s-2",     "Subgrid stress tensor component",      NULL},
+        {"TauTH",     "K m s-1",    "Subgrid turbulent flux of potential temperature", NULL},
+        {"fricVel",   "m s-1",      "Surface friction velocity",            "surface_friction_velocity"},
+        {"htFlux",    "K m s-1",    "Surface sensible heat flux",           "surface_upward_sensible_heat_flux"},
+        {"qFlux",     "kg (m2s)-1", "Surface latent heat flux",             "surface_upward_latent_heat_flux"},
+        {"tskin",     "K",          "Surface skin temperature",             "surface_temperature"},
+        {"qskin",     "kg kg-1",    "Surface skin moisture",                "surface_specific_humidity"},
+        {"z0m",       "m",          "Roughness length for momentum",        "surface_roughness_length_for_momentum_in_air"},
+        {"z0t",       "m",          "Roughness length for heat",            "surface_roughness_length_for_heat_in_air"},
+        {"invOblen",  "1 m-1",      "Inverse Obukhov length",               "atmosphere_boundary_layer_thickness"},
+        {"CanopyLAD", "1 m-1",      "Leaf area density",                    "leaf_area_density"},
+        {"SeaMask",   "1",          "Sea mask",                             "sea_area_fraction"},
+        {NULL, NULL, NULL, NULL} // End marker                                                                                                           
     };
 
     // Search for matching field pattern
     for(int i = 0; field_metadata[i].pattern != NULL; i++) {
         if (strcmp(baseFieldName, field_metadata[i].pattern) == 0) {
-              if(isForcing) {
-                errorCode = ioAddStandardAttrs(fieldName, 
-                                             field_metadata[i].forcing_units,
-                                             field_metadata[i].forcing_long_name,
-                                             NULL); // No standard name for forcing fields
+            if(isForcing) {
+                char *forcing_units = make_forcing_units(field_metadata[i].units);
+                char *forcing_long_name = make_forcing_long_name(field_metadata[i].long_name);
+
+ 
+                errorCode = ioAddStandardAttrs(fieldName,
+                                               forcing_units,
+                                               forcing_long_name,
+                                               NULL); // No standard name for forcing fields
+		
+                free(forcing_units);
+                free(forcing_long_name);
             } else {
                 errorCode = ioAddStandardAttrs(fieldName,
-                                             field_metadata[i].units,
-                                             field_metadata[i].long_name,
-                                             field_metadata[i].standard_name);
+                                               field_metadata[i].units,
+                                               field_metadata[i].long_name,
+                                               field_metadata[i].standard_name);
             }
             return errorCode;
         }
     }
- 
+
     // Handle special case for BS_ fields with numeric identifiers
     if(strncmp(baseFieldName, "BS_", 3) == 0) {
         char *endptr;
         int fieldIndex = strtol(baseFieldName + 3, &endptr, 10);
-        if(*endptr == '\0') { // Successfully parsed a number
-            if(fieldIndex == RHO_INDX_BS) { // 0 = rho base state
+        if(*endptr == '\0') { // Successfully parsed a number                                                                                                        
+            if(fieldIndex == RHO_INDX_BS) { // 0 = rho base state                                                                                                    
                 errorCode = ioAddStandardAttrs(fieldName, "kg m-3", "Base state air density", "air_density");
             }
-            else if(fieldIndex == THETA_INDX_BS) { // 1 = theta base state
+            else if(fieldIndex == THETA_INDX_BS) { // 1 = theta base state                                                                                           
                 errorCode = ioAddStandardAttrs(fieldName, "K", "Base state potential temperature", "air_potential_temperature");
             }
             else {
@@ -3351,7 +3412,7 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
             return errorCode;
         }
     }
- 
+
     // For unrecognized fields, add generic attributes
     printf("Warning: Unrecognized field '%s' in hydro_coreAddFieldAttributes, adding generic attributes\n", fieldName);
     if(isForcing) {
@@ -3359,7 +3420,7 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
     } else {
         errorCode = ioAddStandardAttrs(fieldName, "1", "Generic field", NULL);
     }
-    
+
     return errorCode;
-}
+}    
 
