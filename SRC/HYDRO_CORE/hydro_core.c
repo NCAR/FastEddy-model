@@ -3288,40 +3288,38 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
 
     // Field metadata lookup table
     field_metadata_t field_metadata[] = {
-        {"rho", "kg/m^3", "kg/(m^3*s)", "Air density", "Air density forcing", "air_density"},
-        {"u", "m/s", "m/s^2", "Zonal wind velocity", "Zonal wind velocity forcing", "eastward_wind"},
-        {"v", "m/s", "m/s^2", "Meridional wind velocity", "Meridional wind velocity forcing", "northward_wind"},
-        {"w", "m/s", "m/s^2", "Vertical wind velocity", "Vertical wind velocity forcing", "upward_air_velocity"},
-        {"theta", "K", "K/s", "Potential temperature", "Potential temperature forcing", "air_potential_temperature"},
-        {"pressure", "Pa", "Pa/s", "Perturbation pressure", "Pressure forcing", "air_pressure"},
-        {"BS_pressure", "Pa", "Pa/s", "Base state pressure", "Base state pressure forcing", "air_pressure"},
-        {"TKE", "m^2/s^2", "m^2/s^3", "Turbulent kinetic energy", "Turbulent kinetic energy forcing", "specific_turbulent_kinetic_energy_of_sea_water"},
-        {"AuxScalar", "1", "1/s", "Auxiliary scalar", "Auxiliary scalar forcing", NULL},
-        {"qv", "kg/kg", "kg/kg/s", "Water vapor mixing ratio", "Water vapor mixing ratio forcing", "humidity_mixing_ratio"},
-        {"moisture", "kg/kg", "kg/kg/s", "Water vapor mixing ratio", "Water vapor mixing ratio forcing", "humidity_mixing_ratio"},
-        {"qc", "kg/kg", "kg/kg/s", "Cloud water mixing ratio", "Cloud water mixing ratio forcing", "cloud_liquid_water_mixing_ratio"},
-        {"qi", "kg/kg", "kg/kg/s", "Ice water mixing ratio", "Ice water mixing ratio forcing", "cloud_ice_mixing_ratio"},
-        {"Tau", "m^2/s^2", "m^2/s^3", "Subgrid stress tensor component", "Subgrid stress tensor forcing", NULL},
-        {"TauTH", "K*m/s", "K*m/s^2", "Thermal stress component", "Thermal stress forcing", NULL},
-        {"fricVel", "m/s", "m/s^2", "Surface friction velocity", "Surface friction velocity forcing", "surface_friction_velocity"},
-        {"htFlux", "K*m/s", "K*m/s^2", "Surface sensible heat flux", "Surface sensible heat flux forcing", "surface_upward_sensible_heat_flux"},
-        {"qFlux", "kg/(m^2*s)", "kg/(m^2*s^2)", "Surface latent heat flux", "Surface latent heat flux forcing", "surface_upward_latent_heat_flux"},
-        {"tskin", "K", "K/s", "Surface skin temperature", "Surface skin temperature forcing", "surface_temperature"},
-        {"qskin", "kg/kg", "kg/kg/s", "Surface skin moisture", "Surface skin moisture forcing", "surface_specific_humidity"},
-        {"z0m", "m", "m/s", "Roughness length for momentum", "Roughness length for momentum forcing", "surface_roughness_length_for_momentum_in_air"},
-        {"z0t", "m", "m/s", "Roughness length for heat", "Roughness length for heat forcing", "surface_roughness_length_for_heat_in_air"},
-        {"invOblen", "1/m", "1/(m*s)", "Inverse Obukhov length", "Inverse Obukhov length forcing", "atmosphere_boundary_layer_thickness"},
-        {"canopy_lad", "1/m", "1/(m*s)", "Leaf area density", "Leaf area density forcing", "leaf_area_density"},
-        {"CanopyLAD", "1/m", "1/(m*s)", "Leaf area density", "Leaf area density forcing", "leaf_area_density"},
-        {"sea_mask", "1", "1/s", "Sea mask", "Sea mask forcing", "sea_area_fraction"},
-        {"SeaMask", "1", "1/s", "Sea mask", "Sea mask forcing", "sea_area_fraction"},
+        {"rho", "kg m-3", "kg (m-3*s)", "Air density", "Air density forcing", "air_density"},
+        {"u", "m s-1", "m s-2", "Zonal wind velocity", "Zonal wind velocity forcing", "eastward_wind"},
+        {"v", "m s-1", "m s-2", "Meridional wind velocity", "Meridional wind velocity forcing", "northward_wind"},
+        {"w", "m s-1", "m s-2", "Vertical wind velocity", "Vertical wind velocity forcing", "upward_air_velocity"},
+        {"theta", "K", "K s-1", "Potential temperature", "Potential temperature forcing", "air_potential_temperature"},
+        {"pressure", "Pa", "Pa s-1", "Perturbation pressure", "Pressure forcing", "air_pressure"},
+        {"BS_pressure", "Pa", "Pa s-1", "Base state pressure", "Base state pressure forcing", "air_pressure"},
+        {"TKE", "m2 s-2", "m2 s-3", "Turbulent kinetic energy", "Turbulent kinetic energy forcing", "specific_turbulent_kinetic_energy_of_sea_water"},
+        {"AuxScalar", "1", "1 s-1", "Auxiliary scalar", "Auxiliary scalar forcing", NULL},
+        {"qv", "kg kg-1", "kg kg-1 s-1", "Water vapor mixing ratio", "Water vapor mixing ratio forcing", "humidity_mixing_ratio"},
+        {"moisture", "kg kg-1", "kg kg-1 s-1", "Water vapor mixing ratio", "Water vapor mixing ratio forcing", "humidity_mixing_ratio"},
+        {"qc", "kg kg-1", "kg kg-1 s-1", "Cloud water mixing ratio", "Cloud water mixing ratio forcing", "cloud_liquid_water_mixing_ratio"},
+        {"qi", "kg kg-1", "kg kg-1 s-1", "Ice water mixing ratio", "Ice water mixing ratio forcing", "cloud_ice_mixing_ratio"},
+        {"Tau", "m2 s-2", "m2 s-3", "Subgrid stress tensor component", "Subgrid stress tensor forcing", NULL},
+	{"TauTH", "K m s-1", "K m s-2", "Subgrid turbulent flux of potential temperature", "Subgrid turbulent flux of potential temperature forcing", NULL},	
+        {"fricVel", "m s-1", "m s-2", "Surface friction velocity", "Surface friction velocity forcing", "surface_friction_velocity"},
+        {"htFlux", "K m s-1", "K m s-2", "Surface sensible heat flux", "Surface sensible heat flux forcing", "surface_upward_sensible_heat_flux"},
+        {"qFlux", " kg (m2s)-1", "kg (m2s2)-1", "Surface latent heat flux", "Surface latent heat flux forcing", "surface_upward_latent_heat_flux"},
+        {"tskin", "K", "K s-1", "Surface skin temperature", "Surface skin temperature forcing", "surface_temperature"},
+        {"qskin", "kg kg-1", "kg kg-1 s-1", "Surface skin moisture", "Surface skin moisture forcing", "surface_specific_humidity"},
+        {"z0m", "m", "m s-1", "Roughness length for momentum", "Roughness length for momentum forcing", "surface_roughness_length_for_momentum_in_air"},
+        {"z0t", "m", "m s-1", "Roughness length for heat", "Roughness length for heat forcing", "surface_roughness_length_for_heat_in_air"},
+        {"invOblen", "1 m-1", "1 (m*s)-1", "Inverse Obukhov length", "Inverse Obukhov length forcing", "atmosphere_boundary_layer_thickness"},
+        {"CanopyLAD", "1 m-1", "1 (m*s)-1", "Leaf area density", "Leaf area density forcing", "leaf_area_density"},
+        {"SeaMask", "1", "1 s-1", "Sea mask", "Sea mask forcing", "sea_area_fraction"},
         {NULL, NULL, NULL, NULL, NULL, NULL} // End marker
     };
 
     // Search for matching field pattern
     for(int i = 0; field_metadata[i].pattern != NULL; i++) {
-        if(strncmp(baseFieldName, field_metadata[i].pattern, strlen(field_metadata[i].pattern)) == 0) {
-            if(isForcing) {
+        if (strcmp(baseFieldName, field_metadata[i].pattern) == 0) {
+              if(isForcing) {
                 errorCode = ioAddStandardAttrs(fieldName, 
                                              field_metadata[i].forcing_units,
                                              field_metadata[i].forcing_long_name,
@@ -3342,7 +3340,7 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
         int fieldIndex = strtol(baseFieldName + 3, &endptr, 10);
         if(*endptr == '\0') { // Successfully parsed a number
             if(fieldIndex == RHO_INDX_BS) { // 0 = rho base state
-                errorCode = ioAddStandardAttrs(fieldName, "kg/m^3", "Base state air density", "air_density");
+                errorCode = ioAddStandardAttrs(fieldName, "kg m-3", "Base state air density", "air_density");
             }
             else if(fieldIndex == THETA_INDX_BS) { // 1 = theta base state
                 errorCode = ioAddStandardAttrs(fieldName, "K", "Base state potential temperature", "air_potential_temperature");
@@ -3357,10 +3355,11 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
     // For unrecognized fields, add generic attributes
     printf("Warning: Unrecognized field '%s' in hydro_coreAddFieldAttributes, adding generic attributes\n", fieldName);
     if(isForcing) {
-        errorCode = ioAddStandardAttrs(fieldName, "1/s", "Generic field forcing", NULL);
+        errorCode = ioAddStandardAttrs(fieldName, "1 s-1", "Generic field forcing", NULL);
     } else {
         errorCode = ioAddStandardAttrs(fieldName, "1", "Generic field", NULL);
     }
     
     return errorCode;
 }
+
