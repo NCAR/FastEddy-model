@@ -3342,21 +3342,21 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
 
     // Field metadata lookup table
     field_metadata_t field_metadata[] = {
+        {"BS_pressure","Pa",        "Base state pressure",                  "air_pressure"},
+        {"TauTH",     "K m s-1",    "Subgrid turbulent flux of potential temperature", NULL},
+        {"Tau",       "m2 s-2",     "Subgrid stress tensor component",      NULL},
         {"rho",       "kg m-3",     "Air density",                          "air_density"},
         {"u",         "m s-1",      "Zonal wind velocity",                  "eastward_wind"},
         {"v",         "m s-1",      "Meridional wind velocity",             "northward_wind"},
         {"w",         "m s-1",      "Vertical wind velocity",               "upward_air_velocity"},
         {"theta",     "K",          "Potential temperature",                "air_potential_temperature"},
         {"pressure",  "Pa",         "Perturbation pressure",                "air_pressure"},
-        {"BS_pressure","Pa",        "Base state pressure",                  "air_pressure"},
         {"TKE",       "m2 s-2",     "Turbulent kinetic energy",             "specific_turbulent_kinetic_energy_of_sea_water"},
         {"AuxScalar", "1",          "Auxiliary scalar",                     NULL},
-        {"qv",        "kg kg-1",    "Water vapor mixing ratio",             "humidity_mixing_ratio"},
         {"moisture",  "kg kg-1",    "Water vapor mixing ratio",             "humidity_mixing_ratio"},
+        {"qv",        "kg kg-1",    "Water vapor mixing ratio",             "humidity_mixing_ratio"},
         {"qc",        "kg kg-1",    "Cloud water mixing ratio",             "cloud_liquid_water_mixing_ratio"},
         {"qi",        "kg kg-1",    "Ice water mixing ratio",               "cloud_ice_mixing_ratio"},
-        {"Tau",       "m2 s-2",     "Subgrid stress tensor component",      NULL},
-        {"TauTH",     "K m s-1",    "Subgrid turbulent flux of potential temperature", NULL},
         {"fricVel",   "m s-1",      "Surface friction velocity",            "surface_friction_velocity"},
         {"htFlux",    "K m s-1",    "Surface sensible heat flux",           "surface_upward_sensible_heat_flux"},
         {"qFlux",     "kg (m2s)-1", "Surface latent heat flux",             "surface_upward_latent_heat_flux"},
@@ -3372,7 +3372,7 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
 
     // Search for matching field pattern
     for(int i = 0; field_metadata[i].pattern != NULL; i++) {
-        if (strcmp(baseFieldName, field_metadata[i].pattern) == 0) {
+	if (strncmp(baseFieldName, field_metadata[i].pattern, strlen(field_metadata[i].pattern)) == 0) {
             if(isForcing) {
                 char *forcing_units = make_forcing_units(field_metadata[i].units);
                 char *forcing_long_name = make_forcing_long_name(field_metadata[i].long_name);
