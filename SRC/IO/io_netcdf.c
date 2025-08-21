@@ -849,7 +849,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
                                          strlen("x-component of velocity"), "x-component of velocity"))){
             ERR(errorCode);
          }
-         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("m/s"), "m/s"))){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("m s-1"), "m s-1"))){
             ERR(errorCode);
          }
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name", 
@@ -861,7 +861,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
                                          strlen("y-component of velocity"), "y-component of velocity"))){
             ERR(errorCode);
          }
-         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("m/s"), "m/s"))){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("m s-1"), "m s-1"))){
             ERR(errorCode);
          }
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name", 
@@ -873,7 +873,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
                                          strlen("z-component of velocity"), "z-component of velocity"))){
             ERR(errorCode);
          }
-         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("m/s"), "m/s"))){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("m s-1"), "m s-1"))){
             ERR(errorCode);
          }
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name", 
@@ -897,7 +897,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
                                          strlen("air density"), "air density"))){
             ERR(errorCode);
          }
-         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("kg/m3"), "kg/m3"))){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("kg m-3"), "kg m-3"))){
             ERR(errorCode);
          }
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name", 
@@ -909,7 +909,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
                                          strlen("water vapor mixing ratio"), "water vapor mixing ratio"))){
             ERR(errorCode);
          }
-         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("kg/kg"), "kg/kg"))){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("kg kg-1"), "kg kg-1"))){
             ERR(errorCode);
          }
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name", 
