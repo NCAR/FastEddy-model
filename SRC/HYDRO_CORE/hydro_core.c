@@ -1444,14 +1444,14 @@ int hydro_coreInit(){
              char *direction[] = {"x", "y", "z"};
              if (iFld == 0) { // TauQv (water vapor)
                  sprintf(longName, "Subgrid-scale water vapor flux in %s direction", direction[iFld2]);
-                 errorCode = ioAddStandardAttrs(&moistName[0], "kg/(kg*m/s)", longName, NULL);
+                 errorCode = ioAddStandardAttrs(&moistName[0], "kg kg-1 m-1 s", longName, NULL);
              } else if (iFld == 1) { // TauQl (liquid water)
                  sprintf(longName, "Subgrid-scale liquid water flux in %s direction", direction[iFld2]);
-                 errorCode = ioAddStandardAttrs(&moistName[0], "kg/(kg*m/s)", longName, NULL);
+                 errorCode = ioAddStandardAttrs(&moistName[0], "kg kg-1 m-1 s", longName, NULL);
              } else {
                  // Generic moisture SGS field for other moisture species
                  sprintf(longName, "Subgrid-scale moisture flux in %s direction", direction[iFld2]);
-                 errorCode = ioAddStandardAttrs(&moistName[0], "kg/(kg*m/s)", longName, NULL);
+                 errorCode = ioAddStandardAttrs(&moistName[0], "kg kg-1 m-1 s", longName, NULL);
              }
              printf("hydro_coreInit:moistTauFlds[%d] = %s stored at %p, has been registered with IO.\n",
                     iFld*3+iFld2,&moistName[0],&moistTauFlds[(iFld*3+iFld2)*fldStride]);
