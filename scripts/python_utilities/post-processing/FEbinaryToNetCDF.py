@@ -1,4 +1,4 @@
-import os, sysAA
+import os, sys
 import struct
 import numpy as np
 import numpy.matlib
