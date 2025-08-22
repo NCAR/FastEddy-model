@@ -12,6 +12,57 @@ import argparse
 from mpi4py import MPI
 from datetime import datetime
 
+### Define lookup tables ###
+
+# Fromhydro_core.c
+BASE_ATTRS = {
+    'BS_pressure': ('Pa', 'Base state pressure', 'air_pressure'),
+    'TauTH': ('K m s-1', 'Subgrid turbulent flux of potential temperature', None),
+    'Tau': ('m2 s-2', 'Subgrid stress tensor component', None),
+    'rho': ('kg m-3', 'Air density', 'air_density'),
+    'u': ('m s-1', 'Zonal wind velocity', 'eastward_wind'),
+    'v': ('m s-1', 'Meridional wind velocity', 'northward_wind'),
+    'w': ('m s-1', 'Vertical wind velocity', 'upward_air_velocity'),
+    'theta': ('K', 'Potential temperature', 'air_potential_temperature'),
+    'pressure': ('Pa', 'Perturbation pressure', 'air_pressure'),
+    'TKE': ('m2 s-2', 'Turbulent kinetic energy', 'specific_turbulent_kinetic_energy_of_sea_water'),
+    'AuxScalar': ('1', 'Auxiliary scalar', None),
+    'moisture': ('kg kg-1', 'Water vapor mixing ratio', 'humidity_mixing_ratio'),
+    'qv': ('kg kg-1', 'Water vapor mixing ratio', 'humidity_mixing_ratio'),
+    'qc': ('kg kg-1', 'Cloud water mixing ratio', 'cloud_liquid_water_mixing_ratio'),
+    'qi': ('kg kg-1', 'Ice water mixing ratio', 'cloud_ice_mixing_ratio'),
+    'fricVel': ('m s-1', 'Surface friction velocity', 'surface_friction_velocity'),
+    'htFlux': ('K m s-1', 'Surface sensible heat flux', 'surface_upward_sensible_heat_flux'),
+    'qFlux': ('kg (m2s)-1', 'Surface latent heat flux', 'surface_upward_latent_heat_flux'),
+    'tskin': ('K', 'Surface skin temperature', 'surface_temperature'),
+    'qskin': ('kg kg-1', 'Surface skin moisture', 'surface_specific_humidity'),
+    'z0m': ('m', 'Roughness length for momentum', 'surface_roughness_length_for_momentum_in_air'),
+    'z0t': ('m', 'Roughness length for heat', 'surface_roughness_length_for_heat_in_air'),
+    'invOblen': ('1 m-1', 'Inverse Obukhov length', 'atmosphere_boundary_layer_thickness'),
+    'CanopyLAD': ('1 m-1', 'Leaf area density', 'leaf_area_density'),
+    'SeaMask': ('1', 'Sea mask', 'sea_area_fraction'),
+}
+
+# From grid.c
+JACOBIAN_ATTRS = {
+    'D_Jac': ('1', 'Jacobian determinant', None),
+    'invD_Jac': ('1', 'inverse Jacobian determinant', None),
+    'J13': ('1', 'metric tensor component dx/d_zeta', None),
+    'J23': ('1', 'metric tensor component dy/d_zeta', None),
+    'J31': ('1', 'metric tensor component dz/d_xi', None),
+    'J32': ('1', 'metric tensor component dz/d_eta', None),
+    'J33': ('1', 'metric tensor component dz/d_zeta', None),
+}
+
+COORDINATE_ATTRS = {
+    'xPos': ('m', 'x-coordinate of cell center', 'projection_x_coordinate'),
+    'yPos': ('m', 'y-coordinate of cell center', 'projection_y_coordinate'),
+    'zPos': ('m', 'z-coordinate of cell center', 'height'),
+    'topoPos': ('m', 'topography elevation', 'surface_altitude'),
+}
+
+DIRECTIONS = {0: 'x', 1: 'y', 2: 'z'}
+
 def field3dTranspose(fld,extents):
     fld=fld.reshape(extents)
     fldFinal=np.transpose(fld,axes=[2,1,0])
@@ -22,214 +73,129 @@ def field2dTranspose(fld,extents):
     fldFinal=np.transpose(fld,axes=[1,0])
     return fldFinal[np.newaxis,Nh:-Nh,Nh:-Nh]
 
+def get_variable_attrs(var_name):
+    """
+    Get CF-compliant attributes for a variable name, handling special cases.   
+    Args: var_name (str): Variable name to get attributes for
+    Returns: tuple or None: (units, long_name, standard_name) or None if no match
+    """
+
+    # Handle BS_ fields with numeric identifiers
+    if var_name.startswith('BS_'):
+        try:
+            field_index = int(var_name[3:])
+            if field_index == 0:  # RHO_INDX_BS = 0
+                return ('kg m-3', 'Base state air density', 'air_density')
+            elif field_index == 1:  # THETA_INDX_BS = 1  
+                return ('K', 'Base state potential temperature', 'air_potential_temperature')
+            else:
+                return ('1', 'Base state field', None)
+        except ValueError:
+            pass
+
+    # Handle TauQv/TauQl moisture flux fields
+    tau_moisture_match = re.match(r'^TauQ([vl])(\d+)$', var_name)
+    if tau_moisture_match:
+        species, direction_idx = tau_moisture_match.groups()
+        direction_idx = int(direction_idx)
+        direction_name = DIRECTIONS.get(direction_idx, str(direction_idx))
+        
+        if species == 'v':  # TauQv (water vapor)
+            long_name = f'Subgrid-scale water vapor flux in {direction_name} direction'
+        elif species == 'l':  # TauQl (liquid water)
+            long_name = f'Subgrid-scale liquid water flux in {direction_name} direction'
+        else:
+            long_name = f'Subgrid-scale moisture flux in {direction_name} direction'
+        
+        return ('kg kg-1 m-1 s', long_name, None)
+
+    # Handle TauTH with numeric suffixes (TauTH1, TauTH2, etc.)
+    if re.match(r'^TauTH\d+$', var_name):
+        return BASE_ATTRS['TauTH']
+
+    # Handle Tau with numeric suffixes (Tau11, Tau21, Tau31, Tau32, etc.)
+    if re.match(r'^Tau\d+$', var_name):
+        return BASE_ATTRS['Tau']
+
+    # Handle numbered versions of base fields (e.g., TKE_0, TKE_1, AuxScalar_0, etc.)
+    base_name_match = re.match(r'^([A-Za-z_]+)_?\d+$', var_name)
+    if base_name_match:
+        base_name = base_name_match.group(1)
+        if base_name in BASE_ATTRS:
+            return BASE_ATTRS[base_name]
+
+    # Check specific attribute dictionaries
+    for attr_dict in [JACOBIAN_ATTRS, COORDINATE_ATTRS, BASE_ATTRS]:
+        if var_name in attr_dict:
+            return attr_dict[var_name]
+    
+    return None
+
+def infer_units_from_name(var_name):
+    """Infer units based on variable name patterns."""
+    var_lower = var_name.lower()
+    
+    if any(x in var_lower for x in ['temp', 'theta']):
+        return 'K'
+    elif any(x in var_lower for x in ['vel', 'wind', 'u', 'v', 'w']):
+        return 'm s-1'
+    elif 'rho' in var_lower or 'density' in var_lower:
+        return 'kg m-3'
+    elif any(x in var_lower for x in ['q', 'mixing', 'humidity']):
+        return 'kg kg-1'
+    elif 'tke' in var_lower or 'energy' in var_lower:
+        return 'm2 s-2'
+    elif 'pressure' in var_lower:
+        return 'Pa'
+    else:
+        return 'unknown'
+
 def add_variable_attributes(ds):
-    """Add CF-compliant attributes to variables"""
+    """Add attributes to variables"""
 
-    # Define variable attributes based on common atmospheric variables
-    var_attrs = {
-        'u': {
-            'standard_name': 'eastward_wind',
-            'long_name': 'Eastward wind component',
-            'units': 'm s-1',
-            'description': 'Horizontal wind velocity component in the eastward direction'
-        },
-        'v': {
-            'standard_name': 'northward_wind',
-            'long_name': 'Northward wind component', 
-            'units': 'm s-1',
-            'description': 'Horizontal wind velocity component in the northward direction'
-        },
-        'w': {
-            'standard_name': 'upward_air_velocity',
-            'long_name': 'Vertical wind component',
-            'units': 'm s-1',
-            'description': 'Vertical wind velocity component'
-        },
-        'theta': {
-            'standard_name': 'air_potential_temperature',
-            'long_name': 'Potential temperature',
-            'units': 'K',
-            'description': 'Potential temperature of air'
-        },
-        'rho': {
-            'standard_name': 'air_density',
-            'long_name': 'Air density',
-            'units': 'kg m-3',
-            'description': 'Density of air'
-        },
-        'pressure': {
-            'standard_name': 'air_pressure',
-            'long_name': 'Air pressure',
-            'units': 'Pa',
-            'description': 'Atmospheric pressure'
-        },
-        'TKE_0': {
-            'long_name': 'Turbulent kinetic energy (resolved)',
-            'units': 'm2 s-2',
-            'description': 'Resolved-scale turbulent kinetic energy'
-        },
-        'TKE_1': {
-            'long_name': 'Turbulent kinetic energy (subgrid)',
-            'units': 'm2 s-2', 
-            'description': 'Subgrid-scale turbulent kinetic energy'
-        },
-        'qv': {
-            'standard_name': 'specific_humidity',
-            'long_name': 'Water vapor mixing ratio',
-            'units': 'kg kg-1',
-            'description': 'Mass mixing ratio of water vapor in air'
-        },
-        'ql': {
-            'standard_name': 'mass_fraction_of_cloud_liquid_water_in_air',
-            'long_name': 'Liquid water mixing ratio',
-            'units': 'kg kg-1',
-            'description': 'Mass mixing ratio of liquid water in air'
-        },
-        'qr': {
-            'long_name': 'Rain water mixing ratio',
-            'units': 'kg kg-1',
-            'description': 'Mass mixing ratio of rain water in air'
-        },
-        'xPos': {
-            'standard_name': 'projection_x_coordinate',
-            'long_name': 'X position coordinate',
-            'units': 'm',
-            'description': 'Physical x-coordinate position in meters'
-        },
-        'yPos': {
-            'standard_name': 'projection_y_coordinate', 
-            'long_name': 'Y position coordinate',
-            'units': 'm',
-            'description': 'Physical y-coordinate position in meters'
-        },
-        'zPos': {
-            'standard_name': 'height',
-            'long_name': 'Z position coordinate',
-            'units': 'm',
-            'description': 'Physical z-coordinate position (height) in meters'
-        },
-        'topoPos': {
-            'standard_name': 'surface_altitude',
-            'long_name': 'Topographic surface height',
-            'units': 'm', 
-            'description': 'Height of topographic surface above reference level'
-        },
-        'AuxScalar_0': {
-            'long_name': 'Auxiliary scalar field 0',
-            'units': 'dimensionless',
-            'description': 'User-defined auxiliary scalar variable (tracer or passive scalar)'
-        },
-        'AuxScalar_1': {
-            'long_name': 'Auxiliary scalar field 1', 
-            'units': 'dimensionless',
-            'description': 'User-defined auxiliary scalar variable (tracer or passive scalar)'
-        },
-        'tskin': {
-            'standard_name': 'surface_temperature',
-            'long_name': 'Skin temperature',
-            'units': 'K',
-            'description': 'Temperature at the surface skin layer'
-        },
-        'fricVel': {
-            'standard_name': 'friction_velocity',
-            'long_name': 'Friction velocity',
-            'units': 'm s-1',
-            'description': 'Surface friction velocity (u*)'
-        },
-        'htFlux': {
-            'standard_name': 'surface_upward_sensible_heat_flux',
-            'long_name': 'Surface sensible heat flux',
-            'units': 'W m-2',
-            'description': 'Upward sensible heat flux at the surface'
-        },
-        'invOblen': {
-            'long_name': 'Inverse Obukhov length',
-            'units': 'm-1', 
-            'description': 'Inverse of Obukhov length scale (1/L)'
-        },
-        'z0m': {
-            'standard_name': 'surface_roughness_length_for_momentum_in_air',
-            'long_name': 'Momentum roughness length',
-            'units': 'm',
-            'description': 'Surface roughness length for momentum transfer'
-        },
-        'z0t': {
-            'standard_name': 'surface_roughness_length_for_heat_in_air',
-            'long_name': 'Thermal roughness length',
-            'units': 'm',
-            'description': 'Surface roughness length for heat transfer'
-        }
-    }
-
-    # Apply attributes to variables
     for var_name, var in ds.data_vars.items():
-        if var_name in var_attrs:
-            # Apply specific attributes for known variables
-            for attr_name, attr_value in var_attrs[var_name].items():
-                var.attrs[attr_name] = attr_value
+        attrs_tuple = get_variable_attrs(var_name)
+        
+        if attrs_tuple:
+            units, long_name, standard_name = attrs_tuple
+            var.attrs['units'] = units
+            var.attrs['long_name'] = long_name
+            if standard_name is not None:
+                var.attrs['standard_name'] = standard_name
         else:
             # Generic attributes for unknown variables
             var.attrs['long_name'] = var_name.replace('_', ' ').title()
-            var.attrs['description'] = f'FastEddy model variable: {var_name}'
-
-            # Infer units based on variable name patterns
-            if any(x in var_name.lower() for x in ['temp', 'theta']):
-                var.attrs['units'] = 'K'
-            elif any(x in var_name.lower() for x in ['vel', 'wind', 'u', 'v', 'w']):
-                var.attrs['units'] = 'm s-1'
-            elif 'rho' in var_name.lower() or 'density' in var_name.lower():
-                var.attrs['units'] = 'kg m-3'
-            elif any(x in var_name.lower() for x in ['q', 'mixing', 'humidity']):
-                var.attrs['units'] = 'kg kg-1'
-            elif 'tke' in var_name.lower() or 'energy' in var_name.lower():
-                var.attrs['units'] = 'm2 s-2'
-            elif 'pressure' in var_name.lower():
-                var.attrs['units'] = 'Pa'
-            else:
-                var.attrs['units'] = 'unknown'
-            
-        # Add common attributes to all variables (handle both float and int types)
-        if var.dtype.kind == 'f':  # floating point
-            var.attrs['_FillValue'] = np.nan
-            var.attrs['missing_value'] = np.nan
-        elif var.dtype.kind == 'i':  # integer
-            var.attrs['_FillValue'] = -9999
-            var.attrs['missing_value'] = -9999
-        
-        # Add data type information
-        var.attrs['dtype'] = str(var.dtype)
-    
+            var.attrs['units'] = infer_units_from_name(var_name)
+                
     return ds
-
+    
 def add_coordinate_attributes(ds):
     """Add attributes to coordinate variables"""
     
     if 'time' in ds.coords:
         ds['time'].attrs = {
+            'units': 's',
+            'long_name': 'simulation time',
             'standard_name': 'time',
-            'long_name': 'time',
             'axis': 'T'
         }
 
     coord_attrs = {
         'xIndex': {
-            'standard_name': 'projection_x_coordinate',
-            'long_name': 'x-coordinate in Cartesian system',
-            'axis': 'X',
-            'units': 'index'
+            'long_name': 'x-coordinate index',
+            'units': '1',
+            'axis': 'X'
         },
         'yIndex': {
-            'standard_name': 'projection_y_coordinate', 
-            'long_name': 'y-coordinate in Cartesian system',
-            'axis': 'Y',
-            'units': 'index'
+            'long_name': 'y-coordinate index',
+            'units': '1',
+            'axis': 'Y'
         },
         'zIndex': {
-            'standard_name': 'atmosphere_hybrid_height_coordinate',
-            'long_name': 'z-coordinate in Cartesian system',
+            'long_name': 'z-coordinate index',
+            'units': '1',
             'axis': 'Z',
-            'positive': 'up',
-            'units': 'index'
+            'positive': 'up'
         }
     }
 
