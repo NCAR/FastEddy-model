@@ -289,7 +289,10 @@ def readBinary(outpath,theseFiles):
     # Add variable and coordinate attributes
     dsFull = add_variable_attributes(dsFull)
     dsFull = add_coordinate_attributes(dsFull)
-        
+
+    # Remove unwanted _FillValue attributes
+    dsFull = remove_fill_values(dsFull)
+
     return dsFull
 
 ###
