@@ -279,7 +279,7 @@ int gridInit(){
      ioerrorCode = ioAddStandardAttrs("xPos", "m", "x-coordinate of cell center", "projection_x_coordinate");
      ioerrorCode = ioAddStandardAttrs("yPos", "m", "y-coordinate of cell center", "projection_y_coordinate");
      ioerrorCode = ioAddStandardAttrs("zPos", "m", "z-coordinate of cell center", "height");
-     ioerrorCode = ioAddStandardAttrs("topoPos", "m", "topography elevation", "surface_altitude");
+     ioerrorCode = ioAddStandardAttrs("topoPos", "m", "Topography elevation", "surface_altitude");
 
      if(ioerrorCode != 0){
        printf("Error adding standard attributes to GRID coordinate fields.\n");
@@ -300,12 +300,12 @@ int gridInit(){
 
      /* Add attributes for Jacobian and metric tensor fields */
      ioerrorCode = ioAddStandardAttrs("D_Jac", "1", "Jacobian determinant", NULL);
-     ioerrorCode = ioAddStandardAttrs("invD_Jac", "1", "inverse Jacobian determinant", NULL);
-     ioerrorCode = ioAddStandardAttrs("J13", "1", "metric tensor component dx/d_zeta", NULL);
-     ioerrorCode = ioAddStandardAttrs("J23", "1", "metric tensor component dy/d_zeta", NULL);
-     ioerrorCode = ioAddStandardAttrs("J31", "1", "metric tensor component dz/d_xi", NULL);
-     ioerrorCode = ioAddStandardAttrs("J32", "1", "metric tensor component dz/d_eta", NULL);
-     ioerrorCode = ioAddStandardAttrs("J33", "1", "metric tensor component dz/d_zeta", NULL);
+     ioerrorCode = ioAddStandardAttrs("invD_Jac", "1", "Inverse Jacobian determinant", NULL);
+     ioerrorCode = ioAddStandardAttrs("J13", "1", "Metric tensor component dx/d_zeta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J23", "1", "Metric tensor component dy/d_zeta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J31", "1", "Metric tensor component dz/d_xi", NULL);
+     ioerrorCode = ioAddStandardAttrs("J32", "1", "Metric tensor component dz/d_eta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J33", "1", "Metric tensor component dz/d_zeta", NULL);
 #endif 
    } // end if errorCode indicates no errors thus far
 
