@@ -132,6 +132,13 @@ def get_variable_attrs(var_name):
     
     return None
 
+def remove_fill_values(ds):
+    """Remove _FillValue attributes from all variables"""
+    for var_name in ds.data_vars:
+        if '_FillValue' in ds[var_name].attrs:
+            del ds[var_name].attrs['_FillValue']
+    return ds
+
 def infer_units_from_name(var_name):
     """Infer units based on variable name patterns."""
     var_lower = var_name.lower()
@@ -171,8 +178,24 @@ def add_variable_attributes(ds):
     return ds
     
 def add_coordinate_attributes(ds):
-    """Add attributes to coordinate variables"""
+    """Add coordinate variables and their attributes"""
+
+    # Create explicit coordinate variables based on dimension sizes
+    coords_to_add = {}
     
+    if 'xIndex' in ds.dims:
+        coords_to_add['xIndex'] = np.arange(ds.sizes['xIndex'])
+    
+    if 'yIndex' in ds.dims:
+        coords_to_add['yIndex'] = np.arange(ds.sizes['yIndex'])
+        
+    if 'zIndex' in ds.dims:
+        coords_to_add['zIndex'] = np.arange(ds.sizes['zIndex'])
+    
+    # Add the coordinate variables to the dataset
+    if coords_to_add:
+        ds = ds.assign_coords(coords_to_add)
+ 
     if 'time' in ds.coords:
         ds['time'].attrs = {
             'units': 's',

@@ -149,12 +149,6 @@ int timeAddTimeAttributes(){
       return errorCode;
    }
 
-   errorCode = ioAddVarAttr("time", "_FillValue", "float", "-999.0");
-   if(errorCode != TIME_INTEGRATION_SUCCESS){
-      printf("Error adding _FillValue attribute to time variable: %d\n", errorCode);
-      return errorCode;
-   }
-
    errorCode = ioAddVarAttr("time", "axis", "text", "T");
    if(errorCode != TIME_INTEGRATION_SUCCESS){
       printf("Error adding axis attribute to time variable: %d\n", errorCode);
