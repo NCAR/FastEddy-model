@@ -846,7 +846,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
       /* Add standard CF convention attributes for common variables */
       if(!strcmp(ptr->name,"u")){
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name", 
-                                         strlen("Zonal wind velocity"), "zonal wind velocity"))){
+                                         strlen("Zonal wind velocity"), "Zonal wind velocity"))){
             ERR(errorCode);
          }
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("m s-1"), "m s-1"))){
@@ -858,7 +858,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
          }
       }else if(!strcmp(ptr->name,"v")){
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name", 
-                                         strlen("Meridional wind velocity"), "meridional wind velocity"))){
+                                         strlen("Meridional wind velocity"), "Meridional wind velocity"))){
             ERR(errorCode);
          }
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("m s-1"), "m s-1"))){
@@ -870,7 +870,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
          }
       }else if(!strcmp(ptr->name,"w")){
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name", 
-                                         strlen("Vertical wind velocity"), "vertical wind velocity"))){
+                                         strlen("Vertical wind velocity"), "Vertical wind velocity"))){
             ERR(errorCode);
          }
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("m s-1"), "m s-1"))){
@@ -882,7 +882,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
          }
       }else if(!strcmp(ptr->name,"theta")){
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name", 
-                                         strlen("Potential temperature"), "potential temperature"))){
+                                         strlen("Potential temperature"), "Potential temperature"))){
             ERR(errorCode);
          }
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("K"), "K"))){
@@ -894,7 +894,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
          }
       }else if(!strcmp(ptr->name,"rho")){
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name", 
-                                         strlen("Air density"), "air density"))){
+                                         strlen("Air density"), "Air density"))){
             ERR(errorCode);
          }
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("kg m-3"), "kg m-3"))){
@@ -906,7 +906,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
          }
       }else if(!strcmp(ptr->name,"qv")){
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name", 
-                                         strlen("Water vapor mixing ratio"), "water vapor mixing ratio"))){
+                                         strlen("Water vapor mixing ratio"), "Water vapor mixing ratio"))){
             ERR(errorCode);
          }
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("kg kg-1"), "kg kg-1"))){

@@ -136,16 +136,9 @@ int timeAddTimeAttributes(){
    int errorCode = TIME_INTEGRATION_SUCCESS;
 
    /* Add standard CF convention attributes for the time variable */
-   errorCode = ioAddStandardAttrs("time", "s", "simulation time", "time");
+   errorCode = ioAddStandardAttrs("time", "s", "Simulation time", "time");
    if(errorCode != TIME_INTEGRATION_SUCCESS){
       printf("Error adding standard attributes to time variable: %d\n", errorCode);
-      return errorCode;
-   }
-
-   /* Add additional custom attributes for time variable */
-   errorCode = ioAddVarAttr("time", "comment", "text", "simulation time since model start");
-   if(errorCode != TIME_INTEGRATION_SUCCESS){
-      printf("Error adding comment attribute to time variable: %d\n", errorCode);
       return errorCode;
    }
 
