@@ -119,7 +119,8 @@ def get_variable_attrs(var_name):
         return BASE_ATTRS['Tau']
 
     # Handle numbered versions of base fields (e.g., TKE_0, TKE_1, AuxScalar_0, etc.)
-    base_name_match = re.match(r'^([A-Za-z_]+)_?\d+$', var_name)
+    #base_name_match = re.match(r'^([A-Za-z_]+)_?\d+$', var_name)
+    base_name_match = re.match(r'^([A-Za-z_]+?)_?(\d+)$', var_name)
     if base_name_match:
         base_name = base_name_match.group(1)
         if base_name in BASE_ATTRS:
@@ -132,31 +133,24 @@ def get_variable_attrs(var_name):
     
     return None
 
-def remove_fill_values(ds):
-    """Remove _FillValue attributes from all variables"""
-    for var_name in ds.data_vars:
-        if '_FillValue' in ds[var_name].attrs:
-            del ds[var_name].attrs['_FillValue']
-    return ds
-
-def infer_units_from_name(var_name):
-    """Infer units based on variable name patterns."""
-    var_lower = var_name.lower()
-    
-    if any(x in var_lower for x in ['temp', 'theta']):
-        return 'K'
-    elif any(x in var_lower for x in ['vel', 'wind', 'u', 'v', 'w']):
-        return 'm s-1'
-    elif 'rho' in var_lower or 'density' in var_lower:
-        return 'kg m-3'
-    elif any(x in var_lower for x in ['q', 'mixing', 'humidity']):
-        return 'kg kg-1'
-    elif 'tke' in var_lower or 'energy' in var_lower:
-        return 'm2 s-2'
-    elif 'pressure' in var_lower:
-        return 'Pa'
-    else:
-        return 'unknown'
+#def infer_units_from_name(var_name):
+#    """Infer units based on variable name patterns."""
+#    var_lower = var_name.lower()
+#    
+#    if any(x in var_lower for x in ['temp', 'theta']):
+#        return 'K'
+#    elif any(x in var_lower for x in ['vel', 'wind', 'u', 'v', 'w']):
+#        return 'm s-1'
+#    elif 'rho' in var_lower or 'density' in var_lower:
+#        return 'kg m-3'
+#    elif any(x in var_lower for x in ['q', 'mixing', 'humidity']):
+#        return 'kg kg-1'
+#    elif 'tke' in var_lower or 'energy' in var_lower:
+#        return 'm2 s-2'
+#    elif 'pressure' in var_lower:
+#        return 'Pa'
+#    else:
+#        return 'unknown'
 
 def add_variable_attributes(ds):
     """Add attributes to variables"""
@@ -170,10 +164,10 @@ def add_variable_attributes(ds):
             var.attrs['long_name'] = long_name
             if standard_name is not None:
                 var.attrs['standard_name'] = standard_name
-        else:
-            # Generic attributes for unknown variables
-            var.attrs['long_name'] = var_name.replace('_', ' ').title()
-            var.attrs['units'] = infer_units_from_name(var_name)
+#        else:
+#            # Generic attributes for unknown variables
+#            var.attrs['long_name'] = var_name.replace('_', ' ').title()
+#            var.attrs['units'] = infer_units_from_name(var_name)
                 
     return ds
     
@@ -184,13 +178,13 @@ def add_coordinate_attributes(ds):
     coords_to_add = {}
     
     if 'xIndex' in ds.dims:
-        coords_to_add['xIndex'] = np.arange(ds.sizes['xIndex'])
+        coords_to_add['xIndex'] = np.arange(ds.sizes['xIndex'], dtype=np.int32)
     
     if 'yIndex' in ds.dims:
-        coords_to_add['yIndex'] = np.arange(ds.sizes['yIndex'])
+        coords_to_add['yIndex'] = np.arange(ds.sizes['yIndex'], dtype=np.int32)
         
     if 'zIndex' in ds.dims:
-        coords_to_add['zIndex'] = np.arange(ds.sizes['zIndex'])
+        coords_to_add['zIndex'] = np.arange(ds.sizes['zIndex'], dtype=np.int32)
     
     # Add the coordinate variables to the dataset
     if coords_to_add:
@@ -199,7 +193,7 @@ def add_coordinate_attributes(ds):
     if 'time' in ds.coords:
         ds['time'].attrs = {
             'units': 's',
-            'long_name': 'simulation time',
+            'long_name': 'Simulation time',
             'standard_name': 'time',
             'axis': 'T'
         }
@@ -229,6 +223,49 @@ def add_coordinate_attributes(ds):
     
     return ds
 
+def reorder_dataset_variables(ds):
+    """
+    Reorder dataset variables to desired order:
+    zIndex, yIndex, xIndex, xPos, yPos, zPos, then other variables, with time last
+    """
+    
+    # Define the desired order for the first variables
+    priority_order = ['zIndex', 'yIndex', 'xIndex', 'xPos', 'yPos', 'zPos']
+    
+    # Get all variable names from both data_vars and coords, preserving original order
+    original_data_vars = list(ds.data_vars.keys())
+    original_coords = list(ds.coords.keys())
+    
+    # Build the new order
+    new_order = []
+    used_vars = set()
+    
+    # Add priority variables first (if they exist)
+    for var_name in priority_order:
+        if var_name in ds.data_vars or var_name in ds.coords:
+            new_order.append(var_name)
+            used_vars.add(var_name)
+    
+    # Add remaining data variables in their original order (except time)
+    for var_name in original_data_vars:
+        if var_name not in used_vars and var_name != 'time':
+            new_order.append(var_name)
+            used_vars.add(var_name)
+    
+    # Add remaining coordinate variables in their original order (except time)
+    for var_name in original_coords:
+        if var_name not in used_vars and var_name != 'time':
+            new_order.append(var_name)
+            used_vars.add(var_name)
+    
+    # Add time last if it exists
+    if 'time' in ds.data_vars or 'time' in ds.coords:
+        new_order.append('time')
+    
+    # Use xarray's reindex to reorder variables
+    # This preserves the distinction between coords and data_vars
+    return ds[new_order]
+    
 def readBinary(outpath,theseFiles):
     verboseLogging=False
     print(theseFiles)
@@ -287,11 +324,11 @@ def readBinary(outpath,theseFiles):
     dsFull=xr.concat(dsSet,'xIndex',data_vars='minimal')
 
     # Add variable and coordinate attributes
-    dsFull = add_variable_attributes(dsFull)
     dsFull = add_coordinate_attributes(dsFull)
+    dsFull = add_variable_attributes(dsFull)
 
-    # Remove unwanted _FillValue attributes
-    dsFull = remove_fill_values(dsFull)
+    # Reorder variables to desired order
+    dsFull = reorder_dataset_variables(dsFull)
 
     return dsFull
 
@@ -389,11 +426,18 @@ for timeStep in mytslist:
        print('{:d} specified binary files are missing. Skipping timestep: {:d}...'.format(numOutRanks-goodCnt,timeStep))
    if parseProceed:
      dsFull=readBinary(outpath,theseFiles)
+
+     # Create encoding to prevent _FillValue for all variables AND coordinates
+     encoding = {var: {'_FillValue': None} for var in list(dsFull.data_vars) + list(dsFull.coords)}
+
+     # Create encoding to prevent _FillValue for all variables
+     #encoding = {var: {'_FillValue': None} for var in dsFull.data_vars  + list(dsFull.coords)}
+     
      #write the full  domain datatset to netcdf file
      if False:
-        dsFull.to_netcdf('{:s}NETCDF/{:s}.{:d}'.format(outpath,FEoutBase,timeStep),format='NETCDF4')
+        dsFull.to_netcdf('{:s}NETCDF/{:s}.{:d}'.format(outpath,FEoutBase,timeStep),format='NETCDF4',encoding=encoding)
      else:
-        dsFull.to_netcdf('{:s}/{:s}.{:d}'.format(netCDFpath,FEoutBase,timeStep),format='NETCDF4')
+        dsFull.to_netcdf('{:s}/{:s}.{:d}'.format(netCDFpath,FEoutBase,timeStep),format='NETCDF4',encoding=encoding)
      del dsFull
      if os.path.exists('{:s}/{:s}.{:d}'.format(netCDFpath,FEoutBase,timeStep)):
        if removeBinaries:
