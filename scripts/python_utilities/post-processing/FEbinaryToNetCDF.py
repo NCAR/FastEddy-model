@@ -34,13 +34,13 @@ BASE_ATTRS = {
     'qi': ('kg kg-1', 'Ice water mixing ratio', 'cloud_ice_mixing_ratio'),
     'fricVel': ('m s-1', 'Surface friction velocity', 'surface_friction_velocity'),
     'htFlux': ('K m s-1', 'Surface sensible heat flux', 'surface_upward_sensible_heat_flux'),
-    'qFlux': ('kg (m2s)-1', 'Surface latent heat flux', 'surface_upward_latent_heat_flux'),
+    'qFlux': ('kg kg-1 m s-1', 'Surface latent heat flux', 'surface_upward_latent_heat_flux'),
     'tskin': ('K', 'Surface skin temperature', 'surface_temperature'),
     'qskin': ('kg kg-1', 'Surface skin moisture', 'surface_specific_humidity'),
     'z0m': ('m', 'Roughness length for momentum', 'surface_roughness_length_for_momentum_in_air'),
     'z0t': ('m', 'Roughness length for heat', 'surface_roughness_length_for_heat_in_air'),
-    'invOblen': ('1 m-1', 'Inverse Obukhov length', 'atmosphere_boundary_layer_thickness'),
-    'CanopyLAD': ('1 m-1', 'Leaf area density', 'leaf_area_density'),
+    'invOblen': ('m-1', 'Inverse Obukhov length', 'atmosphere_boundary_layer_thickness'),
+    'CanopyLAD': ('m-1', 'Leaf area density', 'leaf_area_density'),
     'SeaMask': ('1', 'Sea mask', 'sea_area_fraction'),
 }
 
@@ -102,13 +102,13 @@ def get_variable_attrs(var_name):
         direction_name = DIRECTIONS.get(direction_idx, str(direction_idx))
         
         if species == 'v':  # TauQv (water vapor)
-            long_name = f'Subgrid-scale water vapor flux in {direction_name} direction'
+            long_name = f'Subgrid-{direction_name} water vapor flux in {direction_name} direction'
         elif species == 'l':  # TauQl (liquid water)
-            long_name = f'Subgrid-scale liquid water flux in {direction_name} direction'
+            long_name = f'Subgrid-{direction_name} liquid water flux in {direction_name} direction'
         else:
-            long_name = f'Subgrid-scale moisture flux in {direction_name} direction'
+            long_name = f'Subgrid-{direction_name} moisture flux in {direction_name} direction'
         
-        return ('kg kg-1 m-1 s', long_name, None)
+        return ('kg kg-1 m s-1"', long_name, None)
 
     # Handle TauTH with numeric suffixes (TauTH1, TauTH2, etc.)
     if re.match(r'^TauTH\d+$', var_name):
