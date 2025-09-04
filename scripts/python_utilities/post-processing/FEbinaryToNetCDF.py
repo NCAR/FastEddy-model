@@ -18,8 +18,15 @@ import re
 # Fromhydro_core.c
 BASE_ATTRS = {
     'BS_pressure': ('Pa', 'Base state pressure', 'air_pressure'),
-    'TauTH': ('K m s-1', 'Subgrid turbulent flux of potential temperature', None),
-    'Tau': ('m2 s-2', 'Subgrid stress tensor component', None),
+    'TauTH1': ('K m s-1', 'Subgrid-x turbulent flux of potential temperature', None),
+    'TauTH2': ('K m s-1', 'Subgrid-y turbulent flux of potential temperature', None),
+    'TauTH3': ('K m s-1', 'Subgrid-x turbulent flux of potential temperature', None),
+    'Tau11': ('m2 s-2', 'Subgrid-xx stress tensor component', None),
+    'Tau21': ('m2 s-2', 'Subgrid-yx stress tensor component', None),
+    'Tau31': ('m2 s-2', 'Subgrid-zx stress tensor component', None),
+    'Tau32': ('m2 s-2', 'Subgrid-zy stress tensor component', None),
+    'Tau22': ('m2 s-2', 'Subgrid-yy stress tensor component', None),
+    'Tau33': ('m2 s-2', 'Subgrid-zz stress tensor component', None),
     'rho': ('kg m-3', 'Air density', 'air_density'),
     'u': ('m s-1', 'Zonal wind velocity', 'eastward_wind'),
     'v': ('m s-1', 'Meridional wind velocity', 'northward_wind'),
@@ -111,15 +118,14 @@ def get_variable_attrs(var_name):
         return ('kg kg-1 m s-1"', long_name, None)
 
     # Handle TauTH with numeric suffixes (TauTH1, TauTH2, etc.)
-    if re.match(r'^TauTH\d+$', var_name):
-        return BASE_ATTRS['TauTH']
+    #if re.match(r'^TauTH\d+$', var_name):
+    #    return BASE_ATTRS['TauTH']
 
     # Handle Tau with numeric suffixes (Tau11, Tau21, Tau31, Tau32, etc.)
-    if re.match(r'^Tau\d+$', var_name):
-        return BASE_ATTRS['Tau']
+    #if re.match(r'^Tau\d+$', var_name):
+    #    return BASE_ATTRS['Tau']
 
-    # Handle numbered versions of base fields (e.g., TKE_0, TKE_1, AuxScalar_0, etc.)
-    #base_name_match = re.match(r'^([A-Za-z_]+)_?\d+$', var_name)
+    # Handle numbered versions of base fields (e.g., AuxScalar_0, etc.)
     base_name_match = re.match(r'^([A-Za-z_]+?)_?(\d+)$', var_name)
     if base_name_match:
         base_name = base_name_match.group(1)
