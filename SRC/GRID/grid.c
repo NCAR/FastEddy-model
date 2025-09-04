@@ -51,8 +51,8 @@ float dXi, dYi, dZi; //inverse of the reference computational model coordinate r
 float *xPos;  /* Cell-center position in x (meters) */
 float *yPos;  /* Cell-center position in y (meters) */
 float *zPos;  /* Cell-center position in z (meters) */
-float *topoPosGlobal; /*Topography elevation (z in meters) at the cell center position in x and y. (Global domain) */
-float *topoPos; /*Topography elevation (z in meters) at the cell center position in x and y. (per-rank domain) */
+float *topoPosGlobal; /*Terrain elevation (z in meters) at the cell center position in x and y. (Global domain) */
+float *topoPos; /*Terrain elevation (z in meters) at the cell center position in x and y. (per-rank domain) */
 
 //float *J11;      // dx/d_xi  -- assumed = 1.0
 //float *J12;      // dx/d_eta -- assumed = 0.0
@@ -108,7 +108,7 @@ int gridInit(){
    if(mpi_rank_world == 0){
       printComment("GRID parameters---");
       printParameter("gridFile", "A file containing a complete grid specification");
-      printParameter("topoFile", "A file containing topography (surface elevation in meters ASL)");
+      printParameter("topoFile", "A file containing terrain(surface elevation in meters ASL)");
       printParameter("Nx", "Number of discretised domain elements in the x (zonal) direction.");
       printParameter("Ny", "Number of discretised domain elements in the y (meridional) direction.");
       printParameter("Nz", "Number of discretised domain elements in the z (vertical) direction.");
@@ -279,7 +279,7 @@ int gridInit(){
      ioerrorCode = ioAddStandardAttrs("xPos", "m", "x-coordinate of cell center", "projection_x_coordinate");
      ioerrorCode = ioAddStandardAttrs("yPos", "m", "y-coordinate of cell center", "projection_y_coordinate");
      ioerrorCode = ioAddStandardAttrs("zPos", "m", "z-coordinate of cell center", "height");
-     ioerrorCode = ioAddStandardAttrs("topoPos", "m", "Topography elevation", "surface_altitude");
+     ioerrorCode = ioAddStandardAttrs("topoPos", "m", "Terrain elevation", "surface_altitude");
 
      if(ioerrorCode != 0){
        printf("Error adding standard attributes to GRID coordinate fields.\n");

@@ -59,7 +59,7 @@ COORDINATE_ATTRS = {
     'xPos': ('m', 'x-coordinate of cell center', 'projection_x_coordinate'),
     'yPos': ('m', 'y-coordinate of cell center', 'projection_y_coordinate'),
     'zPos': ('m', 'z-coordinate of cell center', 'height'),
-    'topoPos': ('m', 'topography elevation', 'surface_altitude'),
+    'topoPos': ('m', 'terrain elevation', 'surface_altitude'),
 }
 
 DIRECTIONS = {0: 'x', 1: 'y', 2: 'z'}

@@ -46,8 +46,8 @@ extern float dXi, dYi, dZi; //inverse of the reference computational model coord
 extern float *xPos;  /* Cell-center position in x (meters) */
 extern float *yPos;  /* Cell-center position in y (meters) */
 extern float *zPos;  /* Cell-center position in z (meters) */
-extern float *topoPos; /*Topography elevation (z in meters) at the cell center position in x and y. */
-extern float *topoPosGlobal; /*Topography elevation (z in meters) at the cell center position in x and y. (Global domain) */
+extern float *topoPos; /*Terrain elevation (z in meters) at the cell center position in x and y. */
+extern float *topoPosGlobal; /*Terrain elevation (z in meters) at the cell center position in x and y. (Global domain) */
 
 //extern float *J11;      // dx/d_xi  -- assumed = 1.0
 //extern float *J12;      // dx/d_eta -- assumed = 0.0
