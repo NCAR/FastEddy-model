@@ -20,7 +20,7 @@ BASE_ATTRS = {
     'BS_pressure': ('Pa', 'Base state pressure', 'air_pressure'),
     'TauTH1': ('K m s-1', 'Subgrid-x turbulent flux of potential temperature', None),
     'TauTH2': ('K m s-1', 'Subgrid-y turbulent flux of potential temperature', None),
-    'TauTH3': ('K m s-1', 'Subgrid-x turbulent flux of potential temperature', None),
+    'TauTH3': ('K m s-1', 'Subgrid-z turbulent flux of potential temperature', None),
     'Tau11': ('m2 s-2', 'Subgrid-xx stress tensor component', None),
     'Tau21': ('m2 s-2', 'Subgrid-yx stress tensor component', None),
     'Tau31': ('m2 s-2', 'Subgrid-zx stress tensor component', None),
@@ -33,7 +33,8 @@ BASE_ATTRS = {
     'w': ('m s-1', 'Vertical wind velocity', 'upward_air_velocity'),
     'theta': ('K', 'Potential temperature', 'air_potential_temperature'),
     'pressure': ('Pa', 'Perturbation pressure', None),
-    'TKE': ('m2 s-2', 'Turbulent kinetic energy', 'specific_turbulent_kinetic_energy_of_sea_water'),
+    'TKE_0': ('m2 s-2', 'Specific turbulent kinetic energy of air at grid-filter scale', None),
+    'TKE_1': ('m2 s-2', 'Specific turbulent kinetic energy of air at canopy leaf scale', None),
     'AuxScalar': ('-', 'Auxiliary scalar', None),
     'moisture': ('kg kg-1', 'Water vapor mixing ratio', 'humidity_mixing_ratio'),
     'qv': ('kg kg-1', 'Water vapor mixing ratio', 'humidity_mixing_ratio'),
@@ -66,7 +67,7 @@ COORDINATE_ATTRS = {
     'xPos': ('m', 'x-coordinate of cell center', 'projection_x_coordinate'),
     'yPos': ('m', 'y-coordinate of cell center', 'projection_y_coordinate'),
     'zPos': ('m', 'z-coordinate of cell center', 'height'),
-    'topoPos': ('m', 'terrain elevation', 'surface_altitude'),
+    'topoPos': ('m', 'Terrain elevation', 'surface_altitude'),
 }
 
 DIRECTIONS = {0: 'x', 1: 'y', 2: 'z'}
