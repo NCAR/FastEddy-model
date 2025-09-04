@@ -13,64 +13,42 @@ from mpi4py import MPI
 from datetime import datetime
 import re
 
-### Define lookup tables ###
+### Load lookup tables from JSON file ###
 
-# From hydro_core.c
-BASE_ATTRS = {
-    'BS_pressure': ('Pa', 'Base state pressure', 'air_pressure'),
-    'TauTH1': ('K m s-1', 'Subgrid-x turbulent flux of potential temperature', None),
-    'TauTH2': ('K m s-1', 'Subgrid-y turbulent flux of potential temperature', None),
-    'TauTH3': ('K m s-1', 'Subgrid-z turbulent flux of potential temperature', None),
-    'Tau11': ('m2 s-2', 'Subgrid-xx stress tensor component', None),
-    'Tau21': ('m2 s-2', 'Subgrid-yx stress tensor component', None),
-    'Tau31': ('m2 s-2', 'Subgrid-zx stress tensor component', None),
-    'Tau32': ('m2 s-2', 'Subgrid-zy stress tensor component', None),
-    'Tau22': ('m2 s-2', 'Subgrid-yy stress tensor component', None),
-    'Tau33': ('m2 s-2', 'Subgrid-zz stress tensor component', None),
-    'rho': ('kg m-3', 'Air density', 'air_density'),
-    'u': ('m s-1', 'Zonal wind velocity', 'eastward_wind'),
-    'v': ('m s-1', 'Meridional wind velocity', 'northward_wind'),
-    'w': ('m s-1', 'Vertical wind velocity', 'upward_air_velocity'),
-    'theta': ('K', 'Potential temperature', 'air_potential_temperature'),
-    'pressure': ('Pa', 'Perturbation pressure', None),
-    'TKE_0': ('m2 s-2', 'Specific turbulent kinetic energy of air at grid-filter scale', None),
-    'TKE_1': ('m2 s-2', 'Specific turbulent kinetic energy of air at canopy leaf scale', None),
-    'AuxScalar': ('-', 'Auxiliary scalar', None),
-    'moisture': ('kg kg-1', 'Water vapor mixing ratio', 'humidity_mixing_ratio'),
-    'qv': ('kg kg-1', 'Water vapor mixing ratio', 'humidity_mixing_ratio'),
-    'qc': ('kg kg-1', 'Cloud water mixing ratio', 'cloud_liquid_water_mixing_ratio'),
-    'qi': ('kg kg-1', 'Ice water mixing ratio', 'cloud_ice_mixing_ratio'),
-    'fricVel': ('m s-1', 'Surface friction velocity', 'surface_friction_velocity'),
-    'htFlux': ('K m s-1', 'Surface sensible heat flux', 'surface_upward_sensible_heat_flux'),
-    'qFlux': ('kg kg-1 m s-1', 'Surface latent heat flux', 'surface_upward_latent_heat_flux'),
-    'tskin': ('K', 'Surface skin temperature', 'surface_temperature'),
-    'qskin': ('kg kg-1', 'Surface skin water vapor mixing ratio', None),
-    'z0m': ('m', 'Roughness length for momentum', 'surface_roughness_length_for_momentum_in_air'),
-    'z0t': ('m', 'Roughness length for heat', 'surface_roughness_length_for_heat_in_air'),
-    'invOblen': ('m-1', 'Inverse Obukhov length', 'atmosphere_boundary_layer_thickness'),
-    'CanopyLAD': ('m-1', 'Leaf area density', 'leaf_area_density'),
-    'SeaMask': ('-', 'Sea mask', 'sea_area_fraction'),
-}
+def load_field_attributes(json_file_path):
+    """
+    Load field attribute lookup tables from a JSON file.
+    
+    Args:
+        json_file_path (str): Path to the JSON file containing field attributes
+    
+    Returns:
+        tuple: (base_attrs, jacobian_attrs, coordinate_attrs, directions)
+    """
 
-# From grid.c
-JACOBIAN_ATTRS = {
-    'D_Jac': ('-', 'Jacobian determinant', None),
-    'invD_Jac': ('-', 'inverse Jacobian determinant', None),
-    'J13': ('-', 'metric tensor component dx/d_zeta', None),
-    'J23': ('-', 'metric tensor component dy/d_zeta', None),
-    'J31': ('-', 'metric tensor component dz/d_xi', None),
-    'J32': ('-', 'metric tensor component dz/d_eta', None),
-    'J33': ('-', 'metric tensor component dz/d_zeta', None),
-}
+    try:
+        with open(json_file_path, 'r') as f:
+            attrs_data = json.load(f)
+        
+        # Convert lists back to tuples for consistency with original code
+        base_attrs = {k: tuple(v) for k, v in attrs_data['base_attrs'].items()}
+        jacobian_attrs = {k: tuple(v) for k, v in attrs_data['jacobian_attrs'].items()}
+        coordinate_attrs = {k: tuple(v) for k, v in attrs_data['coordinate_attrs'].items()}
+        
+        # Convert string keys back to integers for directions
+        directions = {int(k): v for k, v in attrs_data['directions'].items()}
+        
+        # Load special field mappings
+        base_state_indices = {int(k): tuple(v) for k, v in attrs_data['special_field_mappings']['base_state_indices'].items()}
 
-COORDINATE_ATTRS = {
-    'xPos': ('m', 'x-coordinate of cell center', 'projection_x_coordinate'),
-    'yPos': ('m', 'y-coordinate of cell center', 'projection_y_coordinate'),
-    'zPos': ('m', 'z-coordinate of cell center', 'height'),
-    'topoPos': ('m', 'Terrain elevation', 'surface_altitude'),
-}
-
-DIRECTIONS = {0: 'x', 1: 'y', 2: 'z'}
+        return base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices
+        
+    except FileNotFoundError:
+        print(f"Warning: Field attributes file '{json_file_path}' not found. Using empty lookup tables.")
+        return {}, {}, {}, {}, {}
+    except Exception as e:
+        print(f"Error loading field attributes from '{json_file_path}': {e}")
+        return {}, {}, {}, {}, {}
 
 def field3dTranspose(fld,extents):
     fld=fld.reshape(extents)
@@ -82,21 +60,26 @@ def field2dTranspose(fld,extents):
     fldFinal=np.transpose(fld,axes=[1,0])
     return fldFinal[np.newaxis,Nh:-Nh,Nh:-Nh]
 
-def get_variable_attrs(var_name):
+def get_variable_attrs(var_name, base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices):
     """
     Get CF-compliant attributes for a variable name, handling special cases.   
-    Args: var_name (str): Variable name to get attributes for
-    Returns: tuple or None: (units, long_name, standard_name) or None if no match
+    Args: 
+        var_name (str): Variable name to get attributes for
+        base_attrs (dict): Base field attributes lookup table
+        jacobian_attrs (dict): Jacobian field attributes lookup table
+        coordinate_attrs (dict): Coordinate field attributes lookup table
+        directions (dict): Direction index to name mapping
+        base_state_indices (dict): Base state field index mappings
+    Returns: 
+        tuple or None: (units, long_name, standard_name) or None if no match
     """
 
     # Handle BS_ fields with numeric identifiers
     if var_name.startswith('BS_'):
         try:
             field_index = int(var_name[3:])
-            if field_index == 0:  # RHO_INDX_BS = 0
-                return ('kg m-3', 'Base state air density', 'air_density')
-            elif field_index == 1:  # THETA_INDX_BS = 1  
-                return ('K', 'Base state potential temperature', 'air_potential_temperature')
+            if field_index in base_state_indices:
+                return base_state_indices[field_index]
             else:
                 return ('1', 'Base state field', None)
         except ValueError:
@@ -107,7 +90,7 @@ def get_variable_attrs(var_name):
     if tau_moisture_match:
         species, direction_idx = tau_moisture_match.groups()
         direction_idx = int(direction_idx)
-        direction_name = DIRECTIONS.get(direction_idx, str(direction_idx))
+        direction_name = directions.get(direction_idx, str(direction_idx))
         
         if species == 'v':  # TauQv (water vapor)
             long_name = f'Subgrid-{direction_name} water vapor flux in {direction_name} direction'
@@ -116,54 +99,27 @@ def get_variable_attrs(var_name):
         else:
             long_name = f'Subgrid-{direction_name} moisture flux in {direction_name} direction'
         
-        return ('kg kg-1 m s-1"', long_name, None)
-
-    # Handle TauTH with numeric suffixes (TauTH1, TauTH2, etc.)
-    #if re.match(r'^TauTH\d+$', var_name):
-    #    return BASE_ATTRS['TauTH']
-
-    # Handle Tau with numeric suffixes (Tau11, Tau21, Tau31, Tau32, etc.)
-    #if re.match(r'^Tau\d+$', var_name):
-    #    return BASE_ATTRS['Tau']
+        return ('kg kg-1 m s-1', long_name, None)
 
     # Handle numbered versions of base fields (e.g., AuxScalar_0, etc.)
     base_name_match = re.match(r'^([A-Za-z_]+?)_?(\d+)$', var_name)
     if base_name_match:
         base_name = base_name_match.group(1)
-        if base_name in BASE_ATTRS:
-            return BASE_ATTRS[base_name]
+        if base_name in base_attrs:
+            return base_attrs[base_name]
 
     # Check specific attribute dictionaries
-    for attr_dict in [JACOBIAN_ATTRS, COORDINATE_ATTRS, BASE_ATTRS]:
+    for attr_dict in [jacobian_attrs, coordinate_attrs, base_attrs]:
         if var_name in attr_dict:
             return attr_dict[var_name]
-    
+
     return None
 
-#def infer_units_from_name(var_name):
-#    """Infer units based on variable name patterns."""
-#    var_lower = var_name.lower()
-#    
-#    if any(x in var_lower for x in ['temp', 'theta']):
-#        return 'K'
-#    elif any(x in var_lower for x in ['vel', 'wind', 'u', 'v', 'w']):
-#        return 'm s-1'
-#    elif 'rho' in var_lower or 'density' in var_lower:
-#        return 'kg m-3'
-#    elif any(x in var_lower for x in ['q', 'mixing', 'humidity']):
-#        return 'kg kg-1'
-#    elif 'tke' in var_lower or 'energy' in var_lower:
-#        return 'm2 s-2'
-#    elif 'pressure' in var_lower:
-#        return 'Pa'
-#    else:
-#        return 'unknown'
-
-def add_variable_attributes(ds):
+def add_variable_attributes(ds, base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices):
     """Add attributes to variables"""
 
     for var_name, var in ds.data_vars.items():
-        attrs_tuple = get_variable_attrs(var_name)
+        attrs_tuple = get_variable_attrs(var_name, base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices)
         
         if attrs_tuple:
             units, long_name, standard_name = attrs_tuple
@@ -171,10 +127,6 @@ def add_variable_attributes(ds):
             var.attrs['long_name'] = long_name
             if standard_name is not None:
                 var.attrs['standard_name'] = standard_name
-#        else:
-#            # Generic attributes for unknown variables
-#            var.attrs['long_name'] = var_name.replace('_', ' ').title()
-#            var.attrs['units'] = infer_units_from_name(var_name)
                 
     return ds
     
@@ -273,7 +225,7 @@ def reorder_dataset_variables(ds):
     # This preserves the distinction between coords and data_vars
     return ds[new_order]
     
-def readBinary(outpath,theseFiles):
+def readBinary(outpath,theseFiles, base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices):
     verboseLogging=False
     print(theseFiles)
     dsSet=[]
@@ -332,7 +284,7 @@ def readBinary(outpath,theseFiles):
 
     # Add variable and coordinate attributes
     dsFull = add_coordinate_attributes(dsFull)
-    dsFull = add_variable_attributes(dsFull)
+    dsFull = add_variable_attributes(dsFull, base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices)
 
     # Reorder variables to desired order
     dsFull = reorder_dataset_variables(dsFull)
@@ -346,6 +298,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", required=True, help="JSON file with converter parameter settings")
+    parser.add_argument("-a", "--attrs", required=True, help="JSON file with field attribute definitions")
     args = parser.parse_args()
     return args
 
@@ -360,6 +313,12 @@ mpi_name = MPI.Get_processor_name()
 ### Parse the command line arguments ###
 ########################################
 args = parse_args()
+
+#########################################################
+### Load field attributes from JSON file ###
+#########################################################
+base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices = load_field_attributes(args.attrs)
+
 #########################################################
 ### Read the json file of converter script parameters ###
 #########################################################
@@ -432,14 +391,11 @@ for timeStep in mytslist:
    else:
        print('{:d} specified binary files are missing. Skipping timestep: {:d}...'.format(numOutRanks-goodCnt,timeStep))
    if parseProceed:
-     dsFull=readBinary(outpath,theseFiles)
+     dsFull=readBinary(outpath,theseFiles, base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices)
 
      # Create encoding to prevent _FillValue for all variables AND coordinates
      encoding = {var: {'_FillValue': None} for var in list(dsFull.data_vars) + list(dsFull.coords)}
 
-     # Create encoding to prevent _FillValue for all variables
-     #encoding = {var: {'_FillValue': None} for var in dsFull.data_vars  + list(dsFull.coords)}
-     
      #write the full  domain datatset to netcdf file
      if False:
         dsFull.to_netcdf('{:s}NETCDF/{:s}.{:d}'.format(outpath,FEoutBase,timeStep),format='NETCDF4',encoding=encoding)
