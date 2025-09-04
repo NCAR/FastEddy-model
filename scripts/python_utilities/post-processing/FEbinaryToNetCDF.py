@@ -25,9 +25,9 @@ BASE_ATTRS = {
     'v': ('m s-1', 'Meridional wind velocity', 'northward_wind'),
     'w': ('m s-1', 'Vertical wind velocity', 'upward_air_velocity'),
     'theta': ('K', 'Potential temperature', 'air_potential_temperature'),
-    'pressure': ('Pa', 'Perturbation pressure', 'air_pressure'),
+    'pressure': ('Pa', 'Perturbation pressure', None),
     'TKE': ('m2 s-2', 'Turbulent kinetic energy', 'specific_turbulent_kinetic_energy_of_sea_water'),
-    'AuxScalar': ('1', 'Auxiliary scalar', None),
+    'AuxScalar': ('-', 'Auxiliary scalar', None),
     'moisture': ('kg kg-1', 'Water vapor mixing ratio', 'humidity_mixing_ratio'),
     'qv': ('kg kg-1', 'Water vapor mixing ratio', 'humidity_mixing_ratio'),
     'qc': ('kg kg-1', 'Cloud water mixing ratio', 'cloud_liquid_water_mixing_ratio'),
@@ -41,7 +41,7 @@ BASE_ATTRS = {
     'z0t': ('m', 'Roughness length for heat', 'surface_roughness_length_for_heat_in_air'),
     'invOblen': ('m-1', 'Inverse Obukhov length', 'atmosphere_boundary_layer_thickness'),
     'CanopyLAD': ('m-1', 'Leaf area density', 'leaf_area_density'),
-    'SeaMask': ('1', 'Sea mask', 'sea_area_fraction'),
+    'SeaMask': ('-', 'Sea mask', 'sea_area_fraction'),
 }
 
 # From grid.c
