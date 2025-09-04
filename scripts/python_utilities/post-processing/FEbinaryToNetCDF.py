@@ -15,7 +15,7 @@ import re
 
 ### Define lookup tables ###
 
-# Fromhydro_core.c
+# From hydro_core.c
 BASE_ATTRS = {
     'BS_pressure': ('Pa', 'Base state pressure', 'air_pressure'),
     'TauTH1': ('K m s-1', 'Subgrid-x turbulent flux of potential temperature', None),
@@ -54,13 +54,13 @@ BASE_ATTRS = {
 
 # From grid.c
 JACOBIAN_ATTRS = {
-    'D_Jac': ('1', 'Jacobian determinant', None),
-    'invD_Jac': ('1', 'inverse Jacobian determinant', None),
-    'J13': ('1', 'metric tensor component dx/d_zeta', None),
-    'J23': ('1', 'metric tensor component dy/d_zeta', None),
-    'J31': ('1', 'metric tensor component dz/d_xi', None),
-    'J32': ('1', 'metric tensor component dz/d_eta', None),
-    'J33': ('1', 'metric tensor component dz/d_zeta', None),
+    'D_Jac': ('-', 'Jacobian determinant', None),
+    'invD_Jac': ('-', 'inverse Jacobian determinant', None),
+    'J13': ('-', 'metric tensor component dx/d_zeta', None),
+    'J23': ('-', 'metric tensor component dy/d_zeta', None),
+    'J31': ('-', 'metric tensor component dz/d_xi', None),
+    'J32': ('-', 'metric tensor component dz/d_eta', None),
+    'J33': ('-', 'metric tensor component dz/d_zeta', None),
 }
 
 COORDINATE_ATTRS = {

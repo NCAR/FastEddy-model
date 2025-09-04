@@ -299,13 +299,13 @@ int gridInit(){
      errorCode = ioRegisterVar("J33", "float", 4, dims4d, J33);
 
      /* Add attributes for Jacobian and metric tensor fields */
-     ioerrorCode = ioAddStandardAttrs("D_Jac", "1", "Jacobian determinant", NULL);
-     ioerrorCode = ioAddStandardAttrs("invD_Jac", "1", "Inverse Jacobian determinant", NULL);
-     ioerrorCode = ioAddStandardAttrs("J13", "1", "Metric tensor component dx/d_zeta", NULL);
-     ioerrorCode = ioAddStandardAttrs("J23", "1", "Metric tensor component dy/d_zeta", NULL);
-     ioerrorCode = ioAddStandardAttrs("J31", "1", "Metric tensor component dz/d_xi", NULL);
-     ioerrorCode = ioAddStandardAttrs("J32", "1", "Metric tensor component dz/d_eta", NULL);
-     ioerrorCode = ioAddStandardAttrs("J33", "1", "Metric tensor component dz/d_zeta", NULL);
+     ioerrorCode = ioAddStandardAttrs("D_Jac", "-", "Jacobian determinant", NULL);
+     ioerrorCode = ioAddStandardAttrs("invD_Jac", "-", "Inverse Jacobian determinant", NULL);
+     ioerrorCode = ioAddStandardAttrs("J13", "-", "Metric tensor component dx/d_zeta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J23", "-", "Metric tensor component dy/d_zeta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J31", "-", "Metric tensor component dz/d_xi", NULL);
+     ioerrorCode = ioAddStandardAttrs("J32", "-", "Metric tensor component dz/d_eta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J33", "-", "Metric tensor component dz/d_zeta", NULL);
 #endif 
    } // end if errorCode indicates no errors thus far
 
