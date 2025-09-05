@@ -405,7 +405,9 @@ int main(int argc, char **argv){
      /*Launch the GPU batch timestep kernel*/
      errorCode = cuda_timeIntCommence(itTmp);
 #ifdef GAD_EXT
-     errorCode = GADUpdateTurbineRotorMask();
+     if(GADSelector > 0){
+        errorCode = GADUpdateTurbineRotorMask();
+     }
 #endif
            /*Build an Frhs*/
            /*Update the prognostic variables*/
