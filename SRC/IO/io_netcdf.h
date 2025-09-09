@@ -86,10 +86,10 @@ int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh);
 */
 int ioDefineNetCDFoutFileAttrs(int ncid);
 
-/*----->>>>> int ioDefineNetCDFdimAttrs();    ---------------------------------------------------------------------
+/*----->>>>> int ioDefineNetCDFcoordVarAttrs();    ---------------------------------------------------------------------
 * Used to define attributes for dimension coordinate variables.
 */
-int ioDefineNetCDFdimAttrs(int ncid);
+int ioDefineNetCDFcoordVarAttrs(int ncid);
 
 /*----->>>>> int ioCloseNetCDFfile();    ---------------------------------------------------------------------
 * Used to close a netCDF file

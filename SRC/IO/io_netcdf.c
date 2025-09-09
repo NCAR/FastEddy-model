@@ -464,7 +464,7 @@ int ioWriteNetCDFoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
      errorCode = ioDefineNetCDFoutFileDims(ncid, Nx, Ny, Nz, Nh);
      errorCode = ioDefineNetCDFoutFileVars(ncid);
      /* Define dimension coordinate variable attributes */
-     errorCode = ioDefineNetCDFdimAttrs(ncid);
+     errorCode = ioDefineNetCDFcoordVarAttrs(ncid);
      /* Define variable attributes */
      errorCode = ioDefineNetCDFoutFileAttrs(ncid);
      errorCode = ioEndNetCDFdefineMode(ncid,Nx, Ny, Nz, Nh);
@@ -924,10 +924,10 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
    return(errorCode);
 } //end ioDefineNetCDFoutFileAttrs
 
-/*----->>>>> int ioDefineNetCDFdimAttrs();    ---------------------------------------------------------------------
+/*----->>>>> int ioDefineNetCDFcoordVarAttrs();    ---------------------------------------------------------------------
 * Used to define attributes for dimension coordinate variables.
 */
-int ioDefineNetCDFdimAttrs(int ncid){
+int ioDefineNetCDFcoordVarAttrs(int ncid){
    int errorCode = IO_SUCCESS;
    
    /* Define attributes for xIndex coordinate variable */
@@ -970,7 +970,7 @@ int ioDefineNetCDFdimAttrs(int ncid){
    }
 
    return(errorCode);
-} //end ioDefineNetCDFdimAttrs
+} //end ioDefineNetCDFcoordVarAttrs
 
 
 /*----->>>>> int ioCloseNetCDFfile();    ---------------------------------------------------------------------
