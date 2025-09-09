@@ -81,12 +81,6 @@ int ioCleanup();
 */
 int ioRegisterVar(char *name, char *type, int nDims, int *dimids, void *varMemAddress);
 
-/*----->>>>> int ioRegisterVarWithAttrs(); --------------------------------------------------------------
-* Enhanced function to register a variable with NetCDF attributes
-*/
-int ioRegisterVarWithAttrs(char *name, char *type, int nDims, int *dimids, void *varMemAddress, 
-                          int nAttrs, ioAttr_t *attrs);
-
 /*----->>>>> int ioAddVarAttr(); -------------------------------------------------------------------
 * Add a single attribute to an already registered variable
 */
