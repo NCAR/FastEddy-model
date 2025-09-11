@@ -839,10 +839,10 @@ int hydro_coreInit(){
       printParameter("thetaHeight", "Height below which to include initial theta perturbations: (meters)");
       printParameter("thetaAmplitude", "Maximum amplitude for theta perturbations: thetaAmplitude*[-1,+1] K");
       printParameter("physics_oneRKonly", "selector to apply physics RHS forcing only at the latest RK stage: 0= off, 1= on");
-      printComment("----------: URBAN MODEL ---");
    } //end if(mpi_rank_world == 0)
 #ifdef URBAN_EXT
    /*New EXTENSIONS sub-module style call to print parameters for the URBAN sub-module*/
+   printComment("----------: URBAN MODEL ---");
    errorCode = URBANPrintParams();
 #endif
 #ifdef GAD_EXT
