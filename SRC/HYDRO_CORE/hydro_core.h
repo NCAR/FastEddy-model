@@ -16,14 +16,6 @@
 #ifndef _HYDRO_CORE_H
 #define _HYDRO_CORE_H
 
-/*Model-Extensions includes*/
-#ifdef URBAN_EXT
-  #include <urban.h>
-#endif
-#ifdef GAD_EXT
-  #include <GAD.h>
-#endif
-
 /*hydro_core_ return codes */
 #define HYDRO_CORE_SUCCESS    0
 
@@ -379,6 +371,15 @@ int srcAuxScConstructor();
 * Used to free all malloced memory by the HYDRO_CORE module.
 */
 int hydro_coreCleanup();
+
+/*----->>>>> int hydro_coreAddFieldAttributes();  --------------------------------------------------------
+* Utility function to add NetCDF attributes to hydro core fields based on field name
+* Parameters:
+*   fieldName - name of the field to add attributes to  
+*   isForcing - flag indicating if this is a forcing field (0=regular field, 1=forcing field)
+* Returns: error code (0 = success, non-zero = error)
+*/
+int hydro_coreAddFieldAttributes(char *fieldName, int isForcing);
 
 
 #endif // _HYDRO_CORE_H

@@ -51,8 +51,8 @@ float dXi, dYi, dZi; //inverse of the reference computational model coordinate r
 float *xPos;  /* Cell-center position in x (meters) */
 float *yPos;  /* Cell-center position in y (meters) */
 float *zPos;  /* Cell-center position in z (meters) */
-float *topoPosGlobal; /*Topography elevation (z in meters) at the cell center position in x and y. (Global domain) */
-float *topoPos; /*Topography elevation (z in meters) at the cell center position in x and y. (per-rank domain) */
+float *topoPosGlobal; /*Terrain elevation (z in meters) at the cell center position in x and y. (Global domain) */
+float *topoPos; /*Terrain elevation (z in meters) at the cell center position in x and y. (per-rank domain) */
 
 //float *J11;      // dx/d_xi  -- assumed = 1.0
 //float *J12;      // dx/d_eta -- assumed = 0.0
@@ -108,7 +108,7 @@ int gridInit(){
    if(mpi_rank_world == 0){
       printComment("GRID parameters---");
       printParameter("gridFile", "A file containing a complete grid specification");
-      printParameter("topoFile", "A file containing topography (surface elevation in meters ASL)");
+      printParameter("topoFile", "A file containing terrain(surface elevation in meters ASL)");
       printParameter("Nx", "Number of discretised domain elements in the x (zonal) direction.");
       printParameter("Ny", "Number of discretised domain elements in the y (meridional) direction.");
       printParameter("Nz", "Number of discretised domain elements in the z (vertical) direction.");
@@ -273,6 +273,21 @@ int gridInit(){
        fflush(stdout);
        errorCode = GRID_IO_CALL_FAIL;
      }
+
+   /* Add NetCDF attributes for coordinate variables */
+   if(ioerrorCode == GRID_SUCCESS){
+     ioerrorCode = ioAddStandardAttrs("xPos", "m", "x-coordinate of cell center", "projection_x_coordinate");
+     ioerrorCode = ioAddStandardAttrs("yPos", "m", "y-coordinate of cell center", "projection_y_coordinate");
+     ioerrorCode = ioAddStandardAttrs("zPos", "m", "z-coordinate of cell center", "height");
+     ioerrorCode = ioAddStandardAttrs("topoPos", "m", "Terrain elevation", "surface_altitude");
+
+     if(ioerrorCode != 0){
+       printf("Error adding standard attributes to GRID coordinate fields.\n");
+       fflush(stdout);
+       errorCode = GRID_IO_CALL_FAIL;
+     }
+   }
+     
 #ifdef DEBUG
 //#if 1
      errorCode = ioRegisterVar("D_Jac", "float", 4, dims4d, D_Jac);
@@ -282,9 +297,18 @@ int gridInit(){
      errorCode = ioRegisterVar("J31", "float", 4, dims4d, J31);
      errorCode = ioRegisterVar("J32", "float", 4, dims4d, J32);
      errorCode = ioRegisterVar("J33", "float", 4, dims4d, J33);
+
+     /* Add attributes for Jacobian and metric tensor fields */
+     ioerrorCode = ioAddStandardAttrs("D_Jac", "-", "Jacobian determinant", NULL);
+     ioerrorCode = ioAddStandardAttrs("invD_Jac", "-", "Inverse Jacobian determinant", NULL);
+     ioerrorCode = ioAddStandardAttrs("J13", "-", "Metric tensor component dx/d_zeta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J23", "-", "Metric tensor component dy/d_zeta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J31", "-", "Metric tensor component dz/d_xi", NULL);
+     ioerrorCode = ioAddStandardAttrs("J32", "-", "Metric tensor component dz/d_eta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J33", "-", "Metric tensor component dz/d_zeta", NULL);
 #endif 
    } // end if errorCode indicates no errors thus far
-  
+
 #ifdef DEBUG
 //#if 1
    printf("mpi_rank_world %d/%d: Finished gridInit()!\n",mpi_rank_world,mpi_size_world);

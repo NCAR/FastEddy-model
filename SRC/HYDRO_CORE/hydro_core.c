@@ -839,10 +839,10 @@ int hydro_coreInit(){
       printParameter("thetaHeight", "Height below which to include initial theta perturbations: (meters)");
       printParameter("thetaAmplitude", "Maximum amplitude for theta perturbations: thetaAmplitude*[-1,+1] K");
       printParameter("physics_oneRKonly", "selector to apply physics RHS forcing only at the latest RK stage: 0= off, 1= on");
-      printComment("----------: URBAN MODEL ---");
    } //end if(mpi_rank_world == 0)
 #ifdef URBAN_EXT
    /*New EXTENSIONS sub-module style call to print parameters for the URBAN sub-module*/
+   printComment("----------: URBAN MODEL ---");
    errorCode = URBANPrintParams();
 #endif
 #ifdef GAD_EXT
@@ -1064,6 +1064,8 @@ int hydro_coreInit(){
    for(iFld = 0; iFld < Nhydro; iFld ++){
      errorCode = hydro_coreGetFieldName( &fldName[0], iFld);
      errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, &hydroFlds[iFld*fldStride]);
+     // Add NetCDF attributes based on field type
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0); // 0 = not forcing
      printf("hydro_coreInit:hydroFlds[%d] = %s stored at %p, has been registered with IO.\n",
             iFld,&fldName[0],&hydroFlds[iFld*fldStride]);
      fflush(stdout);
@@ -1073,6 +1075,8 @@ int hydro_coreInit(){
    hydroPres = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "hydroPres");
    errorCode = sprintf(&fldName[0],"pressure");
    errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, hydroPres);
+   // Add attributes for pressure field
+   errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0); // 0 = not forcing
    printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
           &fldName[0],hydroPres);
    
@@ -1083,6 +1087,8 @@ int hydro_coreInit(){
        errorCode = hydro_coreGetFieldName( &fldName[0], iFld);
        sprintf(&frhsName[0],"F_%s",&fldName[0]);
        errorCode = ioRegisterVar(&frhsName[0], "float", 4, dims4d, &hydroFldsFrhs[iFld*fldStride]);
+       // Add attributes for forcing fields
+       errorCode = hydro_coreAddFieldAttributes(&frhsName[0], 1); // 1 = is forcing
        printf("hydro_coreInit:hydroFldsFrhs[%d] = %s stored at %p, has been registered with IO.\n",
               iFld,&frhsName[0],&hydroFldsFrhs[iFld*fldStride]);
      }
@@ -1095,6 +1101,8 @@ int hydro_coreInit(){
      for(iFld = 0; iFld < NhydroAuxScalars; iFld ++){
         sprintf(&AuxScName[0],"AuxScalar_%d",iFld);
         errorCode = ioRegisterVar(&AuxScName[0], "float", 4, dims4d, &hydroAuxScalars[iFld*fldStride]);
+	// Add attributes for auxiliary scalar
+        errorCode = hydro_coreAddFieldAttributes(&AuxScName[0], 0);
         printf("hydro_coreInit:hydroAuxScalars[%d] = %s stored at %p, has been registered with IO.\n",
                iFld,&AuxScName[0],&hydroAuxScalars[iFld*fldStride]);
         fflush(stdout);
@@ -1110,12 +1118,16 @@ int hydro_coreInit(){
         errorCode = ioRegisterVar(&sgstkeScName[0], "float", 4, dims4d, &sgstkeScalars[iFld*fldStride]);
         printf("hydro_coreInit:sgstkeScalars[%d] = %s stored at %p, has been registered with IO.\n",
                iFld,&sgstkeScName[0],&sgstkeScalars[iFld*fldStride]);
+	// Add attributes for TKE scalar
+	errorCode = hydro_coreAddFieldAttributes(&sgstkeScName[0], 0);
         fflush(stdout);
      } //end for iFld...
      if(hydroForcingWrite == 1){ // add rhs forcing of SGSTKE equation
        for(iFld = 0; iFld < TKESelector; iFld ++){
          sprintf(&sgstkeScName[0],"F_TKE%d",iFld);
          errorCode = ioRegisterVar(&sgstkeScName[0], "float", 4, dims4d, &sgstkeScalarsFrhs[iFld*fldStride]);
+         // Add attributes for TKE forcing field
+         errorCode = hydro_coreAddFieldAttributes(&sgstkeScName[0], 1);
          printf("hydro_coreInit:sgstkeScalarsFrhs[%d] = %s stored at %p, has been registered with IO.\n",
                 iFld,&sgstkeScName[0],&sgstkeScalarsFrhs[iFld*fldStride]);
        }
@@ -1138,12 +1150,16 @@ int hydro_coreInit(){
      errorCode = hydro_coreGetFieldName( &fldName[0], iFld);
      errorCode = sprintf(&fldName[0],"BS_%d",iFld);
      errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, &hydroBaseStateFlds[iFld*fldStride]);
+     // Add NetCDF attributes after registration
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0); // 0 = not a forcing field
      printf("hydro_coreInit:hydroBaseStateFlds[%d] = %s stored at %p, has been registered with IO.\n",
             iFld,&fldName[0],&hydroBaseStateFlds[iFld*fldStride]);
      fflush(stdout);
    } //end for iFld...
    errorCode = sprintf(&fldName[0],"BS_pressure");
    errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, hydroBaseStatePres);
+   // Add NetCDF attributes for pressure field
+   errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0); // 0 = not a forcing field
    printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
           &fldName[0],hydroBaseStatePres);
 #endif
@@ -1197,20 +1213,28 @@ int hydro_coreInit(){
            break;
         }//end switch(iFld)
         errorCode = ioRegisterVar(&TauScName[0], "float", 4, dims4d, &hydroTauFlds[iFld*fldStride]);
+	// Add NetCDF attributes for the registered variable
+	errorCode = hydro_coreAddFieldAttributes(&TauScName[0], 0);
         printf("hydro_coreInit:hydroTauFlds[%d] = %s stored at %p, has been registered with IO.\n",
                iFld,&TauScName[0],&hydroTauFlds[iFld*fldStride]);
         fflush(stdout);
      } //end for iFld...
      sprintf(&TauScName[0],"TauTH%d",1);
      errorCode = ioRegisterVar(&TauScName[0], "float", 4, dims4d, &hydroTauFlds[6*fldStride]);
+     // Add NetCDF attributes for TauTH1
+     errorCode = hydro_coreAddFieldAttributes(&TauScName[0], 0);
      printf("hydro_coreInit:hydroTauFlds[6] = %s stored at %p, has been registered with IO.\n",
              &TauScName[0],&hydroTauFlds[6*fldStride]);
      sprintf(&TauScName[0],"TauTH%d",2);
      errorCode = ioRegisterVar(&TauScName[0], "float", 4, dims4d, &hydroTauFlds[7*fldStride]);
+     // Add NetCDF attributes for TauTH2
+     errorCode = hydro_coreAddFieldAttributes(&TauScName[0], 0);
      printf("hydro_coreInit:hydroTauFlds[7] = %s stored at %p, has been registered with IO.\n",
              &TauScName[0],&hydroTauFlds[7*fldStride]);
      sprintf(&TauScName[0],"TauTH%d",3);
      errorCode = ioRegisterVar(&TauScName[0], "float", 4, dims4d, &hydroTauFlds[8*fldStride]);
+     // Add NetCDF attributes for TauTH3
+     errorCode = hydro_coreAddFieldAttributes(&TauScName[0], 0);
      printf("hydro_coreInit:hydroTauFlds[8] = %s stored at %p, has been registered with IO.\n",
              &TauScName[0],&hydroTauFlds[8*fldStride]);
      fflush(stdout);
@@ -1234,43 +1258,59 @@ int hydro_coreInit(){
 
      errorCode = sprintf(&fldName[0],"tskin");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, tskin);
+     // Add NetCDF attributes for the registered variable
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],tskin);
      fflush(stdout);
      errorCode = sprintf(&fldName[0],"fricVel");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, fricVel);
+     // Add NetCDF attributes for the registered variable
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],fricVel);
      fflush(stdout);
      errorCode = sprintf(&fldName[0],"htFlux");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, htFlux);
+     // Add NetCDF attributes for the registered variable
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],htFlux);
      fflush(stdout);
      errorCode = sprintf(&fldName[0],"invOblen");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, invOblen);
+     // Add NetCDF attributes for the registered variable
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],invOblen);
      fflush(stdout);
      if (moistureSelector > 0){
        errorCode = sprintf(&fldName[0],"qskin");
        errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, qskin);
+       // Add NetCDF attributes for the registered variable
+       errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
        printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
                &fldName[0],qskin);
        fflush(stdout);
        errorCode = sprintf(&fldName[0],"qFlux");
        errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, qFlux);
+       // Add NetCDF attributes for the registered variable
+       errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
        printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
                &fldName[0],qFlux);
        fflush(stdout);
      }
      errorCode = sprintf(&fldName[0],"z0m");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, z0m);
+     // Add NetCDF attributes for the registered variable
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],z0m);
      fflush(stdout);
      errorCode = sprintf(&fldName[0],"z0t");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, z0t);
+     // Add NetCDF attributes for the registered variable
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],z0t);
      fflush(stdout);
@@ -1322,6 +1362,8 @@ int hydro_coreInit(){
      sea_mask = memAllocateFloat2DField(Nxp, Nyp, Nh, "sea_mask");
      errorCode = sprintf(&fldName[0],"SeaMask");
      errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, sea_mask);
+     // Add NetCDF attributes for the registered variable
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("surflayer_offshore:Field = %s stored at %p, has been registered with IO.\n",
              &fldName[0],sea_mask);
      fflush(stdout);
@@ -1330,16 +1372,22 @@ int hydro_coreInit(){
    if(cellpertSelector>0){ //Cell Perturbation parameters (time-varying when cellpert_tvcp == 1 and hydroBCs==1)
      errorCode = sprintf(&fldName[0],"cellpert_amp");
      errorCode = ioRegisterVar(&fldName[0], "float", 1, dims1dTD, &cellpert_amp);
+     // Add NetCDF attributes for the registered variable
+     errorCode = ioAddStandardAttrs(&fldName[0], "K", "Cell perturbation amplitude", NULL);
      printf("cellpert:Variable = %s stored at %p, has been registered with IO.\n",
             &fldName[0],&cellpert_amp);
      fflush(stdout);
      errorCode = sprintf(&fldName[0],"cellpert_nts");
      errorCode = ioRegisterVar(&fldName[0], "int", 1, dims1dTD, &cellpert_nts);
+     // Add NetCDF attributes for the registered variable
+     errorCode = ioAddStandardAttrs(&fldName[0], "1", "Cell perturbation number of time steps", NULL);
      printf("cellpert:Variable = %s stored at %p, has been registered with IO.\n",
             &fldName[0],&cellpert_nts);
      fflush(stdout);
      errorCode = sprintf(&fldName[0],"cellpert_ktop");
      errorCode = ioRegisterVar(&fldName[0], "int", 1, dims1dTD, &cellpert_ktop);
+     // Add NetCDF attributes for the registered variable
+     errorCode = ioAddStandardAttrs(&fldName[0], "1", "Cell perturbation top grid level", NULL);
      printf("cellpert:Variable = %s stored at %p, has been registered with IO.\n",
             &fldName[0],&cellpert_ktop);
      fflush(stdout);
@@ -1349,6 +1397,8 @@ int hydro_coreInit(){
      canopy_lad = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "canopy_lad");
      errorCode = sprintf(&fldName[0],"CanopyLAD");
      errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, canopy_lad);
+     // Add NetCDF attributes for the registered variable
+     errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
      printf("canopy:Field = %s stored at %p, has been registered with IO.\n",
             &fldName[0],canopy_lad);
      fflush(stdout);
@@ -1364,6 +1414,8 @@ int hydro_coreInit(){
           sprintf(&moistName[0],"ql");
         }
         errorCode = ioRegisterVar(&moistName[0], "float", 4, dims4d, &moistScalars[iFld*fldStride]);
+	// Add NetCDF attributes for the registered variable
+	errorCode = hydro_coreAddFieldAttributes(&moistName[0], 0);
         printf("hydro_coreInit:moistScalars[%d] = %s stored at %p, has been registered with IO.\n",
                iFld,&moistName[0],&moistScalars[iFld*fldStride]);
         fflush(stdout);
@@ -1376,6 +1428,8 @@ int hydro_coreInit(){
            sprintf(&moistName[0],"F_ql");
          }
          errorCode = ioRegisterVar(&moistName[0], "float", 4, dims4d, &moistScalarsFrhs[iFld*fldStride]);
+	 // Add NetCDF attributes for the registered variable
+	 errorCode = hydro_coreAddFieldAttributes(&moistName[0], 1);
          printf("hydro_coreInit:moistScalarsFrhs[%d] = %s stored at %p, has been registered with IO.\n",
                 iFld,&moistName[0],&moistScalarsFrhs[iFld*fldStride]);
        }
@@ -1416,6 +1470,20 @@ int hydro_coreInit(){
                 break;
              }//end switch(iFld)
              errorCode = ioRegisterVar(&moistName[0], "float", 4, dims4d, &moistTauFlds[(iFld*3+iFld2)*fldStride]);
+	     // Add NetCDF attributes for the moisture SGS field
+             char longName[256];
+             char *direction[] = {"x", "y", "z"};
+             if (iFld == 0) { // TauQv (water vapor)
+                 sprintf(longName, "Subgrid-%s water vapor flux in %s direction", direction[iFld2], direction[iFld2]);
+                 errorCode = ioAddStandardAttrs(&moistName[0], "kg kg-1 m s-1", longName, NULL);
+             } else if (iFld == 1) { // TauQl (liquid water)
+                 sprintf(longName, "Subgrid-%s liquid water flux in %s direction", direction[iFld2], direction[iFld2]);
+                 errorCode = ioAddStandardAttrs(&moistName[0], "kg kg-1 m s-1", longName, NULL);
+             } else {
+                 // Generic moisture SGS field for other moisture species
+                 sprintf(longName, "Subgrid-%s moisture flux in %s direction", direction[iFld2], direction[iFld2]);
+                 errorCode = ioAddStandardAttrs(&moistName[0], "kg kg-1 m s-1", longName, NULL);
+             }
              printf("hydro_coreInit:moistTauFlds[%d] = %s stored at %p, has been registered with IO.\n",
                     iFld*3+iFld2,&moistName[0],&moistTauFlds[(iFld*3+iFld2)*fldStride]);
              fflush(stdout);
@@ -3233,3 +3301,177 @@ int hydro_coreCleanup(){
 
    return(errorCode);
 }//end hydro_coreCleanup()
+
+/*----->>>>> helper functions to create forcing strings --------------------------------------------------*/
+
+// Increment the exponent of "s" if present, else append " s-1"
+static char* make_forcing_units(const char *units) {
+    if(units == NULL) return NULL;
+
+    const char *s_ptr = strstr(units, "s-");
+    if(s_ptr) {
+        // Found "s-" pattern, try to increment number after it
+        const char *exp_ptr = s_ptr + 2;
+        int exp = atoi(exp_ptr);   // atoi will return 0 if not a number
+        if(exp > 0) {
+            exp++; // increment existing exponent
+
+            // copy prefix (up to "s-")
+            size_t prefix_len = s_ptr - units + 2;
+            char prefix[prefix_len + 1];
+            strncpy(prefix, units, prefix_len);
+            prefix[prefix_len] = '\0';
+
+
+            // format new string
+            size_t buf_len = strlen(units) + 10; // extra space
+            char *result = (char*)malloc(buf_len);
+            if(!result) return NULL;
+
+            snprintf(result, buf_len, "%s%d", prefix, exp);
+            return result;
+        }
+    }
+
+    // If no "s-" pattern or exponent, just append " s-1"
+    size_t len = strlen(units);
+    const char *suffix = " s-1";
+    char *result = (char*)malloc(len + strlen(suffix) + 1);
+    if(!result) return NULL;
+
+    strcpy(result, units);
+    strcat(result, suffix);
+    return result;
+}//end make_forcing_units()
+
+// Allocates new string with " forcing" appended to long_name
+static char* make_forcing_long_name(const char *long_name) {
+    if(long_name == NULL) return NULL;
+
+    size_t len = strlen(long_name);
+    const char *suffix = " forcing";
+    char *result = (char*)malloc(len + strlen(suffix) + 1);
+    if(!result) return NULL;
+
+    strcpy(result, long_name);
+    strcat(result, suffix);
+    return result;
+}//end make_forcing_long_name()
+
+/*----->>>>> int hydro_coreAddFieldAttributes();  -----------------------------------------------
+* Utility function to add NetCDF attributes to hydro core fields based on field name
+* Parameters:
+*   fieldName - name of the field to add attributes to
+*   isForcing - flag indicating if this is a forcing field (affects units)
+* Returns: error code (0 = success, non-zero = error)
+*/
+
+int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
+    int errorCode = 0;
+    char *baseFieldName = fieldName;
+
+    // If this is a forcing field, skip the "F_" prefix to get the base field name
+    if(isForcing && strncmp(fieldName, "F_", 2) == 0) {
+        baseFieldName = fieldName + 2; // Skip "F_" prefix  
+    }
+
+    // Define field metadata structure                                                                                                                              
+    typedef struct {
+        char *pattern;
+        char *units;
+        char *long_name;
+        char *standard_name;
+    } field_metadata_t;
+
+    // Field metadata lookup table
+    field_metadata_t field_metadata[] = {
+        {"BS_pressure", "Pa",            "Base state pressure",                                           "air_pressure"},
+        {"TauTH1",      "K m s-1",       "Subgrid-x turbulent flux of potential temperature",             NULL},
+        {"TauTH2",      "K m s-1",       "Subgrid-y turbulent flux of potential temperature",             NULL},
+        {"TauTH3",      "K m s-1",       "Subgrid-z turbulent flux of potential temperature",             NULL},	
+        {"Tau11",       "m2 s-2",        "Subgrid-xx stress tensor component",                            NULL},
+        {"Tau21",       "m2 s-2",        "Subgrid-yx stress tensor component",                            NULL},
+        {"Tau31",       "m2 s-2",        "Subgrid-zx stress tensor component",                            NULL},
+        {"Tau32",       "m2 s-2",        "Subgrid-zy stress tensor component",                            NULL},
+        {"Tau22",       "m2 s-2",        "Subgrid-yy stress tensor component",                            NULL},
+        {"Tau33",       "m2 s-2",        "Subgrid-zz stress tensor component",                            NULL},
+        {"rho",         "kg m-3",        "Air density",                                                   "air_density"},
+        {"u",           "m s-1",         "Zonal wind velocity",                                           "eastward_wind"},
+        {"v",           "m s-1",         "Meridional wind velocity",                                      "northward_wind"},
+        {"w",           "m s-1",         "Vertical wind velocity",                                        "upward_air_velocity"},
+        {"theta",       "K",             "Potential temperature",                                         "air_potential_temperature"},
+        {"pressure",    "Pa",            "Perturbation pressure",                                         NULL},
+        {"TKE_0",       "m2 s-2",        "Subgrid turbulent kinetic energy of air at grid-filter scale", NULL},
+        {"TKE_1",       "m2 s-2",        "Subgrid turbulent kinetic energy of air at canopy leaf scale", NULL},
+        {"AuxScalar",   "-",             "Auxiliary scalar",                                              NULL},
+        {"moisture",    "kg kg-1",       "Water vapor mixing ratio",                                      "humidity_mixing_ratio"},
+        {"qv",          "kg kg-1",       "Water vapor mixing ratio",                                      "humidity_mixing_ratio"},
+        {"qc",          "kg kg-1",       "Cloud water mixing ratio",                                      "cloud_liquid_water_mixing_ratio"},
+        {"qi",          "kg kg-1",       "Ice water mixing ratio",                                        "cloud_ice_mixing_ratio"},
+        {"fricVel",     "m s-1",         "Surface friction velocity",                                     "surface_friction_velocity"},
+        {"htFlux",      "K m s-1",       "Surface sensible heat flux",                                    "surface_upward_sensible_heat_flux"},
+        {"qFlux",       "kg kg-1 m s-1", "Surface latent heat flux",                                      "surface_upward_latent_heat_flux"},
+        {"tskin",       "K",             "Surface skin temperature",                                      "surface_temperature"},
+        {"qskin",       "kg kg-1",       "Surface skin water vapor mixing ratio",                         NULL},
+        {"z0m",         "m",             "Roughness length for momentum",                                 "surface_roughness_length_for_momentum_in_air"},
+        {"z0t",         "m",             "Roughness length for heat",                                     "surface_roughness_length_for_heat_in_air"},
+        {"invOblen",    "m-1",           "Inverse Obukhov length",                                        "atmosphere_boundary_layer_thickness"},
+        {"CanopyLAD",   "m-1",           "Leaf area density",                                             "leaf_area_density"},
+        {"SeaMask",     "-",             "Sea mask",                                                      "sea_area_fraction"},
+        {NULL, NULL, NULL, NULL} // End marker                                                                                                           
+    };
+
+    // Search for matching field pattern
+    for(int i = 0; field_metadata[i].pattern != NULL; i++) {
+	if (strncmp(baseFieldName, field_metadata[i].pattern, strlen(field_metadata[i].pattern)) == 0) {
+            if(isForcing) {
+                char *forcing_units = make_forcing_units(field_metadata[i].units);
+                char *forcing_long_name = make_forcing_long_name(field_metadata[i].long_name);
+
+ 
+                errorCode = ioAddStandardAttrs(fieldName,
+                                               forcing_units,
+                                               forcing_long_name,
+                                               NULL); // No standard name for forcing fields
+		
+                free(forcing_units);
+                free(forcing_long_name);
+            } else {
+                errorCode = ioAddStandardAttrs(fieldName,
+                                               field_metadata[i].units,
+                                               field_metadata[i].long_name,
+                                               field_metadata[i].standard_name);
+            }
+            return errorCode;
+        }
+    }
+
+    // Handle special case for BS_ fields with numeric identifiers
+    if(strncmp(baseFieldName, "BS_", 3) == 0) {
+        char *endptr;
+        int fieldIndex = strtol(baseFieldName + 3, &endptr, 10);
+        if(*endptr == '\0') { // Successfully parsed a number                                                                                                        
+            if(fieldIndex == RHO_INDX_BS) { // 0 = rho base state                                                                                                    
+                errorCode = ioAddStandardAttrs(fieldName, "kg m-3", "Base state air density", "air_density");
+            }
+            else if(fieldIndex == THETA_INDX_BS) { // 1 = theta base state                                                                                           
+                errorCode = ioAddStandardAttrs(fieldName, "K", "Base state potential temperature", "air_potential_temperature");
+            }
+            else {
+                errorCode = ioAddStandardAttrs(fieldName, "-", "Base state field", NULL);
+            }
+            return errorCode;
+        }
+    }
+
+    // For unrecognized fields, add generic attributes
+    printf("Warning: Unrecognized field '%s' in hydro_coreAddFieldAttributes, adding generic attributes\n", fieldName);
+    if(isForcing) {
+        errorCode = ioAddStandardAttrs(fieldName, "s-1", "Generic field forcing", NULL);
+    } else {
+        errorCode = ioAddStandardAttrs(fieldName, "-", "Generic field", NULL);
+    }
+
+    return errorCode;
+}//end hydro_coreAddFieldAttributes()    
+

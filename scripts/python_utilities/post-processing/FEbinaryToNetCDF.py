@@ -10,6 +10,45 @@ import gc
 import json
 import argparse
 from mpi4py import MPI
+from datetime import datetime
+import re
+
+### Load lookup tables from JSON file ###
+
+def load_field_attributes(json_file_path):
+    """
+    Load field attribute lookup tables from a JSON file.
+    
+    Args:
+        json_file_path (str): Path to the JSON file containing field attributes
+    
+    Returns:
+        tuple: (base_attrs, jacobian_attrs, coordinate_attrs, directions)
+    """
+
+    try:
+        with open(json_file_path, 'r') as f:
+            attrs_data = json.load(f)
+        
+        # Convert lists back to tuples for consistency with original code
+        base_attrs = {k: tuple(v) for k, v in attrs_data['base_attrs'].items()}
+        jacobian_attrs = {k: tuple(v) for k, v in attrs_data['jacobian_attrs'].items()}
+        coordinate_attrs = {k: tuple(v) for k, v in attrs_data['coordinate_attrs'].items()}
+        
+        # Convert string keys back to integers for directions
+        directions = {int(k): v for k, v in attrs_data['directions'].items()}
+        
+        # Load special field mappings
+        base_state_indices = {int(k): tuple(v) for k, v in attrs_data['special_field_mappings']['base_state_indices'].items()}
+
+        return base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices
+        
+    except FileNotFoundError:
+        print(f"Warning: Field attributes file '{json_file_path}' not found. Using empty lookup tables.")
+        return {}, {}, {}, {}, {}
+    except Exception as e:
+        print(f"Error loading field attributes from '{json_file_path}': {e}")
+        return {}, {}, {}, {}, {}
 
 def field3dTranspose(fld,extents):
     fld=fld.reshape(extents)
@@ -21,7 +60,172 @@ def field2dTranspose(fld,extents):
     fldFinal=np.transpose(fld,axes=[1,0])
     return fldFinal[np.newaxis,Nh:-Nh,Nh:-Nh]
 
-def readBinary(outpath,theseFiles):
+def get_variable_attrs(var_name, base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices):
+    """
+    Get CF-compliant attributes for a variable name, handling special cases.   
+    Args: 
+        var_name (str): Variable name to get attributes for
+        base_attrs (dict): Base field attributes lookup table
+        jacobian_attrs (dict): Jacobian field attributes lookup table
+        coordinate_attrs (dict): Coordinate field attributes lookup table
+        directions (dict): Direction index to name mapping
+        base_state_indices (dict): Base state field index mappings
+    Returns: 
+        tuple or None: (units, long_name, standard_name) or None if no match
+    """
+
+    # Handle BS_ fields with numeric identifiers
+    if var_name.startswith('BS_'):
+        try:
+            field_index = int(var_name[3:])
+            if field_index in base_state_indices:
+                return base_state_indices[field_index]
+            else:
+                return ('1', 'Base state field', None)
+        except ValueError:
+            pass
+
+    # Handle TauQv/TauQl moisture flux fields
+    tau_moisture_match = re.match(r'^TauQ([vl])(\d+)$', var_name)
+    if tau_moisture_match:
+        species, direction_idx = tau_moisture_match.groups()
+        direction_idx = int(direction_idx)
+        direction_name = directions.get(direction_idx, str(direction_idx))
+        
+        if species == 'v':  # TauQv (water vapor)
+            long_name = f'Subgrid-{direction_name} water vapor flux in {direction_name} direction'
+        elif species == 'l':  # TauQl (liquid water)
+            long_name = f'Subgrid-{direction_name} liquid water flux in {direction_name} direction'
+        else:
+            long_name = f'Subgrid-{direction_name} moisture flux in {direction_name} direction'
+        
+        return ('kg kg-1 m s-1', long_name, None)
+
+    # Handle numbered versions of base fields (e.g., AuxScalar_0, etc.)
+    base_name_match = re.match(r'^([A-Za-z_]+?)_?(\d+)$', var_name)
+    if base_name_match:
+        base_name = base_name_match.group(1)
+        if base_name in base_attrs:
+            return base_attrs[base_name]
+
+    # Check specific attribute dictionaries
+    for attr_dict in [jacobian_attrs, coordinate_attrs, base_attrs]:
+        if var_name in attr_dict:
+            return attr_dict[var_name]
+
+    return None
+
+def add_variable_attributes(ds, base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices):
+    """Add attributes to variables"""
+
+    for var_name, var in ds.data_vars.items():
+        attrs_tuple = get_variable_attrs(var_name, base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices)
+        
+        if attrs_tuple:
+            units, long_name, standard_name = attrs_tuple
+            var.attrs['units'] = units
+            var.attrs['long_name'] = long_name
+            if standard_name is not None:
+                var.attrs['standard_name'] = standard_name
+                
+    return ds
+    
+def add_coordinate_attributes(ds):
+    """Add coordinate variables and their attributes"""
+
+    # Create explicit coordinate variables based on dimension sizes
+    coords_to_add = {}
+    
+    if 'xIndex' in ds.dims:
+        coords_to_add['xIndex'] = np.arange(ds.sizes['xIndex'], dtype=np.int32)
+    
+    if 'yIndex' in ds.dims:
+        coords_to_add['yIndex'] = np.arange(ds.sizes['yIndex'], dtype=np.int32)
+        
+    if 'zIndex' in ds.dims:
+        coords_to_add['zIndex'] = np.arange(ds.sizes['zIndex'], dtype=np.int32)
+    
+    # Add the coordinate variables to the dataset
+    if coords_to_add:
+        ds = ds.assign_coords(coords_to_add)
+ 
+    if 'time' in ds.coords:
+        ds['time'].attrs = {
+            'units': 's',
+            'long_name': 'Simulation time',
+            'standard_name': 'time',
+            'axis': 'T'
+        }
+
+    coord_attrs = {
+        'xIndex': {
+            'long_name': 'x-coordinate index',
+            'units': '1',
+            'axis': 'X'
+        },
+        'yIndex': {
+            'long_name': 'y-coordinate index',
+            'units': '1',
+            'axis': 'Y'
+        },
+        'zIndex': {
+            'long_name': 'z-coordinate index',
+            'units': '1',
+            'axis': 'Z',
+            'positive': 'up'
+        }
+    }
+
+    for coord_name, attrs in coord_attrs.items():
+        if coord_name in ds.coords:
+            ds[coord_name].attrs.update(attrs)
+    
+    return ds
+
+def reorder_dataset_variables(ds):
+    """
+    Reorder dataset variables to desired order:
+    zIndex, yIndex, xIndex, xPos, yPos, zPos, then other variables, with time last
+    """
+    
+    # Define the desired order for the first variables
+    priority_order = ['zIndex', 'yIndex', 'xIndex', 'xPos', 'yPos', 'zPos']
+    
+    # Get all variable names from both data_vars and coords, preserving original order
+    original_data_vars = list(ds.data_vars.keys())
+    original_coords = list(ds.coords.keys())
+    
+    # Build the new order
+    new_order = []
+    used_vars = set()
+    
+    # Add priority variables first (if they exist)
+    for var_name in priority_order:
+        if var_name in ds.data_vars or var_name in ds.coords:
+            new_order.append(var_name)
+            used_vars.add(var_name)
+    
+    # Add remaining data variables in their original order (except time)
+    for var_name in original_data_vars:
+        if var_name not in used_vars and var_name != 'time':
+            new_order.append(var_name)
+            used_vars.add(var_name)
+    
+    # Add remaining coordinate variables in their original order (except time)
+    for var_name in original_coords:
+        if var_name not in used_vars and var_name != 'time':
+            new_order.append(var_name)
+            used_vars.add(var_name)
+    
+    # Add time last if it exists
+    if 'time' in ds.data_vars or 'time' in ds.coords:
+        new_order.append('time')
+    
+    # Use xarray's reindex to reorder variables
+    # This preserves the distinction between coords and data_vars
+    return ds[new_order]
+    
+def readBinary(outpath,theseFiles, base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices):
     verboseLogging=False
     print(theseFiles)
     dsSet=[]
@@ -77,6 +281,14 @@ def readBinary(outpath,theseFiles):
       
     #Concatenate all the perRank dataSets into a single dataset 
     dsFull=xr.concat(dsSet,'xIndex',data_vars='minimal')
+
+    # Add variable and coordinate attributes
+    dsFull = add_coordinate_attributes(dsFull)
+    dsFull = add_variable_attributes(dsFull, base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices)
+
+    # Reorder variables to desired order
+    dsFull = reorder_dataset_variables(dsFull)
+
     return dsFull
 
 ###
@@ -86,6 +298,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", required=True, help="JSON file with converter parameter settings")
+    parser.add_argument("-a", "--attrs", required=True, help="JSON file with field attribute definitions")
     args = parser.parse_args()
     return args
 
@@ -100,6 +313,12 @@ mpi_name = MPI.Get_processor_name()
 ### Parse the command line arguments ###
 ########################################
 args = parse_args()
+
+#########################################################
+### Load field attributes from JSON file ###
+#########################################################
+base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices = load_field_attributes(args.attrs)
+
 #########################################################
 ### Read the json file of converter script parameters ###
 #########################################################
@@ -172,12 +391,16 @@ for timeStep in mytslist:
    else:
        print('{:d} specified binary files are missing. Skipping timestep: {:d}...'.format(numOutRanks-goodCnt,timeStep))
    if parseProceed:
-     dsFull=readBinary(outpath,theseFiles)
+     dsFull=readBinary(outpath,theseFiles, base_attrs, jacobian_attrs, coordinate_attrs, directions, base_state_indices)
+
+     # Create encoding to prevent _FillValue for all variables AND coordinates
+     encoding = {var: {'_FillValue': None} for var in list(dsFull.data_vars) + list(dsFull.coords)}
+
      #write the full  domain datatset to netcdf file
      if False:
-        dsFull.to_netcdf('{:s}NETCDF/{:s}.{:d}'.format(outpath,FEoutBase,timeStep),format='NETCDF4')
+        dsFull.to_netcdf('{:s}NETCDF/{:s}.{:d}'.format(outpath,FEoutBase,timeStep),format='NETCDF4',encoding=encoding)
      else:
-        dsFull.to_netcdf('{:s}/{:s}.{:d}'.format(netCDFpath,FEoutBase,timeStep),format='NETCDF4')
+        dsFull.to_netcdf('{:s}/{:s}.{:d}'.format(netCDFpath,FEoutBase,timeStep),format='NETCDF4',encoding=encoding)
      del dsFull
      if os.path.exists('{:s}/{:s}.{:d}'.format(netCDFpath,FEoutBase,timeStep)):
        if removeBinaries:

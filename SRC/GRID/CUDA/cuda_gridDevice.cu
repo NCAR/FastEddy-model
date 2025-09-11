@@ -47,7 +47,7 @@ __constant__ int kMax_d;
 float *xPos_d;  // Cell-center position in x (meters) 
 float *yPos_d;  // Cell-center position in y (meters) 
 float *zPos_d;  // Cell-center position in z (meters) 
-float *topoPos_d; //Topography elevation (z in meters) at the cell center position in x and y. 
+float *topoPos_d; //Terrain elevation (z in meters) at the cell center position in x and y. 
 
 float *J13_d;      // dx/d_zeta
 float *J23_d;      // dy/d_zeta

@@ -462,6 +462,10 @@ int ioWriteNetCDFoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
      errorCode = ioCreateNetCDFoutFile(outFileName, &ncid);
      errorCode = ioDefineNetCDFoutFileDims(ncid, Nx, Ny, Nz, Nh);
      errorCode = ioDefineNetCDFoutFileVars(ncid);
+     /* Define dimension coordinate variable attributes */
+     errorCode = ioDefineNetCDFcoordVarAttrs(ncid);
+     /* Define variable attributes */
+     errorCode = ioDefineNetCDFoutFileAttrs(ncid);
      errorCode = ioEndNetCDFdefineMode(ncid,Nx, Ny, Nz, Nh);
      /*Write all of the variables in the IO Registry list*/
    } //endif mpi_rank_world==0
@@ -788,6 +792,185 @@ int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
 
    return(errorCode);   
 } //ioPutNetCDFoutFileVars()
+
+/*----->>>>> int ioDefineNetCDFoutFileAttrs();    ---------------------------------------------------------------------
+* Used to define NetCDF variable attributes.
+*/
+int ioDefineNetCDFoutFileAttrs(int ncid){
+   int errorCode = IO_SUCCESS;
+   ioVar_t *ptr;
+   int i;
+
+   /* For each entry in the ioVarsList, define attributes if they exist */
+   ptr = getFirstVarFromList();
+   while(ptr != NULL){
+      /* Check if variable has attributes defined and loop through them */
+      for(i = 0; i < ptr->nAttrs; i++){
+         if(strlen(ptr->attrs[i].name) > 0 && strlen(ptr->attrs[i].value) > 0){
+            /* Determine the appropriate NetCDF function based on attribute type */
+            if(strcmp(ptr->attrs[i].type, "text") == 0){
+               if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, ptr->attrs[i].name,
+                                              strlen(ptr->attrs[i].value), ptr->attrs[i].value))){
+                  ERR(errorCode);
+               }
+            }
+            else if(strcmp(ptr->attrs[i].type, "float") == 0){
+               float val = atof(ptr->attrs[i].value);
+               if ((errorCode = nc_put_att_float(ncid, ptr->ncvarid, ptr->attrs[i].name, NC_FLOAT, 1, &val))){
+                  ERR(errorCode);
+               }
+            }
+            else if(strcmp(ptr->attrs[i].type, "double") == 0){
+               double val = atof(ptr->attrs[i].value);
+               if ((errorCode = nc_put_att_double(ncid, ptr->ncvarid, ptr->attrs[i].name, NC_DOUBLE, 1, &val))){
+                  ERR(errorCode);
+               }
+            }
+            else if(strcmp(ptr->attrs[i].type, "int") == 0){
+               int val = atoi(ptr->attrs[i].value);
+               if ((errorCode = nc_put_att_int(ncid, ptr->ncvarid, ptr->attrs[i].name, NC_INT, 1, &val))){
+                  ERR(errorCode);
+               }
+            }
+            else {
+               /* Default to text if type is unrecognized */
+               if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, ptr->attrs[i].name,
+                                              strlen(ptr->attrs[i].value), ptr->attrs[i].value))){
+                  ERR(errorCode);
+               }
+            }
+         }
+      }
+      
+      /* Add standard CF convention attributes for common variables */
+      if(!strcmp(ptr->name,"u")){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name", 
+                                         strlen("Zonal wind velocity"), "Zonal wind velocity"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("m s-1"), "m s-1"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name", 
+                                         strlen("eastward_wind"), "eastward_wind"))){
+            ERR(errorCode);
+         }
+      }else if(!strcmp(ptr->name,"v")){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name", 
+                                         strlen("Meridional wind velocity"), "Meridional wind velocity"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("m s-1"), "m s-1"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name", 
+                                         strlen("northward_wind"), "northward_wind"))){
+            ERR(errorCode);
+         }
+      }else if(!strcmp(ptr->name,"w")){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name", 
+                                         strlen("Vertical wind velocity"), "Vertical wind velocity"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("m s-1"), "m s-1"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name", 
+                                         strlen("upward_air_velocity"), "upward_air_velocity"))){
+            ERR(errorCode);
+         }
+      }else if(!strcmp(ptr->name,"theta")){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name", 
+                                         strlen("Potential temperature"), "Potential temperature"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("K"), "K"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name", 
+                                         strlen("air_potential_temperature"), "air_potential_temperature"))){
+            ERR(errorCode);
+         }
+      }else if(!strcmp(ptr->name,"rho")){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name", 
+                                         strlen("Air density"), "Air density"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("kg m-3"), "kg m-3"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name", 
+                                         strlen("air_density"), "air_density"))){
+            ERR(errorCode);
+         }
+      }else if(!strcmp(ptr->name,"qv")){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name", 
+                                         strlen("Water vapor mixing ratio"), "Water vapor mixing ratio"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("kg kg-1"), "kg kg-1"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name", 
+                                         strlen("humidity_mixing_ratio"), "humidity_mixing_ratio"))){
+            ERR(errorCode);
+         }
+      }
+
+      ptr = ptr->next;
+   }
+   
+   return(errorCode);
+} //end ioDefineNetCDFoutFileAttrs
+
+/*----->>>>> int ioDefineNetCDFcoordVarAttrs();    ---------------------------------------------------------------------
+* Used to define attributes for dimension coordinate variables.
+*/
+int ioDefineNetCDFcoordVarAttrs(int ncid){
+   int errorCode = IO_SUCCESS;
+   
+   /* Define attributes for xIndex coordinate variable */
+   if ((errorCode = nc_put_att_text(ncid, nx_varid, "long_name", 
+                                   strlen("x-coordinate index"), "x-coordinate index"))){
+      ERR(errorCode);
+   }
+   if ((errorCode = nc_put_att_text(ncid, nx_varid, "units", strlen("1"), "1"))){
+      ERR(errorCode);
+   }
+   if ((errorCode = nc_put_att_text(ncid, nx_varid, "axis", strlen("X"), "X"))){
+      ERR(errorCode);
+   }
+   
+   /* Define attributes for yIndex coordinate variable */
+   if ((errorCode = nc_put_att_text(ncid, ny_varid, "long_name", 
+                                   strlen("y-coordinate index"), "y-coordinate index"))){
+      ERR(errorCode);
+   }
+   if ((errorCode = nc_put_att_text(ncid, ny_varid, "units", strlen("1"), "1"))){
+      ERR(errorCode);
+   }
+   if ((errorCode = nc_put_att_text(ncid, ny_varid, "axis", strlen("Y"), "Y"))){
+      ERR(errorCode);
+   }
+   
+   /* Define attributes for zIndex coordinate variable */
+   if ((errorCode = nc_put_att_text(ncid, nz_varid, "long_name", 
+                                   strlen("z-coordinate index"), "z-coordinate index"))){
+      ERR(errorCode);
+   }
+   if ((errorCode = nc_put_att_text(ncid, nz_varid, "units", strlen("1"), "1"))){
+      ERR(errorCode);
+   }
+   if ((errorCode = nc_put_att_text(ncid, nz_varid, "axis", strlen("Z"), "Z"))){
+      ERR(errorCode);
+   }
+   if ((errorCode = nc_put_att_text(ncid, nz_varid, "positive", strlen("up"), "up"))){
+      ERR(errorCode);
+   }
+
+   return(errorCode);
+} //end ioDefineNetCDFcoordVarAttrs
+
 
 /*----->>>>> int ioCloseNetCDFfile();    ---------------------------------------------------------------------
  * Used to close a netCDF file

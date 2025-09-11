@@ -15,4 +15,4 @@ module load conda
 conda activate npl-2025a
 which python
 
-mpiexec -n 4 --ppn 2 python -u ${SRCDIR}/FEbinaryToNetCDF.py -f ${SRCDIR}/convert.json
+mpiexec -n 4 --ppn 2 python -u ${SRCDIR}/FEbinaryToNetCDF.py -f ${SRCDIR}/convert.json -a ${SRCDIR}/field_attributes.json

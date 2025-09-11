@@ -242,3 +242,48 @@ int ioRegisterVar(char *name, char *type, int nDims, int *dimids, void *varMemAd
     return(errorCode);
 } //end ioRegisterVar()
 
+/*----->>>>> int ioAddVarAttr(); -------------------------------------------------------------------
+* Add a single attribute to an already registered variable
+*/
+int ioAddVarAttr(char *varName, char *attrName, char *attrType, char *attrValue){
+    int errorCode = IO_SUCCESS;
+    int tmperrorCode = 0;
+
+    /* Check if variable exists first */
+    if(getNamedVarFromList(varName) == NULL){
+        printf("ERROR: Variable %s not found in registry...", varName);
+        return IO_ERROR_VAR_NOT_FOUND;
+    }
+
+    /* Add the attribute */
+    tmperrorCode = addAttrToVar(varName, attrName, attrType, attrValue);
+    if(tmperrorCode != 0){
+        printf("ERROR = %d returned by addAttrToVar() for attribute %s...", tmperrorCode, attrName);
+        return IO_ERROR_ATTR_ADD;
+    }
+
+    return errorCode;
+}
+
+/*----->>>>> int ioAddStandardAttrs(); -------------------------------------------------------------
+* Add standard CF convention attributes to a variable (units, long_name, standard_name)
+*/
+int ioAddStandardAttrs(char *varName, char *units, char *longName, char *standardName){
+    int errorCode = IO_SUCCESS;
+    int tmperrorCode = 0;
+
+    /* Check if variable exists first */
+    if(getNamedVarFromList(varName) == NULL){
+        printf("ERROR: Variable %s not found in registry...", varName);
+        return IO_ERROR_VAR_NOT_FOUND;
+    }
+
+    /* Add the standard attribute using the ioVarsList function */
+    tmperrorCode = addStandardAttrsToVar(varName, units, longName, standardName);
+    if(tmperrorCode != 0){
+        printf("ERROR = %d returned by addStandardAttrsToVar()...", tmperrorCode);
+        return IO_ERROR_ATTR_ADD;
+    }
+
+    return errorCode;
+}
