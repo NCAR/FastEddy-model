@@ -20,10 +20,10 @@
     width: 100% !important;
 }
 
-.longtable td:nth-child(1) { width: 25% !important; } /* Name */
-.longtable td:nth-child(2) { width: 10% !important; } /* Min */
-.longtable td:nth-child(3) { width: 10% !important; } /* Max */
-.longtable td:nth-child(4) { width: 10% !important; } /* Default */
+.longtable td:nth-child(1) { width: 20% !important; } /* Name */
+.longtable td:nth-child(2) { width: 8% !important; } /* Min */
+.longtable td:nth-child(3) { width: 8% !important; } /* Max */
+.longtable td:nth-child(4) { width: 8% !important; } /* Default */
 .longtable td:nth-child(5) { width: 20% !important; } /* Mandatory/Optional */
-.longtable td:nth-child(6) { width: 35% !important; } /* Description */
+.longtable td:nth-child(6) { width: 36% !important; } /* Description */
 
