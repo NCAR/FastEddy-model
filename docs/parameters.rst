@@ -11,11 +11,11 @@ brief description. These definitions serve as a reference to ensure correct
 configuration and valid inputs for FastEddy simulations.
 
 
-FEMAIN
-======
+FEMPI
+=====
 
 .. csv-table:: 
-   :file: csv/femain.csv
+   :file: csv/fempi.csv
    :header-rows: 1
    :delim: ,
    :class: longtable
