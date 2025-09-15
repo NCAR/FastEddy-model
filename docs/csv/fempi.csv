@@ -1,3 +1,3 @@
-Name, Min, Max, Default, Mandatory or Optional, Description
+Name, Min, Max, Default, Requirement, Description
 numProcsX, 1, INT_MAX, , Mandatory, Number of cores to be used for horizontal domain decomposition in X
 numProcsY, 1, INT_MAX, , Mandatory, Number of cores to be used for horizontal domain decomposition in Y
