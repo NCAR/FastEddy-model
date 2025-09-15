@@ -12,9 +12,6 @@ configuration and valid inputs for FastEddy simulations.
 
 **FORMAT OPTION 1**
 
-MPI AALES
-=========
-
 .. csv-table:: MPI AALES
    :file: csv/mpi_aales.csv
    :header-rows: 1
@@ -22,9 +19,6 @@ MPI AALES
    :widths: 30, 18, 18, 20, 35
    :class: longtable
 	   
-CUDA AALES
-==========
-
 .. csv-table:: CUDA AALES
    :file: csv/cuda_aales.csv
    :header-rows: 1
@@ -32,9 +26,6 @@ CUDA AALES
    :widths: 30, 18, 18, 20, 35
    :class: longtable
 	     
-IO 
-===
-
 .. csv-table:: IO
    :file: csv/io.csv
    :header-rows: 1
@@ -42,18 +33,12 @@ IO
    :widths: 30, 18, 18, 20, 35
    :class: longtable
 
-GRID
-====
-
 .. csv-table:: GRID
    :file: csv/grid.csv
    :header-rows: 1
    :delim: ,
    :widths: 30, 18, 18, 20, 35
    :class: longtable
-
-TIME INTEGRATION
-================
 
 .. csv-table:: TIME INTEGRATION
    :file: csv/time_integration.csv
