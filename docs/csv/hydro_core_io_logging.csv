@@ -1,4 +1,4 @@
 hydroForcingWrite, 0, 1, Mandatory, Switch for dumping hydroFldsFrhs for prognositic fields. 0=off; 1=on
 hydroSubGridWrite, 0, 1, Mandatory, Switch for dumping Tauij fields. 0=off; 1=on
-hydroForcingLog, 0, 1, Mandatory, Switch for logging Frhs min/max, etc. 0=off; 1=on
+hydroForcingLog, 0, 1, Mandatory, Switch for logging Frhs min/max etc. 0=off; 1=on
 
