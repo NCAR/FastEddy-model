@@ -1,4 +1,3 @@
-Name, Min, Max, Mandatory or Optional, Description
 Nx, 1, INT_MAX, Mandatory, Number of discretised domain elements in the x (zonal) direction
 Ny, 1, INT_MAX, Mandatory, Number of discretised domain elements in the y (meridional) direction
 Nz, 1, INT_MAX, Mandatory, Number of discretised domain elements in the z (vertical) direction

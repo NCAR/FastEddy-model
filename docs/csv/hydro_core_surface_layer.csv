@@ -1,4 +1,3 @@
-Name, Min, Max, Mandatory or Optional, Description
 surflayerSelector, 0, 3, Mandatory, Monin-Obukhov surface layer selector: 0=off; 1=surface kinematic heat flux (surflayer_wth); 2=sking temperature rate (surflayer_tr)
 surflayer_z0, 1e-12, 1e+0, Mandatory, Roughness length (momentum) when surflayerSelector > 0
 surflayer_z0t, 1e-6, 1e+1, Mandatory, Roughness length (temperature) when surflayerSelector > 0

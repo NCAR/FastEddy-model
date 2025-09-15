@@ -1,4 +1,3 @@
-Name, Min, Max, Mandatory or Optional, Description
 stabilityScheme, 0, 4, Mandatory, Scheme used to set hydrostatic, stability-dependent Base-State EOS fields (0=none; 1=profile; 2=linear in theta)
 temp_grnd, FLT_MIN, FLT_MAX, Mandatory, Air Temperature (K) at the ground used to set hydrostatic Base-State EOS fields
 pres_grnd, FLT_MIN, FLT_MAX, Mandatory, Pressure (Pa) at the ground used to set hydrostatic Base-State EOS fields

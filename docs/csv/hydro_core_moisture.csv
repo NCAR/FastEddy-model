@@ -1,4 +1,3 @@
-Name, Min, Max, Mandatory or Optional, Description
 moistureSelector, 0, 1, Mandatory, Moisture selector: 0=off; 1=on
 moistureNvars, 0, 2, Mandatory, Number of moisture species
 moistureAdvSelectorQv, 0, 6, Mandatory, Water vapor advection scheme selector

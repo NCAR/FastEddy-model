@@ -1,4 +1,3 @@
-Name, Min, Max, Mandatory or Optional, Description
 hydroBCs, 1, 2, Mandatory, Selector for hydro BC set. 1=Dirichlet lateral ceiling and surface boundary conditions (Limited Area Domain--LAD); 2=periodicHorizVerticalAbl
 ceilingAdvectionBC, 0, 1, Optional, Selector for normal advection at the domain ceiling (0=zero-valued w-BC; 1=non-zero w-BC)
 hydroBndysFileBase, N/A, N/A, Optional, Base file name LAD BC set (hydroBCs=1)

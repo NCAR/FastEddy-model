@@ -1,4 +1,3 @@
-Name, Min, Max, Mandatory or Optional, Description
 timeMethod, 0, 0, Mandatory, Selector for time integration method. [0=RK3-WS2002 (default)]
 Nt, 1, INT_MAX, Mandatory, Number of timesteps to perform
 dt, FLT_MIN, FLT_MAX, Mandatory, Timestep resolution in seconds

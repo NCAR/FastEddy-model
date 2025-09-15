@@ -1,4 +1,3 @@
-Name, Min, Max, Mandatory or Optional, Description
 lsfSelector, 0, 1, Mandatory, Large-scale forcings selector: 0=off; 1=on
 lsf_horMnSubTerms, 0, 1, Mandatory, Large-scale subsidence terms Switch 0=off 1=on
 lsf_freq, 1e-3, 1e+3, Mandatory, Large-scale forcing frequency (seconds)

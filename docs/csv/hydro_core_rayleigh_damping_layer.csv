@@ -1,3 +1,2 @@
-Name, Min, Max, Mandatory or Optional, Description
 dampingLayerSelector, 0, 1, Mandatory, Rayleigh Damping Layer selector
 dampingLayerDepth, 0.0, FLT_MAX, Mandatory, Rayleigh Damping Layer Depth

@@ -1,4 +1,3 @@
-Name, Min, Max, Mandatory or Optional, Description
 cellpertSelector, 0, 1, Optional, CP method selector: 0=off; 1=on
 cellpert_sw2b, 0, 3, Mandatory, Only south and west bnds perturbed (for idealized cases): 0=off; 1=south & west; 2=south
 cellpert_amp, 0.0, 20.0, Mandatory, Maximum amplitude for the potential temperature perturbations

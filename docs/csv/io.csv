@@ -1,4 +1,3 @@
-Name, Min, Max, Mandatory or Optional, Description
 inPath, N/A, N/A, Optional, Path where initial/restart file is read in from
 inFile, N/A, N/A, Optional, Name of the input file for coordinate system and initial or restart conditions
 outPath, N/A, N/A, Mandatory, Path where output files are to be written
