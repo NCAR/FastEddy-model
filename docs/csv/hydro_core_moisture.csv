@@ -1,0 +1,11 @@
+Name, Min, Max, Mandatory or Optional, Description
+moistureSelector, 0, 1, Mandatory, Moisture selector: 0=off; 1=on
+moistureNvars, 0, 2, Mandatory, Number of moisture species
+moistureAdvSelectorQv, 0, 6, Mandatory, Water vapor advection scheme selector
+moistureAdvSelectorQv_b, 0.0, 1.0, Mandatory, Hybrid advection scheme parameter for water vapor
+moistureAdvSelectorQi, 0, 2, Mandatory, Moisture advection scheme selector for non-qv fields (non-oscillatory schemes)
+moistureSGSturb, 0, 1, Mandatory, Selector to apply sub-grid scale diffusion to moisture fields
+moistureCond, 1, 4, Mandatory, Selector to apply condensation to mositure fields
+moistureCondTscale, 1e-4, 1000.0, Mandatory, Relaxation time in seconds
+moistureCondBasePres, 0, 1, Mandatory, Selector to use base pressure for microphysics
+moistureMPcallTscale, 1e-4, 1000.0, Mandatory, Time scale for microphysics to be called

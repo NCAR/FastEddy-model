@@ -1,0 +1,28 @@
+/* Force CSV table width control */
+.wy-table-responsive table td,
+.wy-table-responsive table th {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+}
+
+.wy-table-responsive {
+    overflow: visible !important;
+}
+
+.wy-table-responsive table {
+    table-layout: fixed !important;
+    width: 100% !important;
+}
+
+/* Specific fixes for parameter tables */
+.longtable table {
+    table-layout: fixed !important;
+    width: 100% !important;
+}
+
+.longtable td:nth-child(1) { width: 25% !important; } /* Name */
+.longtable td:nth-child(2) { width: 10% !important; } /* Min */
+.longtable td:nth-child(3) { width: 10% !important; } /* Max */
+.longtable td:nth-child(4) { width: 20% !important; } /* Mandatory/Optional */
+.longtable td:nth-child(5) { width: 35% !important; } /* Description */
+

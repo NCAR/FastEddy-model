@@ -1,0 +1,7 @@
+Name, Min, Max, Mandatory or Optional, Description
+turbulenceSelector, 0, 1, Mandatory, Turbulence scheme selector: 0=None; 1=Lilly/Smagorinsky
+TKESelector, 0, 2, Mandatory, Prognostic TKE selector: 0=None; 1=Prognostic
+TKEAdvSelector, 0, 6, Mandatory, SGSTKE advection selector
+TKEAdvSelector_b_hyb, 0.0, 1.0, Mandatory, Hybrid advection scheme parameter
+c_s, 1e-6, 1e6, Mandatory, Smagorinsky turbulence model constant used for turbulenceSelector=1 with TKESelector=0
+c_k, 1e-6, 1e6, Mandatory, Lilly turbulence model constant used for turbulenceSelector=1 with TKESelector>0

@@ -1,0 +1,19 @@
+Name, Min, Max, Mandatory or Optional, Description
+lsfSelector, 0, 1, Mandatory, Large-scale forcings selector: 0=off; 1=on
+lsf_horMnSubTerms, 0, 1, Mandatory, Large-scale subsidence terms Switch 0=off 1=on
+lsf_freq, 1e-3, 1e+3, Mandatory, Large-scale forcing frequency (seconds)
+lsf_w_surf, -1e+4, 1e+4, Mandatory, Large-scale forcing to w at the surface
+lsf_w_lev1, -1e+4, 1e+4, Mandatory, Large-scale forcing to w at the first specified level
+lsf_w_lev2, -1e+4, 1e+4, Mandatory, Large-scale forcing to w at the second specified level
+lsf_w_zlev1, 0.0, 1e+4, Mandatory, Large-scale forcing to w height 1
+lsf_w_zlev2, 0.0, 1e+4, Mandatory, Large-scale forcing to w height 2
+lsf_th_surf, -1e+4, 1e+4, Mandatory, Large-scale forcing to theta at the surface
+lsf_th_lev1, -1e+4, 1e+4, Mandatory, Large-scale forcing to theta at the first specified level
+lsf_th_lev2, -1e+4, 1e+4, Mandatory, Large-scale forcing to theta at the second specified level
+lsf_th_zlev1, 0.0, 1e+4, Mandatory, Large-scale forcing to theta height 1
+lsf_th_zlev2, 0.0, 1e+4, Mandatory, Large-scale forcing to theta height 2
+lsf_qv_surf, -1e+4, 1e+4, Mandatory, Large-scale forcing to qv at the first specified level
+lsf_qv_lev1, -1e+4, 1e+4, Mandatory, Large-scale forcing to qv at the first specified level
+lsf_qv_lev2, -1e+4, 1e+4, Mandatory, Large-scale forcing to qv at the second specified level
+lsf_qv_zlev1, 0.0, 1e+4, Mandatory, Large-scale forcing to qv height 1
+lsf_qv_zlev2, 0.0, 1e+4, Mandatory, Large-scale forcing to qv height 2

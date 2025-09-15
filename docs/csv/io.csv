@@ -1,0 +1,7 @@
+Name, Min, Max, Mandatory or Optional, Description
+inPath, N/A, N/A, Optional, Path where initial/restart file is read in from
+inFile, N/A, N/A, Optional, Name of the input file for coordinate system and initial or restart conditions
+outPath, N/A, N/A, Mandatory, Path where output files are to be written
+outFileBase, N/A, N/A, Mandatory, Base name of the output file series as in (outFileBase).element-in-series
+frqOutput, 0, INT_MAX, Mandatory, Frequency (in timesteps) at which to produce output
+ioOutputMode, 0, 1, Optional, 0: N-to-1 gather and write to a netcdf file; 1:N-to-N writes of FastEddy binary files

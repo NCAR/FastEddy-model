@@ -1,0 +1,19 @@
+Name, Min, Max, Mandatory or Optional, Description
+stabilityScheme, 0, 4, Mandatory, Scheme used to set hydrostatic, stability-dependent Base-State EOS fields (0=none; 1=profile; 2=linear in theta)
+temp_grnd, FLT_MIN, FLT_MAX, Mandatory, Air Temperature (K) at the ground used to set hydrostatic Base-State EOS fields
+pres_grnd, FLT_MIN, FLT_MAX, Mandatory, Pressure (Pa) at the ground used to set hydrostatic Base-State EOS fields
+zStableBottom, 0, FLT_MAX, Mandatory, Height (m) of the first stable upper-layer when stabilityScheme = 1 or 2
+stableGradient, FLT_MIN, FLT_MAX, Mandatory, Vertical gradient (K/m) of the first stable upper-layer when stabilityScheme = 1 or 2
+zStableBottom2, 0, FLT_MAX, Mandatory, Height (m) of the second stable upper-layer when stabilityScheme = 2
+stableGradient2, FLT_MIN, FLT_MAX, Mandatory, Vertical gradient (K/m) of the second stable upper-layer when stabilityScheme = 2
+zStableBottom3, 0, FLT_MAX, Mandatory, Height (m) of the third stable upper-layer when stabilityScheme = 2
+stableGradient3, FLT_MIN, FLT_MAX, Mandatory, Vertical gradient (K/m) of the third stable upper-layer when stabilityScheme = 2
+thetaPerturbationSwitch, 0, 1, Mandatory, Switch to include initial theta perturbations: 0=off; 1=on
+thetaHeight, 0.0, FLT_MAX, Mandatory, Height below which to include initial theta perturbations: (meters)
+thetaAmplitude, 0.0, 2.0, Mandatory, Maximum amplitude for theta perturbations: thetaAmplitude*[-1;+1] K
+U_g, -FLT_MAX, FLT_MAX, Mandatory, Zonal (West-East) component of the geostrophic wind (m/s)
+V_g, -FLT_MAX, FLT_MAX, Mandatory, Meridional (South-North) component of the geostrophic wind (m/s)
+z_Ug, 0.0, FLT_MAX, Mandatory, Height (m) above ground for linear geostrophic wind gradient (zonal component)
+z_Vg, 0.0, FLT_MAX, Mandatory, Height (m) above ground for linear geostrophic wind gradient (meridional component)
+Ug_grad, -1e2, 1e2, Mandatory, Geostrophic wind gradient for U component; U_g gradient above z_Ug (ms-1/m)
+Vg_grad, -1e2, 1e2, Mandatory, Geostrophic wind gradient for V component; V_g gradient above z_Vg (ms-1/m)
