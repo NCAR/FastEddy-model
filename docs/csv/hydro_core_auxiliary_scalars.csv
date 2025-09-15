@@ -1,5 +1,5 @@
-NhydroAuxScalars, 0, MAX_AUXSC_SRC, Optional, Number of prognostic auxiliary scalar fields
-AuxScAdvSelector, 0, 6, Mandatory, Advection scheme for auxiliary scalar fields
-AuxScAdvSelector_b_hyb, 0.0, 1.0, Mandatory, Hybrid advection scheme parameter
-AuxScSGSturb, 0, 1, Mandatory, Selector to apply sub-grid scale diffusion to auxiliary scalar fields
-srcAuxScFile, N/A, N/A, Optional, The path and filename to an Auxilliary Scalar Sources specification file
+NhydroAuxScalars, 0, MAX_AUXSC_SRC, , Optional, Number of prognostic auxiliary scalar fields
+AuxScAdvSelector, 0, 6, , Mandatory, Advection scheme for auxiliary scalar fields
+AuxScAdvSelector_b_hyb, 0.0, 1.0, , Mandatory, Hybrid advection scheme parameter
+AuxScSGSturb, 0, 1, , Mandatory, Selector to apply sub-grid scale diffusion to auxiliary scalar fields
+srcAuxScFile, N/A, N/A, , Optional, The path and filename to an Auxilliary Scalar Sources specification file

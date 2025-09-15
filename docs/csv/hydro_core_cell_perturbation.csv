@@ -1,11 +1,11 @@
-cellpertSelector, 0, 1, Optional, CP method selector: 0=off; 1=on
-cellpert_sw2b, 0, 3, Mandatory, Only south and west bnds perturbed (for idealized cases): 0=off; 1=south & west; 2=south
-cellpert_amp, 0.0, 20.0, Mandatory, Maximum amplitude for the potential temperature perturbations
-cellpert_nts, 0, 1e+6, Optional, Number of time steps after which perturbations are seeded
-cellpert_gppc, 0, 50, Mandatory, Number of grid points conforming the cell
-cellpert_ndbc, 0, 10, Mandatory, Number of cells normal to domain lateral boundaries
-cellpert_kbottom, 1, 10, Mandatory, Z-grid point where the perturbations start
-cellpert_ktop, 0, 200, Mandatory, Z-grid point where the perturbations end
-cellpert_tvcp, 0, 1, Mandatory, Time-varying CP method selector: 0=off; 1=on (hydroBCs==1)
-cellpert_eckert, 0.0, 10.0, Mandatory, Eckert number for the potential temperature perturbations (hydroBCs == 1)
-cellpert_tsfact, 0.0, 10.0, Mandatory, Factor on the refreshing perturbation time scale (hydroBCs == 1)
+cellpertSelector, 0, 1, , Optional, CP method selector: 0=off; 1=on
+cellpert_sw2b, 0, 3, , Mandatory, Only south and west bnds perturbed (for idealized cases): 0=off; 1=south & west; 2=south
+cellpert_amp, 0.0, 20.0, , Mandatory, Maximum amplitude for the potential temperature perturbations
+cellpert_nts, 0, 1e+6, , Optional, Number of time steps after which perturbations are seeded
+cellpert_gppc, 0, 50, , Mandatory, Number of grid points conforming the cell
+cellpert_ndbc, 0, 10, , Mandatory, Number of cells normal to domain lateral boundaries
+cellpert_kbottom, 1, 10, , Mandatory, Z-grid point where the perturbations start
+cellpert_ktop, 0, 200, , Mandatory, Z-grid point where the perturbations end
+cellpert_tvcp, 0, 1, , Mandatory, Time-varying CP method selector: 0=off; 1=on (hydroBCs==1)
+cellpert_eckert, 0.0, 10.0, , Mandatory, Eckert number for the potential temperature perturbations (hydroBCs == 1)
+cellpert_tsfact, 0.0, 10.0, , Mandatory, Factor on the refreshing perturbation time scale (hydroBCs == 1)
