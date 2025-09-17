@@ -1,2 +1,2 @@
-diffusionSelector, 0, 1, , Mandatory, Diffusion term-type selector: 0=none; 1=constant; 2=scalar turbulent-diffusivity
-nu_0, 0, FLT_MAX, , Mandatory, Constant diffusivity used when diffusionSelector=1
+diffusionSelector, 0, 1, 0, Mandatory, Diffusion term-type selector: 0=none; 1=constant; 2=scalar turbulent-diffusivity
+nu_0, 0, FLT_MAX, 1.0, Mandatory, Constant diffusivity used when diffusionSelector=1

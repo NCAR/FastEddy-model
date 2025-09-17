@@ -1,5 +1,14 @@
-NhydroAuxScalars, 0, MAX_AUXSC_SRC, , Optional, Number of prognostic auxiliary scalar fields
-AuxScAdvSelector, 0, 6, , Mandatory, Advection scheme for auxiliary scalar fields
-AuxScAdvSelector_b_hyb, 0.0, 1.0, , Mandatory, Hybrid advection scheme parameter
-AuxScSGSturb, 0, 1, , Mandatory, Selector to apply sub-grid scale diffusion to auxiliary scalar fields
-srcAuxScFile, N/A, N/A, , Optional, The path and filename to an Auxilliary Scalar Sources specification file
+NhydroAuxScalars, 0, MAX_AUXSC_SRC (20), 0, Optional, Number of prognostic auxiliary scalar fields
+AuxScAdvSelector, 0, 6, 0, Cond-Mand, Advection scheme for auxiliary scalar fields (Cond-Mand if NhydroAuxScalars > 0)
+AuxScAdvSelector_b_hyb, 0.0, 1.0, 0.0, Cond-Mand, Hybrid advection scheme parameter (Cond-Mand if NhydroAuxScalars > 0)
+AuxScSGSturb, 0, 1, 0, Cond-Mand, Selector to apply sub-grid scale diffusion to auxiliary scalar fields (Cond-Mand if NhydroAuxScalars > 0)
+srcAuxScFile, N/A, N/A, , Cond-Opt, The path and filename to an Auxilliary Scalar Sources specification file (Cond-Opt if NhydroAuxScalars > 0)
+srcAuxScTemporalType, 0, 1, 0, Cond-Mand, Temporal characterization of source (0=instantaneous; 1=continuous) (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
+srcAuxScStartSeconds, 0, FLT_MAX, 0, Cond-Mand, Source start time in seconds (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
+srcAuxScDurationSeconds, 0, FLT_MAX, 30, Cond-Mand, Source duration in seconds (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
+srcAuxScGeometryType, 0, 0, 0, Cond-Mand, 0=point (single cell volume); 1=line (line of surface cells) (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
+srcAuxScMassSpecType, 0, 0, 0, Cond-Mand, Mass specification type 0=strict mass in kg; 1=mass source rate in kg/s (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
+srcAuxScMassSpecValue, 0.0, FLT_MAX, 1.0, Cond-Mand, Mass specification value in kg or kg/s given by srcAuxScMassSpecType 0 or 1 (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
+srcAuxScLocation_X, -FLT_MAX, FLT_MAX, 0.0, Cond-Mand, Source geometry centroid postion in x (west-east) (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
+srcAuxScLocation_Y, -FLT_MAX, FLT_MAX, 0.0, Cond-Mand, Source geometry centroid postion in y (south-north) (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
+srcAuxScLocation_Z, -FLT_MAX, FLT_MAX, 0.0, Cond-Mand, Source geometry centroid postion in z (vertical above the surface) (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)

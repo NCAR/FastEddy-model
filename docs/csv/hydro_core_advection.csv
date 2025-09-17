@@ -1,2 +1,2 @@
-advectionSelector, 0, 6, , Mandatory, Advection scheme selector: 0=1st-order upwind; 1=3rd-order QUICK; 2=hybrid 3rd-4th order; 3=hybrid 5th-6th order
-b_hyb, 0.0, 1.0, , Mandatory, Hybrid advection scheme parameter: 0.0=lower-order upwind; 1.0=higher-order cetered; 0.0 < b_hyb < 1.0 = hybrid
+advectionSelector, 0, 6, 0, Mandatory, Advection scheme selector: 0=1st-order upwind; 1=3rd-order QUICK; 2=hybrid 3rd-4th order; 3=hybrid 5th-6th order
+b_hyb, 0.0, 1.0, 0.8, Mandatory, Hybrid advection scheme parameter: 0.0=lower-order upwind; 1.0=higher-order cetered; 0.0 < b_hyb < 1.0 = hybrid

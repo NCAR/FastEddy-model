@@ -1,4 +1,4 @@
-canopySelector, 0, 1, , Optional, Canopy selector: 0=off; 1=on
-canopySkinOpt, 0, 1, , Mandatory, Canopy selector to use additional skin friction effect on drag coefficient: 0=off; 1=on
-canopy_cd, 0.0, 1e+2, , Mandatory, Non-dimensional canopy drag coefficient
-canopy_lf, 0.0, 1e+2, , Mandatory, Representative canopy element length scale
+canopySelector, 0, 1, 0, Optional, Canopy selector: 0=off; 1=on
+canopySkinOpt, 0, 1, 0, Cond-Mand, Canopy selector to use additional skin friction effect on drag coefficient: 0=off; 1=on (Cond-Mandif canopySelector==1)
+canopy_cd, 0.0, 1e+2, 0.15, Cond-Mand, Non-dimensional canopy drag coefficient (Cond-Mandif canopySelector==1)
+canopy_lf, 0.0, 1e+2, 0.1, Cond-Mand, Representative canopy element length scale (Cond-Mandif canopySelector==1)

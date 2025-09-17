@@ -1,17 +1,24 @@
-surflayerSelector, 0, 3, , Mandatory, Monin-Obukhov surface layer selector: 0=off; 1=surface kinematic heat flux (surflayer_wth); 2=sking temperature rate (surflayer_tr)
-surflayer_z0, 1e-12, 1e+0, , Mandatory, Roughness length (momentum) when surflayerSelector > 0
-surflayer_z0t, 1e-6, 1e+1, , Mandatory, Roughness length (temperature) when surflayerSelector > 0
-surflayer_z0tdyn, 0, 2, , Optional, Dynamic z0t calculation following Zilitinkevich (1995) approach: 0= off 1= constant Zilitinkevich coeff 2=variable Zilitinkevich coeff
-surflayer_wth, -5e+0, 5e+0, , Mandatory, Kinematic sensible heat flux at the surface when surflayerSelector = 1
-surflayer_tr, -1e+1, 1e+1, , Mandatory, Temperature rate at the surface when surflayerSelector = 2 (>0 for warming; <0 for cooling)
-surflayer_wq, -5e+0, 5e+0, , Mandatory, Sensible heat flux at the surface (kg/kg m s-1) when surflayerSelector = 1
-surflayer_qr, -1e+1, 1e+1, , Mandatory, Water vapor rate (kg/kg h-1) when surflayerSelector = 2
-surflayer_idealsine, 0, 1, , Mandatory, Selector for idealized sinusoidal surface heat flux or skin temperature forcing
-surflayer_ideal_ts, 0, 1e+5, , Mandatory, Start time in seconds for the idealized sinusoidal surface forcing
-surflayer_ideal_te, 0, 1e+5, , Mandatory, End time in seconds for the idealized sinusoidal surface forcing
-surflayer_ideal_amp, 0, 1e+3, , Mandatory, Maximum amplitude of the idealized sinusoidal surface forcing
-surflayer_ideal_qts, 0, 1e+5, , Mandatory, Start time in seconds for the idealized sinusoidal surface forcing (qv)
-surflayer_ideal_qte, 0, 1e+5, , Mandatory, End time in seconds for the idealized sinusoidal surface forcing (qv)
-surflayer_ideal_qamp, 0, 1e+3, , Mandatory, Maximum amplitude of the idealized sinusoidal surface forcing (qv)
-surflayer_qskin_input, 0, 1, , Optional, Selector for file input (restart) value for qskin under surflayerSelector == 2
-surflayer_offshore, 0, 1, , Mandatory, Offshore selector: 0=off;1=on
+surflayerSelector, 0, 3, 0, Mandatory, Monin-Obukhov surface layer selector: 0=off; 1=surface kinematic heat flux (surflayer_wth); 2=sking temperature rate (surflayer_tr)
+surflayer_z0, 1e-12, 1e+0, 0.1, Mandatory, Roughness length (momentum) when surflayerSelector > 0
+surflayer_z0t, 1e-6, 1e+1, 0.1, Mandatory, Roughness length (temperature) when surflayerSelector > 0
+surflayer_z0tdyn, 0, 2, 1, Optional, Dynamic z0t calculation following Zilitinkevich (1995) approach: 0= off 1= constant Zilitinkevich coeff 2=variable Zilitinkevich coeff
+surflayer_wth, -5e+0, 5e+0, 0.0, Mandatory, Kinematic sensible heat flux at the surface when surflayerSelector = 1
+surflayer_tr, -1e+1, 1e+1, 0.0, Mandatory, Temperature rate at the surface when surflayerSelector = 2 (>0 for warming; <0 for cooling)
+surflayer_wq, -5e+0, 5e+0, 0.0, Mandatory, Sensible heat flux at the surface (kg/kg m s-1) when surflayerSelector = 1
+surflayer_qr, -1e+1, 1e+1, 0.0, Mandatory, Water vapor rate (kg/kg h-1) when surflayerSelector = 2
+surflayer_idealsine, 0, 1, 0, Mandatory, Selector for idealized sinusoidal surface heat flux or skin temperature forcing
+surflayer_ideal_ts, 0, 1e+5, 0.0, Cond-Mand, Start time in seconds for the idealized sinusoidal surface forcing (Cond-Mand if surflayer_idealsine > 0)
+surflayer_ideal_te, 0, 1e+5, 0.0, Cond-Mand, End time in seconds for the idealized sinusoidal surface forcing (Cond-Mand if surflayer_idealsine > 0)
+surflayer_ideal_amp, 0, 1e+3, 0.1, Cond-Mand, Maximum amplitude of the idealized sinusoidal surface forcing (Cond-Mand if surflayer_idealsine > 0)
+surflayer_ideal_qts, 0, 1e+5, 0.0, Mandatory, Start time in seconds for the idealized sinusoidal surface forcing (qv)
+surflayer_ideal_qte, 0, 1e+5, 0.0, Mandatory, End time in seconds for the idealized sinusoidal surface forcing (qv)
+surflayer_ideal_qamp, 0, 1e+3, 0.1, Mandatory, Maximum amplitude of the idealized sinusoidal surface forcing (qv)
+surflayer_qskin_input, 0, 1, 0, Optional, Selector for file input (restart) value for qskin under surflayerSelector == 2
+surflayer_offshore, 0, 1, 0, Mandatory, Offshore selector: 0=off;1=on
+surflayer_offshore_visc, 0, 1, 1, Optional, Viscous term on z0m: 0=off; 1=on
+surflayer_offshore_opt, 0, 5, 0, Cond-Mand, Offshore roughness parameterization: ==0 (Charnock); ==1 (Charnock with variable alpha); ==2 (Taylor & Yelland); ==3 (Donelan); ==4 (Drennan); ==5 (Porchetta) (Cond-Mand if surflayer_offshore > 0)
+surflayer_offshore_dyn, 0, 1, 1, Cond-Opt, Selector to use parameterized ocean parameters: 0=off; 1=on (Cond-Opt if surflayer_offshore > 0)
+surflayer_offshore_hs, 0, 1e+2, 0.0, Cond-Mand, Significant wave height (Cond-Mand if surflayer_offshore > 0 and surflayer_offshore_dyn == 0 and surflayer_offshore_opt == 2; 3; 4; or 5) 
+surflayer_offshore_lp, 0.1, 1e+3, 0.1, Cond-Mand, Peak wavelength (Cond-Mand if surflayer_offshore > 0 and surflayer_offshore_dyn == 0 and surflayer_offshore_opt == 2)
+surflayer_offshore_cp, 0.1, 1e+2, 0.1, Cond-Mand, Wave phase speed (Cond-Mand if surflayer_offshore > 0 and surflayer_offshore_dyn == 0 and surflayer_offshore_opt == 3; 4; or 5
+surflayer_offshore_theta, 0.0, 180.0, 0.0, Cond-Mand, Wave/wind angle (Cond-Mand if surflayer_offshore > 0 and surflayer_offshore_dyn == 0 and surflayer_offshore_opt == 5 or surflayer_offshore > 0 and surflayer_offshore_dyn==1 and surflayer_offshore_opt == 5)

@@ -1,3 +1,6 @@
-filterSelector, 0, 1, , Mandatory, Explicit filter selector: 0=off; 1=on
-filter_6thdiff_vert, 0, 1, , Optional, Vertical 6th-order filter on w selector: 0=off; 1=on
-filter_6thdiff_vert_coeff, 0.0, 1.0, , Mandatory, Vertical 6th-order filter w factor: 0.0=off; 1.0=full
+filterSelector, 0, 1, 0, Mandatory, Explicit filter selector: 0=off; 1=on
+filter_6thdiff_vert, 0, 1, 0, Cond-Opt, Vertical 6th-order filter on w selector: 0=off; 1=on (Cond-Opt if filterSelector == 1)
+filter_6thdiff_hori, 0, 1, 0, Cond-Opt, Horizontal 6th-order filter on rho,theta,qv selector: 0=off; 1=on (Cond-Opt if filterSelector == 1)
+filter_6thdiff_vert_coeff, 0.0, 1.0, 0.03, Cond-Mand, Vertical 6th-order filter factor: 0.0=off; 1.0=full (Cond-Mand if filterSelector == 1 and filter_6thdiff_vert == 1)
+filter_6thdiff_hori_coeff, 0.0, 1.0, 0.03, Cond-Mand, Horizontal 6th-order filter factor: 0.0=off; 1.0=full (Cond-Mand if filterSelector == 1 and filter_6thdiff_hori == 1)
+filter_divdamp, 0, 1, 0, Cond-Opt, Divergence damping selector: 0=off; 1=on (Cond-Opt if filterSelector == 1)

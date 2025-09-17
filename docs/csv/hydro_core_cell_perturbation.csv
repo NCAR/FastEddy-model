@@ -1,11 +1,11 @@
-cellpertSelector, 0, 1, , Optional, CP method selector: 0=off; 1=on
-cellpert_sw2b, 0, 3, , Mandatory, Only south and west bnds perturbed (for idealized cases): 0=off; 1=south & west; 2=south
-cellpert_amp, 0.0, 20.0, , Mandatory, Maximum amplitude for the potential temperature perturbations
-cellpert_nts, 0, 1e+6, , Optional, Number of time steps after which perturbations are seeded
-cellpert_gppc, 0, 50, , Mandatory, Number of grid points conforming the cell
-cellpert_ndbc, 0, 10, , Mandatory, Number of cells normal to domain lateral boundaries
-cellpert_kbottom, 1, 10, , Mandatory, Z-grid point where the perturbations start
-cellpert_ktop, 0, 200, , Mandatory, Z-grid point where the perturbations end
-cellpert_tvcp, 0, 1, , Mandatory, Time-varying CP method selector: 0=off; 1=on (hydroBCs==1)
-cellpert_eckert, 0.0, 10.0, , Mandatory, Eckert number for the potential temperature perturbations (hydroBCs == 1)
-cellpert_tsfact, 0.0, 10.0, , Mandatory, Factor on the refreshing perturbation time scale (hydroBCs == 1)
+cellpertSelector, 0, 1, 0, Optional, CP method selector: 0=off; 1=on
+cellpert_nts, 0, 1e+6, 500, Optional, Number of time steps after which perturbations are seeded
+cellpert_sw2b, 0, 3, 0, Cond-Mand, Only south and west bnds perturbed (for idealized cases): 0=off; 1=south & west; 2=south (Cond-Mand if cellpertSelector > 0)
+cellpert_amp, 0.0, 20.0, 0.5, Cond-Mand, Maximum amplitude for the potential temperature perturbations (Cond-Mand if cellpertSelector > 0)
+cellpert_gppc, 0, 50, 8, Cond-Mand, Number of grid points conforming the cell (Cond-Mand if cellpertSelector > 0)
+cellpert_ndbc, 0, 10, 3, Cond-Mand, Number of cells normal to domain lateral boundaries (Cond-Mand if cellpertSelector > 0)
+cellpert_kbottom, 1, 10, 1, Cond-Mand, Z-grid point where the perturbations start (Cond-Mand if cellpertSelector > 0)
+cellpert_ktop, 0, 200, 20, Cond-Mand, Z-grid point where the perturbations end (Cond-Mand if cellpertSelector > 0)
+cellpert_tvcp, 0, 1, 0, Cond-Mand, Time-varying CP method selector: 0=off; 1=on (hydroBCs==1) (Cond-Mand if cellpertSelector > 0)
+cellpert_eckert, 0.0, 10.0, 0.2, Cond-Mand, Eckert number for the potential temperature perturbations (hydroBCs==1) (Cond-Mand if cellpertSelector > 0)
+cellpert_tsfact, 0.0, 10.0, 1.0, Cond-Mand, Factor on the refreshing perturbation time scale (hydroBCs==1) (Cond-Mand if cellpertSelector > 0)
