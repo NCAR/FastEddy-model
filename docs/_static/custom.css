@@ -17,6 +17,7 @@
 /* Prevent wrapping in all columns by default */
 .longtable td,
 .longtable th {
+    padding: 4px 6px !important;      /* Default is usually 8px 12px */
     white-space: nowrap !important;   /* keep text on one line */
     overflow: hidden !important;      /* hide overflow if needed */
     text-overflow: ellipsis !important; /* show "…" for cut-off text */
