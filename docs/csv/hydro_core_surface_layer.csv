@@ -4,16 +4,16 @@ surflayer_z0t, 1e-6, 1e+1, 0.1, Mandatory, Roughness length (temperature) when s
 surflayer_z0tdyn, 0, 2, 1, Optional, Dynamic z0t calculation following Zilitinkevich (1995) approach: 0= off 1= constant Zilitinkevich coeff 2=variable Zilitinkevich coeff
 surflayer_wth, -5e+0, 5e+0, 0.0, Mandatory, Kinematic sensible heat flux at the surface when surflayerSelector = 1
 surflayer_tr, -1e+1, 1e+1, 0.0, Mandatory, Temperature rate at the surface when surflayerSelector = 2 (>0 for warming; <0 for cooling)
-surflayer_wq, -5e+0, 5e+0, 0.0, Mandatory, Sensible heat flux at the surface (kg/kg m s-1) when surflayerSelector = 1
-surflayer_qr, -1e+1, 1e+1, 0.0, Mandatory, Water vapor rate (kg/kg h-1) when surflayerSelector = 2
+surflayer_wq, -5e+0, 5e+0, 0.0, Cond-Mand, Sensible heat flux at the surface (kg/kg m s-1) when surflayerSelector = 1 (Cond-Mand if moistureSelector==1)
+surflayer_qr, -1e+1, 1e+1, 0.0, Cond-Mand, Water vapor rate (kg/kg h-1) when surflayerSelector = 2 (Cond-Mand if moistureSelector==1)
 surflayer_idealsine, 0, 1, 0, Mandatory, Selector for idealized sinusoidal surface heat flux or skin temperature forcing
 surflayer_ideal_ts, 0, 1e+5, 0.0, Cond-Mand, Start time in seconds for the idealized sinusoidal surface forcing (Cond-Mand if surflayer_idealsine > 0)
 surflayer_ideal_te, 0, 1e+5, 0.0, Cond-Mand, End time in seconds for the idealized sinusoidal surface forcing (Cond-Mand if surflayer_idealsine > 0)
 surflayer_ideal_amp, 0, 1e+3, 0.1, Cond-Mand, Maximum amplitude of the idealized sinusoidal surface forcing (Cond-Mand if surflayer_idealsine > 0)
-surflayer_ideal_qts, 0, 1e+5, 0.0, Mandatory, Start time in seconds for the idealized sinusoidal surface forcing (qv)
-surflayer_ideal_qte, 0, 1e+5, 0.0, Mandatory, End time in seconds for the idealized sinusoidal surface forcing (qv)
-surflayer_ideal_qamp, 0, 1e+3, 0.1, Mandatory, Maximum amplitude of the idealized sinusoidal surface forcing (qv)
-surflayer_qskin_input, 0, 1, 0, Optional, Selector for file input (restart) value for qskin under surflayerSelector == 2
+surflayer_ideal_qts, 0, 1e+5, 0.0, Cond-Mand, Start time in seconds for the idealized sinusoidal surface forcing (qv) (Cond-Mand if moistureSelector==1 and surflayer_idealsine > 0)
+surflayer_ideal_qte, 0, 1e+5, 0.0, Cond-Mand, End time in seconds for the idealized sinusoidal surface forcing (qv) (Cond-Mand if moistureSelector==1 and surflayer_idealsine > 0)
+surflayer_ideal_qamp, 0, 1e+3, 0.1, Cond-Mand, Maximum amplitude of the idealized sinusoidal surface forcing (qv) (Cond-Mand if moistureSelector==1 and surflayer_idealsine > 0)
+surflayer_qskin_input, 0, 1, 0, Cond-Opt, Selector for file input (restart) value for qskin under surflayerSelector == 2 (Cond-Opt if moistureSelector==1)
 surflayer_offshore, 0, 1, 0, Mandatory, Offshore selector: 0=off;1=on
 surflayer_offshore_visc, 0, 1, 1, Optional, Viscous term on z0m: 0=off; 1=on
 surflayer_offshore_opt, 0, 5, 0, Cond-Mand, Offshore roughness parameterization: ==0 (Charnock); ==1 (Charnock with variable alpha); ==2 (Taylor & Yelland); ==3 (Donelan); ==4 (Drennan); ==5 (Porchetta) (Cond-Mand if surflayer_offshore > 0)
