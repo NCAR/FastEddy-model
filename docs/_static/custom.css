@@ -37,16 +37,16 @@
 .longtable th:nth-child(1) { width:30% !important; }  /* Name */
 
 .longtable td:nth-child(2),
-.longtable th:nth-child(2) { width: 14% !important; }   /* Min */
+.longtable th:nth-child(2) { width: 12% !important; }   /* Min */
 
 .longtable td:nth-child(3),
-.longtable th:nth-child(3) { width: 12% !important; }   /* Max */
+.longtable th:nth-child(3) { width: 10% !important; }   /* Max */
 
 .longtable td:nth-child(4),
-.longtable th:nth-child(4) { width: 8% !important; }   /* Default */
+.longtable th:nth-child(4) { width: 6% !important; }   /* Default */
 
 .longtable td:nth-child(5),
 .longtable th:nth-child(5) { width: 18% !important; }  /* Mandatory/Optional */
 
 .longtable td:nth-child(6),
-.longtable th:nth-child(6) { width: 18% !important; }  /* Description */
+.longtable th:nth-child(6) { width: 34% !important; }  /* Description */
