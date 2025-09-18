@@ -1,6 +1,16 @@
-/* Force longtable width control */
+/* Force longtable width control - MUST use fixed layout for width control */
 .longtable table {
-    table-layout: auto !important;   /* let columns respect widths + content */
+    table-layout: fixed !important;   /* Required for width specifications to work */
+    width: 100% !important;
+}
+
+/* Override RTD theme responsive behavior */
+.wy-table-responsive {
+    overflow: visible !important;
+}
+
+.wy-table-responsive table {
+    table-layout: fixed !important;
     width: 100% !important;
 }
 
@@ -8,11 +18,11 @@
 .longtable td,
 .longtable th {
     white-space: nowrap !important;   /* keep text on one line */
-    overflow: hidden;                 /* hide overflow if needed */
-    text-overflow: ellipsis;          /* optional "…" */
+    overflow: hidden !important;      /* hide overflow if needed */
+    text-overflow: ellipsis !important; /* show "…" for cut-off text */
 }
 
-/* Allow wrapping ONLY in the Description column */
+/* Allow wrapping ONLY in the Description column (6th column) */
 .longtable td:nth-child(6),
 .longtable th:nth-child(6) {
     white-space: normal !important;   /* wrapping allowed */
