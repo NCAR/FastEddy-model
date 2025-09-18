@@ -33,7 +33,7 @@
 
 /* Fixed widths for each column */
 .longtable td:nth-child(1),
-.longtable th:nth-child(1) { width:28% !important; }  /* Name */
+.longtable th:nth-child(1) { width:29% !important; }  /* Name */
 
 .longtable td:nth-child(2),
 .longtable th:nth-child(2) { width: 14% !important; }   /* Min */
@@ -48,4 +48,4 @@
 .longtable th:nth-child(5) { width: 18% !important; }  /* Mandatory/Optional */
 
 .longtable td:nth-child(6),
-.longtable th:nth-child(6) { width: 20% !important; }  /* Description */
+.longtable th:nth-child(6) { width: 19% !important; }  /* Description */
