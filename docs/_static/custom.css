@@ -1,29 +1,41 @@
-/* Force CSV table width control */
-.wy-table-responsive table td,
-.wy-table-responsive table th {
-    white-space: normal !important;
-    word-wrap: break-word !important;
-}
-
-.wy-table-responsive {
-    overflow: visible !important;
-}
-
-.wy-table-responsive table {
-    table-layout: fixed !important;
-    width: 100% !important;
-}
-
-/* Specific fixes for parameter tables */
+/* Force longtable width control */
 .longtable table {
-    table-layout: fixed !important;
+    table-layout: auto !important;   /* let columns respect widths + content */
     width: 100% !important;
 }
 
-.longtable td:nth-child(1) { width: 20% !important; } /* Name */
-.longtable td:nth-child(2) { width: 8% !important; } /* Min */
-.longtable td:nth-child(3) { width: 8% !important; } /* Max */
-.longtable td:nth-child(4) { width: 8% !important; } /* Default */
-.longtable td:nth-child(5) { width: 20% !important; } /* Mandatory/Optional */
-.longtable td:nth-child(6) { width: 36% !important; } /* Description */
+/* Prevent wrapping in all columns by default */
+.longtable td,
+.longtable th {
+    white-space: nowrap !important;   /* keep text on one line */
+    overflow: hidden;                 /* hide overflow if needed */
+    text-overflow: ellipsis;          /* optional "…" */
+}
 
+/* Allow wrapping ONLY in the Description column */
+.longtable td:nth-child(6),
+.longtable th:nth-child(6) {
+    white-space: normal !important;   /* wrapping allowed */
+    word-wrap: break-word !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+}
+
+/* Fixed widths for each column */
+.longtable td:nth-child(1),
+.longtable th:nth-child(1) { width: 20% !important; }  /* Name */
+
+.longtable td:nth-child(2),
+.longtable th:nth-child(2) { width: 8% !important; }   /* Min */
+
+.longtable td:nth-child(3),
+.longtable th:nth-child(3) { width: 8% !important; }   /* Max */
+
+.longtable td:nth-child(4),
+.longtable th:nth-child(4) { width: 8% !important; }   /* Default */
+
+.longtable td:nth-child(5),
+.longtable th:nth-child(5) { width: 20% !important; }  /* Mandatory/Optional */
+
+.longtable td:nth-child(6),
+.longtable th:nth-child(6) { width: 36% !important; }  /* Description */
