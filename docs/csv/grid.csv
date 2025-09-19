@@ -1,12 +1,12 @@
-Nx, 1, INT_MAX, 122, Mandatory, Number of discretised domain elements in the x (zonal) direction
-Ny, 1, INT_MAX, 122, Mandatory, Number of discretised domain elements in the y (meridional) direction
-Nz, 1, INT_MAX, 122, Mandatory, Number of discretised domain elements in the z (vertical) direction
-Nh, 0, INT_MAX, 3, Mandatory, Number of halo cells to be used (dependent on largest stencil extent)
-d_xi, FLT_MIN, FLT_MAX, 10.0, Mandatory, Computational domain fixed resolution in the 'i' direction
-d_eta, FLT_MIN, FLT_MAX, 10.0, Mandatory, Computational domain fixed resolution in the 'j' direction
-d_zeta, FLT_MIN, FLT_MAX, 10.0, Mandatory, Computational domain fixed resolution in the 'k' direction
-coordHorizHalos, 0, 1, 1, Mandatory, Switch to setup coordiante halos as periodic=1 or gradient-following=0
-topoFile, N/A, N/A, , Optional, A file containing topography (surface elevation in meters ASL)
-verticalDeformSwitch, 0, 1, , Mandatory, Switch to use vertical coordinate deformation 0=off; 1=on
-verticalDeformFactor, 0.0, 1.0, , Mandatory, Deformation factor (0.0=max compression; 1.0=no compression)
-verticalDeformQuadCoeff, -2.0, 2.0, 0.0, Mandatory, Deformation factor (0.0=max compression; 1.0=no compression)
+**Nx:** Number of discretised domain elements in the x (zonal) direction, 1, INT_MAX, 122, Mandatory 
+**Ny:** Number of discretised domain elements in the y (meridional) direction, 1, INT_MAX, 122, Mandatory 
+**Nz:** Number of discretised domain elements in the z (vertical) direction, 1, INT_MAX, 122, Mandatory 
+**Nh:** Number of halo cells to be used (dependent on largest stencil extent), 0, INT_MAX, 3, Mandatory
+**d_xi:** Computational domain fixed resolution in the 'i' direction, FLT_MIN, FLT_MAX, 10.0, Mandatory 
+**d_eta:** Computational domain fixed resolution in the 'j' direction, FLT_MIN, FLT_MAX, 10.0, Mandatory 
+**d_zeta:** Computational domain fixed resolution in the 'k' direction, FLT_MIN, FLT_MAX, 10.0, Mandatory 
+**coordHorizHalos:** Switch to setup coordiante halos as periodic=1 or gradient-following=0, 0, 1, 1, Mandatory
+**topoFile:** A file containing topography (surface elevation in meters ASL), N/A, N/A, , Optional
+**verticalDeformSwitch:** Switch to use vertical coordinate deformation 0=off; 1=on, 0, 1, , Mandatory
+**verticalDeformFactor:** Deformation factor (0.0=max compression; 1.0=no compression), 0.0, 1.0, , Mandatory
+**verticalDeformQuadCoeff:** Deformation factor (0.0=max compression; 1.0=no compression), -2.0, 2.0, 0.0, Mandatory

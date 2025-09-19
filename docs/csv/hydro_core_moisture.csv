@@ -1,10 +1,10 @@
-moistureSelector, 0, 1, 0, Mandatory, Moisture selector: 0=off; 1=on
-moistureNvars, 0, 2, 0, Cond-Mand, Number of moisture species (Cond-Mand if moistureSelector==1)
-moistureAdvSelectorQv, 0, 6, 0, Cond-Mand, Water vapor advection scheme selector (Cond-Mand if moistureSelector==1)
-moistureAdvSelectorQv_b, 0.0, 1.0, 0.0, Cond-Mand, Hybrid advection scheme parameter for water vapor (Cond-Mand if moistureSelector==1)
-moistureAdvSelectorQi, 0, 2, 0, Cond-Mand, Moisture advection scheme selector for non-qv fields (non-oscillatory schemes) (Cond-Mand if moistureSelector==1)
-moistureSGSturb, 0, 1, 0, Cond-Mand, Selector to apply sub-grid scale diffusion to moisture fields (Cond-Mand if moistureSelector==1)
-moistureCond, 1, 4, 1, Cond-Mand, Selector to apply condensation to mositure fields (Cond-Mand if moistureSelector==1)
-moistureCondTscale, 1e-4, 1000.0, 1.0, Cond-Mand, Relaxation time in seconds (Cond-Mand if moistureSelector==1)
-moistureCondBasePres, 0, 1, 0, Cond-Mand, Selector to use base pressure for microphysics (Cond-Mand if moistureSelector==1)
-moistureMPcallTscale, 1e-4, 1000.0, 1.0, Cond-Mand, Time scale for microphysics to be called (Cond-Mand if moistureSelector==1)
+**moistureSelector:** Moisture selector: 0=off; 1=on, 0, 1, 0, Mandatory 
+**moistureNvars:** Number of moisture species *Cond-Mand if moistureSelector==1*, 0, 2, 0, Cond-Mand 
+**moistureAdvSelectorQv:** Water vapor advection scheme selector *Cond-Mand if moistureSelector==1*, 0, 6, 0, Cond-Mand 
+**moistureAdvSelectorQv_b:** Hybrid advection scheme parameter for water vapor *Cond-Mand if moistureSelector==1*, 0.0, 1.0, 0.0, Cond-Mand 
+**moistureAdvSelectorQi:** Moisture advection scheme selector for non-qv fields (non-oscillatory schemes) *Cond-Mand if moistureSelector==1*, 0, 2, 0, Cond-Mand 
+**moistureSGSturb:** Selector to apply sub-grid scale diffusion to moisture fields *Cond-Mand if moistureSelector==1*, 0, 1, 0, Cond-Mand 
+**moistureCond:** Selector to apply condensation to mositure fields *Cond-Mand if moistureSelector==1*, 1, 4, 1, Cond-Mand 
+**moistureCondTscale:** Relaxation time in seconds *Cond-Mand if moistureSelector==1*, 1e-4, 1000.0, 1.0, Cond-Mand
+**moistureCondBasePres:** Selector to use base pressure for microphysics *Cond-Mand if moistureSelector==1*, 0, 1, 0, Cond-Mand
+**moistureMPcallTscale:** Time scale for microphysics to be called *Cond-Mand if moistureSelector==1*, 1e-4, 1000.0, 1.0, Cond-Mand

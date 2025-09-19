@@ -24,8 +24,8 @@
 }
 
 /* Allow wrapping ONLY in the Description column (6th column) */
-.longtable td:nth-child(6),
-.longtable th:nth-child(6) {
+.longtable td:nth-child(1),
+.longtable th:nth-child(1) {
     white-space: normal !important;   /* wrapping allowed */
     word-wrap: break-word !important;
     overflow: visible !important;
@@ -34,7 +34,7 @@
 
 /* Fixed widths for each column */
 .longtable td:nth-child(1),
-.longtable th:nth-child(1) { width: 33% !important; }  /* Name */
+.longtable th:nth-child(1) { width: 52% !important; }  /* Name and Description*/
 
 .longtable td:nth-child(2),
 .longtable th:nth-child(2) { width: 12% !important; }   /* Min */
@@ -48,5 +48,7 @@
 .longtable td:nth-child(5),
 .longtable th:nth-child(5) { width: 18% !important; }  /* Mandatory/Optional */
 
+/*
 .longtable td:nth-child(6),
 .longtable th:nth-child(6) { width: 31% !important; }  /* Description */
+*/
