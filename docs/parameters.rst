@@ -7,18 +7,16 @@ Parameters are organized into logical sets by model feature or model configurati
 
 Each table provides the:
 
-  * Parameter name
+  * **Parameter name:** Description
   * Minimum value (if applicable)
   * Maximum value (if applicable)
   * Default value (if applicable)
   * Requirement
     
-    * Mandatory
-    * Optional
-    * Cond-Mand (Conditionally Mandatory, with the condition listed in the description)
-    * Cond-Opt (Conditionally Optional, with the condition listed in the description)
-
-  * Description
+    * M (Mandatory)
+    * O (Optional)
+    * C-M (Conditionally Mandatory, with *the condition listed in the description*)
+    * C-O (Conditionally Optional, with *the condition listed in the description*)
 
 These definitions serve as a reference to ensure correct configuration and valid inputs for FastEddy simulations.
 
