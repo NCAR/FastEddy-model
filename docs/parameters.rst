@@ -11,7 +11,7 @@ Each table provides the:
   * Minimum value (if applicable)
   * Maximum value (if applicable)
   * Default value (if applicable)
-  * Requirement
+  * Req. (Requirement) 
     
     * M (Mandatory)
     * O (Optional)
