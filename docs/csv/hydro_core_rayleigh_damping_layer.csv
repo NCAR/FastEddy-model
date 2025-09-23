@@ -1,2 +1,2 @@
-dampingLayerSelector, 0, 1, 0, Mandatory, Rayleigh Damping Layer selector
-dampingLayerDepth, 0.0, FLT_MAX, 100.0, Mandatory, Rayleigh Damping Layer Depth
+**dampingLayerSelector:** Rayleigh Damping Layer selector, 0, 1, 0, M
+**dampingLayerDepth:** Rayleigh Damping Layer Depth, 0.0, FLT_MAX, 100.0, M

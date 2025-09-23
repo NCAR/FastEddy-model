@@ -1,2 +1,2 @@
-coriolisSelector, 0, 2, 0, Mandatory, Coriolis Force selector: 0=None; 1=Horizontal-only; 2=Horizontal & Vertical
-coriolisLatitude, -90.0, 90.0, 54.0, Mandatory, Charactersitc latitude in degrees from equator of the LES domain
+**coriolisSelector:** Coriolis Force selector: 0=None; 1=Horizontal-only; 2=Horizontal & Vertical, 0, 2, 0, M
+**coriolisLatitude:** Charactersitc latitude in degrees from equator of the LES domain, -90.0, 90.0, 54.0, M

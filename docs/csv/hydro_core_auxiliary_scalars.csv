@@ -1,14 +1,14 @@
-NhydroAuxScalars, 0, MAX_AUXSC_SRC (20), 0, Optional, Number of prognostic auxiliary scalar fields
-AuxScAdvSelector, 0, 6, 0, Cond-Mand, Advection scheme for auxiliary scalar fields (Cond-Mand if NhydroAuxScalars > 0)
-AuxScAdvSelector_b_hyb, 0.0, 1.0, 0.0, Cond-Mand, Hybrid advection scheme parameter (Cond-Mand if NhydroAuxScalars > 0)
-AuxScSGSturb, 0, 1, 0, Cond-Mand, Selector to apply sub-grid scale diffusion to auxiliary scalar fields (Cond-Mand if NhydroAuxScalars > 0)
-srcAuxScFile, N/A, N/A, , Cond-Opt, The path and filename to an Auxilliary Scalar Sources specification file (Cond-Opt if NhydroAuxScalars > 0)
-srcAuxScTemporalType, 0, 1, 0, Cond-Mand, Temporal characterization of source (0=instantaneous; 1=continuous) (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
-srcAuxScStartSeconds, 0, FLT_MAX, 0, Cond-Mand, Source start time in seconds (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
-srcAuxScDurationSeconds, 0, FLT_MAX, 30, Cond-Mand, Source duration in seconds (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
-srcAuxScGeometryType, 0, 0, 0, Cond-Mand, 0=point (single cell volume); 1=line (line of surface cells) (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
-srcAuxScMassSpecType, 0, 0, 0, Cond-Mand, Mass specification type 0=strict mass in kg; 1=mass source rate in kg/s (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
-srcAuxScMassSpecValue, 0.0, FLT_MAX, 1.0, Cond-Mand, Mass specification value in kg or kg/s given by srcAuxScMassSpecType 0 or 1 (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
-srcAuxScLocation_X, -FLT_MAX, FLT_MAX, 0.0, Cond-Mand, Source geometry centroid postion in x (west-east) (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
-srcAuxScLocation_Y, -FLT_MAX, FLT_MAX, 0.0, Cond-Mand, Source geometry centroid postion in y (south-north) (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
-srcAuxScLocation_Z, -FLT_MAX, FLT_MAX, 0.0, Cond-Mand, Source geometry centroid postion in z (vertical above the surface) (Cond-Mand if srcAuxScFile == NULL and NhydroAuxScalars == 1)
+**NhydroAuxScalars:** Number of prognostic auxiliary scalar fields, 0, MAX_AUXSC_SRC (20), 0, O 
+**AuxScAdvSelector:** Advection scheme for auxiliary scalar fields *C-M if NhydroAuxScalars > 0*, 0, 6, 0, C-M
+**AuxScAdvSelector_b_hyb:** Hybrid advection scheme parameter *C-M if NhydroAuxScalars > 0*, 0.0, 1.0, 0.0, C-M 
+**AuxScSGSturb:** Selector to apply sub-grid scale diffusion to auxiliary scalar fields *C-M if NhydroAuxScalars > 0*, 0, 1, 0, C-M
+**srcAuxScFile:** The path and filename to an Auxilliary Scalar Sources specification file *C-O if NhydroAuxScalars > 0*, N/A, N/A, , C-O
+**srcAuxScTemporalType:** Temporal characterization of source (0=instantaneous; 1=continuous) *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, 0, 1, 0, C-M
+**srcAuxScStartSeconds:** Source start time in seconds *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, 0, FLT_MAX, 0, C-M
+**srcAuxScDurationSeconds:** Source duration in seconds *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, 0, FLT_MAX, 30, C-M
+**srcAuxScGeometryType:** 0=point (single cell volume); 1=line (line of surface cells) *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, 0, 0, 0, C-M
+**srcAuxScMassSpecType:** Mass specification type 0=strict mass in kg; 1=mass source rate in kg/s *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, 0, 0, 0, C-M
+**srcAuxScMassSpecValue:** Mass specification value in kg or kg/s given by srcAuxScMassSpecType 0 or 1 *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, 0.0, FLT_MAX, 1.0, C-M
+**srcAuxScLocation_X:** Source geometry centroid postion in x (west-east) *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M
+**srcAuxScLocation_Y:** Source geometry centroid postion in y (south-north) *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M
+**srcAuxScLocation_Z:** Source geometry centroid postion in z (vertical above the surface) *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M

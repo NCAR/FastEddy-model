@@ -1,3 +1,3 @@
-tBx, 1, INT_MAX, , Mandatory, Number of threads in x-dimension
-tBy, 1, INT_MAX, , Mandatory, Number of threads in y-dimension
-tBz, 1, INT_MAX, , Mandatory, Number of threads in z-dimension
+**tBx:** Number of threads in x-dimension, 1, INT_MAX, , M 
+**tBy:** Number of threads in y-dimension, 1, INT_MAX, , M
+**tBz:** Number of threads in z-dimension, 1, INT_MAX, , M

@@ -1,6 +1,6 @@
-hydroBCs, 1, 2, 2, Mandatory, Selector for hydro BC set. 1=Dirichlet lateral ceiling and surface boundary conditions (Limited Area Domain--LAD); 2=periodicHorizVerticalAbl
-ceilingAdvectionBC, 0, 1, 0, Optional, Selector for normal advection at the domain ceiling (0=zero-valued w-BC; 1=non-zero w-BC)
-hydroBndysFileBase, N/A, N/A, , Cond-Opt, Base file name LAD BC set (Cond-Opt if hydroBCs==1)
-hydroBndysFileStart, 0, 500000, 0, Cond-Mand, Start counter value for LAD BC set files (Cond-Mand if hydroBCs==1)
-hydroBndysFileEnd, 0, 500000, 0, Cond-Mand, End counter value for LAD BC set files (Cond-Mand if hydroBCs==1)
-dtBdyPlaneBCs, 0.0, 6e5, 0.0, Cond-Mand, Delta in time (seconds) between BdyPlane sets (Cond-Mand if hydroBCs==1)
+**hydroBCs:** Selector for hydro BC set. 1=Dirichlet lateral ceiling and surface boundary conditions (Limited Area Domain--LAD); 2=periodicHorizVerticalAbl, 1, 2, 2, M
+**ceilingAdvectionBC:** Selector for normal advection at the domain ceiling (0=zero-valued w-BC; 1=non-zero w-BC), 0, 1, 0, O
+**hydroBndysFileBase:** Base file name LAD BC set *Cond-Opt if hydroBCs==1*, N/A, N/A, , C-O
+**hydroBndysFileStart:** Start counter value for LAD BC set files *Cond-Mand if hydroBCs==1*, 0, 500000, 0, C-M 
+**hydroBndysFileEnd:** End counter value for LAD BC set files *Cond-Mand if hydroBCs==1*, 0, 500000, 0, C-M 
+**dtBdyPlaneBCs:** Delta in time (seconds) between BdyPlane sets *Cond-Mand if hydroBCs==1*, 0.0, 6e5, 0.0, C-M 

@@ -1,11 +1,11 @@
-cellpertSelector, 0, 1, 0, Optional, CP method selector: 0=off; 1=on
-cellpert_nts, 0, 1e+6, 500, Optional, Number of time steps after which perturbations are seeded
-cellpert_sw2b, 0, 3, 0, Cond-Mand, Only south and west bnds perturbed (for idealized cases): 0=off; 1=south & west; 2=south (Cond-Mand if cellpertSelector > 0)
-cellpert_amp, 0.0, 20.0, 0.5, Cond-Mand, Maximum amplitude for the potential temperature perturbations (Cond-Mand if cellpertSelector > 0)
-cellpert_gppc, 0, 50, 8, Cond-Mand, Number of grid points conforming the cell (Cond-Mand if cellpertSelector > 0)
-cellpert_ndbc, 0, 10, 3, Cond-Mand, Number of cells normal to domain lateral boundaries (Cond-Mand if cellpertSelector > 0)
-cellpert_kbottom, 1, 10, 1, Cond-Mand, Z-grid point where the perturbations start (Cond-Mand if cellpertSelector > 0)
-cellpert_ktop, 0, 200, 20, Cond-Mand, Z-grid point where the perturbations end (Cond-Mand if cellpertSelector > 0)
-cellpert_tvcp, 0, 1, 0, Cond-Mand, Time-varying CP method selector: 0=off; 1=on (hydroBCs==1) (Cond-Mand if cellpertSelector > 0)
-cellpert_eckert, 0.0, 10.0, 0.2, Cond-Mand, Eckert number for the potential temperature perturbations (hydroBCs==1) (Cond-Mand if cellpertSelector > 0)
-cellpert_tsfact, 0.0, 10.0, 1.0, Cond-Mand, Factor on the refreshing perturbation time scale (hydroBCs==1) (Cond-Mand if cellpertSelector > 0)
+**cellpertSelector:** CP method selector: 0=off; 1=on, 0, 1, 0, O
+**ccellpert_nts:** Number of time steps after which perturbations are seeded, 0, 1e+6, 500, O
+**ccellpert_sw2b:** Only south and west bnds perturbed (for idealized cases): 0=off; 1=south & west; 2=south *C-M if cellpertSelector > 0*, 0, 3, 0, C-M
+**ccellpert_amp:** Maximum amplitude for the potential temperature perturbations *C-M if cellpertSelector > 0*, 0.0, 20.0, 0.5, C-M
+**ccellpert_gppc:** Number of grid points conforming the cell *C-M if cellpertSelector > 0*, 0, 50, 8, C-M
+**ccellpert_ndbc:** Number of cells normal to domain lateral boundaries *C-M if cellpertSelector > 0*, 0, 10, 3, C-M
+**ccellpert_kbottom:** Z-grid point where the perturbations start *C-M if cellpertSelector > 0*, 1, 10, 1, C-M
+**ccellpert_ktop:** Z-grid point where the perturbations end *C-M if cellpertSelector > 0*, 0, 200, 20, C-M
+**ccellpert_tvcp:** Time-varying CP method selector: 0=off; 1=on (hydroBCs==1) *C-M if cellpertSelector > 0*, 0, 1, 0, C-M
+**ccellpert_eckert:** Eckert number for the potential temperature perturbations (hydroBCs==1) *C-M if cellpertSelector > 0*, 0.0, 10.0, 0.2, C-M
+**ccellpert_tsfact:** Factor on the refreshing perturbation time scale (hydroBCs==1) *C-M if cellpertSelector > 0*, 0.0, 10.0, 1.0, C-M 
