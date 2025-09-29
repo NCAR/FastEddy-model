@@ -721,6 +721,7 @@ int GADCreateTurbineVolMask(){
   GAD_turbineVolMask = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "GAD_turbineVolMask");
   sprintf(&fldName[0],"GAD_turbineVolMask");
   errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, &GAD_turbineVolMask[0]);
+  errorCode = ioAddStandardAttrs("GAD_turbineVolMask", "-", "Turbine Volume Mask", NULL);
   if(mpi_rank_world == 0){
     printf("GADCreateTurbineVolMask: %s stored at %p, has been registered with IO.\n",
     &fldName[0],&GAD_turbineVolMask[0]);
@@ -748,12 +749,17 @@ int GADCreateTurbineVolMask(){
     GAD_forceX = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "GAD_forceX");
     sprintf(&fldName[0],"GAD_forceX");
     errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, &GAD_forceX[0]);
+    errorCode = ioAddStandardAttrs("GAD_forceX", "N m-3", "Turbine Forces in X-Direction", NULL);
+    
     GAD_forceY = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "GAD_forceY");
     sprintf(&fldName[0],"GAD_forceY");
     errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, &GAD_forceY[0]);
+    errorCode = ioAddStandardAttrs("GAD_forceY", "N m-3", "Turbine Forces in Y-Direction", NULL);
+    
     GAD_forceZ = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "GAD_forceZ");
     sprintf(&fldName[0],"GAD_forceZ");
     errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, &GAD_forceZ[0]);
+    errorCode = ioAddStandardAttrs("GAD_forceZ", "N m-3", "Turbine Forces in Z-Direction", NULL);
   }
 
   return(errorCode);
@@ -769,6 +775,7 @@ int GADCreateTurbineRotorMask(){
   GAD_turbineRotorMask = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "GAD_turbineRotorMask");
   sprintf(&fldName[0],"GAD_turbineRotorMask");
   errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, &GAD_turbineRotorMask[0]);
+  errorCode = ioAddStandardAttrs("GAD_turbineRotorMask", "-", "Turbine Rotor-Disk Mask", NULL);
   if(mpi_rank_world == 0){
     printf("GADCreateTurbineRotorMask: %s stored at %p, has been registered with IO.\n",
     &fldName[0],&GAD_turbineRotorMask[0]);
