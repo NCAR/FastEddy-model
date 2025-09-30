@@ -1380,14 +1380,14 @@ int hydro_coreInit(){
      errorCode = sprintf(&fldName[0],"cellpert_nts");
      errorCode = ioRegisterVar(&fldName[0], "int", 1, dims1dTD, &cellpert_nts);
      // Add NetCDF attributes for the registered variable
-     errorCode = ioAddStandardAttrs(&fldName[0], "1", "Cell perturbation number of time steps", NULL);
+     errorCode = ioAddStandardAttrs(&fldName[0], "-", "Cell perturbation number of time steps", NULL);
      printf("cellpert:Variable = %s stored at %p, has been registered with IO.\n",
             &fldName[0],&cellpert_nts);
      fflush(stdout);
      errorCode = sprintf(&fldName[0],"cellpert_ktop");
      errorCode = ioRegisterVar(&fldName[0], "int", 1, dims1dTD, &cellpert_ktop);
      // Add NetCDF attributes for the registered variable
-     errorCode = ioAddStandardAttrs(&fldName[0], "1", "Cell perturbation top grid level", NULL);
+     errorCode = ioAddStandardAttrs(&fldName[0], "-", "Cell perturbation top grid level", NULL);
      printf("cellpert:Variable = %s stored at %p, has been registered with IO.\n",
             &fldName[0],&cellpert_ktop);
      fflush(stdout);
