@@ -328,7 +328,7 @@ int GADConstructor(){
        } //end if mpi_rank_world == 0
        MPI_Bcast(*fldPtr, GADNumTurbines, MPI_FLOAT, 0, MPI_COMM_WORLD);
 #ifdef DEBUG_GADCONSTRUCTOR
-       int iRank;
+       int iRank,i;
        for(iRank = 0; iRank < mpi_size_world; iRank++){
          MPI_Barrier(MPI_COMM_WORLD);
          if(iRank == mpi_rank_world){
@@ -384,6 +384,7 @@ int GADConstructor(){
        } //end if mpi_rank_world == 0
        MPI_Bcast(*fldPtr, GADNumTurbineTypes, MPI_FLOAT, 0, MPI_COMM_WORLD);
 #ifdef DEBUG_GADCONSTRUCTOR
+       int iRank,i;
        for(iRank = 0; iRank < mpi_size_world; iRank++){
          MPI_Barrier(MPI_COMM_WORLD);
          if(iRank == mpi_rank_world){
@@ -462,8 +463,8 @@ int GADConstructor(){
        } //end if mpi_rank_world == 0
        MPI_Bcast(*fldPtr, GADNumTurbineTypes*turbinePolyOrderMax, MPI_FLOAT, 0, MPI_COMM_WORLD);
 #ifdef DEBUG_GADCONSTRUCTOR
-       int i,j;
-       int ipoly;
+       int iRank;
+       int i,ipoly;
        for(iRank = 0; iRank < mpi_size_world; iRank++){
          MPI_Barrier(MPI_COMM_WORLD);
          if(iRank == mpi_rank_world){
@@ -501,6 +502,7 @@ int GADConstructor(){
        } //end if mpi_rank_world == 0
        MPI_Bcast(*fldPtr, GADNumTurbineTypes*(turbinePolyClCdrNormSegments+1), MPI_FLOAT, 0, MPI_COMM_WORLD);
 #ifdef DEBUG_GADCONSTRUCTOR
+       int iRank,i,ipoly;
        for(iRank = 0; iRank < mpi_size_world; iRank++){
          MPI_Barrier(MPI_COMM_WORLD);
          if(iRank == mpi_rank_world){
@@ -538,6 +540,7 @@ int GADConstructor(){
        } //end if mpi_rank_world == 0
        MPI_Bcast(*fldPtr, GADNumTurbineTypes*alphaBounds, MPI_FLOAT, 0, MPI_COMM_WORLD);
 #ifdef DEBUG_GADCONSTRUCTOR
+       int iRank,i,ipoly;
        for(iRank = 0; iRank < mpi_size_world; iRank++){
          MPI_Barrier(MPI_COMM_WORLD);
          if(iRank == mpi_rank_world){
@@ -577,6 +580,7 @@ int GADConstructor(){
        } //end if mpi_rank_world == 0
        MPI_Bcast(*fldPtr, GADNumTurbineTypes*turbinePolyClCdrNormSegments*turbinePolyOrderMax, MPI_FLOAT, 0, MPI_COMM_WORLD);
 #ifdef DEBUG_GADCONSTRUCTOR
+       int iRank,i,j,ipoly;
        for(iRank = 0; iRank < mpi_size_world; iRank++){
          MPI_Barrier(MPI_COMM_WORLD);
          if(iRank == mpi_rank_world){
@@ -615,10 +619,10 @@ int GADConstructor(){
   GAD_turbineRefj = (int*) malloc(GADNumTurbines*sizeof(int));
   GAD_turbineRefk = (int*) malloc(GADNumTurbines*sizeof(int));
   GAD_turbineYawing = (int*) malloc(GADNumTurbines*sizeof(int));
-  GAD_turbineRefMag = (float*) malloc(GADNumTurbineTypes*sizeof(float));
-  GAD_turbineRefDir = (float*) malloc(GADNumTurbineTypes*sizeof(float));
-  GAD_yawError = (float*) malloc(GADNumTurbineTypes*sizeof(float));
-  GAD_anFactor = (float*) malloc(GADNumTurbineTypes*sizeof(float));
+  GAD_turbineRefMag = (float*) malloc(GADNumTurbines*sizeof(float));
+  GAD_turbineRefDir = (float*) malloc(GADNumTurbines*sizeof(float));
+  GAD_yawError = (float*) malloc(GADNumTurbines*sizeof(float));
+  GAD_anFactor = (float*) malloc(GADNumTurbines*sizeof(float));
 
   return(errorCode);
 } //end GADConstructor()
