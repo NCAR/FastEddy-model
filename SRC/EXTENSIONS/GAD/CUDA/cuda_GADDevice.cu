@@ -266,7 +266,6 @@ __global__ void cudaDevice_GADinter(float* xPos_d, float* yPos_d, float* zPos_d,
              //update the corresponding series element and refMag and refDir values
              update_turbineRefMagDir(sampleIndex, u_sampAvg_d[iturb],v_sampAvg_d[iturb],
                                      &GAD_turbineUseries_d[iturb*GADrefSeriesLength_d], &GAD_turbineVseries_d[iturb*GADrefSeriesLength_d], &GAD_turbineRefMag_d[iturb], &GAD_turbineRefDir_d[iturb]);
-//#if 1
 #ifdef DEBUG_GAD
              printf("%d/%d:simTime_it=%d, iturb--%d @ (%d,%d,%d): u_sA=%f, v_sA=%f, RefMag=%f, RefDir=%f \n",
                 mpi_rank_world_d,mpi_size_world_d,simTime_it,iturb,i,j,k,u_sampAvg_d[iturb],v_sampAvg_d[iturb],GAD_turbineRefMag_d[iturb],GAD_turbineRefDir_d[iturb]);
@@ -296,7 +295,6 @@ __global__ void cudaDevice_GADinter(float* xPos_d, float* yPos_d, float* zPos_d,
                                      &turbinePolyCl_d[GAD_turbineType_d[iturb]*turbinePolyClCdrNormSegments_d*turbinePolyOrderMax_d],
                                      &turbinePolyCd_d[GAD_turbineType_d[iturb]*turbinePolyClCdrNormSegments_d*turbinePolyOrderMax_d],
 				     &GAD_anFactor_d[iturb]);
-//#if 1
 #ifdef DEBUG_GAD
 	     printf("GAD_turbineRefMag_d[iturb]=%f,GAD_anFactor_d[iturb]=%f \n",GAD_turbineRefMag_d[iturb],GAD_anFactor_d[iturb]);
 #endif
@@ -308,7 +306,6 @@ __global__ void cudaDevice_GADinter(float* xPos_d, float* yPos_d, float* zPos_d,
 
 	   if ((simTime_it%GADsamplingAvgLength_d == 0) && (simTime_it >= GADsamplingAvgLength_d*GADrefSeriesLength_d)){
 	     update_yawError(&GAD_turbineRefDir_d[iturb], &GAD_rotorTheta_d[iturb], &GAD_yawError_d[iturb], &GAD_turbineYawing_d[iturb], dt);
-//#if 1
 #ifdef DEBUG_GAD
 	   printf("%d/%d:simTime_it=%d, iturb--%d @ (%d,%d,%d) [after update_yawError]: GAD_turbineYawing_d[iturb]=%d, GAD_yawError_d[iturb]=%f \n",
 		  mpi_rank_world_d,mpi_size_world_d,simTime_it,iturb,i,j,k,GAD_turbineYawing_d[iturb], GAD_yawError_d[iturb]);
@@ -316,7 +313,6 @@ __global__ void cudaDevice_GADinter(float* xPos_d, float* yPos_d, float* zPos_d,
            }
 	   if (GAD_turbineYawing_d[iturb] == 1){
 	     update_rotorTheta(&GAD_turbineRefDir_d[iturb], &GAD_rotorTheta_d[iturb], &GAD_yawError_d[iturb], &GAD_turbineYawing_d[iturb], dt);
-//#if 1
 #ifdef DEBUG_GAD
            printf("%d/%d:simTime_it=%d, iturb--%d @ (%d,%d,%d) [after update_rotorTheta]: GAD_turbineYawing_d[iturb]=%d, GAD_rotorTheta_d[iturb]=%f \n",
 		  mpi_rank_world_d,mpi_size_world_d,simTime_it,iturb,i,j,k,GAD_turbineYawing_d[iturb], GAD_rotorTheta_d[iturb]);
