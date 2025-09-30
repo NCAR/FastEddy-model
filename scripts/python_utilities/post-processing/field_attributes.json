@@ -33,6 +33,13 @@
     "invOblen": ["m-1", "Inverse Obukhov length", "atmosphere_boundary_layer_thickness"],
     "CanopyLAD": ["m-1", "Leaf area density", "leaf_area_density"],
     "SeaMask": ["-", "Sea mask", "sea_area_fraction"]
+    "GAD_turbineVolMask": ["-", "Turbine Volume Mask", null],
+    "GAD_forceX": ["N m-3", "Turbine Forces in X-Direction", null],
+    "GAD_forceY": ["N m-3", "Turbine Forces in Y-Direction", null],
+    "GAD_forceZ": ["N m-3", "Turbine Forces in Z-Direction", null],
+    "GAD_turbineRotorMask": ["-", "Turbine Rotor-Disk Mask", null],
+    "BuildingMask": ["-", "Building Mask", null],
+    "UrbanHeatRedis": ["-", "Urban Heat Redistribution Coefficient", null]
   },
   "jacobian_attrs": {
     "D_Jac": ["-", "Jacobian determinant", null],
@@ -58,6 +65,6 @@
     "base_state_indices": {
       "0": ["kg m-3", "Base state air density", "air_density"],
       "1": ["K", "Base state potential temperature", "air_potential_temperature"]
-    }
+    },
   }
 }
