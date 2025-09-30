@@ -16,6 +16,14 @@
 #ifndef _HYDRO_CORE_H
 #define _HYDRO_CORE_H
 
+/*Model-Extensions includes*/
+#ifdef URBAN_EXT
+  #include <urban.h>
+#endif
+#ifdef GAD_EXT
+  #include <GAD.h>
+#endif
+
 /*hydro_core_ return codes */
 #define HYDRO_CORE_SUCCESS    0
 

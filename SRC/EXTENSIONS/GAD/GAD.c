@@ -328,7 +328,7 @@ int GADConstructor(){
        } //end if mpi_rank_world == 0
        MPI_Bcast(*fldPtr, GADNumTurbines, MPI_FLOAT, 0, MPI_COMM_WORLD);
 #ifdef DEBUG_GADCONSTRUCTOR
-       int iRank;
+       int iRank,i,j,ipoly;
        for(iRank = 0; iRank < mpi_size_world; iRank++){
          MPI_Barrier(MPI_COMM_WORLD);
          if(iRank == mpi_rank_world){
@@ -462,8 +462,6 @@ int GADConstructor(){
        } //end if mpi_rank_world == 0
        MPI_Bcast(*fldPtr, GADNumTurbineTypes*turbinePolyOrderMax, MPI_FLOAT, 0, MPI_COMM_WORLD);
 #ifdef DEBUG_GADCONSTRUCTOR
-       int i,j;
-       int ipoly;
        for(iRank = 0; iRank < mpi_size_world; iRank++){
          MPI_Barrier(MPI_COMM_WORLD);
          if(iRank == mpi_rank_world){
@@ -615,10 +613,10 @@ int GADConstructor(){
   GAD_turbineRefj = (int*) malloc(GADNumTurbines*sizeof(int));
   GAD_turbineRefk = (int*) malloc(GADNumTurbines*sizeof(int));
   GAD_turbineYawing = (int*) malloc(GADNumTurbines*sizeof(int));
-  GAD_turbineRefMag = (float*) malloc(GADNumTurbineTypes*sizeof(float));
-  GAD_turbineRefDir = (float*) malloc(GADNumTurbineTypes*sizeof(float));
-  GAD_yawError = (float*) malloc(GADNumTurbineTypes*sizeof(float));
-  GAD_anFactor = (float*) malloc(GADNumTurbineTypes*sizeof(float));
+  GAD_turbineRefMag = (float*) malloc(GADNumTurbines*sizeof(float));
+  GAD_turbineRefDir = (float*) malloc(GADNumTurbines*sizeof(float));
+  GAD_yawError = (float*) malloc(GADNumTurbines*sizeof(float));
+  GAD_anFactor = (float*) malloc(GADNumTurbines*sizeof(float));
 
   return(errorCode);
 } //end GADConstructor()
@@ -643,8 +641,8 @@ int GADInitTurbineRefChars(float dt){
   GADrefSeriesWeight = 1.0/((float) GADrefSeriesLength);  //Precompute the averaging weight across the full reference averaging period series of sample average values  
   MPI_Bcast(&GADrefSeriesLength, 1, MPI_INT, 0, MPI_COMM_WORLD); //Broadcast the read-in parameter for series length to all ranks
   MPI_Bcast(&GADrefSeriesWeight, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-#if 1
-//#ifdef DEBUG_TURBCHAR
+//#define DEBUG_TURBCHAR
+#ifdef DEBUG_TURBCHAR
   printf("%d/%d: GADsamplingAvgLength=%d, GADsamplingAvgWeight=%f, GADrefSeriesLength=%d, GADrefSeriesWeight=%f\n",
          mpi_rank_world,mpi_size_world,GADsamplingAvgLength,GADsamplingAvgWeight,GADrefSeriesLength,GADrefSeriesWeight);
   fflush(stdout);
