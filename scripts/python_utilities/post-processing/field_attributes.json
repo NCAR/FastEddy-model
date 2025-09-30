@@ -33,9 +33,9 @@
     "invOblen": ["m-1", "Inverse Obukhov length", "atmosphere_boundary_layer_thickness"],
     "cellpert_amp": ["K", "Cell perturbation amplitude", null],
     "cellpert_nts": ["-", "Cell perturbation number of time steps", null],
-    "cellpert_ktop": ["-", "Cell perturbation top grid level", null]
+    "cellpert_ktop": ["-", "Cell perturbation top grid level", null],
     "CanopyLAD": ["m-1", "Leaf area density", "leaf_area_density"],
-    "SeaMask": ["-", "Sea mask", "sea_area_fraction"]
+    "SeaMask": ["-", "Sea mask", "sea_area_fraction"],
     "GAD_turbineVolMask": ["-", "Turbine Volume Mask", null],
     "GAD_forceX": ["N m-3", "Turbine Forces in X-Direction", null],
     "GAD_forceY": ["N m-3", "Turbine Forces in Y-Direction", null],
