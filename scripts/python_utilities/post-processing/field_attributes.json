@@ -68,6 +68,6 @@
     "base_state_indices": {
       "0": ["kg m-3", "Base state air density", "air_density"],
       "1": ["K", "Base state potential temperature", "air_potential_temperature"]
-    },
+    }
   }
 }
