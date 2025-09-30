@@ -32,7 +32,7 @@
     "z0t": ["m", "Roughness length for heat", "surface_roughness_length_for_heat_in_air"],
     "invOblen": ["m-1", "Inverse Obukhov length", "atmosphere_boundary_layer_thickness"],
     "cellpert_amp": ["K", "Cell perturbation amplitude", null],
-    "cellpert_nts": ["1", "Cell perturbation number of time steps", null],
+    "cellpert_nts": ["-", "Cell perturbation number of time steps", null],
     "cellpert_ktop": ["-", "Cell perturbation top grid level", null]
     "CanopyLAD": ["m-1", "Leaf area density", "leaf_area_density"],
     "SeaMask": ["-", "Sea mask", "sea_area_fraction"]
