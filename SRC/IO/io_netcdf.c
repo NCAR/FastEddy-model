@@ -908,7 +908,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
                                          strlen("Water vapor mixing ratio"), "Water vapor mixing ratio"))){
             ERR(errorCode);
          }
-         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("kg kg-1"), "kg kg-1"))){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("g kg-1"), "g kg-1"))){
             ERR(errorCode);
          }
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name", 
@@ -916,6 +916,18 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
             ERR(errorCode);
          }
       }
+      }else if(!strcmp(ptr->name,"ql")){
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name",
+                                         strlen("Cloud liquid content mixing ratio"), "Cloud liquid content mixing ratio"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "units", strlen("g kg-1"), "g kg-1"))){
+            ERR(errorCode);
+         }
+         if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "standard_name",
+                                         strlen("cloud_liquid_water_mixing_ratio"), "cloud_liquid_water_mixing_ratio"))){
+            ERR(errorCode);
+         }
 
       ptr = ptr->next;
    }

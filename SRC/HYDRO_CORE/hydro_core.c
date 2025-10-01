@@ -2764,7 +2764,7 @@ int hydro_coreStateLogDump(){
          errorCode = sprintf(&fldName[0],"qv");
        } else if(iFld==1){
          errorCode = sprintf(&fldName[0],"ql");
-       } else if(iFld==2){
+       } else if(iFld==2){"
          errorCode = sprintf(&fldName[0],"qr");
        }
        printf("%s\t", &fldName[0]);
@@ -3401,13 +3401,12 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
         {"w",           "m s-1",         "Vertical wind velocity",                                        "upward_air_velocity"},
         {"theta",       "K",             "Potential temperature",                                         "air_potential_temperature"},
         {"pressure",    "Pa",            "Perturbation pressure",                                         NULL},
-        {"TKE_0",       "m2 s-2",        "Subgrid turbulent kinetic energy of air at grid-filter scale", NULL},
-        {"TKE_1",       "m2 s-2",        "Subgrid turbulent kinetic energy of air at canopy leaf scale", NULL},
+        {"TKE_0",       "m2 s-2",        "Subgrid turbulent kinetic energy of air at grid-filter scale",  NULL},
+        {"TKE_1",       "m2 s-2",        "Subgrid turbulent kinetic energy of air at canopy leaf scale",  NULL},
         {"AuxScalar",   "-",             "Auxiliary scalar",                                              NULL},
         {"moisture",    "kg kg-1",       "Water vapor mixing ratio",                                      "humidity_mixing_ratio"},
-        {"qv",          "kg kg-1",       "Water vapor mixing ratio",                                      "humidity_mixing_ratio"},
-        {"qc",          "kg kg-1",       "Cloud water mixing ratio",                                      "cloud_liquid_water_mixing_ratio"},
-        {"qi",          "kg kg-1",       "Ice water mixing ratio",                                        "cloud_ice_mixing_ratio"},
+        {"qv",          "g kg-1",        "Water vapor mixing ratio",                                      "humidity_mixing_ratio"},
+        {"ql",          "g kg-1",        "Cloud liquid water mixing ratio",                               "cloud_liquid_water_mixing_ratio"},
         {"fricVel",     "m s-1",         "Surface friction velocity",                                     "surface_friction_velocity"},
         {"htFlux",      "K m s-1",       "Surface sensible heat flux",                                    "surface_upward_sensible_heat_flux"},
         {"qFlux",       "kg kg-1 m s-1", "Surface latent heat flux",                                      "surface_upward_latent_heat_flux"},
