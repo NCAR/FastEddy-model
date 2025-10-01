@@ -915,7 +915,6 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
                                          strlen("humidity_mixing_ratio"), "humidity_mixing_ratio"))){
             ERR(errorCode);
          }
-      }
       }else if(!strcmp(ptr->name,"ql")){
          if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, "long_name",
                                          strlen("Cloud liquid content mixing ratio"), "Cloud liquid content mixing ratio"))){
