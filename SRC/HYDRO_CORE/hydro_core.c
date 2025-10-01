@@ -2764,7 +2764,7 @@ int hydro_coreStateLogDump(){
          errorCode = sprintf(&fldName[0],"qv");
        } else if(iFld==1){
          errorCode = sprintf(&fldName[0],"ql");
-       } else if(iFld==2){"
+       } else if(iFld==2){
          errorCode = sprintf(&fldName[0],"qr");
        }
        printf("%s\t", &fldName[0]);
