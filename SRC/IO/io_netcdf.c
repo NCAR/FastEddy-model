@@ -927,6 +927,7 @@ int ioDefineNetCDFoutFileAttrs(int ncid){
                                          strlen("cloud_liquid_water_mixing_ratio"), "cloud_liquid_water_mixing_ratio"))){
             ERR(errorCode);
          }
+      }
 
       ptr = ptr->next;
    }
