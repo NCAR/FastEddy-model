@@ -1,0 +1,4 @@
+**urbanSelector:** Urban selector: 0=off; 1=on, 0, 2, , M
+**cd_build:** c_d coefficient (m-1) used by the drag-based building formulation: -c_d|u_i|u_i *Cond-Mand if urbanSelector > 0*, 0.0; 1e+8, 100.0, C-M
+**ct_build:** c_t coefficient (s-1) used by the drag-based building formulation: -c_t(rho*theta-rho_b*theta_b) & -c_t(rho-rho_b) *Cond-Mand if urbanSelector > 0*, 0.0, 1e+8, 0.0, C-M
+**urban_heatRedis:** Selector to activate surface heat redistribution *Cond-Mand if urbanSelector > 0*, 0, 1, 0, C-M
