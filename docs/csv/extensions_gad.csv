@@ -1,0 +1,11 @@
+**GADSelector:** Generalized Actuator Disk Selector: 0=off; 1=on, 0, 1, 1, M
+**turbineSpecsFile:** The path+filename to a turbine specifications file *Cond-Opt if GADSelector > 0*, N/A, N/A, , C-O 
+**GADoutputForces:** Flag to include GAD forces in the output: 0=off; 1=on *Cond-Opt if GADSelector > 0*, 0, 1, 0, C-O
+**GADofflineForces:** Flag to compute GAD forces in an offline mode: 0=of; 1=on *Cond-Opt if GADSelector > 0*, 0, 1, 0, C-O
+**GADaxialInduction:** Flag to compute axial induction factor: 0==off (uses prescribed GADaxialIndVal); 1==on *Cond-Opt if GADSelector > 0*, 0, 1, 0, C-O
+**GADaxialIndVal:** Prescribed constant axial induction factor when GADaxialInduction==1 *Cond-Opt if GADSelector > 0*, 0.0, 1.0, 0.02, C-O
+**GADrefSwitch:** Switch to use reference windspeed: 0=off; 1=on *Cond-Opt if GADSelector > 0*, 0, 1, 0, C-O
+**GADrefU:** Prescribed constant reference hub-height windspeed *Cond-Opt if GADSelector > 0*, 0.0, 50.0, 0.0, C-O
+**GADrefSampleWindow:** Sample duration over which to average per-timestep values (filtering out highest frequencies) *Cond-Opt if GADSelector > 0*, 1.0, 60.0, 10.0, C-O
+**GADrefSeriesLength:** Number of sampling windows over which to average again for reference velocity magnitude and direction *Cond-Opt if GADSelector > 0*, 1, 360, 30, C-O
+**GADForcingSwitch:** Switch to use the GADrefU-based or local windspeed in computing GAD forces: 0=local *Cond-Opt if GADSelector > 0*; 1=ref, 0, 1, 0, C-O

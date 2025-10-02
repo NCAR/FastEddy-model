@@ -185,4 +185,21 @@ LARGE SCALE FORCINGS
    :delim: ,
    :class: longtable
 
+EXTENSIONS
+==========
 
+GAD
+---
+
+.. csv-table::
+   :file: csv/extensions_gad.csv
+   :delim: ,
+   :class: longtable
+
+URBAN
+-----
+
+.. csv-table::
+   :file: csv/extensions_urban.csv
+   :delim: ,
+   :class: longtable
