@@ -9,6 +9,6 @@
 **srcAuxScGeometryType:** 0=point (single cell volume); 1=line (line of surface cells) *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, 0, 0, 0, C-M
 **srcAuxScMassSpecType:** Mass specification type 0=strict mass in kg; 1=mass source rate in kg/s *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, 0, 0, 0, C-M
 **srcAuxScMassSpecValue:** Mass specification value in kg or kg/s given by srcAuxScMassSpecType 0 or 1 *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, 0.0, FLT_MAX, 1.0, C-M
-**srcAuxScLocation_X:** Source geometry centroid postion in x (west-east) *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M
-**srcAuxScLocation_Y:** Source geometry centroid postion in y (south-north) *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M
-**srcAuxScLocation_Z:** Source geometry centroid postion in z (vertical above the surface) *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M
+**srcAuxScLocation_X:** Source geometry centroid position in x (west-east) *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M
+**srcAuxScLocation_Y:** Source geometry centroid position in y (south-north) *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M
+**srcAuxScLocation_Z:** Source geometry centroid position in z (vertical above the surface) *C-M if srcAuxScFile == NULL and NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M

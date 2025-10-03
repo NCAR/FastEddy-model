@@ -1,4 +1,4 @@
-**filterSelector:** Explicit filter selector: 0=off; 1=on, 0, 1, 0, M
+**filterSelector:** Explicit filter selector: 0=off; 1=on, 0, 1, 0, O
 **ffilter_6thdiff_vert:** Vertical 6th-order filter on w selector: 0=off; 1=on *C-O if filterSelector == 1*, 0, 1, 0, C-O
 **ffilter_6thdiff_hori:** Horizontal 6th-order filter on rho; theta; qv selector: 0=off; 1=on *C-O if filterSelector == 1*, 0, 1, 0, C-O
 **ffilter_6thdiff_vert_coeff:** Vertical 6th-order filter factor: 0.0=off; 1.0=full *C-M if filterSelector == 1 and filter_6thdiff_vert == 1*, 0.0, 1.0, 0.03, C-M

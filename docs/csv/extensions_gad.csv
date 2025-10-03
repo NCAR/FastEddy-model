@@ -1,4 +1,4 @@
-**GADSelector:** Generalized Actuator Disk Selector: 0=off; 1=on, 0, 1, 1, M
+**GADSelector:** Generalized Actuator Disk Selector: 0=off; 1=on, 0, 1, 0, O
 **turbineSpecsFile:** The path+filename to a turbine specifications file *Cond-Opt if GADSelector > 0*, N/A, N/A, , C-O 
 **GADoutputForces:** Flag to include GAD forces in the output: 0=off; 1=on *Cond-Opt if GADSelector > 0*, 0, 1, 0, C-O
 **GADofflineForces:** Flag to compute GAD forces in an offline mode: 0=of; 1=on *Cond-Opt if GADSelector > 0*, 0, 1, 0, C-O
