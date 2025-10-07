@@ -4,7 +4,7 @@
 **moistureAdvSelectorQv_b:** Hybrid advection scheme parameter for water vapor *C-M if moistureSelector==1*, 0.0, 1.0, 0.0, C-M 
 **moistureAdvSelectorQi:** Moisture advection scheme selector for non-qv fields (non-oscillatory schemes) *C-M if moistureSelector==1*, 0, 2, 0, C-M 
 **moistureSGSturb:** Selector to apply sub-grid scale diffusion to moisture fields *C-M if moistureSelector==1*, 0, 1, 0, C-M 
-**moistureCond:** Selector to apply condensation to mositure fields *C-M if moistureSelector==1*, 1, 4, 1, C-M 
+**moistureCond:** Selector to apply condensation to moisture fields *C-M if moistureSelector==1*, 1, 4, 1, C-M 
 **moistureCondTscale:** Relaxation time in seconds *C-M if moistureSelector==1*, 1e-4, 1000.0, 1.0, C-M
 **moistureCondBasePres:** Selector to use base pressure for microphysics *C-M if moistureSelector==1*, 0, 1, 0, C-M
 **moistureMPcallTscale:** Time scale for microphysics to be called *C-M if moistureSelector==1*, 1e-4, 1000.0, 1.0, C-M

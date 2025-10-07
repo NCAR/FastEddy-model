@@ -1,4 +1,4 @@
-**NhydroAuxScalars:** Number of prognostic auxiliary scalar fields, 0, MAX_AUXSC_SRC (20), 0, O 
+**NhydroAuxScalars:** Number of prognostic auxiliary scalar fields, 0, 256, 0, O 
 **AuxScAdvSelector:** Advection scheme for auxiliary scalar fields *C-M if NhydroAuxScalars > 0*, 0, 6, 0, C-M
 **AuxScAdvSelector_b_hyb:** Hybrid advection scheme parameter *C-M if NhydroAuxScalars > 0*, 0.0, 1.0, 0.0, C-M 
 **AuxScSGSturb:** Selector to apply sub-grid scale diffusion to auxiliary scalar fields *C-M if NhydroAuxScalars > 0*, 0, 1, 0, C-M
