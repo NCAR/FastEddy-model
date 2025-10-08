@@ -79,6 +79,7 @@ int URBANInit(){
      building_mask = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "building_mask");
      errorCode = sprintf(&fldName[0],"BuildingMask");
      errorCode = ioRegisterVar(&fldName[0], "float", 4, dims4d, building_mask);
+     errorCode = ioAddStandardAttrs("BuildingMask", "-", "Building Mask", NULL);
      printf("urban:Field = %s stored at %p, has been registered with IO.\n",
             &fldName[0],building_mask);
      fflush(stdout);
@@ -86,6 +87,7 @@ int URBANInit(){
        urban_heat_redis = memAllocateFloat2DField(Nxp, Nyp, Nh, "urban_heat_redis");
        errorCode = sprintf(&fldName[0],"UrbanHeatRedis");
        errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, urban_heat_redis);
+       errorCode = ioAddStandardAttrs("UrbanHeatRedis", "-", "Urban Heat Redistribution Coefficient", NULL);
        printf("urban:Field = %s stored at %p, has been registered with IO.\n",
               &fldName[0],urban_heat_redis);
        fflush(stdout);

@@ -1380,14 +1380,14 @@ int hydro_coreInit(){
      errorCode = sprintf(&fldName[0],"cellpert_nts");
      errorCode = ioRegisterVar(&fldName[0], "int", 1, dims1dTD, &cellpert_nts);
      // Add NetCDF attributes for the registered variable
-     errorCode = ioAddStandardAttrs(&fldName[0], "1", "Cell perturbation number of time steps", NULL);
+     errorCode = ioAddStandardAttrs(&fldName[0], "-", "Cell perturbation refresh rate in time steps", NULL);
      printf("cellpert:Variable = %s stored at %p, has been registered with IO.\n",
             &fldName[0],&cellpert_nts);
      fflush(stdout);
      errorCode = sprintf(&fldName[0],"cellpert_ktop");
      errorCode = ioRegisterVar(&fldName[0], "int", 1, dims1dTD, &cellpert_ktop);
      // Add NetCDF attributes for the registered variable
-     errorCode = ioAddStandardAttrs(&fldName[0], "1", "Cell perturbation top grid level", NULL);
+     errorCode = ioAddStandardAttrs(&fldName[0], "-", "Cell perturbation uppermost vertical grid level", NULL);
      printf("cellpert:Variable = %s stored at %p, has been registered with IO.\n",
             &fldName[0],&cellpert_ktop);
      fflush(stdout);
@@ -3401,13 +3401,12 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
         {"w",           "m s-1",         "Vertical wind velocity",                                        "upward_air_velocity"},
         {"theta",       "K",             "Potential temperature",                                         "air_potential_temperature"},
         {"pressure",    "Pa",            "Perturbation pressure",                                         NULL},
-        {"TKE_0",       "m2 s-2",        "Subgrid turbulent kinetic energy of air at grid-filter scale", NULL},
-        {"TKE_1",       "m2 s-2",        "Subgrid turbulent kinetic energy of air at canopy leaf scale", NULL},
+        {"TKE_0",       "m2 s-2",        "Subgrid turbulent kinetic energy of air at grid-filter scale",  NULL},
+        {"TKE_1",       "m2 s-2",        "Subgrid turbulent kinetic energy of air at canopy leaf scale",  NULL},
         {"AuxScalar",   "-",             "Auxiliary scalar",                                              NULL},
         {"moisture",    "kg kg-1",       "Water vapor mixing ratio",                                      "humidity_mixing_ratio"},
-        {"qv",          "kg kg-1",       "Water vapor mixing ratio",                                      "humidity_mixing_ratio"},
-        {"qc",          "kg kg-1",       "Cloud water mixing ratio",                                      "cloud_liquid_water_mixing_ratio"},
-        {"qi",          "kg kg-1",       "Ice water mixing ratio",                                        "cloud_ice_mixing_ratio"},
+        {"qv",          "g kg-1",        "Water vapor mixing ratio",                                      "humidity_mixing_ratio"},
+        {"ql",          "g kg-1",        "Cloud liquid water mixing ratio",                               "cloud_liquid_water_mixing_ratio"},
         {"fricVel",     "m s-1",         "Surface friction velocity",                                     "surface_friction_velocity"},
         {"htFlux",      "K m s-1",       "Surface sensible heat flux",                                    "surface_upward_sensible_heat_flux"},
         {"qFlux",       "kg kg-1 m s-1", "Surface latent heat flux",                                      "surface_upward_latent_heat_flux"},
