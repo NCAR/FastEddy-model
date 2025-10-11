@@ -13,6 +13,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
+#include <stdlib.h>
+
 #define MAXLEN 256
 int dimids[MAXDIMS];
 size_t count[MAXDIMS];
@@ -26,8 +29,12 @@ int dims4d[] = {0,1,2,3};
 int dims3d[] = {1,2,3};  
 int dims2dTD[] = {0,2,3};  
 int dims2d[] = {2,3}; 
-int dims1dTD[] = {0};  
-
+int dims1dTD[] = {0};
+#ifdef GAD_EXT
+   size_t count1dTD_GAD[MAXDIMS];
+   size_t start1dTD_GAD[MAXDIMS];
+   int dims1dTD_GAD[] = {0,4};
+#endif
 //////////***********************  INPUT FUNCTIONS  *********************************////////
 /*----->>>>> int ioReadNetCDFgridFile();  ---------------------------------------------------------------
 * Used to read a NetCDF file of registered "GRID" variables.
@@ -92,7 +99,11 @@ int ioReadNetCDFgridFile(char* gridFile, int Nx, int Ny, int Nz, int Nh){
    start[dimids[3]] = 0;
 
    printf("Reading IO-registered variable fields from gridFile = %s\n",gridFile);
+#ifdef GAD_EXT
+   errorCode = ioGetNetCDFinFileVars(ncid, Nx, Ny, Nz, Nh, 0);
+#else
    errorCode = ioGetNetCDFinFileVars(ncid, Nx, Ny, Nz, Nh);
+#endif
    printf("Done Reading IO-registered variable fields from gridFile = %s\n",gridFile);
    /* close the file */
    errorCode = ioCloseNetCDFfile(ncid);
@@ -104,7 +115,11 @@ int ioReadNetCDFgridFile(char* gridFile, int Nx, int Ny, int Nz, int Nh){
 /*----->>>>> int ioReadNetCDFinFileSingleTime();  ---------------------------------------------------------------
  * Used to read a NetCDF file of registered variables for a single timestep.
 */
+#ifdef GAD_EXT
+int ioReadNetCDFinFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh, int Nturbines){
+#else
 int ioReadNetCDFinFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
+#endif
    int errorCode = IO_SUCCESS;
    int ncid;
    /* concatenate the fileName components */
@@ -127,6 +142,13 @@ int ioReadNetCDFinFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
    }
    printf("Opened inFileName = %s with ncid = %d\n",inFileName,ncid);
    printf("Established dimension ids of xIndex,yIndex,zIndex = %d, %d, %d\n",dimids[3],dimids[2],dimids[1]);
+#ifdef GAD_EXT
+   if ((errorCode = nc_inq_dimid(ncid, "GADNumTurbines", &dimids[4]))){
+      ERR(errorCode);
+   }
+
+   printf("Established GAD dimension id of GADNumTurbines as %d\n",dimids[4]);
+#endif
   
    /*Attempt to read all of the variables in the IO Registry list*/
    /* These are precisely the same as Nxp, Nyp, and Nzp calculated in GRID/grid.c:grid_init(). */
@@ -139,7 +161,10 @@ int ioReadNetCDFinFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
    count2dTD[dimids[0]] = 1;
    count2dTD[dimids[1]] = Ny;
    count2dTD[dimids[2]] = Nx;
-
+#ifdef GAD_EXT
+   count1dTD_GAD[dimids[0]] = 1;
+   count1dTD_GAD[dimids[1]] = Nturbines;
+#endif
    if ((errorCode = nc_inq_dimlen(ncid, dimids[0], &count[0]))){
       ERR(errorCode);
    }
@@ -197,15 +222,39 @@ int ioReadNetCDFinFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
        errorCode = IO_ERROR_DIMLEN;
        return(errorCode);  
    } 
-
+#ifdef GAD_EXT
+   //count1dTD_GAD
+   if ((errorCode = nc_inq_dimlen(ncid, dimids[0], &count1dTD_GAD[0]))){
+      ERR(errorCode);
+   }
+   if ((errorCode = nc_inq_dimlen(ncid, dimids[4], &count1dTD_GAD[1]))){
+      ERR(errorCode);
+   }
+   if(count1dTD_GAD[1]!=Nturbines){
+       printf("ERROR: inFileName = %s, count1dTD_GAD dimension lengths for t,GADNumTurbines = %lu\n",
+               inFileName, count1dTD_GAD[1]);
+       printf("       does not match GADNumTurbines = %d turbineSpecsFile parameter!\n",
+               Nturbines);
+       printf("       No values will be read from the file!\n");
+       errorCode = IO_ERROR_DIMLEN;
+       return(errorCode);
+   }
+#endif
    /*These are the starting location in the full domain space.*/ 
    start[dimids[0]] = 0;   
    start[dimids[1]] = 0;  
    start[dimids[2]] = 0;  
    start[dimids[3]] = 0;  
+#ifdef GAD_EXT
+   start[dimids[4]] = 0;
+#endif
    
    printf("Reading IO-registered variable fields from inFileName = %s\n",inFileName);
+#ifdef GAD_EXT
+   errorCode = ioGetNetCDFinFileVars(ncid, Nx, Ny, Nz, Nh, Nturbines);
+#else
    errorCode = ioGetNetCDFinFileVars(ncid, Nx, Ny, Nz, Nh);
+#endif
    printf("Done Reading IO-registered variable fields from inFileName = %s\n",inFileName);
    /* close the file */
    errorCode = ioCloseNetCDFfile(ncid);    
@@ -233,7 +282,11 @@ int ioOpenNetCDFinFile(char *fileName, int *ncidptr){
 /*----->>>>> int ioGetNetCDFinFileVars();    ---------------------------------------------------------------------
 * Used to get(read) all variables from the register list into the appropriately registered module memory blocks. 
 */
+#ifdef GAD_EXT
+int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh, int Nturbines){
+#else
 int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
+#endif
    int errorCode = IO_SUCCESS;
    int varFound;
    size_t *countPtr;
@@ -251,6 +304,11 @@ int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
    /* For each entry in the ioVarsList, "get" the var */
    ptr = getFirstVarFromList();
    while(ptr != NULL){
+      if(mpi_rank_world==0){ 
+        printf("Checking for %s...\n",ptr->name);
+        fflush(stdout);
+      }//end if mpi_rank==0
+      varFound = 0;
       if(!strcmp(ptr->type,"float")){
          field = (float *) ptr->varMemAddress;  //All ranks set pointer to local memory location 
                                                 //for this registered field
@@ -268,15 +326,22 @@ int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
                fflush(stdout);
                ERR(errorCode);
              }else{
+               printf("Next registered var in list to get is ptr->name = %s, from ptr->ncvarid = %d\n",ptr->name,ptr->ncvarid);
+               fflush(stdout);
                varFound=1;
              }
-             printf("Next registered var in list to get is ptr->name = %s, from ptr->ncvarid = %d\n",ptr->name,ptr->ncvarid);
-             fflush(stdout);
-           
+          
+	     if(varFound == 1){  //Only do this section if a var was found 
              /*Allocate a tmp buffer and get the pointer to the Register var*/
              if((ptr->nDims == 2)||(ptr->nDims==3)){
                if(ptr->nDims == 2){
-                 countPtr = count2d;
+		 if(ptr->dimids[1] == 2){
+                   countPtr = count2d;
+#ifdef GAD_EXT
+		 }else if(ptr->dimids[1] == 4){
+                   countPtr = count1dTD_GAD;
+#endif
+                 }
                }else if(ptr->nDims == 3){
                  countPtr = count2dTD;
                }//end if,else ptr->nDims == 2,3
@@ -296,7 +361,6 @@ int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
                 ERR(errorCode);
              }
              for(i = 0; i< nDims; i++){
-               //printf("Variable field = %s has dimid(%d) = %d\n",ptr->name,i,tmpDimids[i]);
 	       printf("Variable field = %s has dimid(%d) = %d: start, count => %lu, %lu\n",ptr->name,i,tmpDimids[i],start[tmpDimids[i]],countPtr[tmpDimids[i]]);
              }
 	     fflush(stdout);
@@ -309,13 +373,23 @@ int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
 	     fflush(stdout);
              /* Transpose the data */
              if((nDims == 2)||(nDims == 3)){
-               for(i=0; i < Nx; i++){
-                 for(j=0; j < Ny; j++){
-                   ijk = i*(Ny)+j;  //Note ijk is only 2-d here
-                   kji = j*(Nx)+i;  //Note kji is only 2-d here
-                   ioBuffFieldTransposed2D[ijk] = ioBuffField[kji]; //out-of-place transpose the array elements
-                 } // end for(j...
-               } // end for(i...
+#ifdef GAD_EXT
+	       if(ptr->dimids[1] == 4){
+                 for(i=0; i < Nturbines; i++){
+                    field[i] = ioBuffField[i];
+		 }
+	       }else{
+#endif
+                 for(i=0; i < Nx; i++){
+                   for(j=0; j < Ny; j++){
+                     ijk = i*(Ny)+j;  //Note ijk is only 2-d here
+                     kji = j*(Nx)+i;  //Note kji is only 2-d here
+                     ioBuffFieldTransposed2D[ijk] = ioBuffField[kji]; //out-of-place transpose the array elements
+                   } // end for(j...
+                 } // end for(i...
+#ifdef GAD_EXT
+	       }//end if (ptr->dimids[1] == 4) else...
+#endif
              }else{
                for(i=0; i < Nx; i++){
                  for(j=0; j < Ny; j++){
@@ -328,6 +402,7 @@ int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
                } // end for(i...
              }//end if(nDims==2)-else
            }// if this var is Tau* -else 
+	 }//end if varFound==1
          }//end if mpi_rank_world == 0
          MPI_Barrier(MPI_COMM_WORLD);
          //Broadcast the varFound flag for this variable
@@ -337,7 +412,15 @@ int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
            MPI_Bcast(&nDims, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
            //Now scatter the field across ranks
            if((nDims == 2)||(nDims == 3)){
-             errorCode = fempi_ScatterVariable(Nx,Ny,1,Nxp,Nyp,1,Nh,ioBuffFieldTransposed2D,field);
+#ifdef GAD_EXT
+             if(ptr->dimids[1] == 4){
+	       MPI_Bcast(field, Nturbines, MPI_FLOAT, 0, MPI_COMM_WORLD);
+             }else{
+#endif
+               errorCode = fempi_ScatterVariable(Nx,Ny,1,Nxp,Nyp,1,Nh,ioBuffFieldTransposed2D,field);
+#ifdef GAD_EXT
+	     }//end if (ptr->dimids[1] == 4) else...
+#endif
            }else if(nDims == 4){
              errorCode = fempi_ScatterVariable(Nx,Ny,Nz,Nxp,Nyp,Nzp,Nh,ioBuffFieldTransposed,field);
            }else if(nDims == 1){  // A scalar float variable was read, it shoud be simply broadcast to all ranks rather than "scattered"
@@ -386,19 +469,25 @@ int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
            }//end if(nDims==2)-else
            MPI_Barrier(MPI_COMM_WORLD);
          } //end if varFound == 1
-      } else if(!strcmp(ptr->type,"int")){
+      }else if(!strcmp(ptr->type,"int")){
         intField = (int *) ptr->varMemAddress;  //All ranks set pointer to local memory location 
-        countPtr = count;
+	if(ptr->nDims == 1){					
+          countPtr = count;
+#ifdef GAD_EXT
+	}else if(ptr->nDims == 2){
+          countPtr = count1dTD_GAD;
+#endif
+        }//end if ptr->nDims ==1
         if(mpi_rank_world==0){
          varFound = 0;
          /*inquire for the varid for this variable name*/
-         printf("Next registered var in list to get is ptr->name = %s, from ptr->ncvarid = %d\n",ptr->name,ptr->ncvarid);
-         fflush(stdout);
          if ( (errorCode = nc_inq_varid(ncid, ptr->name, &ptr->ncvarid)) ){
            printf("Error ioGetNetCDFinFileVars(): Variable field = %s was not found in this file,!\n",ptr->name);
            fflush(stdout);
            ERR(errorCode);
          }else{
+           printf("Next registered var in list to get is ptr->name = %s, from ptr->ncvarid = %d\n",ptr->name,ptr->ncvarid);
+           fflush(stdout);
            varFound=1;
          }
 
@@ -425,11 +514,16 @@ int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
            }
          } //end if varFound == 1
         }//end if mpi_rank_world==0
+        MPI_Bcast(&varFound, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
         if(varFound==1){
           //Broadcast the nDims read by the rrot rank for this variable
           MPI_Bcast(&nDims, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
           if(nDims == 1){
             MPI_Bcast(intField, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+#ifdef GAD_EXT
+	  }else if(nDims == 2){
+            MPI_Bcast(intField, Nturbines, MPI_INTEGER, 0, MPI_COMM_WORLD);
+#endif
           }//end if nDims == 1
         }//end if varFound == 1
       } else {
@@ -445,7 +539,11 @@ int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
 /*----->>>>> int ioWriteNetCDFoutFileSingleTime();  ---------------------------------------------------------------
  * Used to write a NetCDF file of registered variables for a single timestep.
 */
+#ifdef GAD_EXT
+int ioWriteNetCDFoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh, int Nturbines){
+#else
 int ioWriteNetCDFoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
+#endif
    int errorCode = IO_SUCCESS;
    int ncid;
 
@@ -460,18 +558,30 @@ int ioWriteNetCDFoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
    if(mpi_rank_world==0){
      /* Open and set  the file into "define mode" */
      errorCode = ioCreateNetCDFoutFile(outFileName, &ncid);
+#ifdef GAD_EXT
+     errorCode = ioDefineNetCDFoutFileDims(ncid, Nx, Ny, Nz, Nh, Nturbines);
+#else
      errorCode = ioDefineNetCDFoutFileDims(ncid, Nx, Ny, Nz, Nh);
+#endif
      errorCode = ioDefineNetCDFoutFileVars(ncid);
      /* Define dimension coordinate variable attributes */
      errorCode = ioDefineNetCDFcoordVarAttrs(ncid);
      /* Define variable attributes */
      errorCode = ioDefineNetCDFoutFileAttrs(ncid);
+#ifdef GAD_EXT
+     errorCode = ioEndNetCDFdefineMode(ncid,Nx, Ny, Nz, Nh, Nturbines);
+#else
      errorCode = ioEndNetCDFdefineMode(ncid,Nx, Ny, Nz, Nh);
+#endif
      /*Write all of the variables in the IO Registry list*/
    } //endif mpi_rank_world==0
    //Broadcast the ncid...
    MPI_Bcast(&ncid, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#ifdef GAD_EXT
+   errorCode = ioPutNetCDFoutFileVars(ncid, Nx, Ny, Nz, Nh, Nturbines);
+#else
    errorCode = ioPutNetCDFoutFileVars(ncid, Nx, Ny, Nz, Nh);
+#endif
    /* close the file */
    if(mpi_rank_world==0){
      errorCode = ioCloseNetCDFfile(ncid);    
@@ -498,8 +608,11 @@ int ioCreateNetCDFoutFile(char *outFileName, int *ncidptr){
 /*----->>>>> int ioDefineNetCDFoutFileDims();    ---------------------------------------------------------------------
 * Used to complete the sequence of steps involved in "define mode" for a NetCDF file to be written.
 */
-
+#ifdef GAD_EXT
+int ioDefineNetCDFoutFileDims(int ncid, int Nx, int Ny, int Nz, int Nh, int Nturbines){
+#else
 int ioDefineNetCDFoutFileDims(int ncid, int Nx, int Ny, int Nz, int Nh){
+#endif
    int errorCode = IO_SUCCESS;
 
 
@@ -539,6 +652,13 @@ int ioDefineNetCDFoutFileDims(int ncid, int Nx, int Ny, int Nz, int Nh){
    start[dimids[2]] = 0; 
    start[dimids[3]] = 0; 
    
+#ifdef GAD_EXT
+   if ((errorCode = nc_def_dim(ncid, "GADNumTurbines", Nturbines, &dimids[4]))){
+      ERR(errorCode);
+   }
+   count1dTD_GAD[dimids[0]] = 1;
+   count1dTD_GAD[dimids[4]] = Nturbines;
+#endif
    return(errorCode);
 } //end ioDefineNetCDFoutFileDims()
 
@@ -575,11 +695,6 @@ int ioDefineNetCDFoutFileVars(int ncid){
         printf("Cannot define a NetCDF variable with var->type = %s\n",ptr->type);
       }// if (ptr.type == "float") else ...
       /* define any variable attributes. */
-/*TODO      
-      if ((errorCode = nc_put_att_text(ncid, ptr->ncvarid, ptr->attname, strlen(ptr->attval), ptr->attval))){
-           ERR(errorCode);
-      } 
-*/
       ptr = ptr->next;
    }
    
@@ -589,7 +704,11 @@ int ioDefineNetCDFoutFileVars(int ncid){
 /*----->>>>> int ioEndNetCDFdefineMode();    ---------------------------------------------------------------------
  * Used to close the sequence steps involved in "define mode" for a NetCDF file to be written.
  */
+#ifdef GAD_EXT
+int ioEndNetCDFdefineMode(int ncid, int Nx, int Ny, int Nz, int Nh, int Nturbines){
+#else
 int ioEndNetCDFdefineMode(int ncid, int Nx, int Ny, int Nz, int Nh){
+#endif
    int *dimIndexVec;
    int  dimIndexCnt;
    int idx;
@@ -607,9 +726,15 @@ int ioEndNetCDFdefineMode(int ncid, int Nx, int Ny, int Nz, int Nh){
    } 
    if(dimIndexCnt < Nx){
      dimIndexCnt = Nx;
-   } 
+   }
+#ifdef GAD_EXT
+   if(dimIndexCnt < Nturbines){
+     dimIndexCnt = Nturbines;
+   }
+#endif
+
    //Malloc an index vector with dimIndexCnt elements;
-   dimIndexVec= (int *) malloc(dimIndexCnt*sizeof(int)); /* 3 for each part of path/base.subString */ 
+   dimIndexVec= (int *) malloc(dimIndexCnt*sizeof(int)); 
    //Initialize the index vector
    for(idx=0; idx < dimIndexCnt; idx++){
      dimIndexVec[idx] = idx;
@@ -622,7 +747,12 @@ int ioEndNetCDFdefineMode(int ncid, int Nx, int Ny, int Nz, int Nh){
    } 
    if ((errorCode = nc_put_vara_int(ncid, nx_varid, &start[dimids[3]], &count[dimids[3]], dimIndexVec))){
        ERR(errorCode);
-   } 
+   }
+#ifdef GAD_EXT
+   if ((errorCode = nc_put_vara_int(ncid, nx_varid, &start[dimids[4]], &count[dimids[4]], dimIndexVec))){
+       ERR(errorCode);
+   }
+#endif 
    free(dimIndexVec);
    
    return(errorCode);
@@ -631,7 +761,11 @@ int ioEndNetCDFdefineMode(int ncid, int Nx, int Ny, int Nz, int Nh){
 /*----->>>>> int ioPutNetCDFoutFileVars();    ---------------------------------------------------------------------
 * Used to put(write) all variables in the regiter list in(to) the NetCDF file. 
 */
+#ifdef GAD_EXT
+int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh, int Nturbines){
+#else
 int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
+#endif
    int errorCode = IO_SUCCESS;
    size_t *countPtr;
    ioVar_t *ptr;
@@ -643,6 +777,7 @@ int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
    int rhoDivideSwitch = 0;
    int verbose_log = 0;
    int *intField;
+   void* memsetReturnVal;
 
    /* For each entry in the ioVarsList, "put" the var */
    ptr = getFirstVarFromList();
@@ -754,6 +889,15 @@ int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
                  ioBuffField[kji] = field[ijk]; //out-of-place trim and transpose if the array elements
              } // end for(j...
            } // end for(i...
+#ifdef GAD_EXT
+         }else if((ptr->nDims == 2)&&(ptr->dimids[1] == 4)){
+           countPtr=count1dTD_GAD;
+           /* Reset to zero and then Reduce(MPI_SUM op) into the write buffer */
+           if(mpi_rank_world==0){
+	     memsetReturnVal = memset(ioBuffField,0,(Nturbines)*sizeof(float));  //Just sets the first Nturbines elements to zero
+	   }//end if mpi_rank ==0
+           MPI_Reduce(field, ioBuffField, Nturbines, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+#endif
          }else if((ptr->nDims == 1)&&(ptr->dimids[0] == 0)){
            countPtr=count;
            if(mpi_rank_world==0){
@@ -773,6 +917,10 @@ int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
            }
          }//endif mpi_Rank_world==0
       } else if(!strcmp(ptr->type,"int")){
+#ifdef DEBUG
+   printf("mpi_rank_world--%d/%d Putting variable field %s...\n",mpi_rank_world,mpi_size_world,ptr->name);
+   fflush(stdout);
+#endif
          intField = (int *) ptr->varMemAddress;
          if((ptr->nDims == 1)&&(ptr->dimids[0] == 0)){
            countPtr=count;
@@ -783,10 +931,29 @@ int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
                 fflush(stdout);
              }
            }//endif mpi_Rank_world==0
-         }// end if ndims==1  && dimids[0]=0 (time) 
+	 }else if((ptr->nDims == 2)&&(ptr->dimids[1] == 4)){
+           countPtr=count1dTD_GAD;
+           if (mpi_rank_world==0){
+	      memsetReturnVal = memset(ioBuffFieldInt,0,(Nturbines)*sizeof(int));  //Just sets the first Nturbines elements to zero
+	      if (memsetReturnVal==NULL){
+                printf("ioPutNetCDFoutFileVars: Error in call to memset for var = %s\n",ptr->name);
+                fflush(stdout);
+	      }//end if 
+           }//endif mpi_Rank_world==0
+           MPI_Reduce(intField, ioBuffFieldInt, Nturbines, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+           if (mpi_rank_world==0){
+             if ((errorCode = nc_put_vara_int(ncid, ptr->ncvarid, start, countPtr, ioBuffFieldInt))){
+                ERR(errorCode);
+                printf("ioPutNetCDFoutFileVars: Error writing field = %s\n",ptr->name);
+                fflush(stdout);
+             }
+           }//endif mpi_Rank_world==0
+         
+	 }// end if ndims==1  && dimids[0]=0 (time) else if(nDims==2 && dimids[1]=4)
       } else {
         printf("Cannot 'put' a NetCDF variable with var.type = %s\n",ptr->type);
-      }// if (ptr.type == "float") else ...
+      }// if (ptr->type == "float") else if(ptr->type == "int")...
+      MPI_Barrier(MPI_COMM_WORLD);
       ptr = ptr->next;
    } //end while ptr != NULL
 
