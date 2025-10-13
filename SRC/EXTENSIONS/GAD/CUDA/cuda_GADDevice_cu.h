@@ -109,7 +109,7 @@ __global__ void cudaDevice_GADinter(float* xPos_d, float* yPos_d, float* zPos_d,
 * This function is the global entry kernel for computing GAD forcing from turbines
 */
 __global__ void cudaDevice_GADfinal(float* xPos_d, float* yPos_d, float* zPos_d, float* topoPos_d,
-                                    float* hydroFlds_d, float* hydroFldsFrhs_d, int simTime_it,
+                                    float* hydroFlds_d, float* hydroFldsFrhs_d, int simTime_it, float dt,
                                     int* GAD_turbineType_d, float* GAD_turbineVolMask_d,
                                     float* GAD_Xcoords_d, float* GAD_Ycoords_d, float* GAD_rotorTheta_d,
                                     float* GAD_hubHeights_d, float* GAD_rotorD_d, float* GAD_nacelleD_d,

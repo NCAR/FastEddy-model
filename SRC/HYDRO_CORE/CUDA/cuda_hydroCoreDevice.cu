@@ -483,6 +483,24 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
       cudaDevice_dynamicz0tLand<<<grid, tBlock>>>(z0m_d, z0t_d, fricVel_d, sea_mask_d);
     }
 #endif
+#ifdef GAD_EXT
+   if (GADSelector > 0 && ((physics_oneRKonly==0) || (timeStage==numRKstages))){
+     cudaDevice_GADinter<<<grid, tBlock>>>(xPos_d, yPos_d, zPos_d, topoPos_d,
+                                           simTime_it, timeStage, numRKstages, dt,
+                                           hydroFlds_d, GAD_turbineType_d, GAD_turbineVolMask_d,
+                                           GAD_Xcoords_d, GAD_Ycoords_d, GAD_rotorTheta_d,
+                                           GAD_hubHeights_d, GAD_rotorD_d, GAD_nacelleD_d,
+                                           turbinePolyTwist_d, turbinePolyChord_d,
+                                           turbinePolyPitch_d, turbinePolyOmega_d,
+                                           rnorm_vect_d, alpha_minmax_vect_d,
+                                           turbinePolyCl_d, turbinePolyCd_d,
+                                           GAD_turbineRank_d, GAD_turbineRefi_d, GAD_turbineRefj_d, GAD_turbineRefk_d,
+                                           u_sampAvg_d, v_sampAvg_d,
+                                           GAD_turbineUseries_d, GAD_turbineVseries_d,
+                                           GAD_turbineRefMag_d, GAD_turbineRefDir_d,
+                                           GAD_turbineYawing_d, GAD_yawError_d, GAD_anFactor_d);
+   }
+#endif
    gpuErrchk( cudaGetLastError() );
    gpuErrchk( cudaDeviceSynchronize() );
    
@@ -581,22 +599,8 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 #endif
 #ifdef GAD_EXT
    if (GADSelector > 0 && ((physics_oneRKonly==0) || (timeStage==numRKstages))){
-     cudaDevice_GADinter<<<grid, tBlock>>>(xPos_d, yPos_d, zPos_d, topoPos_d,
-		                           simTime_it, timeStage, numRKstages, dt,
-                                           hydroFlds_d, GAD_turbineType_d, GAD_turbineVolMask_d,
-                                           GAD_Xcoords_d, GAD_Ycoords_d, GAD_rotorTheta_d,
-                                           GAD_hubHeights_d, GAD_rotorD_d, GAD_nacelleD_d,
-                                           turbinePolyTwist_d, turbinePolyChord_d,
-                                           turbinePolyPitch_d, turbinePolyOmega_d,
-                                           rnorm_vect_d, alpha_minmax_vect_d,
-                                           turbinePolyCl_d, turbinePolyCd_d,
-                                           GAD_turbineRank_d, GAD_turbineRefi_d, GAD_turbineRefj_d, GAD_turbineRefk_d,
-                                           u_sampAvg_d, v_sampAvg_d,
-                                           GAD_turbineUseries_d, GAD_turbineVseries_d,
-                                           GAD_turbineRefMag_d, GAD_turbineRefDir_d,
-                                           GAD_turbineYawing_d, GAD_yawError_d, GAD_anFactor_d);
      cudaDevice_GADfinal<<<grid, tBlock>>>(xPos_d, yPos_d, zPos_d, topoPos_d,
-                                           hydroFlds_d, hydroFldsFrhs_d,simTime_it,
+                                           hydroFlds_d, hydroFldsFrhs_d,simTime_it,dt,
                                            GAD_turbineType_d, GAD_turbineVolMask_d,
                                            GAD_Xcoords_d, GAD_Ycoords_d, GAD_rotorTheta_d,
                                            GAD_hubHeights_d, GAD_rotorD_d, GAD_nacelleD_d,
