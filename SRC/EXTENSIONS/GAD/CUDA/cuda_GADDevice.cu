@@ -76,7 +76,10 @@ float* GAD_forceZ_d;         /* turbine forces in the z-direction */
 */
 extern "C" int cuda_GADDeviceSetup(){
    int errorCode = CUDA_GAD_SUCCESS;
-   
+   float* tmp_vector;
+   float pi=acosf(-1.0);
+   int i,iturb;
+
    cudaMemcpyToSymbol(GADSelector_d, &GADSelector, sizeof(int));
    if(GADSelector > 0){
     /*Host-to-Device memcopy constant values */
@@ -124,6 +127,12 @@ extern "C" int cuda_GADDeviceSetup(){
     cudaMemcpy(GAD_Xcoords_d, GAD_Xcoords, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_Ycoords_d, GAD_Ycoords, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_rotorTheta_d, GAD_rotorTheta, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
+#ifdef DEBUG_GAD
+    for (iturb=0; iturb<GADNumTurbines; iturb++){
+       printf("%d/%d: iturb--%d: rotorTheta=%f\n",
+              mpi_rank_world,mpi_size_world,iturb,GAD_rotorTheta[iturb]);
+    }
+#endif
     cudaMemcpy(GAD_yawError_d, GAD_yawError, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_anFactor_d, GAD_anFactor, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     
@@ -131,6 +140,36 @@ extern "C" int cuda_GADDeviceSetup(){
     fecuda_DeviceMalloc(GADNumTurbines*GADrefSeriesLength*sizeof(float), &GAD_turbineVseries_d);
     fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &u_sampAvg_d);
     fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &v_sampAvg_d);
+
+    //Initialize u_sampAvg & GAD_turbineUseries as constant (per-turbine) then send down to the device 
+    tmp_vector = (float *) malloc(GADrefSeriesLength*sizeof(float));
+    for (iturb=0; iturb<GADNumTurbines; iturb++){
+       tmp_vector[0] = -GAD_turbineRefMag[iturb]*sinf(GAD_turbineRefDir[iturb]*pi/180.0);
+#ifdef DEBUG_GAD
+       printf("%d/%d: iturb--%d \tu_refSeries_initial=%f\n",
+              mpi_rank_world,mpi_size_world,iturb,tmp_vector[0]);
+#endif
+       for (i=1; i<GADrefSeriesLength; i++){
+           tmp_vector[i] = tmp_vector[0];
+       }
+
+       cudaMemcpy(&u_sampAvg_d[iturb], &tmp_vector[0], sizeof(float), cudaMemcpyHostToDevice);
+       cudaMemcpy(&GAD_turbineUseries_d[iturb*GADrefSeriesLength], tmp_vector, GADrefSeriesLength*sizeof(float), cudaMemcpyHostToDevice);
+    }
+    //Initialize v_sampAvg & GAD_turbineVseries as constant (per-turbine) then send down to the device 
+    for (iturb=0; iturb<GADNumTurbines; iturb++){
+       tmp_vector[0] = -GAD_turbineRefMag[iturb]*cosf(GAD_turbineRefDir[iturb]*pi/180.0);
+#ifdef DEBUG_GAD
+       printf("%d/%d: iturb--%d \tv_refSeries_initial=%f\n",
+              mpi_rank_world,mpi_size_world,iturb,tmp_vector[0]);
+#endif
+       for (i=1; i<GADrefSeriesLength; i++){
+           tmp_vector[i] = tmp_vector[0];
+       }
+       cudaMemcpy(&v_sampAvg_d[iturb], &tmp_vector[0], sizeof(float), cudaMemcpyHostToDevice);
+       cudaMemcpy(&GAD_turbineVseries_d[iturb*GADrefSeriesLength], tmp_vector, GADrefSeriesLength*sizeof(float), cudaMemcpyHostToDevice);
+    }
+    free(tmp_vector);
 
     fecuda_DeviceMalloc(GADNumTurbineTypes*sizeof(float), &GAD_hubHeights_d);
     fecuda_DeviceMalloc(GADNumTurbineTypes*sizeof(float), &GAD_rotorD_d);
@@ -282,8 +321,8 @@ __global__ void cudaDevice_GADinter(float* xPos_d, float* yPos_d, float* zPos_d,
              update_turbineRefMagDir(sampleIndex, u_sampAvg_d[iturb],v_sampAvg_d[iturb],
                                      &GAD_turbineUseries_d[iturb*GADrefSeriesLength_d], &GAD_turbineVseries_d[iturb*GADrefSeriesLength_d], &GAD_turbineRefMag_d[iturb], &GAD_turbineRefDir_d[iturb]);
 #ifdef DEBUG_GAD
-             printf("%d/%d:simTime_it=%d, iturb--%d @ (%d,%d,%d): u_sA=%f, v_sA=%f, RefMag=%f, RefDir=%f \n",
-                mpi_rank_world_d,mpi_size_world_d,simTime_it,iturb,i,j,k,u_sampAvg_d[iturb],v_sampAvg_d[iturb],GAD_turbineRefMag_d[iturb],GAD_turbineRefDir_d[iturb]);
+             printf("%d/%d:simTime_it=%d, iturb--%d @ (%d,%d,%d): rotTheta = %f, u_sA=%f, v_sA=%f, RefMag=%f, RefDir=%f \n",
+                mpi_rank_world_d,mpi_size_world_d,simTime_it,iturb,i,j,k, GAD_rotorTheta_d[iturb], u_sampAvg_d[iturb],v_sampAvg_d[iturb],GAD_turbineRefMag_d[iturb],GAD_turbineRefDir_d[iturb]);
 #endif
 
              //reset the sampleAVG values to zero
@@ -460,31 +499,7 @@ __device__ void cudaDevice_cellInRotor(float* cell_inRotor, float* cell_rVector,
 
     //Perpendicular distance from nacelle-center to current grid point (normal to the rotor-disk plane)
     perpDist = dr[0]*x_hat[0] + dr[1]*x_hat[1] + dr[2]*x_hat[2];
-/*  Not currently using the variable rVector, nor the parallelHorizDist or parallelVertDist, yHat or zHat variables (will use with yaw corrections and tilt controls...
-    float y_hat[3];
-    float z_hat[3];
-    //Unit horizontal vector normal in the rotor-disk plane 
-    y_hat[0] = -sinf(turbTheta*pi/180.0); 
-    y_hat[1] = cosf(turbTheta*pi/180.0); 
-    y_hat[2] = 0.0; 
-    
-    //Unit vertical vector normal in the rotor-disk plane 
-    z_hat[0] = sinf(tiltAngle*pi/180.0)*cosf(turbTheta*pi/180.0); 
-    z_hat[1] = sinf(tiltAngle*pi/180.0)*sinf(turbTheta*pi/180.0); 
-    z_hat[2] = cosf(tiltAngle*pi/180.0); 
-   
-    float parallelHorizDist;
-    float parallelVertDist;
-    //Horizontal distance from nacelle-center to current grid point parallel to the rotor-disk plane
-    parallelHorizDist = dr[0]*y_hat[0] + dr[1]*y_hat[1] + dr[2]*y_hat[2];
-    //Vertical distance from nacelle-center to current grid point parallel to the rotor-disk plane
-    parallelVertDist = dr[0]*z_hat[0] + dr[1]*z_hat[1] + dr[2]*z_hat[2];
-    //Radial distance from nacelle center parallel to the rotor-disk plane
-    
-    float rVector;
-    rVector = sqrtf(parallelHorizDist*parallelHorizDist + parallelVertDist*parallelVertDist);
-*/    
-    //Proper radial distance of blade segment (accounts for tilted rotor?)
+    //Proper radial distance of blade segment 
     *cell_rVector = sqrtf( powf(dr[0]-perpDist*x_hat[0],2.0)
                           +powf(dr[1]-perpDist*x_hat[1],2.0) 
                           +powf(dr[2]-perpDist*x_hat[2],2.0) );
@@ -552,7 +567,6 @@ __device__ void cudaDevice_GADbetaOmega(float turbineRefMag, float anFactor, flo
     U_ijk = GADrefU_d;
   }else{
     U_ijk = turbineRefMag/(1.0-anFactor); // should this include vertical velcoty too - w???
-    //U_ijk = sqrtf(powf(u/rho,2.0)+powf(v/rho,2.0)); // should this include vertical velcoty too - w???
   }
 
   /* pitch angle */
@@ -827,7 +841,7 @@ __device__ void update_yawError(float* turbineRefDir, float* rotorTheta, float* 
     t_refresh = GADsamplingAvgLength_d*dt;
     Angle_TurbWind(*turbineRefDir, *rotorTheta, &diff_angle);
     *yawError = *yawError + copysign(1.0,diff_angle)*powf(diff_angle,2.0)*t_refresh;
-    if (fabs(*yawError) >= yawErr_max){
+    if (fabsf(*yawError) >= yawErr_max){
       *turbineYawing = 1;
     }
   }
@@ -845,10 +859,10 @@ __device__ void update_rotorTheta(float* turbineRefDir, float* rotorTheta, float
 
   yawing_angle = copysign(1.0,*yawError)*yawing_rate*dt;
   *rotorTheta = *rotorTheta + yawing_angle;
-  *rotorTheta = fmod(*rotorTheta,ref360);
+  *rotorTheta = fmodf(*rotorTheta,ref360);
   Angle_TurbWind(*turbineRefDir, *rotorTheta, &diff_angle);
 
-  if (fabs(diff_angle) <  fabs(yawing_angle)){
+  if (fabsf(diff_angle) <  fabsf(yawing_angle)){
     *turbineYawing = 0;
     *yawError = 0.0;
   }
@@ -867,10 +881,10 @@ __device__ void Angle_TurbWind(float turbineRefDir, float rotorTheta, float* dif
   float sign_diff;
   *diff_angle = 0;
 
-  *diff_angle = fmod(270.0 - turbineRefDir,360.0) - rotorTheta;
-  if (fabs(*diff_angle) > 180.0){
+  *diff_angle = fmodf(270.0 - turbineRefDir,360.0) - rotorTheta;
+  if (fabsf(*diff_angle) > 180.0){
     sign_diff = -copysign(1.0,*diff_angle);
-    *diff_angle = sign_diff*(360.0 - fabs(*diff_angle));
+    *diff_angle = sign_diff*(360.0 - fabsf(*diff_angle));
   }
 
 } // Angle_TurbWind()

@@ -341,6 +341,12 @@ int GADConstructor(){
          }
        } //end if mpi_rank_world == 0
        MPI_Bcast(*fldPtr, GADNumTurbines, MPI_FLOAT, 0, MPI_COMM_WORLD);
+       if(iFld == 2){
+         errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, *fldPtr);
+         printf("%d/%d: GADConstructor()-- %s stored at %p, has been registered with IO.\n",
+                mpi_rank_world, mpi_size_world, &fldName[0], *fldPtr);
+         fflush(stdout);
+       } //end if iFld ==2 ... GAD_rotorTheta
 #ifdef DEBUG_GADCONSTRUCTOR
        int iRank,i,j,ipoly;
        for(iRank = 0; iRank < mpi_size_world; iRank++){
@@ -348,7 +354,7 @@ int GADConstructor(){
          if(iRank == mpi_rank_world){
            printf("%d/%d %s:--------- \n",mpi_rank_world,mpi_size_world, fldName);
            for(i = 0; i < GADNumTurbines; i++){
-             printf("\t%d \t= \t%f\n",i,(*fldPtr)[i]);
+               printf("\t%d \t= \t%f\n",i,(*fldPtr)[i]);
            }// end for i...
            printf("\n");
            fflush(stdout);
@@ -627,10 +633,38 @@ int GADConstructor(){
   GAD_turbineRefj = (int*) malloc(GADNumTurbines*sizeof(int));
   GAD_turbineRefk = (int*) malloc(GADNumTurbines*sizeof(int));
   GAD_turbineYawing = (int*) malloc(GADNumTurbines*sizeof(int));
+  sprintf(&fldName[0],"GAD_turbineYawing");
+  errorCode = ioRegisterVar(&fldName[0], "int", 2, dims1dTD_GAD, &GAD_turbineYawing[0]);
   GAD_turbineRefMag = (float*) malloc(GADNumTurbines*sizeof(float));
+  sprintf(&fldName[0],"GAD_turbineRefMag");
+  errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_turbineRefMag[0]);
   GAD_turbineRefDir = (float*) malloc(GADNumTurbines*sizeof(float));
+  sprintf(&fldName[0],"GAD_turbineRefDir");
+  errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_turbineRefDir[0]);
   GAD_yawError = (float*) malloc(GADNumTurbines*sizeof(float));
+  sprintf(&fldName[0],"GAD_yawError");
+  errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_yawError[0]);
   GAD_anFactor = (float*) malloc(GADNumTurbines*sizeof(float));
+  sprintf(&fldName[0],"GAD_anFactor");
+  errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_anFactor[0]);
+
+  /*Register GAD_rotorTheta*/
+  sprintf(&fldName[0],"GAD_rotorTheta");
+  //errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_rotorTheta[0]);
+  printf("%d/%d: GADConstructor = %s stored at %p, has been registered with IO.\n",
+         mpi_rank_world, mpi_size_world, &fldName[0],&GAD_rotorTheta[0]);
+  fflush(stdout);
+  //sprintf(&fldName[0],"GAD_Xcoords");
+  //errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_Xcoords[0]);
+  //printf("%d/%d: GADConstructor = %s stored at %p, has been registered with IO.\n",
+  //       mpi_rank_world, mpi_size_world, &fldName[0],&GAD_Xcoords[0]);
+  //fflush(stdout);
+  //sprintf(&fldName[0],"GAD_Ycoords");
+  //errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_Ycoords[0]);
+  //printf("%d/%d: GADConstructor = %s stored at %p, has been registered with IO.\n",
+  //       mpi_rank_world, mpi_size_world, &fldName[0],&GAD_Ycoords[0]);
+  //fflush(stdout);
+  //errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, GAD_rotorTheta);
 
   return(errorCode);
 } //end GADConstructor()
@@ -665,15 +699,17 @@ int GADInitTurbineRefChars(float dt){
   for(iturb = 0; iturb < GADNumTurbines; iturb++){
     rVec0 = 99999.9999;
     deltaz0 = 99999.9999;
-    GAD_turbineRank[iturb] = -999;  //Initialize to special "absent" value of -999
-    GAD_turbineRefi[iturb] = -999;  //Initialize to special "absent" value of -999
-    GAD_turbineRefj[iturb] = -999;  //Initialize to special "absent" value of -999
-    GAD_turbineRefk[iturb] = -999;  //Initialize to special "absent" value of -999
-    GAD_turbineRefMag[iturb] = 0.0; //Standard initialization to zero
-    GAD_turbineRefDir[iturb] = 0.0; //Standard initialization to zero
-    GAD_turbineYawing[iturb] = 0;   //Initialize to all turbines not rotating
-    GAD_yawError[iturb] = 0.0;      //Initialize to zero yaw error
-    GAD_anFactor[iturb] = 0.0;      //Initialize to zero axial induction factor
+      GAD_turbineRank[iturb] = -999;  //Initialize to special "absent" value of -999
+      GAD_turbineRefi[iturb] = -999;  //Initialize to special "absent" value of -999
+      GAD_turbineRefj[iturb] = -999;  //Initialize to special "absent" value of -999
+      GAD_turbineRefk[iturb] = -999;  //Initialize to special "absent" value of -999
+    if(inFile == NULL){
+      GAD_turbineRefMag[iturb] = 0.0; //Standard initialization to zero
+      GAD_turbineRefDir[iturb] = 0.0; //Standard initialization to zero
+      GAD_turbineYawing[iturb] = 0;   //Initialize to all turbines not rotating
+      GAD_yawError[iturb] = 0.0;      //Initialize to zero yaw error
+      GAD_anFactor[iturb] = 0.0;      //Initialize to zero axial induction factor
+    }//end if inFile == NULL
     for(i=iMin-Nh; i < iMax+Nh; i++){
       for(j=jMin-Nh; j < jMax+Nh; j++){
         for(k=kMin-Nh; k < kMax+Nh; k++){
@@ -714,6 +750,19 @@ int GADInitTurbineRefChars(float dt){
 #endif
   }// end for iturb...
 
+  //Having determined the mpi_rank of each turbine, zero out the 
+  //GAD_rotorTheta and other elements for any turbines which do NOT belong to a given mpi_rank_world
+  //This allows subsequent MPI_Reduce in IO using MPI_SUM op to update GAD_rotoTheta with time  
+  for(iturb = 0; iturb < GADNumTurbines; iturb++){
+     if(GAD_turbineRank[iturb] != mpi_rank_world){
+       GAD_rotorTheta[iturb] = 0.0;
+       GAD_turbineRefMag[iturb] = 0.0;
+       GAD_turbineRefDir[iturb] = 0.0;
+       GAD_turbineYawing[iturb] = 0;
+       GAD_yawError[iturb] = 0.0;
+       GAD_anFactor[iturb] = 0.0;
+     }
+  }// end for iturb...
 
   return(errorCode);
 }//end int GADInitTurbineRefChars() 
@@ -809,10 +858,17 @@ int GADUpdateTurbineRotorMask(){
   int ij;
   float mask_value;
   float pi = 3.1415926535;
+#define CELLINROTOR
+#ifdef CELLINROTOR
+  float x_hat[3];
+  float dr[3];
+  float tiltAngle = 0.0;
+#else
   float x1,x2,x3,y1,y2,y3;
-  float perpDist;
-  float perpdx_rot;
   float parallelDist;
+#endif
+  float perpdx_rot;
+  float perpDist;
   float rVec;
   void  *memsetReturnVal;
   
@@ -829,6 +885,25 @@ int GADUpdateTurbineRotorMask(){
            ijk = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+k;
            ij = i*(Nyp+2*Nh)+j;
            mask_value = 0.0;
+#ifdef CELLINROTOR
+	   //Unit horizontal vector normal to the rotor-disk plane
+           x_hat[0] = cosf(tiltAngle*pi/180.0)*cosf(GAD_rotorTheta[iturb]*pi/180.0);
+           x_hat[1] = cosf(tiltAngle*pi/180.0)*sinf(GAD_rotorTheta[iturb]*pi/180.0);
+           x_hat[2] = -sinf(tiltAngle*pi/180.0);
+
+           //Vector from nacelle center to current grid point
+           dr[0] = xPos[ijk]-GAD_Xcoords[iturb];
+           dr[1] = yPos[ijk]-GAD_Ycoords[iturb];
+           dr[2] = (zPos[ijk]-topoPos[ij])-GAD_hubHeights[GAD_turbineType[iturb]];
+    
+           //Perpendicular distance from nacelle-center to current grid point (normal to the rotor-disk plane)
+           perpDist = dr[0]*x_hat[0] + dr[1]*x_hat[1] + dr[2]*x_hat[2];
+
+           //Proper radial distance of blade segment (accounts for tilted rotor?) 
+	   rVec = sqrtf( powf(dr[0]-perpDist*x_hat[0],2.0)
+                        +powf(dr[1]-perpDist*x_hat[1],2.0)
+                        +powf(dr[2]-perpDist*x_hat[2],2.0) );
+#else
            /* Define the rotor plane */
            x1 = GAD_Xcoords[iturb] - 0.5*GAD_rotorD[GAD_turbineType[iturb]]*cos(0.5*pi + GAD_rotorTheta[iturb]*pi/180.0);
            y1 = GAD_Ycoords[iturb] - 0.5*GAD_rotorD[GAD_turbineType[iturb]]*sin(0.5*pi + GAD_rotorTheta[iturb]*pi/180.0);
@@ -836,23 +911,28 @@ int GADUpdateTurbineRotorMask(){
            y2 = GAD_Ycoords[iturb] + 0.5*GAD_rotorD[GAD_turbineType[iturb]]*sin(0.5*pi + GAD_rotorTheta[iturb]*pi/180.0);
            x3 = fabs(GAD_Xcoords[iturb]-xPos[ijk])*cos(0.5*pi + GAD_rotorTheta[iturb]*pi/180.0);
            y3 = fabs(GAD_Ycoords[iturb]-yPos[ijk])*sin(0.5*pi + GAD_rotorTheta[iturb]*pi/180.0);
-           /*Define ithe perpendicular "dx" in the rotated "x-y" plane  */
-           perpdx_rot =  fabs(dX*cos(0.5*pi + GAD_rotorTheta[iturb]*pi/180.0))
-                       + fabs(dY*sin(0.5*pi + GAD_rotorTheta[iturb]*pi/180.0));
 
            /*Find the perpendicular distance from this i,j,k cell center to the rotor-plane*/
            perpDist = fabs( (x2-x1)*(y1-yPos[ijk]) - (x1-xPos[ijk])*(y2-y1) )/sqrt(pow((x2-x1),2.0) + pow((y2-y1),2.0));
            parallelDist = sqrt(pow(x3,2.0)+pow(y3,2.0)); 
            /*Recalculate the radial vector of the yaw-projected rotor disk...*/
            rVec = sqrt(pow(parallelDist,2.0) + pow((GAD_hubHeights[GAD_turbineType[iturb]]-(zPos[ijk]-topoPos[ij])),2.0));
-           if(   (perpDist < ((float) numgridCells_away)*perpdx_rot)
-              && rVec <= (0.5*GAD_rotorD[GAD_turbineType[iturb]]) ){
+#endif
+           /*Define ithe perpendicular "dx" in the rotated "x-y" plane  */
+           perpdx_rot =  fabs(dX*cosf(0.5*pi + GAD_rotorTheta[iturb]*pi/180.0))
+                       + fabs(dY*sinf(0.5*pi + GAD_rotorTheta[iturb]*pi/180.0));
+
+           if(   (fabs(perpDist) < ((float) numgridCells_away)*perpdx_rot)
+              && rVec <= (0.5*GAD_rotorD[GAD_turbineType[iturb]])
+	      && rVec >  (0.5*GAD_nacelleD[GAD_turbineType[iturb]]) ){
 //#define DEBUG_GAD_UPDATEROTOR
 #ifdef DEBUG_GAD_UPDATEROTOR
-             float m,b;
-             if((mpi_rank_world == 0) && (k==13) ){
-               printf("GADCreateTurbineRotorMask: Turbine %d @ %d,%d,%d: perpDist = %f , perpdx_rot = %f, parallelDist = %f, zDist = %f, m = %f, b = %f.\n",
-               iturb,i,j,k,perpDist, perpdx_rot, parallelDist, sqrt(pow((GAD_hubHeights[GAD_turbineType[iturb]]-(zPos[ijk]-topoPos[ij])),2.0)), m, b ) ;
+             //float m,b;
+             if((mpi_rank_world == 6) && (k==20) ){
+              // printf("GADCreateTurbineRotorMask: Turbine %d @ %d,%d,%d: perpDist = %f , perpdx_rot = %f, parallelDist = %f, zDist = %f, m = %f, b = %f.\n",
+              // iturb,i,j,k,perpDist, perpdx_rot, parallelDist, sqrt(pow((GAD_hubHeights[GAD_turbineType[iturb]]-(zPos[ijk]-topoPos[ij])),2.0)), m, b ) ;
+               printf("GADCreateTurbineRotorMask: Turbine %d @ %d,%d,%d: rVec = %f , perpDist = %f , perpdx_rot = %f, zDist = %f.\n",
+               iturb,i,j,k, rVec, perpDist, perpdx_rot, sqrtf(powf((GAD_hubHeights[GAD_turbineType[iturb]]-(zPos[ijk]-topoPos[ij])),2.0))) ;
                fflush(stdout);
              }
 #endif

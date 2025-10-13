@@ -1347,12 +1347,12 @@ extern "C" int cuda_hydroCoreSynchFieldsFromDevice(){
 
 #ifdef GAD_EXT
    if (GADSelector > 0){
-     // TODO-- AllGather the rank-dependent RefMag and RefDir values, all all turbine values for these should be 0.0 except when a 
-     // turbine is present in a given ranks subdomain, so MPI_SUM should do the trick to gather the refmag and refdir values 
-     // into a common pair of vectors 
-     //gpuErrchk( cudaMemcpy(GAD_turbineRefMag, GAD_turbineRefMag_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
-     //gpuErrchk( cudaMemcpy(GAD_turbineRefDir, GAD_turbineRefDir_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
-     gpuErrchk( cudaMemcpy(GAD_rotorTheta, GAD_rotorTheta_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) ); // DME: needed to be able to update the rotor location...
+     gpuErrchk( cudaMemcpy(GAD_turbineYawing, GAD_turbineYawing_d, GADNumTurbines*sizeof(int), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(GAD_turbineRefMag, GAD_turbineRefMag_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(GAD_turbineRefDir, GAD_turbineRefDir_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(GAD_yawError, GAD_yawError_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(GAD_anFactor, GAD_anFactor_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(GAD_rotorTheta, GAD_rotorTheta_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) ); 
      if (GADoutputForces == 1){
        gpuErrchk( cudaMemcpy(GAD_forceX, GAD_forceX_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );
        gpuErrchk( cudaMemcpy(GAD_forceY, GAD_forceY_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );
@@ -1368,7 +1368,7 @@ extern "C" int cuda_hydroCoreSynchFieldsFromDevice(){
    fflush(stdout);
    MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
+   
    return(errorCode);
 }//end cuda_hydroCoreSynchFieldsFromDevice()
 
