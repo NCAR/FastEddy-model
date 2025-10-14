@@ -48,7 +48,10 @@
 .longtable td:nth-child(5),
 .longtable th:nth-child(5) { width: 4% !important; }  /* Mandatory/Optional */
 
-/*
-.longtable td:nth-child(6),
-.longtable th:nth-child(6) { width: 31% !important; }  /* Description */
-*/
+/* Custom color for conditional text */
+.conditional-text {
+    color: #666666;  /* or your preferred color */
+    font-style: italic;
+}
+
+
