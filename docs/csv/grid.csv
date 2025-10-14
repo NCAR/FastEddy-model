@@ -1,4 +1,4 @@
-**Nx:** Number of discretised domain elements in the x (zonal) direction, 1, INT_MAX, 122, M 
+**Nx:** Number of discretised domain elements in the x (zonal) direction, 1, INT_MAX, 128, M 
 **Ny:** Number of discretised domain elements in the y (meridional) direction, 1, INT_MAX, 122, M 
 **Nz:** Number of discretised domain elements in the z (vertical) direction, 1, INT_MAX, 122, M 
 **Nh:** Number of halo cells to be used (dependent on largest stencil extent), 0, INT_MAX, 3, M
