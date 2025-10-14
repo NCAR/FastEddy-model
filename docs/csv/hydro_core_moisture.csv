@@ -1,10 +1,10 @@
-**moistureSelector:** Moisture selector: 0=off; 1=on, 0, 1, 0, M
-**moistureNvars:** Number of moisture species *C-M if moistureSelector==1*, 0, 2, 0, C-M
-**moistureAdvSelectorQv:** Water vapor advection scheme selector *C-M if moistureSelector==1*, 0, 6, 0, C-M
-**moistureAdvSelectorQv_b:** Hybrid advection scheme parameter for water vapor *C-M if moistureSelector==1*, 0.0, 1.0, 0.0, C-M 
-**moistureAdvSelectorQi:** Moisture advection scheme selector for non-qv fields (non-oscillatory schemes) *C-M if moistureSelector==1*, 0, 2, 0, C-M 
-**moistureSGSturb:** Selector to apply sub-grid scale diffusion to moisture fields *C-M if moistureSelector==1*, 0, 1, 0, C-M 
-**moistureCond:** Selector to apply condensation to moisture fields *C-M if moistureSelector==1*, 1, 4, 1, C-M 
-**moistureCondTscale:** Relaxation time in seconds *C-M if moistureSelector==1*, 1e-4, 1000.0, 1.0, C-M
-**moistureCondBasePres:** Selector to use base pressure for microphysics *C-M if moistureSelector==1*, 0, 1, 0, C-M
-**moistureMPcallTscale:** Time scale for microphysics to be called *C-M if moistureSelector==1*, 1e-4, 1000.0, 1.0, C-M
+**moistureSelector:** |br| Moisture selector: |br| 0=off; 1=on, 0, 1, 0, M
+**moistureNvars:** |br| Number of moisture species |br| *C-M if moistureSelector==1*, 0, 2, 0, C-M
+**moistureAdvSelectorQv:** |br| Water vapor advection scheme selector |br| *C-M if moistureSelector==1*, 0, 6, 0, C-M
+**moistureAdvSelectorQv_b:** |br| Hybrid advection scheme parameter for water vapor |br| *C-M if moistureSelector==1*, 0.0, 1.0, 0.0, C-M 
+**moistureAdvSelectorQi:** |br| Moisture advection scheme selector for non-qv fields (non-oscillatory schemes) |br| *C-M if moistureSelector==1*, 0, 2, 0, C-M 
+**moistureSGSturb:** |br| Selector to apply sub-grid scale diffusion to moisture fields |br| *C-M if moistureSelector==1*, 0, 1, 0, C-M 
+**moistureCond:** |br| Selector to apply condensation to moisture fields |br| *C-M if moistureSelector==1*, 1, 4, 1, C-M 
+**moistureCondTscale:** |br| Relaxation time in seconds |br| *C-M if moistureSelector==1*, 1e-4, 1000.0, 1.0, C-M
+**moistureCondBasePres:** |br| Selector to use base pressure for microphysics |br| *C-M if moistureSelector==1*, 0, 1, 0, C-M
+**moistureMPcallTscale:** |br| Time scale for microphysics to be called |br| *C-M if moistureSelector==1*, 1e-4, 1000.0, 1.0, C-M
