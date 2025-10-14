@@ -51,7 +51,7 @@
 /* Style italic text in first column only */
 .longtable td:nth-child(1) em,
 .longtable th:nth-child(1) em {
-    color: #222222;
+    color: #2a2a2a;
     font-style: italic;
 }
 
