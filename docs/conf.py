@@ -67,7 +67,7 @@ html_static_path = ['_static']
 html_logo = os.path.join('_static','fasteddy_logo_large_vertical_2024_06.png')
 
 # -- Intersphinx control -----------------------------------------------------
-intersphinx_mapping = {'numpy':("https://docs.scipy.org/doc/numpy/", None)}
+intersphinx_mapping = {'numpy':("https://numpy.org/doc/stable/", None)}
 
 numfig = True
 
