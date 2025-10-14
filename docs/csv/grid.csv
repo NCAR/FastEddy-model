@@ -9,4 +9,4 @@
 **topoFile:** A file containing topography (surface elevation in meters ASL), N/A, N/A, , O
 **verticalDeformSwitch:** Switch to use vertical coordinate deformation 0=off; 1=on, 0, 1, , M
 **verticalDeformFactor:** Deformation factor (0.0=max compression; 1.0=no compression), 0.0, 1.0, , M
-**verticalDeformQuadCoeff:** Deformation factor (0.0=max compression; 1.0=no compression), -2.0, 2.0, 0.0, M
+**verticalDeformQuadCoeff:** Quadratic term coefficient in the deformtion scheme, -2.0, 2.0, 0.0, M
