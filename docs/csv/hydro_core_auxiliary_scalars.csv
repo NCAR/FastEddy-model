@@ -6,8 +6,8 @@
 **srcAuxScTemporalType:** |br| Temporal characterization of source (0=instantaneous; 1=continuous) |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0, 1, 0, C-M
 **srcAuxScStartSeconds:** |br| Source start time in seconds |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0, FLT_MAX, 0, C-M
 **srcAuxScDurationSeconds:** |br| Source duration in seconds |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0, FLT_MAX, 30, C-M
-**srcAuxScGeometryType:** |br| 0=point (single cell volume); |br| 1=line (line of surface cells) |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0, 0, 0, C-M
-**srcAuxScMassSpecType:** |br| Mass specification type 0=strict mass in kg; 1=mass source rate in kg/s |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0, 0, 0, C-M
+**srcAuxScGeometryType:** |br| 0=point (single cell volume) |br| 1=line (line of surface cells) |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0, 0, 0, C-M
+**srcAuxScMassSpecType:** |br| Mass specification type |br| 0=strict mass in kg |br| 1=mass source rate in kg/s |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0, 0, 0, C-M
 **srcAuxScMassSpecValue:** |br| Mass specification value in kg or kg/s given by srcAuxScMassSpecType 0 or 1 |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0.0, FLT_MAX, 1.0, C-M
 **srcAuxScLocation_X:** |br| Source geometry centroid position in x (west-east) |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M
 **srcAuxScLocation_Y:** |br| Source geometry centroid position in y (south-north) |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M

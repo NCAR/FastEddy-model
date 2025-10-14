@@ -3,7 +3,7 @@
 **surflayer_z0t:** |br| Roughness length (temperature) when surflayerSelector > 0, 1e-6, 1e+1, 0.1, M
 **surflayer_z0tdyn:** |br| Dynamic z0t calculation following Zilitinkevich (1995) approach: |br| 0=off |br| 1=constant Zilitinkevich coeff |br| 2=variable Zilitinkevich coeff, 0, 2, 1, O
 **surflayer_wth:** |br| Kinematic sensible heat flux at the surface |br| *C-M if surflayerSelector==1*, -5e+0, 5e+0, 0.0, C-M
-**surflayer_tr:** |br| Temperature rate at the surface |br| *C-M if surflayerSelector==2* |br| (>0 for warming; <0 for cooling), -1e+1, 1e+1, 0.0, C-M
+**surflayer_tr:** |br| Temperature rate at the surface |br| (>0 for warming; <0 for cooling) |br| *C-M if surflayerSelector==2*, -1e+1, 1e+1, 0.0, C-M
 **surflayer_wq:** |br| Sensible heat flux at the surface (kg/kg m s-1) when surflayerSelector = 1 |br| *C-M if moistureSelector==1*, -5e+0, 5e+0, 0.0, C-M
 **surflayer_qr:** |br| Water vapor rate (kg/kg h-1) when surflayerSelector = 2 |br| *C-M if moistureSelector==1*, -1e+1, 1e+1, 0.0, C-M
 **surflayer_idealsine:** |br| Selector for idealized sinusoidal surface heat flux or skin temperature forcing, 0, 1, 0, O
