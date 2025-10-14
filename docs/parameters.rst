@@ -1,6 +1,6 @@
-**********
-Parameters
-**********
+**************************
+Parameters Reference Guide
+**************************
 
 This page defines the configurable parameters available in FastEddy\ :sup:`®`.
 Parameters are organized into logical sets by model feature or model configuration component.
