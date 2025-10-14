@@ -1,4 +1,4 @@
 **timeMethod:** Selector for time integration method. [0=RK3-WS2002 (default)], 0, 0, 0, O
 **Nt:** Number of timesteps to perform, 1, INT_MAX, 1000, M 
 **dt:** Timestep resolution in seconds, FLT_MIN, FLT_MAX, 1.0, M
-**NtBatch:** Number of timesteps to compute in batch launch; must have NtBatch <= Nt, 1, Nt, 1, M
+**NtBatch:** Number of timesteps to compute in batch launch; must have NtBatch <= Nt; should be equal to or a factor of frqOutput, 1, Nt, 1, M
