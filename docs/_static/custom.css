@@ -48,9 +48,10 @@
 .longtable td:nth-child(5),
 .longtable th:nth-child(5) { width: 4% !important; }  /* Mandatory/Optional */
 
-/* Custom color for conditional text */
-.conditional-text {
-    color: #666666;  /* or your preferred color */
+/* Style italic text in first column only */
+.longtable td:nth-child(1) em,
+.longtable th:nth-child(1) em {
+    color: #666666;
     font-style: italic;
 }
 
