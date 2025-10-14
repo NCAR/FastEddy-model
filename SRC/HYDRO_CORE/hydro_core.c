@@ -433,6 +433,9 @@ int hydro_coreGetParams(){
      errorCode = queryIntegerParameter("cellpert_kbottom", &cellpert_kbottom, 1, 10, PARAM_MANDATORY);
      cellpert_ktop = 20; // Default to 20th grid point above surface
      errorCode = queryIntegerParameter("cellpert_ktop", &cellpert_ktop, 0, 200, PARAM_MANDATORY);
+     if (cellpert_ktop > Nz){
+       cellpert_ktop = Nz-10;
+     }
      cellpert_tvcp = 0; // Default to off 
      errorCode = queryIntegerParameter("cellpert_tvcp", &cellpert_tvcp, 0, 1, PARAM_MANDATORY);
      cellpert_eckert = 0.2; // Default to Ec = 0.2
