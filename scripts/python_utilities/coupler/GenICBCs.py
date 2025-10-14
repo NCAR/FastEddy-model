@@ -369,11 +369,10 @@ for Bdy_file_num in range(it00,it11):
     t3s = time.perf_counter()
     dsFEFinal=create_dsFEFinal(ds_FEGrid)
     verticalInterpFinal(ds_FEGrid,dsFENew,dsFEFinal,zRect)
-    ## No Building grid-cell adjustments for now
-    #if 'BuildingMask' in list(dsFEFinal.variables):
-    #   for var in ['u','v','w','ql','TKE_0']:
-    #      if var in list(dsFEFinal.variables):
-    #        dsFEFinal[var][:,:,:]=dsFEFinal[var][:,:,:]*np.where((dsFEFinal['BuildingMask'][:,:,:]>1e-3),0.0,1.0)
+    if 'BuildingMask' in list(dsFEFinal.variables):
+       for var in ['u','v','w','ql','TKE_0']:
+          if var in list(dsFEFinal.variables):
+            dsFEFinal[var][:,:,:]=dsFEFinal[var][:,:,:]*np.where((dsFEFinal['BuildingMask'][:,:,:]>1e-3),0.0,1.0)
     t3e = time.perf_counter()
     print('{:d}/{:d}: t3_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t3e-t3s))
     addTimeDim_FEfinal(dsFEFinal)
