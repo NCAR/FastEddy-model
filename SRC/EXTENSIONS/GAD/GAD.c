@@ -76,8 +76,8 @@ float* GAD_forceZ;         /* turbine forces in the z-direction */
 int GADGetParams(){
    int errorCode = GAD_SUCCESS;
 
-   GADSelector = 0; // Default to 1
-   errorCode = queryIntegerParameter("GADSelector", &GADSelector, 0, 1, PARAM_MANDATORY);
+   GADSelector = 0; // Default to 0
+   errorCode = queryIntegerParameter("GADSelector", &GADSelector, 0, 1, PARAM_OPTIONAL);
    if(GADSelector > 0){
      errorCode = queryFileParameter("turbineSpecsFile", &turbineSpecsFile, PARAM_OPTIONAL);
      GADoutputForces = 0; // default off
@@ -90,14 +90,16 @@ int GADGetParams(){
      errorCode = queryFloatParameter("GADaxialIndVal", &GADaxialIndVal, 0.0, 1.0, PARAM_OPTIONAL);
      GADrefSwitch = 0; // default off
      errorCode = queryIntegerParameter("GADrefSwitch", &GADrefSwitch, 0, 1, PARAM_OPTIONAL);
-     GADrefU = 0.0; // default to 0.0 m/s
-     errorCode = queryFloatParameter("GADrefU", &GADrefU, 0.0, 50.0, PARAM_OPTIONAL);
      GADrefSampleWindow = 10.0; // default to 10.0 seconds, limit in range 1.0-60.0 seconds
      errorCode = queryFloatParameter("GADrefSampleWindow", &GADrefSampleWindow, 1.0, 60.0, PARAM_OPTIONAL);
      GADrefSeriesLength = 30; // default to a series length of 30 sample-window averaged values 
      errorCode = queryIntegerParameter("GADrefSeriesLength", &GADrefSeriesLength, 1, 360, PARAM_OPTIONAL);
      GADForcingSwitch = 0; // default off
      errorCode = queryIntegerParameter("GADForcingSwitch", &GADForcingSwitch, 0, 1, PARAM_OPTIONAL);
+     if (GADrefSwitch == 1){
+       GADrefU = 0.0; // default to 0.0 m/s
+       errorCode = queryFloatParameter("GADrefU", &GADrefU, 0.0, 50.0, PARAM_MANDATORY);
+     }
    }//End if GADSelector > 0
    
    return(errorCode);

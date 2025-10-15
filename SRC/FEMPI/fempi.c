@@ -81,6 +81,8 @@ int fempi_GetParams(){
    int errorCode = FEMPI_SUCCESS;
 
    /*query for each FEMPI parameter */
+   numProcsX=1; // default to 1
+   numProcsY=1; // default to 1
    errorCode = queryIntegerParameter("numProcsX", &numProcsX, 1, INT_MAX, PARAM_MANDATORY);
    errorCode = queryIntegerParameter("numProcsY", &numProcsY, 1, INT_MAX, PARAM_MANDATORY);
 

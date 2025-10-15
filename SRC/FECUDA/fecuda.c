@@ -39,6 +39,9 @@ int fecuda_GetParams(){
    int errorCode = FECUDA_SUCCESS;
 
    /*query for each FECUDA parameter */
+   tBx=1; // default to 1
+   tBy=8; // default to 8
+   tBz=32; // default to 32
    errorCode = queryIntegerParameter("tBx", &tBx, 1, INT_MAX, PARAM_MANDATORY);
    errorCode = queryIntegerParameter("tBy", &tBy, 1, INT_MAX, PARAM_MANDATORY);
    errorCode = queryIntegerParameter("tBz", &tBz, 1, INT_MAX, PARAM_MANDATORY);

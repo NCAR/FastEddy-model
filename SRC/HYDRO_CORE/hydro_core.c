@@ -39,7 +39,7 @@ int Nhydro = 5;              /*Number of prognostic variable fields under hydro_
 int hydroBCs;          /*selector for hydro BC set. 1= LAD, Dirichlet lateral, ceiling and surface boundary conditions,
 			                            2= periodicHorizBSVertical */
 
-int hydroForcingWrite;     /*switching for dumping forcing fields of prognostic variables. 0-off (default), 1= on*/
+int hydroForcingWrite;     /*switching for writing output of forcing fields of prognostic variables. 0-off (default), 1= on*/
 int hydroForcingLog;     /*switch for logging Frhs summary metrics. 0-off (default), 1= on*/
 int hydroSubGridWrite;   /*switch for SGS fields 0-off (default), 1= on*/
 float *hydroFlds;        /*Base Adress of memory containing all prognostic variable fields under hydro_core */
@@ -99,7 +99,7 @@ int buoyancySelector;     /*buoyancy Force selector: 0=off, 1=on*/
 
 /*----Coriolis*/ 
 int coriolisSelector;   /* Coriolis selector, (0 = none, 1 = horizontal terms only, 2 = horizontal and vertical terms*/
-float coriolisLatitude; /*Charactersitc latitude in degrees from equator of the LES domain*/
+float coriolisLatitude; /*Characteristic latitude in degrees from equator of the LES domain*/
 float corioConstHorz;   /*Latitude dependent horizontal Coriolis term constant */
 float corioConstVert;   /*Latitude dependent Vertical Coriolis term constant */
 int coriolis_LAD = 0;       /*Coriolis force selector for LAD BC cases (hydroBCs==1): 0=off, 1=on*/
@@ -107,7 +107,7 @@ float corioLS_fact;     /*large-scale factor on Coriolis term*/
 
 /*----Turbulence*/ 
 int turbulenceSelector;         /*turbulence scheme selector: 0= none, 1= Lilly/Smagorinsky */
-int TKESelector;                /* Prognostic TKE selector: 0= none, 1= Prognostic */
+int TKESelector;                /* Prognostic TKE selector: 0= none, 1= Prognostic, 2= requires canopySelector=1 */
 int TKEAdvSelector;             /* SGSTKE advection scheme selector */
 float TKEAdvSelector_b_hyb;     /*hybrid advection scheme parameter */
 float c_s;                      /* Smagorinsky turbulence model constant used for turbulenceSelector = 1 with TKESelector = 0 */
@@ -116,11 +116,11 @@ float *sgstkeScalars;     /* Base Adress of memory containing all prognostic "sg
 float *sgstkeScalarsFrhs; /* Base Adress of memory containing all prognostic "sgstke" RHS forcing fields */ 
 
 /*----Advection*/ 
-int advectionSelector;    /*advection scheme selector: 0= 1st-order upwind, 1= 3rd-order QUICK, 
-                                              2= hybrid 3rd-4th order, 3= hybrid 5th-6th order */
+int advectionSelector;    /*advection scheme selector: 0=1st-order upwind, 1=3rd-order QUICK, 2=hybrid 3rd-4th order,
+			    3=hybrid 5th-6th order, 4=3rd-order WENO, 5=5th-order WENO, 6=2nd-order centered */
 int ceilingAdvectionBC;   /*selector to allow advection through the domain ceiling 1=on, 0=off (w-ceiling = 0)*/
 float b_hyb;      /*hybrid advection scheme parameter: 0.0= lower-order upwind,
-                                          1.0=higher-order cetered, 0.0 < b_hyb < 1.0 = hybrid */
+                                          1.0=higher-order centered, 0.0 < b_hyb < 1.0 = hybrid */
 
 /*----Diffusion*/ 
 int diffusionSelector;    /*diffusion Term-type selector: 0= none, 1= constant, 2= scalar turbulent-diffusivity*/
@@ -132,11 +132,11 @@ float* hydroDiffTauYFlds; /*Base adress for diffusion TauY arrays for all progno
 float* hydroDiffTauZFlds; /*Base adress for diffusion TauZ arrays for all prognostic fields*/
 
 /*---Monin-Obukhov surface layer---*/ 
-int surflayerSelector;    /*Monin-Obukhov surface layer selector: 0= off, 1= on */
+int surflayerSelector;    /*Monin-Obukhov surface layer selector: 0=off, 1=surface kinematic heat flux (surflayer_wth), 2=skin temperature rate (surflayer_tr) */
 float surflayer_z0;       /* roughness length (momentum) */
 float surflayer_z0t;      /* roughness length (temperature) */
 float surflayer_wth;      /* kinematic sensible heat flux at the surface */
-float surflayer_tr;       /* surface temperature rate in K h-1 */
+float surflayer_tr;       /* surface temperature rate in K h-1 when surflayerSelector == 2*/
 float surflayer_wq;       /* kinematic latent heat flux at the surface */
 float surflayer_qr;       /* surface water vapor rate (kg/kg) h-1 */
 int surflayer_qskin_input;/* selector to use file input (restart) value for qskin under surflayerSelector == 2 */
@@ -206,7 +206,7 @@ int moistureNvars;           /* number of moisture species */
 int moistureAdvSelectorQv;     /* water vapor advection scheme selector */
 float moistureAdvSelectorQv_b; /*hybrid advection scheme parameter */
 int moistureSGSturb;         /* selector to apply sub-grid scale diffusion to moisture fields */
-int moistureCond;            /* selector to apply condensation to mositure fields */
+int moistureCond;            /* selector to apply condensation to moisture fields */
 float *moistScalars;         /*Base address for moisture field arrays*/
 float *moistScalarsFrhs;     /*Base address for moisture forcing field arrays*/
 float *moistTauFlds;         /*Base address for SGS moisture field arrays*/
@@ -292,10 +292,10 @@ int hydro_coreGetParams(){
    int errorCode = HYDRO_CORE_SUCCESS;
 
    /*query for each HYDRO_CORE parameter */
-   hydroBCs = 0; //Default to triply-periodic
+   hydroBCs = 2; //Default to periodicHorizVerticalAbl
    errorCode = queryIntegerParameter("hydroBCs", &hydroBCs, 1, 2, PARAM_MANDATORY);
    if(hydroBCs==1){
-     errorCode = queryFileParameter("hydroBndysFileBase", &hydroBndysFileBase, PARAM_OPTIONAL);  
+     errorCode = queryFileParameter("hydroBndysFileBase", &hydroBndysFileBase, PARAM_MANDATORY);  
      hydroBndysFileStart = 0;
      errorCode = queryIntegerParameter("hydroBndysFileStart", &hydroBndysFileStart, 0, 500000, PARAM_MANDATORY);
      hydroBndysFileEnd = 0;
@@ -304,7 +304,7 @@ int hydro_coreGetParams(){
      errorCode = queryFloatParameter("dtBdyPlaneBCs", &dtBdyPlaneBCs, 0.0, 6e5, PARAM_MANDATORY);
    }
    hydroForcingWrite = 0; //Default to off
-   errorCode = queryIntegerParameter("hydroForcingWrite", &hydroForcingWrite, 0, 1, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("hydroForcingWrite", &hydroForcingWrite, 0, 1, PARAM_OPTIONAL);
    hydroForcingLog = 0; //Default to off
    errorCode = queryIntegerParameter("hydroForcingLog", &hydroForcingLog, 0, 1, PARAM_MANDATORY);
    hydroSubGridWrite = 0; //Default to off
@@ -320,37 +320,47 @@ int hydro_coreGetParams(){
    turbulenceSelector = 0; //Default to off
    errorCode = queryIntegerParameter("turbulenceSelector", &turbulenceSelector, 0, 1, PARAM_MANDATORY);
    TKESelector = 0; //Default to none
-   errorCode = queryIntegerParameter("TKESelector", &TKESelector, 0, 2, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("TKESelector", &TKESelector, 0, 2, PARAM_OPTIONAL);
    TKEAdvSelector = 0; //Default to 0 for monotonic 1st-order upstream
-   errorCode = queryIntegerParameter("TKEAdvSelector", &TKEAdvSelector, 0, 6, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("TKEAdvSelector", &TKEAdvSelector, 0, 6, PARAM_OPTIONAL);
    TKEAdvSelector_b_hyb = 0.0; //Default to 0.0
-   errorCode = queryFloatParameter("TKEAdvSelector_b_hyb", &TKEAdvSelector_b_hyb, 0.0, 1.0, PARAM_MANDATORY);
-   c_s = 0.18; //Default to 0.18
-   errorCode = queryFloatParameter("c_s", &c_s, 1e-6, 1e6, PARAM_MANDATORY);
-   c_k = 0.10; //Default to 0.1
-   errorCode = queryFloatParameter("c_k", &c_k, 1e-6, 1e6, PARAM_MANDATORY);
-   advectionSelector = 0; //Default to 0
-   errorCode = queryIntegerParameter("advectionSelector", &advectionSelector, 0, 6, PARAM_MANDATORY);
+   errorCode = queryFloatParameter("TKEAdvSelector_b_hyb", &TKEAdvSelector_b_hyb, 0.0, 1.0, PARAM_OPTIONAL);
+   if ((turbulenceSelector == 1) && (TKESelector == 0)){
+     c_s = 0.18; //Default to 0.18
+     errorCode = queryFloatParameter("c_s", &c_s, 1e-6, 1e6, PARAM_OPTIONAL);
+     c_k = 0.10; //Default to 0.1
+     errorCode = queryFloatParameter("c_k", &c_k, 1e-6, 1e6, PARAM_OPTIONAL);
+   }
+   advectionSelector = 3; //Default to 3
+   errorCode = queryIntegerParameter("advectionSelector", &advectionSelector, 0, 6, PARAM_OPTIONAL);
    ceilingAdvectionBC = 0;
    errorCode = queryIntegerParameter("ceilingAdvectionBC", &ceilingAdvectionBC, 0, 1, PARAM_OPTIONAL);
-   b_hyb = 0.8; //Default to 0.8
-   errorCode = queryFloatParameter("b_hyb", &b_hyb, 0.0, 1.0, PARAM_MANDATORY);
+   if ((advectionSelector == 2) || (advectionSelector == 3)){
+     b_hyb = 0.8; //Default to 0.8
+     errorCode = queryFloatParameter("b_hyb", &b_hyb, 0.0, 1.0, PARAM_OPTIONAL);
+   }
    diffusionSelector = 0; //Default to off
-   errorCode = queryIntegerParameter("diffusionSelector", &diffusionSelector, 0, 1, PARAM_MANDATORY);
-   nu_0 = 1.0; //Default to 1.0 m/s^2
-   errorCode = queryFloatParameter("nu_0", &nu_0, 0, FLT_MAX, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("diffusionSelector", &diffusionSelector, 0, 1, PARAM_OPTIONAL);
+   if (diffusionSelector==1){
+     nu_0 = 1.0; //Default to 1.0 m/s^2
+     errorCode = queryFloatParameter("nu_0", &nu_0, 0, FLT_MAX, PARAM_OPTIONAL);
+   }
    surflayerSelector = 0; // Default to off
    errorCode = queryIntegerParameter("surflayerSelector", &surflayerSelector, 0, 3, PARAM_MANDATORY);
    surflayer_z0 = 0.1; // Default to 0.1 m 
    errorCode = queryFloatParameter("surflayer_z0", &surflayer_z0, 1e-12, 1e+0, PARAM_MANDATORY);
    surflayer_z0t = 0.1; // Default to 0.1 m 
    errorCode = queryFloatParameter("surflayer_z0t", &surflayer_z0t, 1e-6, 1e+1, PARAM_MANDATORY);
-   surflayer_tr = 0.0; // Default to 0.0 K h-1 
-   errorCode = queryFloatParameter("surflayer_tr", &surflayer_tr, -1e+1, 1e+1, PARAM_MANDATORY);
-   surflayer_wth = 0.0; // Default to 0.0 K m s-1 
-   errorCode = queryFloatParameter("surflayer_wth", &surflayer_wth, -5e+0, 5e+0, PARAM_MANDATORY);
+   if (surflayerSelector == 2){
+     surflayer_tr = 0.0; // Default to 0.0 K h-1 
+     errorCode = queryFloatParameter("surflayer_tr", &surflayer_tr, -1e+1, 1e+1, PARAM_MANDATORY);
+   }
+   if (surflayerSelector == 1){
+     surflayer_wth = 0.0; // Default to 0.0 K m s-1 
+     errorCode = queryFloatParameter("surflayer_wth", &surflayer_wth, -5e+0, 5e+0, PARAM_MANDATORY);
+   }
    surflayer_idealsine = 0; //Default to off 
-   errorCode = queryIntegerParameter("surflayer_idealsine", &surflayer_idealsine, 0, 1, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("surflayer_idealsine", &surflayer_idealsine, 0, 1, PARAM_OPTIONAL);
    surflayer_ideal_ts = 0.0; // Default to 0.0 s
    surflayer_ideal_te = 0.0; // Default to 0.0 s
    surflayer_ideal_amp = 0.1; // Default to 0.1
@@ -370,18 +380,18 @@ int hydro_coreGetParams(){
    errorCode = queryIntegerParameter("surflayer_stab", &surflayer_stab, 0, 1, PARAM_OPTIONAL);
    surflayer_z0tdyn = 1; // Default to option 1
    errorCode = queryIntegerParameter("surflayer_z0tdyn", &surflayer_z0tdyn, 0, 2, PARAM_OPTIONAL);
-   surflayer_offshore = 0; // Default to off
-   surflayer_offshore_opt = 0;
+   surflayer_offshore = 1; // Default to on
+   surflayer_offshore_opt = 4; // Default to 4
    surflayer_offshore_dyn = 1;
    surflayer_offshore_hs = 0.0;
    surflayer_offshore_lp = 0.1;
    surflayer_offshore_cp = 0.1;
    surflayer_offshore_theta = 0.0;
    surflayer_offshore_visc = 1;
-   errorCode = queryIntegerParameter("surflayer_offshore", &surflayer_offshore, 0, 1, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("surflayer_offshore", &surflayer_offshore, 0, 1, PARAM_OPTIONAL);
    errorCode = queryIntegerParameter("surflayer_offshore_visc", &surflayer_offshore_visc, 0, 1, PARAM_OPTIONAL);
    if (surflayer_offshore > 0){
-     errorCode = queryIntegerParameter("surflayer_offshore_opt", &surflayer_offshore_opt, 0, 5, PARAM_MANDATORY);
+     errorCode = queryIntegerParameter("surflayer_offshore_opt", &surflayer_offshore_opt, 0, 5, PARAM_OPTIONAL);
      errorCode = queryIntegerParameter("surflayer_offshore_dyn", &surflayer_offshore_dyn, 0, 1, PARAM_OPTIONAL);
      if (surflayer_offshore_dyn == 0){
        if (surflayer_offshore_opt == 2){
@@ -420,25 +430,25 @@ int hydro_coreGetParams(){
    cellpert_nts = 500; // Default to 500 time steps
    errorCode = queryIntegerParameter("cellpert_nts", &cellpert_nts, 0, 1e+6, PARAM_OPTIONAL);
    if (cellpertSelector > 0){
-     errorCode = queryIntegerParameter("cellpertSelector", &cellpertSelector, 0, 1, PARAM_MANDATORY);
+     errorCode = queryIntegerParameter("cellpertSelector", &cellpertSelector, 0, 1, PARAM_OPTIONAL);
      cellpert_sw2b = 0; // Default to 0
-     errorCode = queryIntegerParameter("cellpert_sw2b", &cellpert_sw2b, 0, 3, PARAM_MANDATORY);
+     errorCode = queryIntegerParameter("cellpert_sw2b", &cellpert_sw2b, 0, 3, PARAM_OPTIONAL);
      cellpert_amp = 0.5; // Default to 0.5 K
-     errorCode = queryFloatParameter("cellpert_amp", &cellpert_amp, 0.0, 20.0, PARAM_MANDATORY);
+     errorCode = queryFloatParameter("cellpert_amp", &cellpert_amp, 0.0, 20.0, PARAM_OPTIONAL);
      cellpert_gppc = 8; // Default to 8 grid points per cell
-     errorCode = queryIntegerParameter("cellpert_gppc", &cellpert_gppc, 0, 50, PARAM_MANDATORY);
+     errorCode = queryIntegerParameter("cellpert_gppc", &cellpert_gppc, 0, 50, PARAM_OPTIONAL);
      cellpert_ndbc = 3; // Default to 3 cells
-     errorCode = queryIntegerParameter("cellpert_ndbc", &cellpert_ndbc, 0, 10, PARAM_MANDATORY);
+     errorCode = queryIntegerParameter("cellpert_ndbc", &cellpert_ndbc, 0, 10, PARAM_OPTIONAL);
      cellpert_kbottom = 1; // Default to 1st grid point above surface
-     errorCode = queryIntegerParameter("cellpert_kbottom", &cellpert_kbottom, 1, 10, PARAM_MANDATORY);
+     errorCode = queryIntegerParameter("cellpert_kbottom", &cellpert_kbottom, 1, 10, PARAM_OPTIONAL);
      cellpert_ktop = 20; // Default to 20th grid point above surface
-     errorCode = queryIntegerParameter("cellpert_ktop", &cellpert_ktop, 0, 200, PARAM_MANDATORY);
+     errorCode = queryIntegerParameter("cellpert_ktop", &cellpert_ktop, 0, 200, PARAM_OPTIONAL);
      cellpert_tvcp = 0; // Default to off 
-     errorCode = queryIntegerParameter("cellpert_tvcp", &cellpert_tvcp, 0, 1, PARAM_MANDATORY);
+     errorCode = queryIntegerParameter("cellpert_tvcp", &cellpert_tvcp, 0, 1, PARAM_OPTIONAL);
      cellpert_eckert = 0.2; // Default to Ec = 0.2
-     errorCode = queryFloatParameter("cellpert_eckert", &cellpert_eckert, 0.0, 10.0, PARAM_MANDATORY);
+     errorCode = queryFloatParameter("cellpert_eckert", &cellpert_eckert, 0.0, 10.0, PARAM_OPTIONAL);
      cellpert_tsfact = 1.0; // Default to cellpert_tsfact = 1.0
-     errorCode = queryFloatParameter("cellpert_tsfact", &cellpert_tsfact, 0.0, 10.0, PARAM_MANDATORY);
+     errorCode = queryFloatParameter("cellpert_tsfact", &cellpert_tsfact, 0.0, 10.0, PARAM_OPTIONAL);
    }
    //
    lsfSelector = 0; // Default to off 
@@ -512,8 +522,10 @@ int hydro_coreGetParams(){
      errorCode = queryIntegerParameter("moistureCondBasePres", &moistureCondBasePres, 0, 1, PARAM_MANDATORY);
      errorCode = queryFloatParameter("moistureMPcallTscale", &moistureMPcallTscale, 1e-4, 1000.0, PARAM_MANDATORY);
      errorCode = queryFloatParameter("surflayer_wq", &surflayer_wq, -5e+0, 5e+0, PARAM_MANDATORY);
-     errorCode = queryFloatParameter("surflayer_qr", &surflayer_qr, -1e+1, 1e+1, PARAM_MANDATORY);
-     errorCode = queryIntegerParameter("surflayer_qskin_input", &surflayer_qskin_input, 0, 1, PARAM_OPTIONAL);
+     if (surflayerSelector == 2){
+       errorCode = queryFloatParameter("surflayer_qr", &surflayer_qr, -1e+1, 1e+1, PARAM_MANDATORY);
+       errorCode = queryIntegerParameter("surflayer_qskin_input", &surflayer_qskin_input, 0, 1, PARAM_OPTIONAL);
+     }
      if (surflayer_idealsine > 0){
        errorCode = queryFloatParameter("surflayer_ideal_qts", &surflayer_ideal_qts, 0, 1e+5, PARAM_MANDATORY);
        errorCode = queryFloatParameter("surflayer_ideal_qte", &surflayer_ideal_qte, 0, 1e+5, PARAM_MANDATORY);
@@ -526,7 +538,7 @@ int hydro_coreGetParams(){
    filter_6thdiff_hori = 0; // Default to off
    filter_6thdiff_hori_coeff = 0.03; // Default to 0.03
    filter_divdamp = 0; // Default to off
-   errorCode = queryIntegerParameter("filterSelector", &filterSelector, 0, 1, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("filterSelector", &filterSelector, 0, 1, PARAM_OPTIONAL);
    if (filterSelector == 1){
      errorCode = queryIntegerParameter("filter_6thdiff_vert", &filter_6thdiff_vert, 0, 1, PARAM_OPTIONAL);
      errorCode = queryIntegerParameter("filter_6thdiff_hori", &filter_6thdiff_hori, 0, 1, PARAM_OPTIONAL);
@@ -543,9 +555,11 @@ int hydro_coreGetParams(){
    errorCode = GADGetParams();
 #endif
    dampingLayerSelector = 0; // Default to off 
-   errorCode = queryIntegerParameter("dampingLayerSelector", &dampingLayerSelector, 0, 1, PARAM_MANDATORY);
-   dampingLayerDepth = 100.0; //Default to 100.0 (meters)  
-   errorCode = queryFloatParameter("dampingLayerDepth", &dampingLayerDepth, 0.0, FLT_MAX, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("dampingLayerSelector", &dampingLayerSelector, 0, 1, PARAM_OPTIONAL);
+   if(dampingLayerSelector == 1){
+     dampingLayerDepth = 100.0; //Default to 100.0 (meters)  
+     errorCode = queryFloatParameter("dampingLayerDepth", &dampingLayerDepth, 0.0, FLT_MAX, PARAM_OPTIONAL);
+   }
    /*Auxiliary scalar parameters*/
    NhydroAuxScalars = 0; // Default to zero auxiliary scalars
    errorCode = queryIntegerParameter("NhydroAuxScalars", &NhydroAuxScalars, 0, MAX_AUXSC_SRC, PARAM_OPTIONAL);
@@ -594,8 +608,8 @@ int hydro_coreGetParams(){
                                         0.0, FLT_MAX, PARAM_MANDATORY);
      } //endif srcAuxScFile == NULL...
    }// endif NhydroAuxScalars > 0
-   stabilityScheme = 0; //Default to constant rho & theta
-   errorCode = queryIntegerParameter("stabilityScheme", &stabilityScheme, 0, 4, PARAM_MANDATORY);
+   stabilityScheme = 2; //Default to 2
+   errorCode = queryIntegerParameter("stabilityScheme", &stabilityScheme, 2, 2, PARAM_MANDATORY);
    temp_grnd = 300.0; //Default to 300.0-(Kelvin) = 80.33-(Fahrenheit) = 26.85-(Celsius) 
    errorCode = queryFloatParameter("temp_grnd", &temp_grnd, FLT_MIN, FLT_MAX, PARAM_MANDATORY);
    pres_grnd = 1.0e5; //Default to refPressure 100,000-(pascals) = 1000-(millibars)
@@ -678,8 +692,8 @@ int hydro_coreInit(){
         printParameter("hydroBndysFileEnd", "end counter value for BdyPlane sets");
         printParameter("dtBdyPlaneBCs", "delta in time (seconds) between BdyPlane sets (default = 0.0)");
       }
-      printParameter("hydroForcingWrite", "Switch for dumping hydroFldsFrhs for prognositic fields. 0 = off, 1=on");
-      printParameter("hydroSubGridWrite", "Switch for dumping Tauij fields. 0 = off, 1=on");
+      printParameter("hydroForcingWrite", "Switch for writing output of hydroFldsFrhs for prognostic fields. 0 = off, 1=on");
+      printParameter("hydroSubGridWrite", "Switch for writing output of Tauij fields. 0 = off, 1=on");
       printParameter("hydroForcingLog", "Switch for logging Frhs summary metrics. 0 = off, 1=on");
       printComment("----------: PRESSURE GRADIENT FORCE ---");
       printParameter("pgfSelector", "Pressure Gradient Force (pgf) selector: 0=off, 1=on");
@@ -687,23 +701,23 @@ int hydro_coreInit(){
       printParameter("buoyancySelector", "Buoyancy force  selector: 0=off, 1=on");
       printComment("----------: CORIOLIS ---");
       printParameter("coriolisSelector", "Corilis force selector: 0= none, 1= horiz. terms, 2= horiz. & vert. terms");
-      printParameter("coriolisLatitude", "Charactersitc latitude in degrees from equator of the LES domain");
+      printParameter("coriolisLatitude", "Characteristic latitude in degrees from equator of the LES domain");
       printComment("----------: TURBULENCE ---");
       printParameter("turbulenceSelector", "turbulence scheme selector: 0= none, 1= Lilly/Smagorinsky ");
-      printParameter("TKESelector", "Prognostic TKE selector: 0= none, 1= Prognostic");
+      printParameter("TKESelector", "Prognostic TKE selector: 0= none, 1= Prognostic, 2= requires canopySelector=1");
       printParameter("TKEAdvSelector", "advection scheme for SGSTKE equation");
       printParameter("TKEAdvSelector_b_hyb","hybrid advection scheme parameter");
       printParameter("c_s", "Smagorinsky model constant used for turbulenceSelector = 1 and TKESelector = 0");
       printParameter("c_k", "Lilly model constant used for turbulenceSelector = 1 and TKESelector > 0");
       printComment("----------: ADVECTION ---");
-      printParameter("advectionSelector", "advection scheme selector: 0= 1st-order upwind, 1= 3rd-order QUICK, 2= hybrid 3rd-4th order, 3= hybrid 5th-6th order");
+      printParameter("advectionSelector", "advection scheme selector: 0=1st-order upwind, 1=3rd-order QUICK, 2=hybrid 3rd-4th order, 3=hybrid 5th-6th order, 4=3rd-order WENO, 5=5th-order WENO, 6=2nd-order centered");
       printParameter("ceilingAdvectionBC", "selector to allow advection through the domain ceiling 1=on, 0=off (w-ceiling = 0)");
-      printParameter("b_hyb", "hybrid advection scheme parameter: 0.0= lower-order upwind, 1.0=higher-order cetered, 0.0 < b_hyb < 1.0 = hybrid");
+      printParameter("b_hyb", "hybrid advection scheme parameter: 0.0= lower-order upwind, 1.0=higher-order centered, 0.0 < b_hyb < 1.0 = hybrid");
       printComment("----------: DIFFUSION ---");
       printParameter("diffusionSelector", "diffusivity selector: 0= none, 1= const.");
       printParameter("nu_0", "constant diffusivity used when diffusionSelector = 1");
       printComment("----------: SURFACE LAYER ---"); 
-      printParameter("surflayerSelector", "surfacelayer selector: 0= off, 1,2= on");
+      printParameter("surflayerSelector", "surfacelayer selector: 0=off, 1=surface kinematic heat flux (surflayer_wth), 2=skin temperature rate (surflayer_tr)");
       printParameter("surflayer_z0", "roughness length (momentum) when surflayerSelector > 0");
       printParameter("surflayer_z0t", "roughness length (temperature) when surflayerSelector > 0");
       printParameter("surflayer_wth", "kinematic sensible heat flux at the surface when surflayerSelector = 1");
@@ -806,9 +820,9 @@ int hydro_coreInit(){
                          "Source start time in seconds from start of simulation (i.e. time = 0.0)");
           printParameter("srcAuxScDurationSeconds", "Source duration in seconds from srcAuxScStartSeconds");
           printParameter("srcAuxScGeometryType", "0 = point (single cell volume), 1 = line (line of surface cells)");
-          printParameter("srcAuxScLocation_X", "Source geometry centroid postion in x (west-east)");
-          printParameter("srcAuxScLocation_Y", "Source geometry centroid postion in y (south-north)");
-          printParameter("srcAuxScLocation_Z", "Source geometry centroid postion in z (vertical above the surface)");
+          printParameter("srcAuxScLocation_X", "Source geometry centroid position in x (west-east)");
+          printParameter("srcAuxScLocation_Y", "Source geometry centroid position in y (south-north)");
+          printParameter("srcAuxScLocation_Z", "Source geometry centroid position in z (vertical above the surface)");
           printParameter("srcAuxScMassSpecType",
                          "Source mass specification type 0 = mass in kg, 1 = mass source rate in kg/s");
           printParameter("srcAuxScMassSpecValue",
