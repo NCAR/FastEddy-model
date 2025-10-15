@@ -218,7 +218,11 @@ int main(int argc, char **argv){
 #endif
     printf("Reading coordinates and input conditions from %s\n",inFile);
     fflush(stdout);
+#ifdef GAD_EXT
+    errorCode = ioReadNetCDFinFileSingleTime(0, Nx, Ny, Nz, Nh, GADNumTurbines);
+#else
     errorCode = ioReadNetCDFinFileSingleTime(0, Nx, Ny, Nz, Nh);
+#endif
   }else{
 #ifdef DEBUG_INITIALIZATION 
     printf("mpi_rank_world--%d/%d inFile == NULL !!\n",mpi_rank_world,mpi_size_world);
@@ -389,7 +393,11 @@ int main(int argc, char **argv){
        /* Dump the root output file. */
 #ifndef IO_OFF
        if(ioOutputMode==0){
+#ifdef GAD_EXT
+         errorCode = ioWriteNetCDFoutFileSingleTime(it, Nx, Ny, Nz, Nh, GADNumTurbines);
+#else
          errorCode = ioWriteNetCDFoutFileSingleTime(it, Nx, Ny, Nz, Nh);
+#endif
        }else if(ioOutputMode==1){
          errorCode = ioWriteBinaryoutFileSingleTime(it, Nxp, Nyp, Nzp, Nh);
        }
@@ -406,6 +414,7 @@ int main(int argc, char **argv){
      errorCode = cuda_timeIntCommence(itTmp);
 #ifdef GAD_EXT
      if(GADSelector > 0){
+	//Update the turbine rotor mask output array from new rotorTheta values updated at device-level
         errorCode = GADUpdateTurbineRotorMask();
      }
 #endif
@@ -454,7 +463,11 @@ int main(int argc, char **argv){
   /*Dump the final timestep*/
 #ifndef IO_OFF
   if(ioOutputMode==0){
+#ifdef GAD_EXT
+    errorCode = ioWriteNetCDFoutFileSingleTime(it, Nx, Ny, Nz, Nh, GADNumTurbines);
+#else
     errorCode = ioWriteNetCDFoutFileSingleTime(it, Nx, Ny, Nz, Nh);
+#endif
   }else if(ioOutputMode==1){
     errorCode = ioWriteBinaryoutFileSingleTime(it, Nxp, Nyp, Nzp, Nh);
   }

@@ -51,6 +51,7 @@ float *ioBuffField;
 float *ioBuffFieldTransposed;
 float *ioBuffFieldRho;
 float *ioBuffFieldTransposed2D;
+int *ioBuffFieldInt;
 
 int nz_varid;
 int ny_varid;
@@ -190,8 +191,8 @@ int ioAllocateBuffers(int globalNx, int globalNy, int globalNz){
      ioBuffFieldTransposed = (float *) malloc(numElems*sizeof(float));
      ioBuffFieldRho = (float *) malloc(numElems*sizeof(float));
      ioBuffFieldTransposed2D = (float *) malloc(numElems2D*sizeof(float));
+     ioBuffFieldInt = (int *) malloc(numElems*sizeof(int));
    } //endif mpi_Rank_world==0
-
    return(errorCode);
 } //end ioAllocateBuffers()
 
@@ -208,11 +209,13 @@ int ioCleanup(){
    int errorCode = IO_SUCCESS;
 
    /*free the io-buffers*/
-   free(ioBuffField);
-   free(ioBuffFieldTransposed);
-   free(ioBuffFieldRho);
-   free(ioBuffFieldTransposed2D);
-
+   if(mpi_rank_world == 0){
+     free(ioBuffField);
+     free(ioBuffFieldTransposed);
+     free(ioBuffFieldRho);
+     free(ioBuffFieldTransposed2D);
+     free(ioBuffFieldInt);
+   } //end if mpi_rank_world == 0
    /*free the registry list*/
    destroyList();
 
