@@ -34,12 +34,12 @@ size_t start2dTD[MAXDIMS];
 
 /*######################------------------- IO module variable definitions ---------------------#################*/
 /* Parameters */
-int ioOutputMode;  /*0: N-to-1 gather and write to a netcdf file, 1:N-to-N writes of FastEddy binary files*/
+int ioOutputMode;  /*0: N-to-1 gather and write to a netCDF file, 1: N-to-N writes of FastEddy binary files*/
 char *outPath;     /* Directory Path where output files are to be written */
 char *outFileBase; /* Base name of the output file series as in (outFileBase).element-in-series */
 char *inPath;      /* Directory Path where input files are to be read from */
 char *inFile;      /* Name of the input file */
-int frqOutput;     /*frequency (in timesteps) at which to produce output*/
+int frqOutput;     /*frequency (in timesteps) at which to produce output; should be an even multiple of NtBatch*/
 
 /*static Variables*/
 char *outSubString; /*subString portion of outFile holding element-in-series as in path/base.substring */
@@ -67,7 +67,7 @@ int ioGetParams(){
    int errorCode = IO_SUCCESS;
 
    /*query for each IO parameter */
-   ioOutputMode=0;
+   ioOutputMode=0; //default  = 0
    errorCode = queryIntegerParameter("ioOutputMode", &ioOutputMode, 0, 1, PARAM_OPTIONAL);
    errorCode = queryPathParameter("inPath", &inPath, PARAM_OPTIONAL);
    errorCode = queryStringParameter("inFile", &inFile, PARAM_OPTIONAL);
@@ -86,12 +86,12 @@ int ioInit(){
  
    if(mpi_rank_world == 0){
       printComment("IO parameters---");
-      printParameter("ioOutputMode", "0: N-to-1 gather and write to a netcdf file, 1:N-to-N writes of FastEddy binary files");
+      printParameter("ioOutputMode", "0: N-to-1 gather and write to a netCDF file, 1:N-to-N writes of FastEddy binary files");
       printParameter("inPath", "Path where initial/restart file is read in from");
       printParameter("inFile", "name of the input file for coordinate system and initial or restart conditions");
       printParameter("outPath", "Path where output files are to be written");
       printParameter("outFileBase", "Base name of the output file series as in (outFileBase).element-in-series");
-      printParameter("frqOutput", "frequency (in timesteps) at which to produce output");
+      printParameter("frqOutput", "frequency (in timesteps) at which to produce output; should be an even multiple of NtBatch");
    } //end if(mpi_rank_world == 0) 
 
    /*Broadcast the parameters across mpi_ranks*/

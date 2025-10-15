@@ -37,14 +37,14 @@
 #define THETA_INDX_BS         1
 
 #define MAX_HC_FLDNAME_LENGTH 256
-#define MAX_AUXSC_SRC         20
+#define MAX_AUXSC_SRC         256
 /*#################------------------- HYDRO_CORE module variable declarations ---------------------#################*/
 /* Parameters */
 extern int Nhydro;          /*Number of prognostic variable fields under hydro_core */
 extern int hydroBCs;          /*selector for hydro BC set. 1= Dirichlet lateral, ceiling and surface boundary conditions (Limited Area Domain -- LAD),
 			                                   2= periodicHorizVerticalAbl */
 
-extern int hydroForcingWrite;   /*switch for dumping forcing fields of prognostic variables. 0-off (default), 1= on*/
+extern int hydroForcingWrite;   /*switch for writing output of forcing fields of prognostic variables. 0-off (default), 1= on*/
 extern int hydroForcingLog;     /*switch for logging Frhs summary metrics. 0-off (default), 1= on*/
 extern int hydroSubGridWrite;   /*switch for SGS fields 0-off (default), 1= on*/
 extern float *hydroFlds;        /*Base Adress of memory containing all prognostic variable fields under hydro_core */
@@ -105,7 +105,7 @@ extern int buoyancySelector;     /*buoyancy Force selector: 0=off, 1=on*/
 
 /*---CORIOLIS*/
 extern int coriolisSelector;     /*coriolis Force selector: 0= none, 1= Horiz.-only, 2=Horz. & Vert.*/
-extern float coriolisLatitude;   /*Charactersitc latitude in degrees from equator of the LES domain*/
+extern float coriolisLatitude;   /*Characteristic latitude in degrees from equator of the LES domain*/
 extern float corioConstHorz;     /*Latitude dependent horizontal Coriolis term constant */
 extern float corioConstVert;     /*Latitude dependent Vertical Coriolis term constant */
 extern int coriolis_LAD;         /*Coriolis force selector for LAD BC cases (hydroBCs==1): 0=off, 1=on*/
@@ -113,7 +113,7 @@ extern float corioLS_fact;       /*large-scale factor on Coriolis term*/
 
 /*---TURBULENCE*/
 extern int turbulenceSelector;    /*turbulence scheme selector: 0= none, 1= Lilly/Smagorinsky */
-extern int TKESelector;           /* Prognostic TKE selector: 0= none, 1= Prognostic */
+extern int TKESelector;           /* Prognostic TKE selector: 0= none, 1= Prognostic, 2= requires canopySelector=1 */
 extern int TKEAdvSelector;        /* SGSTKE advection scheme selector */
 extern float TKEAdvSelector_b_hyb;     /*hybrid advection scheme parameter */
 extern float c_s;     /* Smagorinsky turbulence model constant used for turbulenceSelector = 1 with TKESelector = 0 */
@@ -130,13 +130,13 @@ extern float *hydroDiffTauYFlds; /*Base address for diffusion TauY arrays for al
 extern float *hydroDiffTauZFlds; /*Base address for diffusion TauZ arrays for all prognostic fields*/
 
 /*---ADVECTION*/
-extern int advectionSelector;    /*advection scheme selector: 0= 1st-order upwind, 2= 3rd-order QUICK */
+extern int advectionSelector;    /*advection scheme selector: 0=1st-order upwind, 1=3rd-order QUICK, 2=hybrid 3rd-4th order, 3=hybrid 5th-6th order, 4=3rd-order WENO, 5=5th-order WENO, 6=2nd-order centered */
 extern int ceilingAdvectionBC;   /*selector to allow advection through the domain ceiling 1=on, 0=off (w-ceiling = 0)*/
 extern float b_hyb; /*hybrid advection scheme parameter: 0.0= lower-order upwind, 
-                             1.0=higher-order cetered, 0.0 < b_hyb < 1.0 = hybrid */
+                             1.0=higher-order centered, 0.0 < b_hyb < 1.0 = hybrid */
 
 /*---SURFACE LAYER*/
-extern int surflayerSelector;    /*Monin-Obukhov surface layer selector: 0= off, 1= on */
+extern int surflayerSelector;    /*Monin-Obukhov surface layer selector: 0=off, 1=surface kinematic heat flux (surflayer_wth), 2=skin temperature rate (surflayer_tr) */
 extern float surflayer_z0;       /* roughness length (momentum) */
 extern float surflayer_z0t;      /* roughness length (temperature) */
 extern float surflayer_wth;      /* kinematic sensible heat flux at the surface */
@@ -207,7 +207,7 @@ extern int moistureNvars;           /* number of moisture species */
 extern int moistureAdvSelectorQv;     /* water vapor advection scheme selector */
 extern float moistureAdvSelectorQv_b; /*hybrid advection scheme parameter */
 extern int moistureSGSturb;         /* selector to apply sub-grid scale diffusion to moisture fields */
-extern int moistureCond;            /* selector to apply condensation to mositure fields */
+extern int moistureCond;            /* selector to apply condensation to moisture fields */
 extern float *moistScalars;         /*Base address for moisture field arrays*/
 extern float *moistScalarsFrhs;     /*Base address for moisture forcing field arrays*/
 extern float *moistTauFlds;         /*Base address for moisture SGS field arrays*/

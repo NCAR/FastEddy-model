@@ -29,20 +29,20 @@
 /*##################------------------- GRID module variable definitions ---------------------#################*/
 char *gridFile = NULL;
 char *topoFile = NULL;
-int Nx = 1;
-int Ny = 1;
-int Nz = 1;
-int Nh = 0;
-float d_xi = 1.0;
-float d_eta = 1.0;
-float d_zeta = 1.0;
-int coordHorizHalos = 1; //switch to setup coordiante halos as periodic, or gradient following
+int Nx = 128;
+int Ny = 122;
+int Nz = 122;
+int Nh = 3;
+float d_xi = 10.0;
+float d_eta = 10.0;
+float d_zeta = 10.0;
+int coordHorizHalos = 1; //switch to setup coordinate halos as periodic, or gradient following
 int iMin, iMax; //Constant min and max bounds of i-index accounting for only non-halos cells of the mpi_rank subdomain
 int jMin, jMax; //Constant min and max bounds of j-index accounting for only non-halos cells of the mpi_rank subdomain
 int kMin, kMax; //Constant min and max bounds of k-index accounting for only non-halos cells of the mpi_rank subdomain
 int verticalDeformSwitch; //switch to use vertical coordinate deformation
 float verticalDeformFactor; //factor to used under vertical deformation (0.0-1.0)
-float verticalDeformQuadCoeff; // quadratic term coefficient in the deformtion scheme (default = 0.0)
+float verticalDeformQuadCoeff; // quadratic term coefficient in the deformation scheme (default = 0.0)
 
 float dX, dY, dZ; //reference computational model coordinate resolution
 float dXi, dYi, dZi; //inverse of the reference computational model coordinate resolution
@@ -116,7 +116,7 @@ int gridInit(){
       printParameter("d_xi", "Computational domain fixed resolution in the 'i' direction."); 
       printParameter("d_eta", "Computational domain fixed resolution in the 'j' direction."); 
       printParameter("d_zeta", "Computational domain fixed resolution in the 'k' direction."); 
-      printParameter("coordHorizHalos", "switch to setup coordiante halos as periodic=1 or gradient-following=0."); 
+      printParameter("coordHorizHalos", "switch to setup coordinate halos as periodic=1 or gradient-following=0."); 
       printParameter("verticalDeformSwitch", "switch to use vertical coordinate deformation 0=off, 1=on"); 
       printParameter("verticalDeformFactor", "deformation factor (0.0=max compression,  1.0=no compression)"); 
       printParameter("verticalDeformQuadCoeff", "deformation factor (0.0=max compression,  1.0=no compression)"); 

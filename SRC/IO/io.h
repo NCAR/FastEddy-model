@@ -33,12 +33,12 @@
 
 /*######################------------------- IO module variable declarations ---------------------#################*/
 /* Parameters */
-extern int ioOutputMode;  /*0: N-to-1 gather and write to a netcdf file, 1:N-to-N writes of FastEddy binary files*/
+extern int ioOutputMode;  /*0: N-to-1 gather and write to a netCDF file, 1: N-to-N writes of FastEddy binary files*/
 extern char *outPath;     /* Directory Path where output files are to be written */
 extern char *outFileBase; /* Base name of the output file series as in (outFileBase).element-in-series */ 
 extern char *inPath;      /* Directory Path where input files are to be read from */
 extern char *inFile;      /* Name of the input file */ 
-extern int frqOutput;     /*frequency in timesteps to produce output*/
+extern int frqOutput;     /*frequency in timesteps to produce output; should be an even multiple of NtBatch*/
 
 /*static Variables*/
 extern char *outSubString; /*subString portion of outFile holding element-in-series as in path/base.substring */

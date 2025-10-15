@@ -53,7 +53,7 @@ int timeGetParams(){
 
    /*query for each TIME_INTEGRATION parameter */
    timeMethod = 0;
-   errorCode = queryIntegerParameter("timeMethod", &timeMethod, 0, 0, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("timeMethod", &timeMethod, 0, 0, PARAM_OPTIONAL);
    Nt = 1000;
    errorCode = queryIntegerParameter("Nt", &Nt, 1, INT_MAX, PARAM_MANDATORY);
    dt = 1.0;
