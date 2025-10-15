@@ -29,7 +29,7 @@ int URBANGetParams(){
    int errorCode = URBAN_SUCCESS;
 
    urbanSelector = 0; // Default to off
-   errorCode = queryIntegerParameter("urbanSelector", &urbanSelector, 0, 2, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("urbanSelector", &urbanSelector, 0, 2, PARAM_OPTIONAL);
    if(urbanSelector > 0){
      cd_build = 100.0; // Default to 100.0
      errorCode = queryFloatParameter("cd_build", &cd_build, 0.0, 1e+8, PARAM_OPTIONAL);

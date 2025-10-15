@@ -27,10 +27,10 @@ extern char *turbineSpecsFile;  /* The path+filename to a turbine specifications
 extern int GADoutputForces;     /* Flag to include GAD forces in the output: 0=off, 1=on */
 extern int GADofflineForces;    /* Flag to compute GAD forces in an offline mode: 0=off, 1=on */
 extern int GADaxialInduction;   /* Flag to compute axial induction factor: 0==off (uses prescribed GADaxialIndVal), 1==on */
-extern float GADaxialIndVal;    /* Prescribed constant axial induction factor when GADaxialInduction==1 */
+extern float GADaxialIndVal;    /* Prescribed constant axial induction factor when GADaxialInduction==0 */
 extern int GADrefSwitch;        /* Switch to use reference windspeed: 0=off, 1=on */
 extern float GADrefU;           /* Prescribed constant reference hub-height windspeed*/
-extern float GADrefSampWindow;  /* Sample duration over which to average per-timestep values (filtering out highest frequencies)*/
+extern float GADrefSampWindow;  /* Sample duration (in seconds) over which to average per-timestep values (filtering out highest frequencies)*/
 extern int GADsamplingAvgLength;/* number of timestep in the prescribed sample window */
 extern float GADsamplingAvgWeight;/* sample window averaging weight*/
 extern int GADrefSeriesLength;  /* Number of sampling windows over which to average again for reference velocity magnitude and direction */

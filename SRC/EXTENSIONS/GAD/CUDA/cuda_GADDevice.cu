@@ -18,7 +18,7 @@ __constant__ int GADSelector_d;     /* Generalized Actuator Disk Selector: 0=off
 __constant__ int GADoutputForces_d;   /* Flag to include GAD forces in the output: 0=off, 1=on */
 __constant__ int GADofflineForces_d;  /* Flag to compute GAD forces in an offline mode: 0=off, 1=on */
 __constant__ int GADaxialInduction_d;   /* Flag to compute axial induction factor: 0==off (uses prescribed GADaxialIndVal), 1==on */
-__constant__ float GADaxialIndVal_d;    /* Prescribed constant axial induction factor when GADaxialInduction==1 */
+__constant__ float GADaxialIndVal_d;    /* Prescribed constant axial induction factor when GADaxialInduction==0 */
 __constant__ int GADrefSwitch_d;   /* Switch to use reference windspeed: 0=off, 1=on */
 __constant__ float GADrefU_d;    /* Prescribed constant reference hub-height windspeed*/
 __constant__ int GADForcingSwitch_d;    /* Switch to use the GADrefU-based or local windspeed in computing GAD forces: 0=local, 1=ref */
