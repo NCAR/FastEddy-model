@@ -21,10 +21,10 @@ char *turbineSpecsFile;  /* The path+filename to a turbine specifications file*/
 int GADoutputForces;     /* Flag to include GAD forces in the output: 0=off, 1=on */
 int GADofflineForces;    /* Flag to compute GAD forces in an offline mode: 0=off, 1=on */
 int GADaxialInduction;   /* Flag to compute axial induction factor: 0==off (uses prescribed GADaxialIndVal), 1==on */
-float GADaxialIndVal;    /* Prescribed constant axial induction factor when GADaxialInduction==1 */
+float GADaxialIndVal;    /* Prescribed constant axial induction factor when GADaxialInduction==0 */
 int GADrefSwitch;        /* Switch to use reference windspeed: 0=off, 1=on */
 float GADrefU;           /* Prescribed constant reference hub-height windspeed*/
-float GADrefSampleWindow;/* Sample duration over which to average per-timestep values (filtering out highest frequencies) */
+float GADrefSampleWindow;/* Sample duration (in seconds) over which to average per-timestep values (filtering out highest frequencies) */
 int GADsamplingAvgLength;/* number of timestep in the prescribed sample window */
 float GADsamplingAvgWeight;/* sample window averaging weight*/
 int GADrefSeriesLength;  /* Number of sampling windows over which to average again for reference velocity magnitude and direction */
@@ -118,10 +118,10 @@ int GADPrintParams(){
        printParameter("GADoutputForces", "Flag to include GAD forces in the output: 0=off, 1=on");
        printParameter("GADofflineForces", "Flag to compute GAD forces in an offline mode: 0=off, 1=on");
        printParameter("GADaxialInduction", "Flag to compute axial induction factor: 0==off (uses prescribed GADaxialIndVal), 1==on");
-       printParameter("GADaxialIndVal", "Prescribed constant axial induction factor when GADaxialInduction==1");
+       printParameter("GADaxialIndVal", "Prescribed constant axial induction factor when GADaxialInduction==0");
        printParameter("GADrefSwitch", "Switch to use reference windspeed: 0=off, 1=on");
        printParameter("GADrefU", "Prescribed constant reference hub-height windspeed");
-       printParameter("GADrefSampleWindow", "Sample duration over which to average per-timestep values (filtering out highest frequencies)");
+       printParameter("GADrefSampleWindow", "Sample duration (in seconds) over which to average per-timestep values (filtering out highest frequencies)");
        printParameter("GADrefSeriesLength", "Number of sampling windows over which to average again for reference velocity magnitude and direction");
        printParameter("GADForcingSwitch", "Switch to use the GADrefU-based or local windspeed in computing GAD forces: 0=local, 1=ref");
      }
