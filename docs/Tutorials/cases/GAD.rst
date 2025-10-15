@@ -13,7 +13,7 @@ In order to activate the GAD model, the corresponding selector needs to be turne
    turbineSpecsFile = ./GAD_NREL28_9WTs_tutorial.nc
    GADoutputForces = 1
 
-A key aspect required for the GAD model to work is the specification of the aerodynamic characteristics of the simulated turbine. These are included in a netCDF file, together with geometrical characteristics of the wind turbine (rotor diameter: :code:`GAD_rotorD`, turbine hub height: :code:`GAD_hubHeights`, nacelle diameter: :code:`GAD_nacelleD`) and the initial location and orientation of the turbines (:code:`GAD_Xcoords`, :code:`GAD_Ycoords`, :code:`GAD_rotorTheta`). Polynomial fits for lift and drag coefficient, twist, chord length, blade pitch, and rotational speed are utilized, discretized over a finite number of normalized blade elements (:code:`rnorm_vect`), required by the blade-element momentum theory used in the GAD formulation. For flexibilty purposes, an arbitrary number of turbines can be defined (:code:`GAD_turbineType`). This tutorial provides an example turbine specification file corresponding to NREL28's turbine (**GAD_NREL28_9WTs_tutorial.nc**). All the required variables and dimensions in the turbine specifications file are listed here below.
+A key aspect required for the GAD model to work is the specification of the aerodynamic characteristics of the simulated turbine. These are included in a netCDF file, together with geometrical characteristics of the wind turbine (rotor diameter: :code:`GAD_rotorD`, turbine hub height: :code:`GAD_hubHeights`, nacelle diameter: :code:`GAD_nacelleD`) and the initial location and orientation of the turbines (:code:`GAD_Xcoords`, :code:`GAD_Ycoords`, :code:`GAD_rotorTheta`). Polynomial fits for lift and drag coefficient, twist, chord length, blade pitch, and rotational speed are utilized, discretized over a finite number of normalized blade elements (:code:`rnorm_vect`), required by the blade-element momentum theory used in the GAD formulation. For flexibility purposes, an arbitrary number of turbines can be defined (:code:`GAD_turbineType`). This tutorial provides an example turbine specification file corresponding to NREL28's turbine (**GAD_NREL28_9WTs_tutorial.nc**). All the required variables and dimensions in the turbine specifications file are listed here below.
 
 .. code-block:: none
 
@@ -52,7 +52,7 @@ The figure shows instantaneous contours of hub height (90 m) wind speed (in m/s)
 
 .. note::
 
-   * The orientation of the turbine (:code:`GAD_rotorTheta`) is defined as the angle from the negative x axis, incresing counter-clockwise. This is different from the meteorological convention for wind direction. For example a turbine facing the west will have :code:`GAD_rotorTheta` = :math:`0.0^{\circ}`, while a turbine facing south will have :code:`GAD_rotorTheta` = :math:`90.0^{\circ}`.
+   * The orientation of the turbine (:code:`GAD_rotorTheta`) is defined as the angle from the negative x axis, increasing counterclockwise. This is different from the meteorological convention for wind direction. For example, a turbine facing the west will have :code:`GAD_rotorTheta` = :math:`0.0^{\circ}`, while a turbine facing south will have :code:`GAD_rotorTheta` = :math:`90.0^{\circ}`.
    * Application of the GAD to a real world WRF-coupled simulation does not require any additional steps besides the ones described here.
 
 .. rubric:: References
