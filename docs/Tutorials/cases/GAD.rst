@@ -57,4 +57,4 @@ The figure shows instantaneous contours of hub height (90 m) wind speed (in m/s)
 
 .. rubric:: References
 
-.. [#f1] Sanchez-Gomez, M., Muñoz-Esparza, D. & Sauer, J.A. (2024). Implementation and Validation of a Generalized Actuator Disk Parameterization for Wind Turbine Simulations Within the FastEddy Model. Wind Energy, 27(11), 1353-1368.
+.. [#f1] Sanchez Gomez, M., Muñoz-Esparza, D. & Sauer, J.A. (2024). Implementation and Validation of a Generalized Actuator Disk Parameterization for Wind Turbine Simulations Within the FastEddy Model. Wind Energy, 27(11), 1353-1368.
