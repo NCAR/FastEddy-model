@@ -1,4 +1,4 @@
-/* FastEddy®: SRC/EXTENSIONAS/URBAN/urban.c 
+/* FastEddy®: SRC/EXTENSIONS/URBAN/urban.c 
 * ©2016 University Corporation for Atmospheric Research
 * 
 * This file is licensed under the Apache License, Version 2.0 (the "License");
