@@ -777,7 +777,10 @@ int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
    int rhoDivideSwitch = 0;
    int verbose_log = 0;
    int *intField;
+
+#ifdef GAD_EXT
    void* memsetReturnVal;
+#endif
 
    /* For each entry in the ioVarsList, "put" the var */
    ptr = getFirstVarFromList();
@@ -931,6 +934,7 @@ int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
                 fflush(stdout);
              }
            }//endif mpi_Rank_world==0
+#ifdef GAD_EXT
 	 }else if((ptr->nDims == 2)&&(ptr->dimids[1] == 4)){
            countPtr=count1dTD_GAD;
            if (mpi_rank_world==0){
@@ -948,8 +952,8 @@ int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh){
                 fflush(stdout);
              }
            }//endif mpi_Rank_world==0
-         
-	 }// end if ndims==1  && dimids[0]=0 (time) else if(nDims==2 && dimids[1]=4)
+#endif         
+	 }// end if ndims==1  && dimids[0]=0 (time), #ifdef GAD_EXT-- else if(nDims==2 && dimids[1]=4) #endif
       } else {
         printf("Cannot 'put' a NetCDF variable with var.type = %s\n",ptr->type);
       }// if (ptr->type == "float") else if(ptr->type == "int")...
