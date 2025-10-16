@@ -44,6 +44,12 @@ A key aspect required for the GAD model to work is the specification of the aero
    int turbinePolyClOrder(GADNumTurbineTypes) ;
    int turbinePolyCdOrder(GADNumTurbineTypes) ;
 
+The GAD turbine model capability has been implemented into FastEddy as an extension module, and is not compiled by default. The user needs to build FastEddy using the following compile flag below in order to include the GAD module:
+
+.. code-block:: none
+
+   make WITH_GAD=1
+
 The figure shows instantaneous contours of hub height (90 m) wind speed (in m/s) spatial distribution at three different times, showcasing the yawing of the turbines to align with the time-varying wind direction throughout the course of the simulation as it shifts from SW to NW. The gray areas represent the location over which GAD forces are applied (larger than the actual rotor area).
 
 .. image:: ../images/GAD_tutorial.png
