@@ -21,6 +21,12 @@ After initial and boundary conditions have been created, a building-resolving Fa
    #--URBAN
    urbanSelector = 1 # urban selector: 0=off, 1=on
 
+The urban model capability has been implemented into FastEddy as an extension module, and is not compiled by default. The user needs to build FastEddy using the following compile flag below in order to include the GAD module:
+
+.. code-block:: none
+
+   make WITH_URBAN=1
+
 The model used to represent buildings follows the immersed body force approach desctibed in *Muñoz-Esparza et al., 2020* [#f1]_, and the tutorial case corresponds to the passage of a cold front (*Muñoz-Esparza et al.* (2021 [#f2]_, 2025 [#f3]_). The figure below shows instantaneous wind speed and vertical velocity fields corresponding to 30min hindcast valid at 1500 UTC on November 11th 2011. These horizontal contours are from the model's third vertical level, located at approximately 23 m above ground level.
 
 .. image:: ../images/URBAN_tutorial_nz2_2panel.png

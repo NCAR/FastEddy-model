@@ -1,4 +1,4 @@
-Description = This is an example of multiscale WRF-FE over Fort Collins (CO) including resolved buildings.
+Description = This is an example of multiscale WRF-FE over dowtown Dallas (TX) including resolved buildings.
 #--MPI_AALES
 numProcsX = 16 # Number of cores to be used for horizontal domain decomposition in X
 numProcsY = 1 # Number of cores to be used for horizontal domain decomposition in Y
