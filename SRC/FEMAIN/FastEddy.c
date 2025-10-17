@@ -399,12 +399,17 @@ int main(int argc, char **argv){
          errorCode = ioWriteNetCDFoutFileSingleTime(it, Nx, Ny, Nz, Nh);
 #endif
        }else if(ioOutputMode==1){
+#ifdef GAD_EXT
+         errorCode = ioWriteBinaryoutFileSingleTime(it, Nxp, Nyp, Nzp, Nh, GADNumTurbines);
+#else
          errorCode = ioWriteBinaryoutFileSingleTime(it, Nxp, Nyp, Nzp, Nh);
+#endif
        }
 #endif
        mpi_t4 = MPI_Wtime();    //Mark the walltime to measure IO duration
        if(mpi_rank_world == 0){
          printf("Dumped state at timestep = %d...\n",it);
+         fflush(stdout);
        } //if mpi_rank_world
      } //end if (it%frqOutput == 0) ....   (We log summary info and dump outputs)
 #ifdef NOTCUDA 
@@ -469,7 +474,11 @@ int main(int argc, char **argv){
     errorCode = ioWriteNetCDFoutFileSingleTime(it, Nx, Ny, Nz, Nh);
 #endif
   }else if(ioOutputMode==1){
+#ifdef GAD_EXT
+    errorCode = ioWriteBinaryoutFileSingleTime(it, Nxp, Nyp, Nzp, Nh, GADNumTurbines);
+#else
     errorCode = ioWriteBinaryoutFileSingleTime(it, Nxp, Nyp, Nzp, Nh);
+#endif
   }
 #endif
   MPI_Barrier(MPI_COMM_WORLD); 

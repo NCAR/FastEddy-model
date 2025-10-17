@@ -454,7 +454,7 @@ __global__ void cudaDevice_GADfinal(float* xPos_d, float* yPos_d, float* zPos_d,
                                       &turbinePolyCl_d[GAD_turbineType_d[iturb]*turbinePolyClCdrNormSegments_d*turbinePolyOrderMax_d],
                                       &turbinePolyCd_d[GAD_turbineType_d[iturb]*turbinePolyClCdrNormSegments_d*turbinePolyOrderMax_d],
                                       &cell_forceN, &cell_forceT);
-	  if (simTime_it >= __float2int_rn(floor(GADsamplingAvgLength_d*GADrefSeriesLength_d/dt))){ // prevents use of potentially unrealistic initial values...
+	  if (simTime_it >= (GADsamplingAvgLength_d*GADrefSeriesLength_d)){ // prevents use of potentially unrealistic initial values...
           cudaDevice_GADforcesApply(hydroFlds_d[fldStride*RHO_INDX+ijk], GAD_Xcoords_d[iturb], GAD_Ycoords_d[iturb],
                                     GAD_hubHeights_d[GAD_turbineType_d[iturb]], GAD_rotorTheta_d[iturb], GAD_rotorD_d[GAD_turbineType_d[iturb]],
                                     xPos_d[ijk], yPos_d[ijk], (zPos_d[ijk]-topoPos_d[ij]),
