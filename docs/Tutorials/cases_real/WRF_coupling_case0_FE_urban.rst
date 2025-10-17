@@ -33,4 +33,4 @@ The model used to represent buildings follows the immersed body force approach d
 
 .. [#f2] Muñoz-Esparza, D., Shin, H.H, Sauer, J.A, et al. (2021). Efficient Graphics Processing Unit Modeling of Street-Scale Weather Effects in Support of Aerial Operations in the Urban Environment. AGU Advances, 2(2), e2021AV000432.
 
-.. [#f3] Muñoz-Esparza, D., Sauer, J.A, et al. (2025). Multiscale weather forecasting sensitivities to urban characteristics and atmospheric conditions during a cold front passage over the Dallas-Fort Worth metroplex. Urban Climate, 60, 102334.
+.. [#f3] Muñoz-Esparza, D., Sauer, J.A, Jiménez, P.A., Boehnert, J. , Hahn, D., Steiner, M. (2025). Multiscale weather forecasting sensitivities to urban characteristics and atmospheric conditions during a cold front passage over the Dallas-Fort Worth metroplex. Urban Climate, 60, 102334.
