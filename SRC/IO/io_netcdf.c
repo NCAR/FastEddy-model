@@ -122,11 +122,18 @@ int ioReadNetCDFinFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
 #endif
    int errorCode = IO_SUCCESS;
    int ncid;
+   int ncdims;
    /* concatenate the fileName components */
    sprintf(inFileName, "%s%s",inPath,inFile);
    /* Open the input file.*/
    printf("Attempting to open inFileName = %s\n",inFileName);
    errorCode = ioOpenNetCDFinFile(inFileName, &ncid);
+   /* Inquire for the inumber of dimensions*/
+   if ((errorCode = nc_inq_ndims(ncid, &ncdims))){
+      ERR(errorCode);
+   }
+   printf("inFileName = %s as %d dimensions\n",inFileName,ncdims);
+
    /* Inquire for the dimension-ids*/
    if ((errorCode = nc_inq_dimid(ncid, "time", &dimids[0]))){
       ERR(errorCode);
@@ -143,11 +150,12 @@ int ioReadNetCDFinFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
    printf("Opened inFileName = %s with ncid = %d\n",inFileName,ncid);
    printf("Established dimension ids of xIndex,yIndex,zIndex = %d, %d, %d\n",dimids[3],dimids[2],dimids[1]);
 #ifdef GAD_EXT
-   if ((errorCode = nc_inq_dimid(ncid, "GADNumTurbines", &dimids[4]))){
-      ERR(errorCode);
-   }
-
-   printf("Established GAD dimension id of GADNumTurbines as %d\n",dimids[4]);
+   if(ncdims > 4){
+     if ((errorCode = nc_inq_dimid(ncid, "GADNumTurbines", &dimids[4]))){
+        ERR(errorCode);
+     }
+     printf("Established GAD dimension id of GADNumTurbines as %d\n",dimids[4]);
+   }//endif ncdims > 4
 #endif
   
    /*Attempt to read all of the variables in the IO Registry list*/
@@ -223,21 +231,23 @@ int ioReadNetCDFinFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
        return(errorCode);  
    } 
 #ifdef GAD_EXT
-   //count1dTD_GAD
-   if ((errorCode = nc_inq_dimlen(ncid, dimids[0], &count1dTD_GAD[0]))){
-      ERR(errorCode);
-   }
-   if ((errorCode = nc_inq_dimlen(ncid, dimids[4], &count1dTD_GAD[1]))){
-      ERR(errorCode);
-   }
-   if(count1dTD_GAD[1]!=Nturbines){
-       printf("ERROR: inFileName = %s, count1dTD_GAD dimension lengths for t,GADNumTurbines = %lu\n",
+   if(ncdims > 4){
+     //count1dTD_GAD
+     if ((errorCode = nc_inq_dimlen(ncid, dimids[0], &count1dTD_GAD[0]))){
+        ERR(errorCode);
+     }
+     if ((errorCode = nc_inq_dimlen(ncid, dimids[4], &count1dTD_GAD[1]))){
+        ERR(errorCode);
+     }
+     if(count1dTD_GAD[1]!=Nturbines){
+        printf("ERROR: inFileName = %s, count1dTD_GAD dimension lengths for t,GADNumTurbines = %lu\n",
                inFileName, count1dTD_GAD[1]);
-       printf("       does not match GADNumTurbines = %d turbineSpecsFile parameter!\n",
+        printf("       does not match GADNumTurbines = %d turbineSpecsFile parameter!\n",
                Nturbines);
-       printf("       No values will be read from the file!\n");
-       errorCode = IO_ERROR_DIMLEN;
-       return(errorCode);
+        printf("       No values will be read from the file!\n");
+        errorCode = IO_ERROR_DIMLEN;
+        return(errorCode);
+     }
    }
 #endif
    /*These are the starting location in the full domain space.*/ 

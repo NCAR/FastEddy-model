@@ -30,7 +30,7 @@ float GADsamplingAvgWeight;/* sample window averaging weight*/
 int GADrefSeriesLength;  /* Number of sampling windows over which to average again for reference velocity magnitude and direction */
 float GADrefSeriesWeight;  /* ref Series averaging weight */
 int GADForcingSwitch;    /* Switch to use the GADrefU-based or local windspeed in computing GAD forces: 0=local, 1=ref */
-int GADNumTurbines;      /* Number of GAD Turbines */
+int GADNumTurbines = 0;      /* Number of GAD Turbines */
 int GADNumTurbineTypes;  /* Number of GAD Turbine Types */
 int turbinePolyOrderMax; /* Maximum Polynomial order across all turbine types */
 int turbinePolyClCdrNormSegments; /* Number of segments in the normalized radius for the lift and drag coefficient polynomial */
