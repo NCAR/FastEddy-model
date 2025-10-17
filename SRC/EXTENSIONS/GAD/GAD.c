@@ -345,6 +345,7 @@ int GADConstructor(){
        MPI_Bcast(*fldPtr, GADNumTurbines, MPI_FLOAT, 0, MPI_COMM_WORLD);
        if(iFld == 2){
          errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, *fldPtr);
+         errorCode = ioAddStandardAttrs("GAD_rotorTheta", "degrees", "rotor angle from west increasing counter-clockwise", NULL);
          printf("%d/%d: GADConstructor()-- %s stored at %p, has been registered with IO.\n",
                 mpi_rank_world, mpi_size_world, &fldName[0], *fldPtr);
          fflush(stdout);
@@ -637,36 +638,23 @@ int GADConstructor(){
   GAD_turbineYawing = (int*) malloc(GADNumTurbines*sizeof(int));
   sprintf(&fldName[0],"GAD_turbineYawing");
   errorCode = ioRegisterVar(&fldName[0], "int", 2, dims1dTD_GAD, &GAD_turbineYawing[0]);
+  errorCode = ioAddStandardAttrs("GAD_turbineYawing", "-", "flag indicating turbine is in the process of yawing", NULL);
   GAD_turbineRefMag = (float*) malloc(GADNumTurbines*sizeof(float));
   sprintf(&fldName[0],"GAD_turbineRefMag");
   errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_turbineRefMag[0]);
+  errorCode = ioAddStandardAttrs("GAD_turbineRefMag", "m s-1", "turbine reference wind speed", NULL);
   GAD_turbineRefDir = (float*) malloc(GADNumTurbines*sizeof(float));
   sprintf(&fldName[0],"GAD_turbineRefDir");
   errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_turbineRefDir[0]);
+  errorCode = ioAddStandardAttrs("GAD_turbineRefDir", "degrees", "turbine reference wind direction", NULL);
   GAD_yawError = (float*) malloc(GADNumTurbines*sizeof(float));
   sprintf(&fldName[0],"GAD_yawError");
   errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_yawError[0]);
+  errorCode = ioAddStandardAttrs("GAD_yawError", "degrees2 s", "turbine-wind misalignment error for yaw-controller", NULL);
   GAD_anFactor = (float*) malloc(GADNumTurbines*sizeof(float));
   sprintf(&fldName[0],"GAD_anFactor");
   errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_anFactor[0]);
-
-  /*Register GAD_rotorTheta*/
-  sprintf(&fldName[0],"GAD_rotorTheta");
-  //errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_rotorTheta[0]);
-  printf("%d/%d: GADConstructor = %s stored at %p, has been registered with IO.\n",
-         mpi_rank_world, mpi_size_world, &fldName[0],&GAD_rotorTheta[0]);
-  fflush(stdout);
-  //sprintf(&fldName[0],"GAD_Xcoords");
-  //errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_Xcoords[0]);
-  //printf("%d/%d: GADConstructor = %s stored at %p, has been registered with IO.\n",
-  //       mpi_rank_world, mpi_size_world, &fldName[0],&GAD_Xcoords[0]);
-  //fflush(stdout);
-  //sprintf(&fldName[0],"GAD_Ycoords");
-  //errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_Ycoords[0]);
-  //printf("%d/%d: GADConstructor = %s stored at %p, has been registered with IO.\n",
-  //       mpi_rank_world, mpi_size_world, &fldName[0],&GAD_Ycoords[0]);
-  //fflush(stdout);
-  //errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, GAD_rotorTheta);
+  errorCode = ioAddStandardAttrs("GAD_anFactor", "-", "rotor-normal upstream wind speed induction factor", NULL);
 
   return(errorCode);
 } //end GADConstructor()

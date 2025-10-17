@@ -16,7 +16,11 @@
 /*----->>>>> int ioWriteBinaryoutFileSingleTime();  ---------------------------------------------------------------
  * Used to have N-ranks write N-binary files of registered variables for a single timestep.
 */
+#ifdef GAD_EXT
+int ioWriteBinaryoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh, int Nturbines){
+#else
 int ioWriteBinaryoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
+#endif
    int errorCode = IO_SUCCESS;
    FILE *output_ptr;
 
@@ -27,7 +31,11 @@ int ioWriteBinaryoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
    /*Open the output file*/
    output_ptr = fopen(outFileName,"wb");
    /*Write the IO-registered variables to the output file*/
+#ifdef GAD_EXT
+   errorCode = ioPutBinaryoutFileVars(output_ptr, Nx, Ny, Nz, Nh, Nturbines);
+#else
    errorCode = ioPutBinaryoutFileVars(output_ptr, Nx, Ny, Nz, Nh);
+#endif
    /*Close the output file*/
    fclose(output_ptr);
    return(errorCode);
@@ -36,7 +44,11 @@ int ioWriteBinaryoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh){
 /*----->>>>> int ioPutBinaryoutFileVars();    ---------------------------------------------------------------------
 * Used to put(write) all variables in the register list in(to) the Binary file. 
 */
+#ifdef GAD_EXT
+int ioPutBinaryoutFileVars(FILE *outptr, int Nx, int Ny, int Nz, int Nh, int Nturbines){
+#else
 int ioPutBinaryoutFileVars(FILE *outptr, int Nx, int Ny, int Nz, int Nh){
+#endif
    int errorCode = IO_SUCCESS;
    ioVar_t *ptr;
    ioVar_t *rhoptr;
@@ -130,6 +142,15 @@ int ioPutBinaryoutFileVars(FILE *outptr, int Nx, int Ny, int Nz, int Nh){
            extent=Ny+2*Nh; 
            fwrite(&extent,sizeof(int),1,outptr);
            fwrite(field,numElems*sizeof(float),1,outptr);
+#ifdef GAD_EXT
+         }else if((ptr->nDims == 2)&&(ptr->dimids[1] == 4)){
+           numElems=(Nturbines);
+           binary_nDims=1;
+           fwrite(&binary_nDims,sizeof(int),1,outptr);
+           extent=Nturbines;
+           fwrite(&extent,sizeof(int),1,outptr);
+           fwrite(field,numElems*sizeof(float),1,outptr);
+#endif
 	 }else if((ptr->nDims == 1)&&(ptr->dimids[0] == 0)){
            numElems=1;
            binary_nDims=1;
@@ -147,6 +168,15 @@ int ioPutBinaryoutFileVars(FILE *outptr, int Nx, int Ny, int Nz, int Nh){
            extent=1;
            fwrite(&extent,sizeof(int),1,outptr);
            fwrite(intField,numElems*sizeof(int),1,outptr);
+#ifdef GAD_EXT
+	 }else if((ptr->nDims == 2)&&(ptr->dimids[1] == 4)){
+           numElems=(Nturbines);
+           binary_nDims=1;
+           fwrite(&binary_nDims,sizeof(int),1,outptr);
+           extent=Nturbines;
+           fwrite(&extent,sizeof(int),1,outptr);
+           fwrite(intField,numElems*sizeof(int),1,outptr);
+#endif
          }// end if ndims == 1  && ptr->dimids[0] == 0  
       }// if (ptr.type == "float") else if (ptr.type == "int")...
       ptr = ptr->next;

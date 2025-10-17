@@ -295,7 +295,7 @@ int hydro_coreGetParams(){
    hydroBCs = 2; //Default to periodicHorizVerticalAbl
    errorCode = queryIntegerParameter("hydroBCs", &hydroBCs, 1, 2, PARAM_MANDATORY);
    if(hydroBCs==1){
-     errorCode = queryFileParameter("hydroBndysFileBase", &hydroBndysFileBase, PARAM_MANDATORY);  
+     errorCode = queryStringParameter("hydroBndysFileBase", &hydroBndysFileBase, PARAM_MANDATORY);  
      hydroBndysFileStart = 0;
      errorCode = queryIntegerParameter("hydroBndysFileStart", &hydroBndysFileStart, 0, 500000, PARAM_MANDATORY);
      hydroBndysFileEnd = 0;
