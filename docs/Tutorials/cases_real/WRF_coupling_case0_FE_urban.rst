@@ -12,9 +12,9 @@ In the *GeoSpec* preprocessing step, and additional 2d field describing building
 
 This tutorial provides an example of building heights for downtown Dallas, TX (:code:`Dallas_input_Oct2025_lod13.nc`). Prior to the execution of **GeoSpec.py**, the *geospec.json* file option :code:`urban_opt : 1` needs to be selected for building height information to be ingested in the reference standard-format NetCDF output file.
 
-The same :code:`urban_opt : 1` option needs to be included in the subsequent *SimGrid* and *GenICBCs*, so the building information leads to the creation of a :code:`BuildingMask` array containing gridded information of building presence, and ensuring theat winds, subgrid-scale TKE and hydrometeors are zeroed out in the initial condition, respectively.
+The same :code:`urban_opt : 1` option needs to be included in the subsequent *SimGrid* and *GenICBCs*, so the building information leads to the creation of a :code:`BuildingMask` array containing gridded information of building presence, and ensuring that winds, subgrid-scale TKE and hydrometeors are zeroed out in the initial condition, respectively.
 
-After initial and boundary conditions have been created, a building-resolving FastEddy simulation can undertaken with intial and boundary forcing from the mesoscale prognostic state fields. The lines below correspond to additions and modifications to the FastEddy parameters file necessary to activate the urban model capability (corresponding to the test case from **tutorials/examples/Example10_REALCASE_Dallas_urban.in**)
+After initial and boundary conditions have been created, a building-resolving FastEddy simulation can be undertaken with initial and boundary forcing from the mesoscale prognostic state fields. The lines below correspond to additions and modifications to the FastEddy parameters file necessary to activate the urban model capability (corresponding to the test case from **tutorials/examples/Example10_REALCASE_Dallas_urban.in**)
 
 .. code-block:: none
 
@@ -27,7 +27,7 @@ The urban model capability has been implemented into FastEddy as an extension mo
 
    make WITH_URBAN=1
 
-The model used to represent buildings follows the immersed body force approach desctibed in *Muñoz-Esparza et al., 2020* [#f1]_, and the tutorial case corresponds to the passage of a cold front (*Muñoz-Esparza et al.* (2021 [#f2]_, 2025 [#f3]_). The figure below shows instantaneous wind speed and vertical velocity fields corresponding to 30min hindcast valid at 1500 UTC on November 11th 2011. These horizontal contours are from the model's third vertical level, located at approximately 23 m above ground level.
+The model used to represent buildings follows the immersed body force approach described in *Muñoz-Esparza et al., 2020* [#f1]_, and the tutorial case corresponds to the passage of a cold front (*Muñoz-Esparza et al.* (2021 [#f2]_, 2025 [#f3]_). The figure below shows instantaneous wind speed and vertical velocity fields corresponding to 30min hindcast valid at 1500 UTC on November 11th 2011 (pre-frontal conditions). These horizontal contours are from the model's third vertical level, located at approximately 23 m above ground level.
 
 .. image:: ../images/URBAN_tutorial_nz2_2panel.png
   :width: 900
