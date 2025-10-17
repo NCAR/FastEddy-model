@@ -8,9 +8,10 @@ Real cases are performed by dynamically downscaling from a mesoscale model such 
 * Step 2: **SimGrid**. Simulation grid definition step. Defines a FastEddy gridded domain at a specificed grid spacing, location and extent using the file resulting from ther previous GeoSpec step and a FastEddy input parameters file (with targeted domain configuration parameters) as inputs.
 * Step 3: **GenICBCs**. Generate initial conditions/boundary (ICBCs) conditions step. Creates ICBCs for a targeted FastEddy domain (defined in the SimGrid step) from a set of mesoscale model results. 
 
-The following tutorial provides a practical example of performing these preprocessing steps followed by a corresponding weather-driven FastEddy simulation for a real-world downscaled scenario.
+The following tutorial provides a practical example of performing these preprocessing steps followed by a corresponding weather-driven FastEddy simulation for a real-world downscaled scenario. In addition, another real-world downscaled scenario where buildings are explicitly modeled is included.
 
 .. toctree::
 
    cases_real/WRF_coupling_case0.rst
    cases_real/WRF_coupling_case0_FE.rst
+   cases_real/WRF_coupling_case0_FE_urban.rst
