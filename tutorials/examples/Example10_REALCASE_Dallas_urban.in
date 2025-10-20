@@ -60,7 +60,7 @@ moistureCondBasePres = 1 #selector to use base pressure for microphysics
 moistureMPcallTscale = 1.0 # time scale for microphysics to be called
 ##------------: CORIOLIS ---
 coriolisSelector = 1  #Coriolis switch: 0 off, 1 on
-coriolisLatitude = 40.5948 # Charactersitc latitude in degrees from equator of the LES domain
+coriolisLatitude = 32.78 # Charactersitc latitude in degrees from equator of the LES domain
 ## ----------: TURBULENCE ---
 turbulenceSelector = 1 # turbulence scheme selector: 0= none, 1= Lilly/Smagorinsky
 TKESelector = 1 # Prognostic TKE selector: 0= none, 1= Prognostic
