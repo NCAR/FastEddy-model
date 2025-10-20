@@ -27,6 +27,9 @@ __constant__ float corioLS_fact_d;            /*large-scale forcing factor on Co
 extern "C" int cuda_coriolisDeviceSetup(){
    int errorCode = CUDA_CORIOLIS_SUCCESS;
    cudaMemcpyToSymbol(coriolisSelector_d, &coriolisSelector, sizeof(int));
+   cudaMemcpyToSymbol(corioConstHorz_d, &corioConstHorz, sizeof(float));
+   cudaMemcpyToSymbol(corioConstVert_d, &corioConstVert, sizeof(float));
+   cudaMemcpyToSymbol(corioLS_fact_d, &corioLS_fact, sizeof(float));
 
    return(errorCode);
 } //end cuda_coriolisDeviceSetup()
