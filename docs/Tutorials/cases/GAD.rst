@@ -1,6 +1,6 @@
-==========================================================
-Flow in the presence of a turbine array under a wind shift
-==========================================================
+=====================================
+Turbine array flow with the GAD model
+=====================================
 
 This is an idealized scenario of wind farm (3 x 3 turbine array) flow in neutrally stratified boundary layer with an evolving wind direction spanning 90 degrees of clockwise turning over 40 minutes. This idealized scenario demonstrates the generalized actuator disk (GAD) implementation in FastEddy (*Sanchez Gomez et al., 2024* [#f1]_), with the inclusion of a turbine yawing capability to align with the meteorological wind direction at the turbine's nacelle. The initial and boundary conditions for this idealized case are derived from a horizontally averaged LES run of a neutral ABL with a geostrophic wind aligned in the zonal direction (:math:`[U_g,V_g]=[10.0,0.0]` m/s) with and a latitude of :math:`40.0^{\circ}` N. The required datasets to run this tutorial are provided at this Zenodo record [TO BE UPDATED].
 
