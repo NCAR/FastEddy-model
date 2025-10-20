@@ -2,7 +2,7 @@
 Turbine array flow with the GAD model
 =====================================
 
-This is an idealized scenario of wind farm (3 x 3 turbine array) flow in neutrally stratified boundary layer with an evolving wind direction spanning 90 degrees of clockwise turning over 40 minutes. This idealized scenario demonstrates the generalized actuator disk (GAD) implementation in FastEddy (*Sanchez Gomez et al., 2024* [#f1]_), with the inclusion of a turbine yawing capability to align with the meteorological wind direction at the turbine's nacelle. The initial and boundary conditions for this idealized case are derived from a horizontally averaged LES run of a neutral ABL with a geostrophic wind aligned in the zonal direction (:math:`[U_g,V_g]=[10.0,0.0]` m/s) with and a latitude of :math:`40.0^{\circ}` N. The required datasets to run this tutorial are provided at this Zenodo record [TO BE UPDATED].
+This is an idealized scenario of wind farm (3 x 3 turbine array) flow in neutrally stratified boundary layer with an evolving wind direction spanning 90 degrees of clockwise turning over 40 minutes. This idealized scenario demonstrates the generalized actuator disk (GAD) implementation in FastEddy (*Sanchez Gomez et al., 2024*), with the inclusion of a turbine yawing capability to align with the meteorological wind direction at the turbine's nacelle. The initial and boundary conditions for this idealized case are derived from a horizontally averaged LES run of a neutral ABL with a geostrophic wind aligned in the zonal direction (:math:`[U_g,V_g]=[10.0,0.0]` m/s) with and a latitude of :math:`40.0^{\circ}` N. The required datasets to run this tutorial are provided at this Zenodo record [TO BE UPDATED].
 
 The GAD model is activated by the selector (:code:`GADSelector = 1`) in the parameters file. This case uses the parameters file **tutorials/examples/Example09_GAD.in**. The lines below correspond to additions to the FastEddy parameters file necessary for turbine-inclusive LES runs. These correspond to the turbine specification file (:code:`turbineSpecsFile`) and a parameter to choose whether or not to write GAD forces to output files (:code:`GADoutputForces`).
 
@@ -60,7 +60,3 @@ The figure shows instantaneous contours of hub height (90 m) wind speed (in m/s)
 
    * The orientation of the turbine (:code:`GAD_rotorTheta`) is defined as the angle from the negative x axis, increasing counterclockwise. This is different from the meteorological convention for wind direction. For example, a turbine facing the west will have :code:`GAD_rotorTheta` = :math:`0.0^{\circ}`, while a turbine facing south will have :code:`GAD_rotorTheta` = :math:`90.0^{\circ}`.
    * Application of the GAD to a real world WRF-coupled simulation does not require any additional steps besides the ones described here.
-
-.. rubric:: References
-
-.. [#f1] Sanchez Gomez, M., Muñoz-Esparza, D. & Sauer, J.A. (2024). Implementation and Validation of a Generalized Actuator Disk Parameterization for Wind Turbine Simulations Within the FastEddy Model. Wind Energy, 27(11), 1353-1368.
