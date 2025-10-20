@@ -325,11 +325,14 @@ int hydro_coreGetParams(){
    errorCode = queryIntegerParameter("TKEAdvSelector", &TKEAdvSelector, 0, 6, PARAM_OPTIONAL);
    TKEAdvSelector_b_hyb = 0.0; //Default to 0.0
    errorCode = queryFloatParameter("TKEAdvSelector_b_hyb", &TKEAdvSelector_b_hyb, 0.0, 1.0, PARAM_OPTIONAL);
-   if ((turbulenceSelector == 1) && (TKESelector == 0)){
-     c_s = 0.18; //Default to 0.18
-     errorCode = queryFloatParameter("c_s", &c_s, 1e-6, 1e6, PARAM_OPTIONAL);
-     c_k = 0.10; //Default to 0.1
-     errorCode = queryFloatParameter("c_k", &c_k, 1e-6, 1e6, PARAM_OPTIONAL);
+   if (turbulenceSelector == 1){
+      if (TKESelector == 0){
+         c_s = 0.18; //Default to 0.18
+         errorCode = queryFloatParameter("c_s", &c_s, 1e-6, 1e6, PARAM_OPTIONAL);
+      }else if (TKESelector > 0){
+         c_k = 0.10; //Default to 0.1
+         errorCode = queryFloatParameter("c_k", &c_k, 1e-6, 1e6, PARAM_OPTIONAL);
+      }
    }
    advectionSelector = 3; //Default to 3
    errorCode = queryIntegerParameter("advectionSelector", &advectionSelector, 0, 6, PARAM_OPTIONAL);
