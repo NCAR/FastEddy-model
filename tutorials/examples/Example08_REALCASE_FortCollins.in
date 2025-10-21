@@ -50,9 +50,9 @@ b_hyb = 0.0 # hybrid advection scheme parameter: 0.0= lower-order upwind, 1.0=hi
 ##------------: MOISTURE ---
 moistureSelector = 1 # moisture selector: 0=off, 1=on
 moistureNvars = 2 # number of moisture species
-moistureAdvSelectorQv = 2 # water vapor advection scheme selector
+moistureAdvSelectorQv = 3 # water vapor advection scheme selector
 moistureAdvSelectorQv_b = 0.0 # hybrid advection scheme parameter for water vapor
-moistureAdvSelectorQi = 2 # moisture advection scheme selector for non-qv fields (non-oscillatory schemes)
+moistureAdvSelectorQi = 1 # moisture advection scheme selector for non-qv fields (non-oscillatory schemes)
 moistureSGSturb = 1 # selector to apply sub-grid scale diffusion to moisture fields
 moistureCond = 3 # selector to apply condensation to mositure fields
 moistureCondTscale = 1.0 # relaxation time in seconds
