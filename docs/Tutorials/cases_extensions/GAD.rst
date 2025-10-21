@@ -60,3 +60,5 @@ The figure shows instantaneous contours of hub height (90 m) wind speed (in m/s)
 
    * The orientation of the turbine (:code:`GAD_rotorTheta`) is defined as the angle from the negative x axis, increasing counterclockwise. This is different from the meteorological convention for wind direction. For example, a turbine facing the west will have :code:`GAD_rotorTheta` = :math:`0.0^{\circ}`, while a turbine facing south will have :code:`GAD_rotorTheta` = :math:`90.0^{\circ}`.
    * Application of the GAD to a real world WRF-coupled simulation does not require any additional steps besides the ones described here.
+
+Full citation references can be found in the :doc:`Publications <../publications.rst>` section.
