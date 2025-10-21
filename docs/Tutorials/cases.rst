@@ -25,6 +25,7 @@ Resources required for tutorial cases including python utilities and Jupyter Not
    cases/DISPERSION.rst
 
 .. rubric::
+
 Sensitivity Tests
 =================
 
