@@ -2,13 +2,33 @@
 Release Notes
 *************
 
+FastEddy-model Version 4.0 Release Notes (20251022)
+===================================================
+
+.. dropdown:: Repository, build, and test
+
+   * Two new tutorials for coupled mesoscale-LES real-world case including urban structure impacts and an idealized demonstration of wind farm flow under a wind shift
+   * New comprehensive model parameter reference guide
+   * Documentation updates to organization and content clarity
+   * IO module feature extensions providing output field attributes (units and description) in both netCDF and raw binary forms
+   * Modular framework and Makefile-based build process for model extensions (GAD and URBAN)  
+
+.. dropdown:: Bugfixes
+
+   * Fix to the Coriolis force term to properly pass down parameters to the GPU
+   * Introduction of limiters for instantaneous heat and moisture exchange coefficients to avoid unrealistically large values in surface-layer fluxes
+
+.. dropdown:: Enhancements
+
+   * Urban model using an immersed body force method (IBFM) (urbanSelector=1)
+   * Wind turbine model using a generalized actuator disk (GAD) method (GADSelector=1)
 
 FastEddy-model Version 3.0 Release Notes (20250415)
 ===================================================
 
 .. dropdown:: Repository, build, and test
 
-   * 1 new tutorial for coupled mesoscale-LES real-world case
+   * One new tutorial for coupled mesoscale-LES real-world case
    * Additional makefile for building for AMD GPUs with hip and corresponding documentation [Contributed by Dr. Joe Schoonover from Fluid Numerics]
 
 
