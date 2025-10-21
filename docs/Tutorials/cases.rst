@@ -24,6 +24,8 @@ Required tutorial resources including python utilities and Jupyter Notebooks are
    cases/OFFSHORE.rst
    cases/DISPERSION.rst
 
+Upon completing these basic tutorials the beginner-level user may be interested to explore a series of sensitivity tests to learn more about large-eddy simulation of idealized boundary layers and the impacts of various model parameters.
+
 Sensitivity Tests
 =================
 
