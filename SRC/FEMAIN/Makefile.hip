@@ -33,7 +33,8 @@ TEST_CU_CC = hipcc -Rpass-analysis=kernel-resource-usage --gpu-max-threads-per-b
 ROCM_PATH ?= /opt/rocm
 MPI_ROOT ?= ""
 NETCDF_C_ROOT ?= ""
-GPU_ARCH ?= gfx90a
+#GPU_ARCH ?= gfx90a
+GPU_ARCH ?= gfx942
 
 # For compilation on NCAR's Casper or Derecho supercomputers use the OTHER_INCLUDES below
 OTHER_INCLUDES = -I${MPI_ROOT}/include
@@ -121,6 +122,30 @@ TEST_OBJS = ./FastEddy.o \
 	../PARAMETERS/parameters.o \
 	../PARAMETERS/hashTable.o
 
+
+################################################################################
+# Extensions 
+################################################################################
+WITH_GAD = 0
+ifeq ($(WITH_GAD),1)
+ DEFINES+=-DGAD_EXT
+ INCLUDES+=-I../EXTENSIONS/GAD/ \
+	   -I../EXTENSIONS/GAD/CUDA/
+ $(info WITH_GAD=1)
+ $(info ${DEFINES})
+ $(info ${INCLUDES})
+endif
+
+WITH_URBAN = 0
+ifeq ($(WITH_URBAN),1)
+ DEFINES+=-DURBAN_EXT
+ INCLUDES+=-I../EXTENSIONS/URBAN/ \
+	   -I../EXTENSIONS/URBAN/CUDA/
+ $(info WITH_URBAN=1)
+ $(info ${DEFINES})
+ $(info ${INCLUDES})
+endif
+
 ################################################################################
 # Targets
 # ###############################################################################
@@ -137,7 +162,6 @@ hipify:
 # Generic compile rules
 # ################################################################################
 %.o: %.cu
-	rm -rf ./FastEddy_devlink.o; \
 	$(TEST_CU_CC) $(TEST_CU_CFLAGS) -fgpu-rdc -c $< -o $@
 
 .c.o:
@@ -149,7 +173,6 @@ hipify:
 
 ../TIME_INTEGRATION/CUDA/cuda_timeIntDevice.o: ../TIME_INTEGRATION/CUDA/cuda_timeIntDevice.cu \
         ../TIME_INTEGRATION/CUDA/cuda_RKschemes.cu
-	rm -rf ./FastEddy_devlink.o; \
 	$(TEST_CU_CC) $(TEST_CU_CFLAGS) -fgpu-rdc -c $< -o $@
 
 ../IO/io.o: ../IO/io.c \
@@ -160,7 +183,6 @@ hipify:
 ../FECUDA/fecuda_Device.o: ../FECUDA/fecuda_Device.cu \
 	../FECUDA/fecuda_Utils.cu \
 	../FECUDA/fecuda_PlugIns.cu 
-	rm -rf ./FastEddy_devlink.o; \
 	$(TEST_CU_CC) $(TEST_CU_CFLAGS) -fgpu-rdc -c $< -o $@
 
 ../HYDRO_CORE/CUDA/cuda_hydroCoreDevice.o: ../HYDRO_CORE/CUDA/cuda_hydroCoreDevice.cu \
@@ -178,8 +200,8 @@ hipify:
 	../HYDRO_CORE/CUDA/cuda_canopyDevice.cu \
         ../HYDRO_CORE/CUDA/cuda_largeScaleForcingsDevice.cu \
         ../HYDRO_CORE/CUDA/cuda_moistureDevice.cu \
-        ../HYDRO_CORE/CUDA/cuda_filtersDevice.cu
-	rm -rf ./FastEddy_devlink.o; \
+        ../HYDRO_CORE/CUDA/cuda_filtersDevice.cu \
+	../HYDRO_CORE/CUDA/cuda_cellpertDevice.cu
 	$(TEST_CU_CC) $(TEST_CU_CFLAGS) -fgpu-rdc -c $< -o $@
 ################################################################################
 # Generic Executable
@@ -190,6 +212,7 @@ FastEddy: COMP_FLAGS = ${TEST_CC} ${TEST_CFLAGS}
 TEST_DEPENDENCIES = ${TEST_OBJS} ${TEST_HDRS} FastEddy_devlink.o
 
 FastEddy_devlink.o:
+	rm -rf ./FastEddy_devlink.o; \
 	$(TEST_CU_CC) ${ARCH_CU_FLAGS} ${TEST_OBJS} ${TEST_LDFLAGS} ${TEST_LIBS} -fgpu-rdc --hip-link --emit-static-lib -o FastEddy_devlink.o
 FastEddy: ${TEST_DEPENDENCIES}
 	${COMP_FLAGS} -o FastEddy ${TEST_OBJS} ./FastEddy_devlink.o ${TEST_LDFLAGS} ${TEST_LIBS}
