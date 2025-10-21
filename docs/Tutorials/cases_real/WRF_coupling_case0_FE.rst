@@ -1,6 +1,6 @@
-========================================================
-Running a real-world downscaled simulation with FastEddy
-========================================================
+===================================================
+Running a real-world downscaled FastEddy simulation
+===================================================
 
 After initial and boundary conditions have been created, a FastEddy simulation can undertaken with intial and boundary forcing from the mesoscale prognostic state fields. The lines below correspond to additions and modifications to the FastEddy parameters file necessary for coupled mesoscale-LES runs (corresponding to the test case from **tutorials/examples/Example08_REALCASE_FortCollins.in**)
 

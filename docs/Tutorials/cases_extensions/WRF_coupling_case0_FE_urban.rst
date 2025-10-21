@@ -32,3 +32,5 @@ The model used to represent buildings follows the immersed body force approach d
 .. image:: ../images/URBAN_tutorial_nz2_2panel.png
   :width: 900
   :alt: Alternative text
+
+Full citation references can be found in the :doc:`Publications <../../publications>` section.
