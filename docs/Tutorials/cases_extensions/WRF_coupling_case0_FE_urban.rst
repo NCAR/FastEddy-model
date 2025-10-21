@@ -1,6 +1,6 @@
-==========================================================================================
-Setting up and running a real-world downscaled building-resolving simulation with FastEddy
-==========================================================================================
+========================================================
+Real-world downscaled FastEddy simulation with buildings
+========================================================
 
 This tutorial involves setting up a real-world downscaled simulation that includes resolved buildings and closely follows the same procedure outlined in section 4.1. Additional steps for including buildings are described below and all required input datasets to run this tutorial are provided in this Zenodo record [TO BE UPDATED].
 
