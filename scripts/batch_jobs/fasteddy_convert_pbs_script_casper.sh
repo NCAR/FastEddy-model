@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -A <ProjectAccount>
 #PBS -N FE_convert 
-#PBS -l select=2:ncpus=2:mpiprocs=2:mem=40GB
+#PBS -l select=2:ncpus=2:mpiprocs=2:mem=200GB
 #PBS -l walltime=24:00:00
 #PBS -q casper
 #PBS -j oe
@@ -12,7 +12,10 @@ export SRCDIR=${BASEDIR}/scripts/python_utilities/post-processing/
 
 hostname
 module load conda
-conda activate npl-2025a
+# Be to have created the following conda environment (on Casper) from 
+# the environment.yml file in this */scripts/batch_jobs/ directory
+# with---> conda env create -f environment.yml
+conda activate mpi4py-casper-oneapi-2024.2.1-openmpi-5.0.6 
 which python
 
-mpiexec -n 4 --ppn 2 python -u ${SRCDIR}/FEbinaryToNetCDF.py -f ${SRCDIR}/convert.json -a ${SRCDIR}/field_attributes.json
+mpiexec python -u ${SRCDIR}/FEbinaryToNetCDF.py -f ${SRCDIR}/convert.json -a ${SRCDIR}/field_attributes.json
