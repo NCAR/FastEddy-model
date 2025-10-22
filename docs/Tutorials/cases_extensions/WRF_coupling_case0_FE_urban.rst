@@ -2,7 +2,7 @@
 Real-world downscaled FastEddy simulation with buildings
 ========================================================
 
-This tutorial involves setting up a real-world downscaled simulation that includes resolved buildings and closely follows the same procedure outlined in section 4.1. Additional steps for including buildings are described below and all required input datasets to run this tutorial are provided in this Zenodo record [TO BE UPDATED].
+This tutorial involves setting up a real-world downscaled simulation that includes resolved buildings and closely follows the same procedure outlined in section 4.1. Additional steps for including buildings are described below and all required input datasets to run this tutorial are provided in this `Zenodo record <https://zenodo.org/records/17419234>`_.
 
 In the *GeoSpec* preprocessing step, and additional 2d field describing building heights above ground level is required in the georeference input NetCDF file.
 
