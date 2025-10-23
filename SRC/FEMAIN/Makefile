@@ -159,7 +159,7 @@ all: FastEddy
 # Module=specific compile rules
 # ################################################################################
 
-../TIME_INTEGBRATION/CUDA/cuda_timeIntDevice.o: ../TIME_INTEGRATION/CUDA/cuda_timeIntDevice.cu \
+../TIME_INTEGRATION/CUDA/cuda_timeIntDevice.o: ../TIME_INTEGRATION/CUDA/cuda_timeIntDevice.cu \
         ../TIME_INTEGRATION/CUDA/cuda_RKschemes.cu
 	$(TEST_CU_CC) $(TEST_CU_CFLAGS) -dc $< -o $@
 
