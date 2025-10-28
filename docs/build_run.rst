@@ -29,7 +29,7 @@ Casper
 
 .. code-block:: shell
 
-  module use /glade/work/fasteddyrt/casper/installations/modulefiles
+  module use /glade/u/fehelp/casper/installations/modulefiles
   module load fasteddy/<version>
 
 Derecho
@@ -37,7 +37,7 @@ Derecho
 
 .. code-block:: shell
 
-  module use /glade/work/fasteddyrt/derecho/installations/modulefiles
+  module use /glade/u/fehelp/derecho/installations/modulefiles
   module load fasteddy/<version>
 
 Compilation
