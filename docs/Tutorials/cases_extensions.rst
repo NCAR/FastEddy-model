@@ -2,7 +2,7 @@
 Model Extension Cases
 *********************
 
-Two model extension cases are provided excercising the Generalized Actuator Disk (GAD) parameterized model and building-resolving URBAN model extensions respectively.
+Two model extension cases are provided exercising the Generalized Actuator Disk (GAD) parameterized model and building-resolving URBAN model extensions respectively.
 
 .. toctree::
 
