@@ -29,7 +29,7 @@ Casper
 
 .. code-block:: shell
 
-  module use /glade/work/fasteddyrt/casper/installations/modulefiles
+  module use /glade/u/fehelp/casper/installations/modulefiles
   module load fasteddy/<version>
 
 Derecho
@@ -37,7 +37,7 @@ Derecho
 
 .. code-block:: shell
 
-  module use /glade/work/fasteddyrt/derecho/installations/modulefiles
+  module use /glade/u/fehelp/derecho/installations/modulefiles
   module load fasteddy/<version>
 
 Compilation
@@ -71,8 +71,33 @@ Currently, the default modules loaded at login suffice on Casper, however the
 :code:`cuda` module will need to be loaded on Derecho by running
 :code:`module load cuda`.
 
-After following steps 1 and 2 above, to build the FastEddy executable run
-:code:`make` (optionally run :code:`make clean` first if appropriate).
+After following steps 1 and 2 above, build the FastEddy executable by running:
+
+.. code::
+
+   make
+
+(Optionally, run :code:`make clean` first if appropriate.)
+
+To enable model extensions, additional compilation flags are required:
+
+* To include the **Generalized Actuator Disk (GAD)** parameterized model, run:
+
+  .. code::
+
+     make WITH_GAD=1
+
+* To include the **building-resolving URBAN** model extension, run:
+
+  .. code::
+
+     make WITH_URBAN=1
+
+* To enable **both** extensions, run:
+
+  .. code::
+
+     make WITH_GAD=1 WITH_URBAN=1
 
 The :code:`FastEddy` executable will be located in the **SRC/FEMAIN** directory.
 
@@ -88,9 +113,32 @@ have allocations on:
    * `CSCS's Lumi <https://www.lumi-supercomputer.eu/may-we-introduce-lumi/>`_
    * `Fluid Numerics' Galapagos <https://galapagos.fluidnumerics.com>`_
 
-After following steps 1 and 2 above, to build the FastEddy executable run
-:code:`make -f Makfile.hip` (optionally run :code:`make clean`
-first if appropriate).
+After following steps 1 and 2 above, build the FastEddy executable by running:
+
+.. code::
+
+   make -f Makefile.hip
+
+(Optionally, run :code:`make clean` first if appropriate.)
+
+To enable model extensions, additional compilation flags are required:
+
+* To include the **Generalized Actuator Disk (GAD)** parameterized model, run:
+
+  .. code::
+
+     make -f Makefile.hip WITH_GAD=1                                                                                                                                                                                        
+* To include the **building-resolving URBAN** model extension, run:
+
+  .. code::
+
+     make -f Makefile.hip WITH_URBAN=1
+
+* To enable **both** extensions, run:
+
+  .. code::
+
+     make -f Makefile.hip WITH_GAD=1 WITH_URBAN=1 
 
 Users may need to define a few environment variables that influence the build
 process to properly set the paths to various dependencies and to select the
