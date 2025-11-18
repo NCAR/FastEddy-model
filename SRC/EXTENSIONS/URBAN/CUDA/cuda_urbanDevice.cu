@@ -29,21 +29,21 @@ float *urban_heat_redis_d;                 /* Base Address of memory containing 
 */
 extern "C" int cuda_urbanDeviceSetup(){
    int errorCode = CUDA_URBAN_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    cudaMemcpyToSymbol(urbanSelector_d, &urbanSelector, sizeof(int));
    cudaMemcpyToSymbol(cd_build_d, &cd_build, sizeof(float));
    cudaMemcpyToSymbol(ct_build_d, &ct_build, sizeof(float));
 
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &building_mask_d);
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+   fecuda_DeviceMalloc(Nelems, &building_mask_d);
    cudaMemcpy(building_mask_d, building_mask, Nelems*sizeof(float), cudaMemcpyHostToDevice);
 
    cudaMemcpyToSymbol(delta_aware_bdg_d, &delta_aware_bdg, sizeof(float));
 
    if(urban_heatRedis > 0){
      Nelems = (Nxp+2*Nh)*(Nyp+2*Nh);
-     fecuda_DeviceMalloc(Nelems*sizeof(float), &urban_heat_redis_d);
+     fecuda_DeviceMalloc(Nelems, &urban_heat_redis_d);
      cudaMemcpy(urban_heat_redis_d, urban_heat_redis, Nelems*sizeof(float), cudaMemcpyHostToDevice);
    }
 

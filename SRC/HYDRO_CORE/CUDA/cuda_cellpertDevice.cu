@@ -32,7 +32,8 @@ float* randcp_d;            /*Base address for pseudo-random numbers used for ce
 */
 extern "C" int cuda_cellpertDeviceSetup(){
    int errorCode = CUDA_CELLPERT_SUCCESS;
-   int Nelems1d_xy, Nelems1d;
+   int Nelems1d_xy;
+   size_t Nelems1d;
 
    /*Constants*/
    cudaMemcpyToSymbol(cellpertSelector_d, &cellpertSelector, sizeof(int));
@@ -45,8 +46,8 @@ extern "C" int cuda_cellpertDeviceSetup(){
    cudaMemcpyToSymbol(cellpert_ktop_d, &cellpert_ktop, sizeof(int));
 
    Nelems1d_xy = (Nx/cellpert_gppc+min(Nx%cellpert_gppc,1))*(2*cellpert_ndbc+min(Ny%cellpert_gppc,1)) + (Ny/cellpert_gppc-2*cellpert_ndbc)*(2*cellpert_ndbc+min(Nx%cellpert_gppc,1));
-   Nelems1d = Nelems1d_xy*(cellpert_ktop-cellpert_kbottom+1);
-   fecuda_DeviceMalloc(Nelems1d*sizeof(float), &randcp_d);
+   Nelems1d = (size_t)(Nelems1d_xy*(cellpert_ktop-cellpert_kbottom+1));
+   fecuda_DeviceMalloc(Nelems1d, &randcp_d);
 
    return(errorCode);
 } //end cuda_cellpertDeviceSetup()

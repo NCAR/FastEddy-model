@@ -64,7 +64,7 @@ float *invD_Jac_d; //inverse Determinant of the Jacbian
 */
 extern "C" int cuda_gridDeviceSetup(){
    int errorCode = CUDA_GRID_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 #ifdef DEBUG 
    cudaEvent_t startE, stopE;
    float elapsedTime;
@@ -100,21 +100,21 @@ extern "C" int cuda_gridDeviceSetup(){
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
 
    /*Set the full memory block number of elements for grid fields*/
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh); 
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)); 
    /* Allocate the GRID arrays */
    /* Coordinate Arrays */
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &xPos_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &yPos_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &zPos_d);
-   fecuda_DeviceMalloc(((Nxp+2*Nh)*(Nyp+2*Nh))*sizeof(float), &topoPos_d);
+   fecuda_DeviceMalloc(Nelems, &xPos_d);
+   fecuda_DeviceMalloc(Nelems, &yPos_d);
+   fecuda_DeviceMalloc(Nelems, &zPos_d);
+   fecuda_DeviceMalloc((size_t)((Nxp+2*Nh)*(Nyp+2*Nh)), &topoPos_d);
    /* Metric Tensors Fields */
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J13_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J23_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J31_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J32_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J33_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &D_Jac_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &invD_Jac_d);
+   fecuda_DeviceMalloc(Nelems, &J13_d);
+   fecuda_DeviceMalloc(Nelems, &J23_d);
+   fecuda_DeviceMalloc(Nelems, &J31_d);
+   fecuda_DeviceMalloc(Nelems, &J32_d);
+   fecuda_DeviceMalloc(Nelems, &J33_d);
+   fecuda_DeviceMalloc(Nelems, &D_Jac_d);
+   fecuda_DeviceMalloc(Nelems, &invD_Jac_d);
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
 
    /* cudaMemcpy the GRID arrays from Host to Device*/

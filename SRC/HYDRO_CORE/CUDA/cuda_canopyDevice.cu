@@ -26,9 +26,9 @@ float *canopy_lad_d;          /* Base Address of memory containing leaf area den
 */
 extern "C" int cuda_canopyDeviceSetup(){
    int errorCode = CUDA_CANOPY_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
 
    cudaMemcpyToSymbol(canopySelector_d, &canopySelector, sizeof(int));
    cudaMemcpyToSymbol(canopySkinOpt_d, &canopySkinOpt, sizeof(int));
@@ -36,7 +36,7 @@ extern "C" int cuda_canopyDeviceSetup(){
    cudaMemcpyToSymbol(canopy_lf_d, &canopy_lf, sizeof(float));
 
    Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &canopy_lad_d);
+   fecuda_DeviceMalloc(Nelems, &canopy_lad_d);
    cudaMemcpy(canopy_lad_d, canopy_lad, Nelems*sizeof(float), cudaMemcpyHostToDevice);
 
    return(errorCode);

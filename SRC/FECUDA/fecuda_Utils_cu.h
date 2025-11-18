@@ -41,7 +41,12 @@ extern "C" int fecuda_UtilsDeallocateHaloBuffers();
 /*----->>>>> void fecuda_DeviceMalloc();    -----------------------------------------------------------
 * Used to allocate device memory float blocks and set the  host memory addresses of device memory pointers.
 */
-extern "C" void fecuda_DeviceMalloc(int Nelems, float** memBlock_d);
+extern "C" void fecuda_DeviceMalloc(size_t Nelems, float** memBlock_d);
+
+/*----->>>>> void fecuda_DeviceMallocInt();    -----------------------------------------------------------
+* Used to allocate device memory integer blocks and set the  host memory addresses of device memory pointers.
+*/
+extern "C" void fecuda_DeviceMallocInt(size_t Nelems, int** memBlock_d);
 
 /*----->>>>> int fecuda_SendRecvWestEast(); -------------------------------------------------------------------
 Used to perform western/eastern device domain halo exchange for an arbitrary field.

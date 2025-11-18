@@ -35,7 +35,7 @@ __device__ __constant__ float srcAuxScMassSpecValue_d[MAX_AUXSC_SRC]; /*Mass spe
 */
 extern "C" int cuda_auxScalarsDeviceSetup(){
    int errorCode = CUDA_AUXSCALARS_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    cudaMemcpyToSymbol(NhydroAuxScalars_d, &NhydroAuxScalars, sizeof(int));
    if (NhydroAuxScalars > 0){
@@ -51,11 +51,11 @@ extern "C" int cuda_auxScalarsDeviceSetup(){
    }//end if NydroAuxScalars > 0
 
    if (NhydroAuxScalars > 0){
-     Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-     fecuda_DeviceMalloc(Nelems*NhydroAuxScalars*sizeof(float), &hydroAuxScalars_d); /*Prognostic variable fields*/
-     fecuda_DeviceMalloc(Nelems*NhydroAuxScalars*sizeof(float), &hydroAuxScalarsFrhs_d); /*Prognostic variable Frhs*/
+     Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+     fecuda_DeviceMalloc(Nelems*NhydroAuxScalars, &hydroAuxScalars_d); /*Prognostic variable fields*/
+     fecuda_DeviceMalloc(Nelems*NhydroAuxScalars, &hydroAuxScalarsFrhs_d); /*Prognostic variable Frhs*/
      if ((turbulenceSelector > 0) && (AuxScSGSturb > 0)){
-       fecuda_DeviceMalloc(Nelems*3*sizeof(float), &AuxScalarsTauFlds_d);
+       fecuda_DeviceMalloc(Nelems*3, &AuxScalarsTauFlds_d);
      }
    } // end if NhydroAuxScalars > 0
 

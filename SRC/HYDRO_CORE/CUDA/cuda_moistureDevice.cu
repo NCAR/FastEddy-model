@@ -35,7 +35,7 @@ float* fcond_d;                          /*Base address for f_cond array*/
 */
 extern "C" int cuda_moistureDeviceSetup(){
    int errorCode = CUDA_MOISTURE_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    cudaMemcpyToSymbol(moistureSelector_d, &moistureSelector, sizeof(int));
    if (moistureSelector > 0){
@@ -49,11 +49,11 @@ extern "C" int cuda_moistureDeviceSetup(){
      cudaMemcpyToSymbol(moistureCondBasePres_d, &moistureCondBasePres, sizeof(int));
      cudaMemcpyToSymbol(moistureMPcallTscale_d, &moistureMPcallTscale, sizeof(float));
 
-     Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-     fecuda_DeviceMalloc(Nelems*moistureNvars*sizeof(float), &moistScalars_d);
-     fecuda_DeviceMalloc(Nelems*moistureNvars*sizeof(float), &moistScalarsFrhs_d);
-     fecuda_DeviceMalloc(Nelems*moistureNvars*3*sizeof(float), &moistTauFlds_d);
-     fecuda_DeviceMalloc(Nelems*sizeof(float), &fcond_d);
+     Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+     fecuda_DeviceMalloc(Nelems*moistureNvars, &moistScalars_d);
+     fecuda_DeviceMalloc(Nelems*moistureNvars, &moistScalarsFrhs_d);
+     fecuda_DeviceMalloc(Nelems*moistureNvars*3, &moistTauFlds_d);
+     fecuda_DeviceMalloc(Nelems, &fcond_d);
    }
 
    return(errorCode);

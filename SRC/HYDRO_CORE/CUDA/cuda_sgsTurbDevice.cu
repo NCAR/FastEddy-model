@@ -26,17 +26,17 @@ float* hydroKappaM_d;  /*Base address for KappaM (eddy diffusivity for momentum)
 */
 extern "C" int cuda_sgsTurbDeviceSetup(){
    int errorCode = CUDA_SGSTURB_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    cudaMemcpyToSymbol(turbulenceSelector_d, &turbulenceSelector, sizeof(int));
    cudaMemcpyToSymbol(TKESelector_d, &TKESelector, sizeof(int));
    cudaMemcpyToSymbol(c_s_d, &c_s, sizeof(float));
    cudaMemcpyToSymbol(c_k_d, &c_k, sizeof(float));
 
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
 
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &hydroKappaM_d); 
-   fecuda_DeviceMalloc(Nelems*9*sizeof(float), &hydroTauFlds_d);
+   fecuda_DeviceMalloc(Nelems, &hydroKappaM_d); 
+   fecuda_DeviceMalloc(Nelems*9, &hydroTauFlds_d);
   
    /* Done */
    return(errorCode);
