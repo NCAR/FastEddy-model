@@ -37,7 +37,7 @@
 #define THETA_INDX_BS         1
 
 #define MAX_HC_FLDNAME_LENGTH 256
-#define MAX_AUXSC_SRC         256
+#define MAX_AUXSC_SRC         1280 
 /*#################------------------- HYDRO_CORE module variable declarations ---------------------#################*/
 /* Parameters */
 extern int Nhydro;          /*Number of prognostic variable fields under hydro_core */

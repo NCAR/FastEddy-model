@@ -137,16 +137,21 @@ float * memAllocateFloat4DField(int Nfields, int iN, int jN, int kN, int halo_ex
   float *blockOfFields;
   void  *m_field;
   void  *memsetReturnVal;
+  size_t Nbytes;
 
+  Nbytes = (size_t)(Nfields)*(size_t)((iN+2*halo_extent)*(jN+2*halo_extent)*(kN+2*halo_extent)*sizeof(float));
   if(posix_memalign(&m_field, ALIGN_SIZE, 
-                    (Nfields)*(iN+2*halo_extent)*(jN+2*halo_extent)*(kN+2*halo_extent)*sizeof(float))) {
-     fprintf(stderr, "Rank %d/%d memAllocateFloat4DField(%s): Memory Allocation of m_field failed!\n",
-             mpi_rank_world,mpi_size_world,fieldName);
+                    Nbytes)) {
+                    //(Nfields)*(iN+2*halo_extent)*(jN+2*halo_extent)*(kN+2*halo_extent)*sizeof(float))) {
+     fprintf(stderr, "Rank %d/%d memAllocateFloat4DField(%s): Memory Allocation of m_field with %zu bytes failed!\n",
+             mpi_rank_world,mpi_size_world,fieldName,Nbytes);
+     fflush(stdout);
      exit(1);
   } // if
   
   /*initialize the allocated space to zero everywhere*/
-  memsetReturnVal = memset(m_field,0,(Nfields)*(iN+2*halo_extent)*(jN+2*halo_extent)*(kN+2*halo_extent)*sizeof(float));
+  memsetReturnVal = memset(m_field,0,Nbytes);
+  //memsetReturnVal = memset(m_field,0,(Nfields)*(iN+2*halo_extent)*(jN+2*halo_extent)*(kN+2*halo_extent)*sizeof(float));
 
   blockOfFields = (float *) m_field;
 

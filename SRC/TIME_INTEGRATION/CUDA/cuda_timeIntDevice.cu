@@ -52,7 +52,7 @@ float *timeFrhsTmp_d; /* Multistage time scheme variable fields Frhs 4-D array *
 */
 extern "C" int cuda_timeIntDeviceSetup(){
    int errorCode = CUDA_TIME_INTEGRATION_SUCCESS;
-   int Nelems;
+   size_t Nelems;
    int NtimeTotVars;
   
    /*Synchronize the Device*/
@@ -68,11 +68,11 @@ extern "C" int cuda_timeIntDeviceSetup(){
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
 
    /*Set the full memory block number of elements for timeInt fields*/
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh); 
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)); 
    /* Allocate the TIME_INTEGRATION arrays */
    /*TIME_INTEGRATION/CUDA internal device arrays*/
    NtimeTotVars = 5 + TKESelector*turbulenceSelector + moistureNvars*moistureSelector + NhydroAuxScalars; 
-   fecuda_DeviceMalloc(NtimeTotVars*Nelems*sizeof(float), &timeFlds0_d);
+   fecuda_DeviceMalloc(NtimeTotVars*Nelems, &timeFlds0_d);
    
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
 

@@ -24,13 +24,13 @@ float *hydroBaseStatePres_d;   /*Base Adress of memory containing the diagnostic
 */
 extern "C" int cuda_BaseStateDeviceSetup(){
    int errorCode = CUDA_BASESTATE_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    /*Set the full memory block number of elements for base-state fields*/
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
    /* Allocate the Base State arrays on the device */
-   fecuda_DeviceMalloc(Nelems*2*sizeof(float), &hydroBaseStateFlds_d);  //Only rho and theta base-state variables
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &hydroBaseStatePres_d);  //Only base-state pressure 
+   fecuda_DeviceMalloc(Nelems*2, &hydroBaseStateFlds_d);  //Only rho and theta base-state variables
+   fecuda_DeviceMalloc(Nelems, &hydroBaseStatePres_d);  //Only base-state pressure 
 
    /* Send the Base State arrays down to the device */
    cudaMemcpy(hydroBaseStateFlds_d, hydroBaseStateFlds, Nelems*2*sizeof(float), cudaMemcpyHostToDevice);

@@ -42,7 +42,7 @@ float* lsf_meanPhiBlock_d;              /*Base address of work arrray for block 
 */
 extern "C" int cuda_lsfDeviceSetup(){
    int errorCode = CUDA_LSF_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    cudaMemcpyToSymbol(lsfSelector_d, &lsfSelector, sizeof(int));
    cudaMemcpyToSymbol(lsf_w_surf_d, &lsf_w_surf, sizeof(float));
@@ -69,9 +69,9 @@ extern "C" int cuda_lsfDeviceSetup(){
        fflush(stdout);
      }
      cudaMemcpyToSymbol(lsf_numPhiVars_d, &lsf_numPhiVars, sizeof(float));
-     Nelems = (Nzp+2*Nh);
-     fecuda_DeviceMalloc(Nelems*lsf_numPhiVars*sizeof(float), &lsf_slabMeanPhiProfiles_d);
-     fecuda_DeviceMalloc(grid_red.x*grid_red.y*grid_red.z*sizeof(float), &lsf_meanPhiBlock_d);
+     Nelems = (size_t)(Nzp+2*Nh);
+     fecuda_DeviceMalloc(Nelems*(size_t)lsf_numPhiVars, &lsf_slabMeanPhiProfiles_d);
+     fecuda_DeviceMalloc((size_t)(grid_red.x*grid_red.y*grid_red.z), &lsf_meanPhiBlock_d);
    }
 
    return(errorCode);

@@ -23,14 +23,14 @@ float *hydroPres_d;            /*Base Adress of memory containing the diagnostic
 */
 extern "C" int cuda_pressureDeviceSetup(){
    int errorCode = CUDA_PRESSURE_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    //Copy the pgfSelector constant to device constant-memory
    cudaMemcpyToSymbol(pgfSelector_d, &pgfSelector, sizeof(int));
 
    /*Set the full memory block number of elements for hydroCore fields*/
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &hydroPres_d);
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+   fecuda_DeviceMalloc(Nelems, &hydroPres_d);
 
    return(errorCode);
 } //end cuda_pressureDeviceSetup()
