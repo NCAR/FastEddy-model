@@ -460,7 +460,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
    tauyz = -cd_i*sqrtf(powf(*u/ *rho,2.0)+powf(*v/ *rho,2.0))*(*v);
    *tau31 = tauxz;
    *tau32 = tauyz;
-   *fricVel = powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25);
+   *fricVel = powf(powf(tauxz/(*rho),2.0)+powf(tauyz/(*rho),2.0),0.25);
    tauthz = (*htFlux)*(*rho);
    *tauTH3 = tauthz;
    *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
@@ -573,7 +573,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    tauyz = -cd_i*sqrtf(powf(*u/ *rho,2.0)+powf(*v/ *rho,2.0))*(*v);
    *tau31 = tauxz;
    *tau32 = tauyz;
-   *fricVel = powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25);
+   *fricVel = powf(powf(tauxz/(*rho),2.0)+powf(tauyz/(*rho),2.0),0.25);
    tauthz = (*htFlux)*(*rho);
    *tauTH3 = tauthz;
    tauqz = (*qFlux)*(*rho); // specified qflux or delta-qv-based flux assumes qv units of g/kg
