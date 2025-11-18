@@ -7,7 +7,8 @@ FastEddy-model Version 4.0.1 Release Notes (20251118)
 
 .. dropdown:: Bugfixes
 
-   * Added gpu_type=a100 and full path for conda to fasteddy_pbs_scripts per NSF NCAR HPC environment change
+   * Added gpu_type=a100 to fasteddy_pbs_scripts per NSF NCAR HPC environment change
+   * Added full path for conda environment to to fasteddy_pbs_scripts
    * Changed default Example08 jsons
    * Casted simTime_it as unsigned long long in curandPseudo…Seed()
    * Enhanced Simgrid.py
