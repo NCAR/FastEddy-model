@@ -1,5 +1,5 @@
 {
-  "name_dom": "FTCollinsCO",
+  "name_dom": "FortCollinsCO",
   "FE_ref_GIS_nc": "geospec_file.nc",
   "FE_params_file": "FE_parameters_file.in",
   "center_lat": 40.5948,

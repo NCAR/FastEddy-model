@@ -66,22 +66,22 @@ extern "C" int cuda_BCsDeviceSetup(){
    /*Allocate arrays*/
    if(hydroBCs==1){ //Using LAD BCs
      if((rankYid == 0)||(rankYid == numProcsY-1)){
-       fecuda_DeviceMalloc(2*nBndyVars*(Nxp+2*Nh)*(Nzp+2*Nh)*sizeof(float), &XZBdyPlanes_d);
-       fecuda_DeviceMalloc(2*nBndyVars*(Nxp+2*Nh)*(Nzp+2*Nh)*sizeof(float), &XZBdyPlanesNext_d);
-       fecuda_DeviceMalloc(2*nBndyVars*(Nxp+2*Nh)*(Nzp+2*Nh)*sizeof(float), &XZBdyPlanesBuffer_d);
+       fecuda_DeviceMalloc((size_t)(2*nBndyVars*(Nxp+2*Nh)*(Nzp+2*Nh)), &XZBdyPlanes_d);
+       fecuda_DeviceMalloc((size_t)(2*nBndyVars*(Nxp+2*Nh)*(Nzp+2*Nh)), &XZBdyPlanesNext_d);
+       fecuda_DeviceMalloc((size_t)(2*nBndyVars*(Nxp+2*Nh)*(Nzp+2*Nh)), &XZBdyPlanesBuffer_d);
      }
      if((rankXid == 0)||(rankXid == numProcsX-1)){
-       fecuda_DeviceMalloc(2*nBndyVars*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), &YZBdyPlanes_d);
-       fecuda_DeviceMalloc(2*nBndyVars*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), &YZBdyPlanesNext_d);
-       fecuda_DeviceMalloc(2*nBndyVars*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), &YZBdyPlanesBuffer_d);
+       fecuda_DeviceMalloc((size_t)(2*nBndyVars*(Nyp+2*Nh)*(Nzp+2*Nh)), &YZBdyPlanes_d);
+       fecuda_DeviceMalloc((size_t)(2*nBndyVars*(Nyp+2*Nh)*(Nzp+2*Nh)), &YZBdyPlanesNext_d);
+       fecuda_DeviceMalloc((size_t)(2*nBndyVars*(Nyp+2*Nh)*(Nzp+2*Nh)), &YZBdyPlanesBuffer_d);
      }
-     fecuda_DeviceMalloc(2*nBndyVars*(Nxp+2*Nh)*(Nyp+2*Nh)*sizeof(float), &XYBdyPlanes_d);
-     fecuda_DeviceMalloc(2*nBndyVars*(Nxp+2*Nh)*(Nyp+2*Nh)*sizeof(float), &XYBdyPlanesNext_d);
-     fecuda_DeviceMalloc(2*nBndyVars*(Nxp+2*Nh)*(Nyp+2*Nh)*sizeof(float), &XYBdyPlanesBuffer_d);
+     fecuda_DeviceMalloc((size_t)(2*nBndyVars*(Nxp+2*Nh)*(Nyp+2*Nh)), &XYBdyPlanes_d);
+     fecuda_DeviceMalloc((size_t)(2*nBndyVars*(Nxp+2*Nh)*(Nyp+2*Nh)), &XYBdyPlanesNext_d);
+     fecuda_DeviceMalloc((size_t)(2*nBndyVars*(Nxp+2*Nh)*(Nyp+2*Nh)), &XYBdyPlanesBuffer_d);
      if(surflayerSelector == 3){
-       fecuda_DeviceMalloc(nSurfBndyVars*(Nxp+2*Nh)*(Nyp+2*Nh)*sizeof(float), &SURFBdyPlanes_d);
-       fecuda_DeviceMalloc(nSurfBndyVars*(Nxp+2*Nh)*(Nyp+2*Nh)*sizeof(float), &SURFBdyPlanesNext_d);
-       fecuda_DeviceMalloc(nSurfBndyVars*(Nxp+2*Nh)*(Nyp+2*Nh)*sizeof(float), &SURFBdyPlanesBuffer_d);
+       fecuda_DeviceMalloc((size_t)(nSurfBndyVars*(Nxp+2*Nh)*(Nyp+2*Nh)), &SURFBdyPlanes_d);
+       fecuda_DeviceMalloc((size_t)(nSurfBndyVars*(Nxp+2*Nh)*(Nyp+2*Nh)), &SURFBdyPlanesNext_d);
+       fecuda_DeviceMalloc((size_t)(nSurfBndyVars*(Nxp+2*Nh)*(Nyp+2*Nh)), &SURFBdyPlanesBuffer_d);
      }
    }//end if hydroBCs == 1
   

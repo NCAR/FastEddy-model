@@ -31,13 +31,13 @@ float* dedxi_d; /*Base address for d(SGSTKE)/dxi field arrays*/
 */
 extern "C" int cuda_sgstkeDeviceSetup(){
    int errorCode = CUDA_SGSTKE_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   fecuda_DeviceMalloc(Nelems*TKESelector*sizeof(float), &sgstkeScalars_d);
-   fecuda_DeviceMalloc(Nelems*TKESelector*sizeof(float), &sgstkeScalarsFrhs_d);
-   fecuda_DeviceMalloc(Nelems*TKESelector*sizeof(float), &sgstke_ls_d);
-   fecuda_DeviceMalloc(Nelems*TKESelector*3*sizeof(float), &dedxi_d);
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+   fecuda_DeviceMalloc(Nelems*TKESelector, &sgstkeScalars_d);
+   fecuda_DeviceMalloc(Nelems*TKESelector, &sgstkeScalarsFrhs_d);
+   fecuda_DeviceMalloc(Nelems*TKESelector, &sgstke_ls_d);
+   fecuda_DeviceMalloc(Nelems*TKESelector*3, &dedxi_d);
 
    cudaMemcpyToSymbol(TKEAdvSelector_d, &TKEAdvSelector, sizeof(int));
    cudaMemcpyToSymbol(TKEAdvSelector_b_hyb_d, &TKEAdvSelector_b_hyb, sizeof(float));

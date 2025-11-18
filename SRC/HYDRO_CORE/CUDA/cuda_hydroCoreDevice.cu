@@ -90,7 +90,7 @@ __constant__ float L_v_d;            /* latent heat of vaporization (J/kg) */
 */
 extern "C" int cuda_hydroCoreDeviceSetup(){
    int errorCode = CUDA_HYDRO_CORE_SUCCESS;
-   int Nelems;
+   size_t Nelems;
  
    /*Synchronize the Device*/
    gpuErrchk( cudaDeviceSynchronize() );
@@ -133,11 +133,11 @@ extern "C" int cuda_hydroCoreDeviceSetup(){
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
 
    /*Set the full memory block number of elements for hydroCore fields*/
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh); 
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)); 
    /* Allocate the HYDRO_CORE arrays */
-   fecuda_DeviceMalloc(Nelems*Nhydro*sizeof(float), &hydroFlds_d); /*Prognostic variable fields*/ 
-   fecuda_DeviceMalloc(Nelems*Nhydro*sizeof(float), &hydroFldsFrhs_d); /*Prognostic variable field Frhs(s)*/ 
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &hydroRhoInv_d); 
+   fecuda_DeviceMalloc(Nelems*(size_t)Nhydro, &hydroFlds_d); /*Prognostic variable fields*/ 
+   fecuda_DeviceMalloc(Nelems*(size_t)Nhydro, &hydroFldsFrhs_d); /*Prognostic variable field Frhs(s)*/ 
+   fecuda_DeviceMalloc(Nelems, &hydroRhoInv_d); 
    
    /*AUXILIARY SCALARS*/
    if(NhydroAuxScalars > 0){
@@ -1282,7 +1282,7 @@ extern "C" int cuda_hydroCoreInitFieldsDevice(){
      }
    }// end if surflayerSelector > 0
    if(NhydroAuxScalars > 0){ /*Copy any required host auxiliary sclar fields to the device */
-     cudaMemcpy(hydroAuxScalars_d, hydroAuxScalars, Nelems*NhydroAuxScalars*sizeof(float), cudaMemcpyHostToDevice);
+     cudaMemcpy(hydroAuxScalars_d, hydroAuxScalars, (size_t)(Nelems)*(size_t)(NhydroAuxScalars*sizeof(float)), cudaMemcpyHostToDevice);
    }// end if hydroAuxScalars > 0
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    gpuErrchk( cudaDeviceSynchronize() );
@@ -1333,9 +1333,9 @@ extern "C" int cuda_hydroCoreSynchFieldsFromDevice(){
      }
    }//endif surflayerSelector > 0
    if(NhydroAuxScalars > 0){
-     gpuErrchk( cudaMemcpy(hydroAuxScalars, hydroAuxScalars_d, Nelems*NhydroAuxScalars*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(hydroAuxScalars, hydroAuxScalars_d, (size_t)(Nelems)*(size_t)(NhydroAuxScalars*sizeof(float)), cudaMemcpyDeviceToHost) );
      if((hydroForcingWrite==1)||(hydroForcingLog==1)){
-       gpuErrchk( cudaMemcpy(hydroAuxScalarsFrhs, hydroAuxScalarsFrhs_d, Nelems*NhydroAuxScalars*sizeof(float), cudaMemcpyDeviceToHost) );
+       gpuErrchk( cudaMemcpy(hydroAuxScalarsFrhs, hydroAuxScalarsFrhs_d, (size_t)(Nelems)*(size_t)(NhydroAuxScalars*sizeof(float)), cudaMemcpyDeviceToHost) );
      } //endif we need to send up the Frhs
    } //end if NhydroAuxScalars > 0
    if(hydroSubGridWrite==1){

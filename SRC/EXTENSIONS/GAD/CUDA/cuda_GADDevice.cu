@@ -102,12 +102,12 @@ extern "C" int cuda_GADDeviceSetup(){
     cudaMemcpyToSymbol(numgridCells_away_d, &numgridCells_away, sizeof(int));
 
     /*Device memory allocations and Host-to-Device memcopy for turbine arrays */
-    fecuda_DeviceMallocInt(GADNumTurbines*sizeof(int), &GAD_turbineType_d);
-    fecuda_DeviceMallocInt(GADNumTurbines*sizeof(int), &GAD_turbineRank_d);
-    fecuda_DeviceMallocInt(GADNumTurbines*sizeof(int), &GAD_turbineRefi_d);
-    fecuda_DeviceMallocInt(GADNumTurbines*sizeof(int), &GAD_turbineRefj_d);
-    fecuda_DeviceMallocInt(GADNumTurbines*sizeof(int), &GAD_turbineRefk_d);
-    fecuda_DeviceMallocInt(GADNumTurbines*sizeof(int), &GAD_turbineYawing_d);
+    fecuda_DeviceMallocInt((size_t)(GADNumTurbines), &GAD_turbineType_d);
+    fecuda_DeviceMallocInt((size_t)(GADNumTurbines), &GAD_turbineRank_d);
+    fecuda_DeviceMallocInt((size_t)(GADNumTurbines), &GAD_turbineRefi_d);
+    fecuda_DeviceMallocInt((size_t)(GADNumTurbines), &GAD_turbineRefj_d);
+    fecuda_DeviceMallocInt((size_t)(GADNumTurbines), &GAD_turbineRefk_d);
+    fecuda_DeviceMallocInt((size_t)(GADNumTurbines), &GAD_turbineYawing_d);
     cudaMemcpy(GAD_turbineType_d, GAD_turbineType, GADNumTurbines*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_turbineRank_d, GAD_turbineRank, GADNumTurbines*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_turbineRefi_d, GAD_turbineRefi, GADNumTurbines*sizeof(int), cudaMemcpyHostToDevice);
@@ -115,13 +115,13 @@ extern "C" int cuda_GADDeviceSetup(){
     cudaMemcpy(GAD_turbineRefk_d, GAD_turbineRefk, GADNumTurbines*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_turbineYawing_d, GAD_turbineYawing, GADNumTurbines*sizeof(int), cudaMemcpyHostToDevice);
 
-    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &GAD_turbineRefMag_d);
-    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &GAD_turbineRefDir_d);
-    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &GAD_Xcoords_d);
-    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &GAD_Ycoords_d);
-    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &GAD_rotorTheta_d);
-    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &GAD_yawError_d);
-    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &GAD_anFactor_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbines), &GAD_turbineRefMag_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbines), &GAD_turbineRefDir_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbines), &GAD_Xcoords_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbines), &GAD_Ycoords_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbines), &GAD_rotorTheta_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbines), &GAD_yawError_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbines), &GAD_anFactor_d);
     cudaMemcpy(GAD_turbineRefMag_d, GAD_turbineRefMag, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_turbineRefDir_d, GAD_turbineRefDir, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_Xcoords_d, GAD_Xcoords, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
@@ -136,10 +136,10 @@ extern "C" int cuda_GADDeviceSetup(){
     cudaMemcpy(GAD_yawError_d, GAD_yawError, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_anFactor_d, GAD_anFactor, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     
-    fecuda_DeviceMalloc(GADNumTurbines*GADrefSeriesLength*sizeof(float), &GAD_turbineUseries_d);
-    fecuda_DeviceMalloc(GADNumTurbines*GADrefSeriesLength*sizeof(float), &GAD_turbineVseries_d);
-    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &u_sampAvg_d);
-    fecuda_DeviceMalloc(GADNumTurbines*sizeof(float), &v_sampAvg_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbines*GADrefSeriesLength), &GAD_turbineUseries_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbines*GADrefSeriesLength), &GAD_turbineVseries_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbines), &u_sampAvg_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbines), &v_sampAvg_d);
 
     //Initialize u_sampAvg & GAD_turbineUseries as constant (per-turbine) then send down to the device 
     tmp_vector = (float *) malloc(GADrefSeriesLength*sizeof(float));
@@ -171,40 +171,40 @@ extern "C" int cuda_GADDeviceSetup(){
     }
     free(tmp_vector);
 
-    fecuda_DeviceMalloc(GADNumTurbineTypes*sizeof(float), &GAD_hubHeights_d);
-    fecuda_DeviceMalloc(GADNumTurbineTypes*sizeof(float), &GAD_rotorD_d);
-    fecuda_DeviceMalloc(GADNumTurbineTypes*sizeof(float), &GAD_nacelleD_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbineTypes), &GAD_hubHeights_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbineTypes), &GAD_rotorD_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbineTypes), &GAD_nacelleD_d);
     cudaMemcpy(GAD_hubHeights_d, GAD_hubHeights, GADNumTurbineTypes*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_rotorD_d, GAD_rotorD, GADNumTurbineTypes*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_nacelleD_d, GAD_nacelleD, GADNumTurbineTypes*sizeof(float), cudaMemcpyHostToDevice);
    
      
-    fecuda_DeviceMalloc(GADNumTurbineTypes*turbinePolyOrderMax*sizeof(float), &turbinePolyTwist_d);
-    fecuda_DeviceMalloc(GADNumTurbineTypes*turbinePolyOrderMax*sizeof(float), &turbinePolyChord_d);
-    fecuda_DeviceMalloc(GADNumTurbineTypes*turbinePolyOrderMax*sizeof(float), &turbinePolyPitch_d);
-    fecuda_DeviceMalloc(GADNumTurbineTypes*turbinePolyOrderMax*sizeof(float), &turbinePolyOmega_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbineTypes*turbinePolyOrderMax), &turbinePolyTwist_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbineTypes*turbinePolyOrderMax), &turbinePolyChord_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbineTypes*turbinePolyOrderMax), &turbinePolyPitch_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbineTypes*turbinePolyOrderMax), &turbinePolyOmega_d);
     cudaMemcpy(turbinePolyTwist_d, turbinePolyTwist, GADNumTurbineTypes*turbinePolyOrderMax*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(turbinePolyChord_d, turbinePolyChord, GADNumTurbineTypes*turbinePolyOrderMax*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(turbinePolyPitch_d, turbinePolyPitch, GADNumTurbineTypes*turbinePolyOrderMax*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(turbinePolyOmega_d, turbinePolyOmega, GADNumTurbineTypes*turbinePolyOrderMax*sizeof(float), cudaMemcpyHostToDevice);
 
-    fecuda_DeviceMalloc(GADNumTurbineTypes*(turbinePolyClCdrNormSegments+1)*sizeof(float), &rnorm_vect_d);
-    fecuda_DeviceMalloc(GADNumTurbineTypes*alphaBounds*sizeof(float), &alpha_minmax_vect_d);
-    fecuda_DeviceMalloc(GADNumTurbineTypes*turbinePolyClCdrNormSegments*turbinePolyOrderMax*sizeof(float), &turbinePolyCl_d);
-    fecuda_DeviceMalloc(GADNumTurbineTypes*turbinePolyClCdrNormSegments*turbinePolyOrderMax*sizeof(float), &turbinePolyCd_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbineTypes*(turbinePolyClCdrNormSegments+1)), &rnorm_vect_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbineTypes*alphaBounds), &alpha_minmax_vect_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbineTypes*turbinePolyClCdrNormSegments*turbinePolyOrderMax), &turbinePolyCl_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbineTypes*turbinePolyClCdrNormSegments*turbinePolyOrderMax), &turbinePolyCd_d);
 
     cudaMemcpy(rnorm_vect_d, rnorm_vect, GADNumTurbineTypes*(turbinePolyClCdrNormSegments+1)*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(alpha_minmax_vect_d, alpha_minmax_vect, GADNumTurbineTypes*alphaBounds*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(turbinePolyCd_d, turbinePolyCd, GADNumTurbineTypes*turbinePolyClCdrNormSegments*turbinePolyOrderMax*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(turbinePolyCl_d, turbinePolyCl, GADNumTurbineTypes*turbinePolyClCdrNormSegments*turbinePolyOrderMax*sizeof(float), cudaMemcpyHostToDevice);
 
-    fecuda_DeviceMalloc((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), &GAD_turbineVolMask_d);
+    fecuda_DeviceMalloc((size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)), &GAD_turbineVolMask_d);
     cudaMemcpy(GAD_turbineVolMask_d, GAD_turbineVolMask, (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), cudaMemcpyHostToDevice);
 
     if (GADoutputForces == 1){
-      fecuda_DeviceMalloc((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), &GAD_forceX_d);
-      fecuda_DeviceMalloc((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), &GAD_forceY_d);
-      fecuda_DeviceMalloc((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), &GAD_forceZ_d);
+      fecuda_DeviceMalloc((size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)), &GAD_forceX_d);
+      fecuda_DeviceMalloc((size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)), &GAD_forceY_d);
+      fecuda_DeviceMalloc((size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)), &GAD_forceZ_d);
       cudaMemcpy(GAD_forceX_d, GAD_forceX, (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), cudaMemcpyHostToDevice);
       cudaMemcpy(GAD_forceY_d, GAD_forceY, (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), cudaMemcpyHostToDevice);
       cudaMemcpy(GAD_forceZ_d, GAD_forceZ, (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), cudaMemcpyHostToDevice);

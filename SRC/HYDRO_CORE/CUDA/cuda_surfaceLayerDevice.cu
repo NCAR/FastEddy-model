@@ -60,7 +60,7 @@ float *sea_mask_d;
 */
 extern "C" int cuda_surfaceLayerDeviceSetup(){
    int errorCode = CUDA_SURFLAYER_SUCCESS;
-   int Nelems2d;
+   size_t Nelems2d;
 
    cudaMemcpyToSymbol(surflayerSelector_d, &surflayerSelector, sizeof(int));
    cudaMemcpyToSymbol(surflayer_z0_d, &surflayer_z0, sizeof(float));
@@ -80,19 +80,19 @@ extern "C" int cuda_surfaceLayerDeviceSetup(){
    cudaMemcpyToSymbol(surflayer_ideal_qte_d, &surflayer_ideal_qte, sizeof(float));
    cudaMemcpyToSymbol(surflayer_ideal_qamp_d, &surflayer_ideal_qamp, sizeof(float));
 
-   Nelems2d = (Nxp+2*Nh)*(Nyp+2*Nh);  //2-d element count
+   Nelems2d = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh));  //2-d element count
 
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &cdFld_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &chFld_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &cqFld_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &fricVel_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &htFlux_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &qFlux_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &tskin_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &qskin_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &invOblen_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &z0m_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &z0t_d);
+   fecuda_DeviceMalloc(Nelems2d, &cdFld_d);
+   fecuda_DeviceMalloc(Nelems2d, &chFld_d);
+   fecuda_DeviceMalloc(Nelems2d, &cqFld_d);
+   fecuda_DeviceMalloc(Nelems2d, &fricVel_d);
+   fecuda_DeviceMalloc(Nelems2d, &htFlux_d);
+   fecuda_DeviceMalloc(Nelems2d, &qFlux_d);
+   fecuda_DeviceMalloc(Nelems2d, &tskin_d);
+   fecuda_DeviceMalloc(Nelems2d, &qskin_d);
+   fecuda_DeviceMalloc(Nelems2d, &invOblen_d);
+   fecuda_DeviceMalloc(Nelems2d, &z0m_d);
+   fecuda_DeviceMalloc(Nelems2d, &z0t_d);
 
    // offshore
    cudaMemcpyToSymbol(surflayer_offshore_d, &surflayer_offshore, sizeof(int));
@@ -104,7 +104,7 @@ extern "C" int cuda_surfaceLayerDeviceSetup(){
    cudaMemcpyToSymbol(surflayer_offshore_theta_d, &surflayer_offshore_theta, sizeof(float));
    cudaMemcpyToSymbol(surflayer_offshore_visc_d, &surflayer_offshore_visc, sizeof(int));
 
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &sea_mask_d);
+   fecuda_DeviceMalloc(Nelems2d, &sea_mask_d);
    if (surflayer_offshore > 0){
      cudaMemcpy(sea_mask_d, sea_mask, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
    }
@@ -460,7 +460,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
    tauyz = -cd_i*sqrtf(powf(*u/ *rho,2.0)+powf(*v/ *rho,2.0))*(*v);
    *tau31 = tauxz;
    *tau32 = tauyz;
-   *fricVel = powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25);
+   *fricVel = powf(powf(tauxz/(*rho),2.0)+powf(tauyz/(*rho),2.0),0.25);
    tauthz = (*htFlux)*(*rho);
    *tauTH3 = tauthz;
    *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
@@ -573,7 +573,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    tauyz = -cd_i*sqrtf(powf(*u/ *rho,2.0)+powf(*v/ *rho,2.0))*(*v);
    *tau31 = tauxz;
    *tau32 = tauyz;
-   *fricVel = powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25);
+   *fricVel = powf(powf(tauxz/(*rho),2.0)+powf(tauyz/(*rho),2.0),0.25);
    tauthz = (*htFlux)*(*rho);
    *tauTH3 = tauthz;
    tauqz = (*qFlux)*(*rho); // specified qflux or delta-qv-based flux assumes qv units of g/kg
