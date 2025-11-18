@@ -187,22 +187,33 @@ else:
     if(j%int(Ny/10)==0):
       print('{:d}% complete...'.format(10*int(j/int(Ny/10))))
     for i in range(Nx):
-      for k in range(Nz):
         zbot = data_topo[j,i]
-        zPos_uni = k*d_zeta + 0.5*d_zeta
-        zPos_str[k] = zDeform(zPos_uni,zbot,ztop,c1,fCoeff)
-        zarr[k,j,i] = zPos_str[k]
+        zPos_uni = np.linspace(0.5*d_zeta,(Nz-0.5)*d_zeta,Nz)
+        zPos_str = zDeform(zPos_uni,zbot,ztop,c1,fCoeff)
+        zarr[:,j,i] = zPos_str
         if (j==0) and (i==0):
-          if (k==0):
-            print('k,zPos_str,dz=',k,',',zPos_str[k],', -')
-          else:
-            print('k,zPos_str,dz=',k,',',zPos_str[k],',',zPos_str[k]-zPos_str[k-1])
-
+         for k in range(Nz):
+           if (k==0):
+             print('k,zPos_str,dz=',k,',',zPos_str[k],', -')
+           else:
+             print('k,zPos_str,dz=',k,',',zPos_str[k],',',zPos_str[k]-zPos_str[k-1])
 
 ind_topomin = np.where(data_topo==topoPos_min)
-z_lowTopo_v = zarr[:,ind_topomin[0],ind_topomin[1]]
+if isinstance(ind_topomin, tuple):
+   j_topomin = ind_topomin[0][0]
+   i_topomin = ind_topomin[1][0]
+else:
+   j_topomin = ind_topomin[0]
+   i_topomin = ind_topomin[1]
+z_lowTopo_v = zarr[:,j_topomin,i_topomin]
 ind_topomax = np.where(data_topo==topoPos_max)
-z_highTopo_v = zarr[:,ind_topomax[0],ind_topomax[1]]
+if isinstance(ind_topomax, tuple):
+  j_topomax = ind_topomax[0][0]
+  i_topomax = ind_topomax[1][0]
+else:
+  j_topomax = ind_topomax[0]
+  i_topomax = ind_topomax[1]
+z_highTopo_v = zarr[:,j_topomax,i_topomax]
 
 dz_lowTopo_v = z_lowTopo_v[1:Nz]-z_lowTopo_v[0:Nz-1]
 dz_highTopo_v = z_highTopo_v[1:Nz]-z_highTopo_v[0:Nz-1]

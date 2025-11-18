@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -A <ProjectAccount>
 #PBS -N FastEddy 
-#PBS -l select=1:ncpus=4:mpiprocs=4:ngpus=4:mem=100GB
+#PBS -l select=1:ncpus=4:mpiprocs=4:ngpus=4:mem=100GB:gpu_type=a100
 #PBS -l walltime=12:00:00
 #PBS -q main 
 #PBS -j oe

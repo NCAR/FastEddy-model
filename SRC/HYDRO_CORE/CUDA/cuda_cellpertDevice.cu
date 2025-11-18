@@ -95,7 +95,7 @@ extern "C" int cuda_hydroCoreDeviceBuildCPmethod(int simTime_it){
    n_tot = n_xy*(cellpert_ktop-cellpert_kbottom+1);
 
    curandCreateGenerator(&gen,CURAND_RNG_PSEUDO_DEFAULT);
-   curandSetPseudoRandomGeneratorSeed(gen,simTime_it);
+   curandSetPseudoRandomGeneratorSeed(gen,(unsigned long long)simTime_it);
    curandGenerateUniform(gen,randcp_d,n_tot);
 
 #ifdef URBAN_EXT
