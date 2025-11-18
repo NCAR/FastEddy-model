@@ -10,6 +10,10 @@ Downloads
      - Release Date
      - Tar File
      - Release Notes
+   * - 4.0.1
+     - November 18, 2025
+     - `v4.0.1.tar.gz <https://github.com/NCAR/FastEddy-model/archive/refs/tags/v4.0.1.tar.gz>`_
+     - `v4.0.1 Release Notes <https://fasteddy-model.readthedocs.io/en/main_v4.0/release_notes.html>`_
    * - 4.0.0
      - October 23, 2025
      - `v4.0.0.tar.gz <https://github.com/NCAR/FastEddy-model/archive/refs/tags/v4.0.0.tar.gz>`_
