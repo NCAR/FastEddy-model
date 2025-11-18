@@ -12,10 +12,10 @@ export SRCDIR=${BASEDIR}/scripts/python_utilities/post-processing/
 
 hostname
 module load conda
-# Be to have created the following conda environment (on Casper) from 
-# the environment.yml file in this */scripts/batch_jobs/ directory
+# The following conda environment (on Casper) can be created (for other platforms) from 
+# the environment.yml file in this repository */scripts/batch_jobs/ directory
 # with---> conda env create -f environment.yml
-conda activate mpi4py-casper-oneapi-2024.2.1-openmpi-5.0.6 
+conda activate /glade/u/fehelp/casper/conda-envs/mpi4py-casper-oneapi-2024.2.1-openmpi-5.0.6 
 which python
 
 mpiexec python -u ${SRCDIR}/FEbinaryToNetCDF.py -f ${SRCDIR}/convert.json -a ${SRCDIR}/field_attributes.json
