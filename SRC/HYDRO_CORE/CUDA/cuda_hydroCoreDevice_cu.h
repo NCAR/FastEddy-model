@@ -80,6 +80,15 @@ extern float *hydroRhoInv_d;   //storage for 1.0/rho
 /*---CELL PERTURBATION METHOD*/
 #include <cuda_cellpertDevice_cu.h>
 
+#ifdef URBAN_EXT
+  /*URBAN */
+  #include <cuda_urbanDevice_cu.h>
+#endif
+#ifdef GAD_EXT
+  /*GENERALIZED ACTUATOR DISK */
+  #include <cuda_GADDevice_cu.h>
+#endif
+
 /*Switch for Last-RK stage physics */
 extern __constant__ int physics_oneRKonly_d; /* selector to apply physics RHS forcing only at the latest RK stage: 0= off, 1= on */
 
@@ -163,5 +172,17 @@ __device__ void cudaDevice_SetRhoInv(float* hydroFlds, float* hydroRhoInv);
 * This sets every element of a device "field"-array to zero
 */
 __device__ void cudaDevice_setToZero(float* fld);
+
+/*----->>>>> extern "C" int cuda_hydroCoreInitFieldsDevice();  -----------------------------------------------------------
+* This function handles the one-time initializations of state fields on-device (GPU) memory by executing the appropriate sequence
+* of cudaMemcpyHostToDevice data transfers.
+*/
+extern "C" int cuda_hydroCoreInitFieldsDevice();
+
+/*----->>>>> extern "C" int cuda_hydroCoreSynchFieldsFromDevice();  --------------------------------------------------
+* This function handles the synchronization to host of on-device (GPU) fields  by executing the appropriate sequence
+* of cudaMemcpyDeviceiToHost data transfers.
+*/
+extern "C" int cuda_hydroCoreSynchFieldsFromDevice();
 
 #endif // _HYDRO_CORE_CUDADEV_CU_H

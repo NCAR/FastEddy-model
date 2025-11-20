@@ -44,7 +44,7 @@ extern __constant__ int kMax_d;
 extern float *xPos_d;  /* Cell-center position in x (meters) */
 extern float *yPos_d;  /* Cell-center position in y (meters) */
 extern float *zPos_d;  /* Cell-center position in z (meters) */
-extern float *topoPos_d; /*Topography elevation (z in meters) at the cell center position in x and y. */
+extern float *topoPos_d; /*Terrain elevation (z in meters) at the cell center position in x and y. */
 
 extern float *J13_d;      // dx/d_zeta
 extern float *J23_d;      // dy/d_zeta

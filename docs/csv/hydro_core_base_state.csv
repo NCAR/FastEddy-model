@@ -1,0 +1,19 @@
+**stabilityScheme:** |br| Scheme used to set hydrostatic stability-dependent Base-State EOS fields |br| 0=none |br| 1=profile |br| 2=linear in theta, 2, 2, 2, M 
+**temp_grnd:** |br| Air Temperature (K) at the ground used to set hydrostatic Base-State EOS fields, FLT_MIN, FLT_MAX, 300.0, M 
+**pres_grnd:** |br| Pressure (Pa) at the ground used to set hydrostatic Base-State EOS fields, FLT_MIN, FLT_MAX, 1.0e5, M 
+**zStableBottom:** |br| Height (m) of the first stable upper-layer when stabilityScheme = 1 or 2, 0, FLT_MAX, 1000.0, M 
+**stableGradient:** |br| Vertical gradient (K/m) of the first stable upper-layer when stabilityScheme = 1 or 2, FLT_MIN, FLT_MAX, 0.1, M 
+**zStableBottom2:** |br| Height (m) of the second stable upper-layer when stabilityScheme = 2, 0, FLT_MAX, 1100.0, M 
+**stableGradient2:** |br| Vertical gradient (K/m) of the second stable upper-layer when stabilityScheme = 2, FLT_MIN, FLT_MAX, 0.03, M 
+**zStableBottom3:** |br| Height (m) of the third stable upper-layer when stabilityScheme = 2, 0, FLT_MAX, 1500.0, M 
+**stableGradient3:** |br| Vertical gradient (K/m) of the third stable upper-layer when stabilityScheme = 2, FLT_MIN, FLT_MAX, 0.03, M 
+**thetaPerturbationSwitch:** |br| Switch to include initial theta perturbations: |br| 0=off; 1=on, 0, 1, 0, M 
+**thetaHeight:** |br| Height below which to include initial theta perturbations: |br| (meters), 0.0, FLT_MAX, 0.0, M 
+**thetaAmplitude:** |br| Maximum amplitude for theta perturbations: |br| thetaAmplitude*[-1;+1] K, 0.0, 2.0, 0.0, M 
+**U_g:** |br| Zonal (West-East) component of the geostrophic wind (m/s), -FLT_MAX, FLT_MAX, 0.0, M 
+**V_g:** |br| Meridional (South-North) component of the geostrophic wind (m/s), -FLT_MAX, FLT_MAX, 0.0, M 
+**z_Ug:** |br| Height (m) above ground for linear geostrophic wind gradient (zonal component), 0.0, FLT_MAX, 10000.0, M 
+**z_Vg:** |br| Height (m) above ground for linear geostrophic wind gradient (meridional component), 0.0, FLT_MAX, 10000.0, M 
+**Ug_grad:** |br| Geostrophic wind gradient for U component |br| U_g gradient above z_Ug (ms-1/m), -1e2, 1e2, 0.0, M 
+**Vg_grad:** |br| Geostrophic wind gradient for V component |br| V_g gradient above z_Vg (ms-1/m), -1e2, 1e2, 0.0, M 
+**physics_oneRKonly:** |br| Selector to apply physics RHS forcing only at the latest RK stage: |br| 0=off; 1=on, 0, 1, 1, O

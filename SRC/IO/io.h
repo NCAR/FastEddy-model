@@ -22,19 +22,23 @@
 #define MAXDIMS     16   //used for static allocation of dimids length. Could be made dynamic.
 
 #define IO_ERROR_DIMLEN          200
+#define IO_ERROR_ATTR_ADD        201
+#define IO_ERROR_VAR_NOT_FOUND   202
+/*#define IO_ERROR_ATTR_LIMIT      203*/
 
 /*io includes*/
 #include <io_netcdf.h>
 #include <io_binary.h>
+#include <ioVarsList.h>
 
 /*######################------------------- IO module variable declarations ---------------------#################*/
 /* Parameters */
-extern int ioOutputMode;  /*0: N-to-1 gather and write to a netcdf file, 1:N-to-N writes of FastEddy binary files*/
+extern int ioOutputMode;  /*0: N-to-1 gather and write to a netCDF file, 1: N-to-N writes of FastEddy binary files*/
 extern char *outPath;     /* Directory Path where output files are to be written */
 extern char *outFileBase; /* Base name of the output file series as in (outFileBase).element-in-series */ 
 extern char *inPath;      /* Directory Path where input files are to be read from */
 extern char *inFile;      /* Name of the input file */ 
-extern int frqOutput;     /*frequency in timesteps to produce output*/
+extern int frqOutput;     /*frequency in timesteps to produce output; should be an even multiple of NtBatch*/
 
 /*static Variables*/
 extern char *outSubString; /*subString portion of outFile holding element-in-series as in path/base.substring */
@@ -76,5 +80,15 @@ int ioCleanup();
 * Used by other modules to register a variable in the IO module list of variables to read/write as input/output.
 */
 int ioRegisterVar(char *name, char *type, int nDims, int *dimids, void *varMemAddress);
+
+/*----->>>>> int ioAddVarAttr(); -------------------------------------------------------------------
+* Add a single attribute to an already registered variable
+*/
+int ioAddVarAttr(char *varName, char *attrName, char *attrType, char *attrValue);
+
+/*----->>>>> int ioAddStandardAttrs(); -------------------------------------------------------------
+* Add standard CF convention attributes to a variable (units, long_name, standard_name)
+*/
+int ioAddStandardAttrs(char *varName, char *units, char *longName, char *standardName);
 
 #endif // _IO_H

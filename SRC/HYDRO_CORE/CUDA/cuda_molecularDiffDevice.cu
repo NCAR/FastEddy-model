@@ -27,15 +27,15 @@ float* hydroNuGradZFlds_d;                 /* Base address for diffusion for nu*
 */
 extern "C" int cuda_molecularDiffDeviceSetup(){
    int errorCode = CUDA_MOLDIFF_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    cudaMemcpyToSymbol(diffusionSelector_d, &diffusionSelector, sizeof(int));
    cudaMemcpyToSymbol(nu_0_d, &nu_0, sizeof(float));
 
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   fecuda_DeviceMalloc(Nelems*(Nhydro-1)*sizeof(float), &hydroNuGradXFlds_d); // all Nhydro except density 
-   fecuda_DeviceMalloc(Nelems*(Nhydro-1)*sizeof(float), &hydroNuGradYFlds_d);  
-   fecuda_DeviceMalloc(Nelems*(Nhydro-1)*sizeof(float), &hydroNuGradZFlds_d); 
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+   fecuda_DeviceMalloc(Nelems*(Nhydro-1), &hydroNuGradXFlds_d); // all Nhydro except density 
+   fecuda_DeviceMalloc(Nelems*(Nhydro-1), &hydroNuGradYFlds_d);  
+   fecuda_DeviceMalloc(Nelems*(Nhydro-1), &hydroNuGradZFlds_d); 
 
    return(errorCode);
 } //end cuda_molecularDiffDeviceSetup()

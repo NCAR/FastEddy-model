@@ -1,0 +1,14 @@
+**NhydroAuxScalars:** |br| Number of prognostic auxiliary scalar fields, 0, 256, 0, O 
+**AuxScAdvSelector:** |br| Advection scheme for auxiliary scalar fields |br| *C-M if NhydroAuxScalars > 0*, 0, 6, 0, C-M
+**AuxScAdvSelector_b_hyb:** |br| Hybrid advection scheme parameter |br| *C-M if NhydroAuxScalars > 0*, 0.0, 1.0, 0.0, C-M 
+**AuxScSGSturb:** |br| Selector to apply sub-grid scale diffusion to auxiliary scalar fields |br| *C-M if NhydroAuxScalars > 0*, 0, 1, 0, C-M
+**srcAuxScFile:** |br| The path and filename to an Auxilliary Scalar Sources specification file |br| *C-O if NhydroAuxScalars > 0*, N/A, N/A, , C-O
+**srcAuxScTemporalType:** |br| Temporal characterization of source (0=instantaneous; 1=continuous) |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0, 1, 0, C-M
+**srcAuxScStartSeconds:** |br| Source start time in seconds |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0, FLT_MAX, 0, C-M
+**srcAuxScDurationSeconds:** |br| Source duration in seconds |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0, FLT_MAX, 30, C-M
+**srcAuxScGeometryType:** |br| 0=point (single cell volume) |br| 1=line (line of surface cells) |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0, 0, 0, C-M
+**srcAuxScMassSpecType:** |br| Mass specification type |br| 0=strict mass in kg |br| 1=mass source rate in kg/s |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0, 0, 0, C-M
+**srcAuxScMassSpecValue:** |br| Mass specification value in kg or kg/s given by srcAuxScMassSpecType 0 or 1 |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, 0.0, FLT_MAX, 1.0, C-M
+**srcAuxScLocation_X:** |br| Source geometry centroid position in x (west-east) |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M
+**srcAuxScLocation_Y:** |br| Source geometry centroid position in y (south-north) |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M
+**srcAuxScLocation_Z:** |br| Source geometry centroid position in z (vertical above the surface) |br| *C-M if srcAuxScFile == NULL and* |br| *NhydroAuxScalars == 1*, -FLT_MAX, FLT_MAX, 0.0, C-M

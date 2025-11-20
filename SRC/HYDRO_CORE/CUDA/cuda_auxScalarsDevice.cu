@@ -1,3 +1,18 @@
+/* FastEddy®: SRC/HYDRO_CORE/CUDA/cuda_auxScalarsDevice.cu
+* ©2016 University Corporation for Atmospheric Research
+* 
+* This file is licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+* 
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 /*Auxiliary Scalar Fields*/
 __constant__ int NhydroAuxScalars_d;       /*Number of prognostic auxiliary scalar variable fields */
 __constant__ int AuxScAdvSelector_d; /*adv. scheme for auxiliary scalar fields */
@@ -20,7 +35,7 @@ __device__ __constant__ float srcAuxScMassSpecValue_d[MAX_AUXSC_SRC]; /*Mass spe
 */
 extern "C" int cuda_auxScalarsDeviceSetup(){
    int errorCode = CUDA_AUXSCALARS_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    cudaMemcpyToSymbol(NhydroAuxScalars_d, &NhydroAuxScalars, sizeof(int));
    if (NhydroAuxScalars > 0){
@@ -36,11 +51,11 @@ extern "C" int cuda_auxScalarsDeviceSetup(){
    }//end if NydroAuxScalars > 0
 
    if (NhydroAuxScalars > 0){
-     Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-     fecuda_DeviceMalloc(Nelems*NhydroAuxScalars*sizeof(float), &hydroAuxScalars_d); /*Prognostic variable fields*/
-     fecuda_DeviceMalloc(Nelems*NhydroAuxScalars*sizeof(float), &hydroAuxScalarsFrhs_d); /*Prognostic variable Frhs*/
+     Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+     fecuda_DeviceMalloc(Nelems*NhydroAuxScalars, &hydroAuxScalars_d); /*Prognostic variable fields*/
+     fecuda_DeviceMalloc(Nelems*NhydroAuxScalars, &hydroAuxScalarsFrhs_d); /*Prognostic variable Frhs*/
      if ((turbulenceSelector > 0) && (AuxScSGSturb > 0)){
-       fecuda_DeviceMalloc(Nelems*3*sizeof(float), &AuxScalarsTauFlds_d);
+       fecuda_DeviceMalloc(Nelems*3, &AuxScalarsTauFlds_d);
      }
    } // end if NhydroAuxScalars > 0
 

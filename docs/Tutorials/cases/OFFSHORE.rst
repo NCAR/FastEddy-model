@@ -52,7 +52,7 @@ Note that this example requires customization of the initial condition file. A J
   * Change :code:`NtBatch` from 7500 to 1
 
 5. The run of the Jupyter notebook in the next step will write a *FE_OFFSHORE.0* file in an **initial** subdirectory. Create an **initial** directory, if one does not already exist.
-6. Then, run the Jupyter notebook to produce a modified initial conditions file as describe in the first paragraph. Modify :code:`path_base` in the **tutorial/notebooks/Canopy_Prep.ipynb** file, specifying the path to the **Example06_OFFSHORE** directory. Be sure to include the trailing slash :code:`/`.
+6. Then, run the Jupyter notebook to produce a modified initial conditions file as describe in the first paragraph. Modify :code:`path_base` in the **tutorial/notebooks/Offshore_Prep.ipynb** file, specifying the path to the **Example06_OFFSHORE** directory. Be sure to include the trailing slash :code:`/`.
 7. Then, run FastEddy for the :math:`4` h of the simulation by changing :code:`frqOutput`, :code:`Nt`, and :code:`NtBatch` back to their original values, and modify :code:`inPath` and :code:`inFile` in tutorials/example/Example06_OFFSHORE.in, specifying the path and the filename, respectively, for the newly written initial condition *FE_OFFSHORE.0* file in the initial directory.  Be sure to include the trailing slash :code:`/` in the :code:`inPath`.
 
 See :ref:`run_fasteddy` for instructions on how to build and run FastEddy on NSF NCAR's High Performance Computing machines.

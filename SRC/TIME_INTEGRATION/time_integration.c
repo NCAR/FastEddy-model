@@ -53,7 +53,7 @@ int timeGetParams(){
 
    /*query for each TIME_INTEGRATION parameter */
    timeMethod = 0;
-   errorCode = queryIntegerParameter("timeMethod", &timeMethod, 0, 0, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("timeMethod", &timeMethod, 0, 0, PARAM_OPTIONAL);
    Nt = 1000;
    errorCode = queryIntegerParameter("Nt", &Nt, 1, INT_MAX, PARAM_MANDATORY);
    dt = 1.0;
@@ -112,6 +112,10 @@ int timeInit(){
    /*Register a time variable holding "simTime" or the master simulation time*/
    errorCode = sprintf(&varName[0],"time");
    errorCode = ioRegisterVar(&varName[0], "float", 1, dims1dTD, &simTime);
+   
+   /* Add NetCDF attributes for the time variable */
+   errorCode = timeAddTimeAttributes();
+   
    printf(":Variable = %s stored at %p, has been registered with IO.\n",
           &varName[0],&simTime);
    fflush(stdout);
@@ -124,6 +128,28 @@ int timeInit(){
    /* Done */
    return(errorCode);
 } //end timeInit()
+
+/*----->>>>> int timeAddTimeAttributes();       ----------------------------------------------------------------------
+* Add NetCDF attributes to time-related variables registered by the TIME_INTEGRATION module.
+*/
+int timeAddTimeAttributes(){
+   int errorCode = TIME_INTEGRATION_SUCCESS;
+
+   /* Add standard CF convention attributes for the time variable */
+   errorCode = ioAddStandardAttrs("time", "s", "Simulation time", "time");
+   if(errorCode != TIME_INTEGRATION_SUCCESS){
+      printf("Error adding standard attributes to time variable: %d\n", errorCode);
+      return errorCode;
+   }
+
+   errorCode = ioAddVarAttr("time", "axis", "text", "T");
+   if(errorCode != TIME_INTEGRATION_SUCCESS){
+      printf("Error adding axis attribute to time variable: %d\n", errorCode);
+      return errorCode;
+   }
+
+   return errorCode;
+} //end timeAddTimeAttributes()
 
 /*----->>>>> int timeIntBdyPlaneUpdates();       ----------------------------------------------------------------------
  * Used to broadcast and print parameters, allocate memory, and initialize configuration settings 

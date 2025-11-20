@@ -1,0 +1,4 @@
+**canopySelector:** |br| Canopy selector: |br| 0=off; 1=on, 0, 1, 0, O 
+**canopySkinOpt:** |br| Canopy selector to use additional skin friction effect on drag coefficient: |br| 0=off; 1=on |br| *C-M if canopySelector==1*, 0, 1, 0, C-M
+**canopy_cd:** |br| Non-dimensional canopy drag coefficient |br| *C-M if canopySelector==1*, 0.0, 1e+2, 0.15, C-M
+**canopy_lf:** |br| Representative canopy element length scale |br| *C-M if canopySelector==1*, 0.0, 1e+2, 0.1, C-M 

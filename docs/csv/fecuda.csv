@@ -1,0 +1,3 @@
+**tBx:** |br| Number of threads in x-dimension, 1, INT_MAX, 1, M 
+**tBy:** |br| Number of threads in y-dimension, 1, INT_MAX, 8, M
+**tBz:** |br| Number of threads in z-dimension, 1, INT_MAX, 32, M

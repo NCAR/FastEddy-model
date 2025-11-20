@@ -47,7 +47,7 @@ __constant__ int kMax_d;
 float *xPos_d;  // Cell-center position in x (meters) 
 float *yPos_d;  // Cell-center position in y (meters) 
 float *zPos_d;  // Cell-center position in z (meters) 
-float *topoPos_d; //Topography elevation (z in meters) at the cell center position in x and y. 
+float *topoPos_d; //Terrain elevation (z in meters) at the cell center position in x and y. 
 
 float *J13_d;      // dx/d_zeta
 float *J23_d;      // dy/d_zeta
@@ -64,7 +64,7 @@ float *invD_Jac_d; //inverse Determinant of the Jacbian
 */
 extern "C" int cuda_gridDeviceSetup(){
    int errorCode = CUDA_GRID_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 #ifdef DEBUG 
    cudaEvent_t startE, stopE;
    float elapsedTime;
@@ -100,21 +100,21 @@ extern "C" int cuda_gridDeviceSetup(){
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
 
    /*Set the full memory block number of elements for grid fields*/
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh); 
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)); 
    /* Allocate the GRID arrays */
    /* Coordinate Arrays */
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &xPos_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &yPos_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &zPos_d);
-   fecuda_DeviceMalloc(((Nxp+2*Nh)*(Nyp+2*Nh))*sizeof(float), &topoPos_d);
+   fecuda_DeviceMalloc(Nelems, &xPos_d);
+   fecuda_DeviceMalloc(Nelems, &yPos_d);
+   fecuda_DeviceMalloc(Nelems, &zPos_d);
+   fecuda_DeviceMalloc((size_t)((Nxp+2*Nh)*(Nyp+2*Nh)), &topoPos_d);
    /* Metric Tensors Fields */
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J13_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J23_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J31_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J32_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J33_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &D_Jac_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &invD_Jac_d);
+   fecuda_DeviceMalloc(Nelems, &J13_d);
+   fecuda_DeviceMalloc(Nelems, &J23_d);
+   fecuda_DeviceMalloc(Nelems, &J31_d);
+   fecuda_DeviceMalloc(Nelems, &J32_d);
+   fecuda_DeviceMalloc(Nelems, &J33_d);
+   fecuda_DeviceMalloc(Nelems, &D_Jac_d);
+   fecuda_DeviceMalloc(Nelems, &invD_Jac_d);
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
 
    /* cudaMemcpy the GRID arrays from Host to Device*/
@@ -176,14 +176,20 @@ extern "C" int cuda_gridDeviceCleanup(){
     /* metric tensor fields */
    cudaFree(J13_d); 
    cudaFree(J23_d); 
+<<<<<<< HEAD
+=======
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
+>>>>>>> upstream/develop
    cudaFree(J31_d); 
    cudaFree(J32_d); 
    cudaFree(J33_d); 
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    cudaFree(D_Jac_d); 
    cudaFree(invD_Jac_d); 
     /* coordinate fields */
    cudaFree(xPos_d); 
    cudaFree(yPos_d); 
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    cudaFree(zPos_d); 
    cudaFree(topoPos_d); 
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/

@@ -12,6 +12,12 @@ on:
     types: [opened, reopened, synchronize]
   workflow_dispatch:
 
+permissions:
+  contents: read       # Only read repository contents
+  actions: read        # Required for using 'actions/upload-artifact'
+  pull-requests: read  # For workflows triggered by pull requests
+  # Other permissions set to none by default
+
 jobs:
   documentation:
     name: Build Documentation

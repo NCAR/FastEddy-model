@@ -104,6 +104,7 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
 
 __device__ void cudaDevice_offshoreRoughness(float* z0m, float* z0t, float* fricVel, float u_1, float v_1, float* sea_mask);
 
+__global__ void cudaDevice_dynamicz0tLand(float* z0m, float* z0t, float* fricVel, float* sea_mask);
 __device__ void cudaDevice_z0tdyn(float* z0m, float* z0t, float* fricVel);
 
 #endif // _SURFLAYER_CUDADEV_CU_H

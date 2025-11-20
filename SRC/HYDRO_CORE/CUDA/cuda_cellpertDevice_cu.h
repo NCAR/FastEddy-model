@@ -1,3 +1,18 @@
+/* FastEddy®: SRC/HYDRO_CORE/CUDA/cuda_cellpertDevice_cu.h
+* ©2016 University Corporation for Atmospheric Research
+* 
+* This file is licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+* 
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef _CELLPERT_CUDADEV_CU_H
 #define _CELLPERT_CUDADEV_CU_H
 
@@ -40,9 +55,11 @@ extern "C" int cuda_hydroCoreDeviceBuildCPmethod(int simTime_it);
 extern "C" int cuda_hydroCoreTVCP();
 
 __global__ void cudaDevice_hydroCoreCompleteCellPerturbation(float* hydroFlds, float* randcp_d, int my_mpi, int numpx, int numpy);
+__global__ void cudaDevice_hydroCoreCompleteCellPerturbationMasked(float* hydroFlds, float* randcp_d, int my_mpi, int numpx, int numpy, float* bdg_mask);
 
 /*----->>>>> __device__ void  cudaDevice_CellPerturbation();  --------------------------------------------------
  *  */ // This cuda kerne lsets up the cells and their id in the CP method
 __device__ void cudaDevice_CellPerturbation(int i_ind, int j_ind, int k_ind, int Nx, int Ny, int Nz, int Nh, int my_mpi, int numpx, int numpy, float* rho, float* theta, float *rand_1darray);
+__device__ void cudaDevice_CellPerturbationMasked(int i_ind, int j_ind, int k_ind, int Nx, int Ny, int Nz, int Nh, int my_mpi, int numpx, int numpy, float* rho, float* theta, float* rand_1darray,float* bdg_mask);
 
 #endif // _CELLPERT_CUDADEV_CU_H

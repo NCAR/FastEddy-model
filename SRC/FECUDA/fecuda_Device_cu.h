@@ -55,11 +55,6 @@ extern __constant__ int rankYid_d;
 */
 extern "C" int fecuda_DeviceSetup(int tBx, int tBy, int tBz);
 
-/*----->>>>> void fecuda_DeviceMallocInt();    -----------------------------------------------------------
-* Used to allocate device memory integer blocks and set the  host memory addresses of device memory pointers.
-*/
-extern "C" void fecuda_DeviceMallocInt(int Nelems, int** memBlock_d);
-
 /*----->>>>> int fecuda_SetBlocksPerGrid();   ------------------------------------------------------------------
  * Used to set the "dim3 grid" module variable that is passed to any device kernel 
  * to specify the number of blocks per grid in each dimenaion

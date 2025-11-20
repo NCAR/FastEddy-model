@@ -4,6 +4,20 @@
 Publications
 ************
 
+.. _bowen_pressurewaves_2025:
+
+| Lin, Yi, and Bowen Zhou. “A theory for the spurious pressure waves in compressible large
+|   eddy simulations of shallow cumulus clouds”. *Geophysical Research Letters*, 52 (2025)
+|   https://doi.org/10.1029/2025GL118786
+
+.. _urban_climate_2025:
+
+| Muñoz-Esparza, D., J. Sauer, P.A. Jimenez, J. Boehnert, D. Hahn, and M. Steiner.
+|   “Multiscale Weather Forecasting Sensitivities to Urban Characteristics and Atmospheric
+|   Conditions During a Cold Front Passage Over the Dallas-Fort Worth Metroplex”.
+|   *Urban Climate*, 60 (102334) 2025
+|   https://doi.org/10.1016/j.uclim.2025.102334
+
 .. _wind_energy_2024:
 
 | Sanchez Gomez, M., D. Muñoz-Esparza, J.A. Sauer. "Implementation and Validation

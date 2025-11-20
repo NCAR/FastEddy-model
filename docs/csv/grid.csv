@@ -1,0 +1,12 @@
+**Nx:** |br| Number of discretised domain elements in the |br| x (zonal) direction, 1, INT_MAX, 128, M 
+**Ny:** |br| Number of discretised domain elements in the |br| y (meridional) direction, 1, INT_MAX, 122, M 
+**Nz:** |br| Number of discretised domain elements in the |br| z (vertical) direction, 1, INT_MAX, 122, M 
+**Nh:** |br| Number of halo cells to be used |br| (dependent on largest stencil extent), 0, INT_MAX, 3, M
+**d_xi:** |br| Computational domain fixed resolution in the 'i' direction, FLT_MIN, FLT_MAX, 10.0, M 
+**d_eta:** |br| Computational domain fixed resolution in the 'j' direction, FLT_MIN, FLT_MAX, 10.0, M 
+**d_zeta:** |br| Computational domain fixed resolution in the 'k' direction, FLT_MIN, FLT_MAX, 10.0, M 
+**coordHorizHalos:** |br| Switch to setup coordinate halos as periodic=1 or gradient-following=0, 0, 1, 1, M
+**topoFile:** |br| A file containing topography |br| (surface elevation in meters ASL), N/A, N/A, , O
+**verticalDeformSwitch:** |br| Switch to use vertical coordinate deformation 0=off; 1=on, 0, 1, , M
+**verticalDeformFactor:** |br| Deformation factor |br| 0.0=max compression |br| 1.0=no compression, 0.0, 1.0, , M
+**verticalDeformQuadCoeff:** |br| Quadratic term coefficient in the deformation scheme, -2.0, 2.0, 0.0, M

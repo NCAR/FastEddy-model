@@ -1,0 +1,24 @@
+**surflayerSelector:** |br| Monin-Obukhov surface layer selector: |br| 0=off |br| 1=surface kinematic heat flux (surflayer_wth) |br| 2=skin temperature rate (surflayer_tr), 0, 3, 0, M
+**surflayer_z0:** |br| Roughness length (momentum) when surflayerSelector > 0, 1e-12, 1e+0, 0.1, M
+**surflayer_z0t:** |br| Roughness length (temperature) when surflayerSelector > 0, 1e-6, 1e+1, 0.1, M
+**surflayer_z0tdyn:** |br| Dynamic z0t calculation following Zilitinkevich (1995) approach: |br| 0=off |br| 1=constant Zilitinkevich coeff |br| 2=variable Zilitinkevich coeff, 0, 2, 1, O
+**surflayer_wth:** |br| Kinematic sensible heat flux at the surface |br| *C-M if surflayerSelector==1*, -5e+0, 5e+0, 0.0, C-M
+**surflayer_tr:** |br| Temperature rate at the surface |br| (>0 for warming; <0 for cooling) |br| *C-M if surflayerSelector==2*, -1e+1, 1e+1, 0.0, C-M
+**surflayer_wq:** |br| Sensible heat flux at the surface (kg/kg m s-1) when surflayerSelector = 1 |br| *C-M if moistureSelector==1*, -5e+0, 5e+0, 0.0, C-M
+**surflayer_qr:** |br| Water vapor rate (kg/kg h-1) when surflayerSelector = 2 |br| *C-M if moistureSelector==1*, -1e+1, 1e+1, 0.0, C-M
+**surflayer_idealsine:** |br| Selector for idealized sinusoidal surface heat flux or skin temperature forcing, 0, 1, 0, O
+**surflayer_ideal_ts:** |br| Start time in seconds for the idealized sinusoidal surface forcing |br| *C-M if surflayer_idealsine > 0*, 0, 1e+5, 0.0, C-M
+**surflayer_ideal_te:** |br| End time in seconds for the idealized sinusoidal surface forcing |br| *C-M if surflayer_idealsine > 0*, 0, 1e+5, 0.0, C-M 
+**surflayer_ideal_amp:** |br| Maximum amplitude of the idealized sinusoidal surface forcing |br| *C-M if surflayer_idealsine > 0*, 0, 1e+3, 0.1, C-M
+**surflayer_ideal_qts:** |br| Start time in seconds for the idealized sinusoidal surface forcing (qv) |br| *C-M if moistureSelector==1 and* |br| *surflayer_idealsine > 0*, 0, 1e+5, 0.0, C-M
+**surflayer_ideal_qte:** |br| End time in seconds for the idealized sinusoidal surface forcing (qv) |br| *C-M if moistureSelector==1 and* |br| *surflayer_idealsine > 0*, 0, 1e+5, 0.0, C-M
+**surflayer_ideal_qamp:** |br| Maximum amplitude of the idealized sinusoidal surface forcing (qv) |br| *C-M if moistureSelector==1 and* |br| *surflayer_idealsine > 0*, 0, 1e+3, 0.1, C-M
+**surflayer_qskin_input:** |br| Selector for file input (restart) value for qskin under surflayerSelector == 2 |br| *C-O if moistureSelector==1*, 0, 1, 0, C-O
+**surflayer_offshore:** |br| Offshore selector: |br| 0=off;1=on, 0, 1, 1, O
+**surflayer_offshore_visc:** |br| Viscous term on z0m: |br| 0=off; 1=on, 0, 1, 1, O
+**surflayer_offshore_opt:** |br| Offshore roughness parameterization: |br| ==0 (Charnock) |br| ==1 (Charnock with variable alpha) |br| ==2 (Taylor & Yelland) |br| ==3 (Donelan) |br| ==4 (Drennan) |br| ==5 (Porchetta) |br| *C-M if surflayer_offshore > 0*, 0, 5, 4, O
+**surflayer_offshore_dyn:** |br| Selector to use parameterized ocean parameters: |br| 0=off; 1=on |br| *C-O if surflayer_offshore > 0*, 0, 1, 1, C-O
+**surflayer_offshore_hs:** |br| Significant wave height |br| *C-M if surflayer_offshore > 0 and* |br| *surflayer_offshore_dyn == 0 and* |br| *surflayer_offshore_opt == 2 or 3 or 4 or 5*, 0, 1e+2, 0.0, C-M
+**surflayer_offshore_lp:** |br| Peak wavelength |br| *C-M if surflayer_offshore > 0 and* |br| *surflayer_offshore_dyn == 0 and* |br| *surflayer_offshore_opt == 2*, 0.1, 1e+3, 0.1, C-M
+**surflayer_offshore_cp:** |br| Wave phase speed |br| *C-M if surflayer_offshore > 0 and* |br| *surflayer_offshore_dyn == 0 and* |br| *surflayer_offshore_opt == 3 or 4 or 5*, 0.1, 1e+2, 0.1, C-M
+**surflayer_offshore_theta:** |br| Wave/wind angle |br| *C-M if surflayer_offshore > 0 and* |br| *surflayer_offshore_dyn == 0 and* |br| *surflayer_offshore_opt == 5 or* |br| *surflayer_offshore > 0 and* |br| *surflayer_offshore_dyn==1 and* |br| *surflayer_offshore_opt == 5*, 0.0, 180.0, 0.0, C-M 

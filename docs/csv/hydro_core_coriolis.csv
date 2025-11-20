@@ -1,0 +1,2 @@
+**coriolisSelector:** |br| Coriolis Force selector: |br| 0=None |br| 1=Horizontal-only |br| 2=Horizontal & Vertical, 0, 2, 0, M
+**coriolisLatitude:** |br| Characteristic latitude in degrees from equator of the LES domain, -90.0, 90.0, 54.0, M

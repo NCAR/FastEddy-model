@@ -29,20 +29,20 @@
 /*##################------------------- GRID module variable definitions ---------------------#################*/
 char *gridFile = NULL;
 char *topoFile = NULL;
-int Nx = 1;
-int Ny = 1;
-int Nz = 1;
-int Nh = 0;
-float d_xi = 1.0;
-float d_eta = 1.0;
-float d_zeta = 1.0;
-int coordHorizHalos = 1; //switch to setup coordiante halos as periodic, or gradient following
+int Nx = 128;
+int Ny = 122;
+int Nz = 122;
+int Nh = 3;
+float d_xi = 10.0;
+float d_eta = 10.0;
+float d_zeta = 10.0;
+int coordHorizHalos = 1; //switch to setup coordinate halos as periodic, or gradient following
 int iMin, iMax; //Constant min and max bounds of i-index accounting for only non-halos cells of the mpi_rank subdomain
 int jMin, jMax; //Constant min and max bounds of j-index accounting for only non-halos cells of the mpi_rank subdomain
 int kMin, kMax; //Constant min and max bounds of k-index accounting for only non-halos cells of the mpi_rank subdomain
 int verticalDeformSwitch; //switch to use vertical coordinate deformation
 float verticalDeformFactor; //factor to used under vertical deformation (0.0-1.0)
-float verticalDeformQuadCoeff; // quadratic term coefficient in the deformtion scheme (default = 0.0)
+float verticalDeformQuadCoeff; // quadratic term coefficient in the deformation scheme (default = 0.0)
 
 float dX, dY, dZ; //reference computational model coordinate resolution
 float dXi, dYi, dZi; //inverse of the reference computational model coordinate resolution
@@ -51,8 +51,17 @@ float dXi, dYi, dZi; //inverse of the reference computational model coordinate r
 float *xPos;  /* Cell-center position in x (meters) */
 float *yPos;  /* Cell-center position in y (meters) */
 float *zPos;  /* Cell-center position in z (meters) */
-float *topoPosGlobal; /*Topography elevation (z in meters) at the cell center position in x and y. (Global domain) */
-float *topoPos; /*Topography elevation (z in meters) at the cell center position in x and y. (per-rank domain) */
+float *topoPosGlobal; /*Terrain elevation (z in meters) at the cell center position in x and y. (Global domain) */
+float *topoPos; /*Terrain elevation (z in meters) at the cell center position in x and y. (per-rank domain) */
+
+//float *J11;      // dx/d_xi  -- assumed = 1.0
+//float *J12;      // dx/d_eta -- assumed = 0.0
+
+//float *J21;      // dy/d_xi  -- assumed = 0.0
+//float *J22;      // dy/d_eta -- assumed = 1.0
+
+float *J13;      // dx/d_zeta
+float *J23;      // dy/d_zeta
 
 //float *J11;      // dx/d_xi  -- assumed = 1.0
 //float *J12;      // dx/d_eta -- assumed = 0.0
@@ -108,7 +117,7 @@ int gridInit(){
    if(mpi_rank_world == 0){
       printComment("GRID parameters---");
       printParameter("gridFile", "A file containing a complete grid specification");
-      printParameter("topoFile", "A file containing topography (surface elevation in meters ASL)");
+      printParameter("topoFile", "A file containing terrain(surface elevation in meters ASL)");
       printParameter("Nx", "Number of discretised domain elements in the x (zonal) direction.");
       printParameter("Ny", "Number of discretised domain elements in the y (meridional) direction.");
       printParameter("Nz", "Number of discretised domain elements in the z (vertical) direction.");
@@ -116,7 +125,7 @@ int gridInit(){
       printParameter("d_xi", "Computational domain fixed resolution in the 'i' direction."); 
       printParameter("d_eta", "Computational domain fixed resolution in the 'j' direction."); 
       printParameter("d_zeta", "Computational domain fixed resolution in the 'k' direction."); 
-      printParameter("coordHorizHalos", "switch to setup coordiante halos as periodic=1 or gradient-following=0."); 
+      printParameter("coordHorizHalos", "switch to setup coordinate halos as periodic=1 or gradient-following=0."); 
       printParameter("verticalDeformSwitch", "switch to use vertical coordinate deformation 0=off, 1=on"); 
       printParameter("verticalDeformFactor", "deformation factor (0.0=max compression,  1.0=no compression)"); 
       printParameter("verticalDeformQuadCoeff", "deformation factor (0.0=max compression,  1.0=no compression)"); 
@@ -273,6 +282,21 @@ int gridInit(){
        fflush(stdout);
        errorCode = GRID_IO_CALL_FAIL;
      }
+
+   /* Add NetCDF attributes for coordinate variables */
+   if(ioerrorCode == GRID_SUCCESS){
+     ioerrorCode = ioAddStandardAttrs("xPos", "m", "x-coordinate of cell center", "projection_x_coordinate");
+     ioerrorCode = ioAddStandardAttrs("yPos", "m", "y-coordinate of cell center", "projection_y_coordinate");
+     ioerrorCode = ioAddStandardAttrs("zPos", "m", "z-coordinate of cell center", "height");
+     ioerrorCode = ioAddStandardAttrs("topoPos", "m", "Terrain elevation", "surface_altitude");
+
+     if(ioerrorCode != 0){
+       printf("Error adding standard attributes to GRID coordinate fields.\n");
+       fflush(stdout);
+       errorCode = GRID_IO_CALL_FAIL;
+     }
+   }
+     
 #ifdef DEBUG
 //#if 1
      errorCode = ioRegisterVar("D_Jac", "float", 4, dims4d, D_Jac);
@@ -282,9 +306,18 @@ int gridInit(){
      errorCode = ioRegisterVar("J31", "float", 4, dims4d, J31);
      errorCode = ioRegisterVar("J32", "float", 4, dims4d, J32);
      errorCode = ioRegisterVar("J33", "float", 4, dims4d, J33);
+
+     /* Add attributes for Jacobian and metric tensor fields */
+     ioerrorCode = ioAddStandardAttrs("D_Jac", "-", "Jacobian determinant", NULL);
+     ioerrorCode = ioAddStandardAttrs("invD_Jac", "-", "Inverse Jacobian determinant", NULL);
+     ioerrorCode = ioAddStandardAttrs("J13", "-", "Metric tensor component dx/d_zeta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J23", "-", "Metric tensor component dy/d_zeta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J31", "-", "Metric tensor component dz/d_xi", NULL);
+     ioerrorCode = ioAddStandardAttrs("J32", "-", "Metric tensor component dz/d_eta", NULL);
+     ioerrorCode = ioAddStandardAttrs("J33", "-", "Metric tensor component dz/d_zeta", NULL);
 #endif 
    } // end if errorCode indicates no errors thus far
-  
+
 #ifdef DEBUG
 //#if 1
    printf("mpi_rank_world %d/%d: Finished gridInit()!\n",mpi_rank_world,mpi_size_world);

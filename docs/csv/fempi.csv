@@ -1,0 +1,3 @@
+Parameter Name: Description, Min, Max, Default, Req.
+**numProcsX:** |br| Number of cores to be used for horizontal domain decomposition in X, 1, INT_MAX, 1, M
+**numProcsY:** |br| Number of cores to be used for horizontal domain decomposition in Y, 1, INT_MAX, 1, M

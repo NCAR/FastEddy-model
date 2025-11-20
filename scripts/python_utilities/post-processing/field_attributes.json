@@ -1,0 +1,78 @@
+{
+  "base_attrs": {
+    "BS_pressure": ["Pa", "Base state pressure", "air_pressure"],
+    "TauTH1": ["K m s-1", "Subgrid-x turbulent flux of potential temperature", null],
+    "TauTH2": ["K m s-1", "Subgrid-y turbulent flux of potential temperature", null],
+    "TauTH3": ["K m s-1", "Subgrid-z turbulent flux of potential temperature", null],
+    "Tau11": ["m2 s-2", "Subgrid-xx stress tensor component", null],
+    "Tau21": ["m2 s-2", "Subgrid-yx stress tensor component", null],
+    "Tau31": ["m2 s-2", "Subgrid-zx stress tensor component", null],
+    "Tau32": ["m2 s-2", "Subgrid-zy stress tensor component", null],
+    "Tau22": ["m2 s-2", "Subgrid-yy stress tensor component", null],
+    "Tau33": ["m2 s-2", "Subgrid-zz stress tensor component", null],
+    "rho": ["kg m-3", "Air density", "air_density"],
+    "u": ["m s-1", "Zonal wind velocity", "eastward_wind"],
+    "v": ["m s-1", "Meridional wind velocity", "northward_wind"],
+    "w": ["m s-1", "Vertical wind velocity", "upward_air_velocity"],
+    "theta": ["K", "Potential temperature", "air_potential_temperature"],
+    "pressure": ["Pa", "Perturbation pressure", null],
+    "TKE_0": ["m2 s-2", "Subgrid turbulent kinetic energy of air at grid-filter scale", null],
+    "TKE_1": ["m2 s-2", "Subgrid turbulent kinetic energy of air at canopy leaf scale", null],
+    "AuxScalar": ["-", "Auxiliary scalar", null],
+    "moisture": ["kg kg-1", "Water vapor mixing ratio", "humidity_mixing_ratio"],
+    "qv": ["g kg-1", "Water vapor mixing ratio", "humidity_mixing_ratio"],
+    "ql": ["g kg-1", "Cloud liquid water mixing ratio", "cloud_liquid_water_mixing_ratio"],
+    "fricVel": ["m s-1", "Surface friction velocity", "surface_friction_velocity"],
+    "htFlux": ["K m s-1", "Surface sensible heat flux", "surface_upward_sensible_heat_flux"],
+    "qFlux": ["kg kg-1 m s-1", "Surface latent heat flux", "surface_upward_latent_heat_flux"],
+    "tskin": ["K", "Surface skin temperature", "surface_temperature"],
+    "qskin": ["kg kg-1", "Surface skin water vapor mixing ratio", null],
+    "z0m": ["m", "Roughness length for momentum", "surface_roughness_length_for_momentum_in_air"],
+    "z0t": ["m", "Roughness length for heat", "surface_roughness_length_for_heat_in_air"],
+    "invOblen": ["m-1", "Inverse Obukhov length", "atmosphere_boundary_layer_thickness"],
+    "cellpert_amp": ["K", "Cell perturbation amplitude", null],
+    "cellpert_nts": ["-", "Cell perturbation number of time steps", null],
+    "cellpert_ktop": ["-", "Cell perturbation top grid level", null],
+    "CanopyLAD": ["m-1", "Leaf area density", "leaf_area_density"],
+    "SeaMask": ["-", "Sea mask", "sea_area_fraction"],
+    "GAD_rotorTheta": ["degrees", "rotor angle from west increasing counter-clockwise", null],
+    "GAD_turbineYawing": ["-", "flag indicating turbine is in the process of yawing", null],
+    "GAD_turbineRefMag": ["m s-1", "turbine reference wind speed", null],
+    "GAD_turbineRefDir": ["degrees", "turbine reference wind direction", null],
+    "GAD_yawError": ["degrees 2 s", "turbine-wind misalignment error for yaw-controller", null],
+    "GAD_anFactor": ["-", "rotor-normal upstream wind speed induction factor", null],
+    "GAD_turbineVolMask": ["-", "Turbine Volume Mask", null],
+    "GAD_forceX": ["N m-3", "Turbine Forces in X-Direction", null],
+    "GAD_forceY": ["N m-3", "Turbine Forces in Y-Direction", null],
+    "GAD_forceZ": ["N m-3", "Turbine Forces in Z-Direction", null],
+    "GAD_turbineRotorMask": ["-", "Turbine Rotor-Disk Mask", null],
+    "BuildingMask": ["-", "Building Mask", null],
+    "UrbanHeatRedis": ["-", "Urban Heat Redistribution Coefficient", null]
+  },
+  "jacobian_attrs": {
+    "D_Jac": ["-", "Jacobian determinant", null],
+    "invD_Jac": ["-", "inverse Jacobian determinant", null],
+    "J13": ["-", "metric tensor component dx/d_zeta", null],
+    "J23": ["-", "metric tensor component dy/d_zeta", null],
+    "J31": ["-", "metric tensor component dz/d_xi", null],
+    "J32": ["-", "metric tensor component dz/d_eta", null],
+    "J33": ["-", "metric tensor component dz/d_zeta", null]
+  },
+  "coordinate_attrs": {
+    "xPos": ["m", "x-coordinate of cell center", "projection_x_coordinate"],
+    "yPos": ["m", "y-coordinate of cell center", "projection_y_coordinate"],
+    "zPos": ["m", "z-coordinate of cell center", "height"],
+    "topoPos": ["m", "Terrain elevation", "surface_altitude"]
+  },
+  "directions": {
+    "0": "x",
+    "1": "y",
+    "2": "z"
+  },
+  "special_field_mappings": {
+    "base_state_indices": {
+      "0": ["kg m-3", "Base state air density", "air_density"],
+      "1": ["K", "Base state potential temperature", "air_potential_temperature"]
+    }
+  }
+}

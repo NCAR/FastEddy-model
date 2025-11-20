@@ -13,7 +13,6 @@ import warnings
 from matplotlib.gridspec import GridSpec
 from scipy import ndimage,interpolate
 from netCDF4 import Dataset
-from numba import jit
 import datetime as dt
 #from datetime import date
 
@@ -26,7 +25,7 @@ mpi_rank = MPI.COMM_WORLD.Get_rank()
 mpi_name = MPI.Get_processor_name()
 
 print("{:d}/{:d}: Hello World! on {:s}.".format(mpi_rank, mpi_size, mpi_name))
-DEBUG_COUPLER = False
+DEBUG_COUPLER = False #True
 
 ######################################################
 ### Parse the command line arguments                ###
@@ -116,7 +115,6 @@ for iRank in range(mpi_size):
      myend = (iRank+1)*elems_perRank + list_StartOffset
      if iRank == (mpi_size-1):
         myend = myend+((list_len-list_StartOffset)-mpi_size*elems_perRank) ###Catch straggler files with the last rank
-        #myend = myend-1 ###Drop the last instance since (avoiding redundancy of the time instance)  it belongs in the next it_set
      print("{:d}/{:d}: mylist = files_list({:d}:{:d})".format(mpi_rank, mpi_size,mystart,myend))
      mylist = files_list[mystart:myend]
      print("{:d}/{:d}: len(mylist) = {:d}".format(mpi_rank, mpi_size,len(mylist)))
@@ -124,24 +122,20 @@ for iRank in range(mpi_size):
 
 
 MPI.COMM_WORLD.Barrier()
-#### JAS quit for now
-#print("{:d}/{:d}: Bailing Out!".format(mpi_rank, mpi_size))
-#exit()
 
 ##############################################################################
 ### Ingest the target FE grid created from "BuildingMask_FEgen_SimGrid.py" ###
 ##############################################################################
-ds_FEGrid=xr.open_dataset(FE_simGrid)
+ds_FEGrid=xr.open_dataset(FE_simGrid, engine="netcdf4")
 
 ########################################
 ### Load the reference WRF data file ###
 ########################################
-ds_WRFRef=xr.open_dataset(files_list[0])
+ds_WRFRef=xr.open_dataset(files_list[0], engine="netcdf4")
 
 ############################################################################################
 ### Locate the FE-grid-bounding corners as index pairs (j,i) in the WRF-reference domain ###
 ############################################################################################
-####THIS is the real cell that find the minimum vector-distance location i,j for each lat/lon tower observation pairing
 
 ## Find the the WRF d02 profiler locations
 itargs=[]
@@ -152,9 +146,10 @@ jtargs=[]
 latFE = ds_FEGrid.lat.values
 lonFE = ds_FEGrid.lon.values
 
-corners_lat = [latFE[0,0], latFE[0,-1],latFE[-1,-1], latFE[-1,0]]
-corners_lon = [lonFE[0,0], lonFE[0,-1],lonFE[-1,-1], lonFE[-1,0]]
-
+corners_lat = np.asarray([latFE[0,0], latFE[0,-1],latFE[-1,-1], latFE[-1,0]])
+corners_lon = np.asarray([lonFE[0,0], lonFE[0,-1],lonFE[-1,-1], lonFE[-1,0]])
+print('corners_lat.shape=',corners_lat.shape)
+print('corners_lon.shape=',corners_lon.shape)
 print('corners_lat=',corners_lat)
 print('corners_lon=',corners_lon)
 
@@ -178,6 +173,7 @@ ds_WRFRef['dFE_jindxs']=xr.DataArray(np.asarray(jtargs,dtype=np.int32),dims=["co
 ds_WRFRef['dFE_iindxs']=xr.DataArray(np.asarray(itargs,dtype=np.int32),dims=["corners"])
 for indx in range(len(corners_lat)):
   if(mpi_rank == 0):
+    print(f"corner({indx}) @ WRF({ds_WRFRef['dFE_jindxs'][indx].values},{ds_WRFRef['dFE_iindxs'][indx].values})")
     print('[WRF,corner({:d})]: lats = [{:f},{:f}], lons = [{:f},{:f}]'.format(indx,ds_WRFRef['XLAT'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
                                                                                  corners_lat[indx],
                                                                                  ds_WRFRef['XLONG'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
@@ -208,14 +204,14 @@ for indx in range(len(corners_lat)):
         else: 
             if xoffset > 0.0: #FE domain SE corner is east of the closest wrf cell, increment the bounding iindx
                 ds_WRFRef['dFE_iindxs'][indx]+=1
-    else:   ## 2=northwest, or 3=northeast corner
+    else:   ## 3=northwest, or 2=northeast corner
         if yoffset > 0.0:  #FE domain NE/NW corner is north of the closest wrf cell, increment the bounding jindx
             ds_WRFRef['dFE_jindxs'][indx]+=1
         if indx < 3: 
             if xoffset > 0.0: #FE domain NE corner is east of the closest wrf cell, increment the bounding iindx
                 ds_WRFRef['dFE_iindxs'][indx]+=1
         else: 
-            if xoffset < 0.0: #FE domain NW corner is west of the closest wrf cell, deccrement the bounding iindx
+            if xoffset < 0.0: #FE domain NW corner is west of the closest wrf cell, decrement the bounding iindx
                 ds_WRFRef['dFE_iindxs'][indx]-=1 
 if(mpi_rank == 0):
   print('Bounding-box corrected offsets:')        
@@ -244,10 +240,38 @@ ll_jindx=ds_WRFRef['dFE_jindxs'].min(dim='corners').values
 ll_iindx=ds_WRFRef['dFE_iindxs'].min(dim='corners').values
 j_extent=ds_WRFRef['dFE_jindxs'].max(dim='corners').values-ll_jindx
 i_extent=ds_WRFRef['dFE_iindxs'].max(dim='corners').values-ll_iindx
+
+##Ensure WRF interpolation area extents will entirely encompass FE target x & y domain 
+y_distWRF = (j_extent-1)*ds_WRFRef.attrs['DY']-ll_yoffset
+x_distWRF = (i_extent-1)*ds_WRFRef.attrs['DX']-ll_xoffset
+dxFE=(ds_FEGrid['xPos'][0,0,1]-ds_FEGrid['xPos'][0,0,0]).values
+dyFE=(ds_FEGrid['yPos'][0,1,0]-ds_FEGrid['yPos'][0,0,0]).values
+x_distFE = (ds_FEGrid.sizes['xIndex']-1)*dxFE
+y_distFE = (ds_FEGrid.sizes['yIndex']-1)*dyFE
+while x_distWRF <= x_distFE:
+    i_extent += 1
+    x_distWRF = (i_extent-1)*ds_WRFRef.attrs['DX']-ll_xoffset
+while y_distWRF <= y_distFE:
+    j_extent += 1
+    y_distWRF = (j_extent-1)*ds_WRFRef.attrs['DY']-ll_yoffset
+
 if(mpi_rank == 0):
-  print('ll: ({:d},{:d})'.format(ll_jindx,ll_iindx))
-  print('extents: ({:d},{:d})'.format(j_extent,i_extent))
-  print('y,x offsets: ({:f},{:f})'.format(ll_yoffset,ll_xoffset))
+    if (ll_jindx < 0):
+        print(f"Southern FE domain boundary coordinate falls outside of the provided WRF domain, exiting.")
+        exit()
+    elif (ll_iindx < 0):
+        print(f"Western Ft domain boundary coordinate falls outside of the provided WRF domain, exiting.")
+        exit()
+    elif (ll_jindx+j_extent > ds_WRFRef.sizes['south_north']):
+        print(f"Northern Ft domain boundary coordinate falls outside of the provided WRF domain, exiting.")
+        exit()
+    elif (ll_iindx+i_extent > ds_WRFRef.sizes['west_east']):  
+        print(f"Eastern Ft domain boundary coordinate falls outside of the provided WRF domain, exiting.")
+        exit()
+    else:  #All set to perform strictly interpolation in the horizontal of WRF outputs to FE domain 
+        print('ll: ({:d},{:d})'.format(ll_jindx,ll_iindx))
+        print('extents: ({:d},{:d})'.format(j_extent,i_extent))
+        print('y,x offsets: ({:f},{:f})'.format(ll_yoffset,ll_xoffset))
 
 ######################################################################################################################
 ### Define the Cartesian southwest corner origin (x,y) WRF coordinate system for the horizontal FE-bounding domain ###
@@ -270,13 +294,13 @@ print(ds_WRFRef['HGT'][0,ll_jindx:ll_jindx+j_extent,ll_iindx:ll_iindx+i_extent].
 dxFE=(ds_FEGrid['xPos'][0,0,1]-ds_FEGrid['xPos'][0,0,0]).values
 dyFE=(ds_FEGrid['yPos'][0,1,0]-ds_FEGrid['yPos'][0,0,0]).values
 if(mpi_rank == 0) and DEBUG_COUPLER:
-  print("Nx,NY = ({:d},{:d}), dxFE={:f},dyFE={:f}".format(ds_FEGrid.dims['xIndex'],ds_FEGrid.dims['yIndex'],dxFE,dyFE))
-x0FEinWRF=XvWRF[0,0]+ll_xoffset+ds_FEGrid['xPos'][0,0,0].values
-y0FEinWRF=YvWRF[0,0]+ll_yoffset+ds_FEGrid['yPos'][0,0,0].values
+  print("Nx,NY = ({:d},{:d}), dxFE={:f},dyFE={:f}".format(ds_FEGrid.sizes['xIndex'],ds_FEGrid.sizes['yIndex'],dxFE,dyFE))
+x0FEinWRF=XvWRF[0,0]+ll_xoffset 
+y0FEinWRF=YvWRF[0,0]+ll_yoffset 
 if(mpi_rank == 0) and DEBUG_COUPLER:
   print("x0FEinWRF,y0FEinWRF = {:f},{:f}".format(x0FEinWRF,y0FEinWRF))
-xNFEinWRF = x0FEinWRF-ds_FEGrid['xPos'][0,0,0].values+ds_FEGrid['xPos'][0,0,-1].values
-yNFEinWRF = y0FEinWRF-ds_FEGrid['yPos'][0,0,0].values+ds_FEGrid['yPos'][0,-1,0].values
+xNFEinWRF = x0FEinWRF+(ds_FEGrid.sizes['xIndex']-1)*dxFE
+yNFEinWRF = y0FEinWRF+(ds_FEGrid.sizes['yIndex']-1)*dyFE
 if(mpi_rank == 0) and DEBUG_COUPLER:
   print("xNFEinWRF,yNFEinWRF = {:f},{:f}".format(xNFEinWRF,yNFEinWRF))
   print("X_extentFE,Y_extentFE = {:f},{:f}".format(xNFEinWRF-x0FEinWRF,yNFEinWRF-y0FEinWRF))
@@ -303,7 +327,7 @@ cp_R = cp_gas/R_gas
 ####################################################################################################
 zBottom = 0.0
 zTop = ds_FEGrid['zPos'][-1,0,0].values+90.0
-NzWRFInterp = 275
+NzWRFInterp = 200 #275
 zRect = np.linspace(zBottom,zTop,NzWRFInterp)
 if(mpi_rank == 0) and DEBUG_COUPLER:
   print(zRect[0],zRect[-1])
@@ -345,6 +369,10 @@ for Bdy_file_num in range(it00,it11):
     t3s = time.perf_counter()
     dsFEFinal=create_dsFEFinal(ds_FEGrid)
     verticalInterpFinal(ds_FEGrid,dsFENew,dsFEFinal,zRect)
+    if 'BuildingMask' in list(dsFEFinal.variables):
+       for var in ['u','v','w','ql','TKE_0']:
+          if var in list(dsFEFinal.variables):
+            dsFEFinal[var][:,:,:]=dsFEFinal[var][:,:,:]*np.where((dsFEFinal['BuildingMask'][:,:,:]>1e-3),0.0,1.0)
     t3e = time.perf_counter()
     print('{:d}/{:d}: t3_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t3e-t3s))
     addTimeDim_FEfinal(dsFEFinal)

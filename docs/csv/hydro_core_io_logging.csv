@@ -1,0 +1,3 @@
+**hydroForcingWrite:** |br| Switch for writing output of hydroFldsFrhs for prognostic fields |br| 0=off; 1=on, 0, 1, 0, O
+**hydroSubGridWrite:** |br| Switch for writing output of SGS fields |br| 0=off; 1=on, 0, 1, 0, M
+**hydroForcingLog:** |br| Switch for logging Frhs min/max etc |br| 0=off; 1=on, 0, 1, 0, M

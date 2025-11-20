@@ -21,12 +21,12 @@ language='en'
 
 project = 'FastEddy'
 author = 'UCAR/NCAR'
-author_list = 'Sauer, J., D. Muñoz-Esparza'
-version = '2.0'
+author_list = 'Muñoz-Esparza, D., J. Sauer'
+version = '4.0'
 verinfo = version
 release = f'{version}'
-release_year = '2024'
-release_date = f'{release_year}-08-09'
+release_year = '2025'
+release_date = f'{release_year}-10-23'
 copyright = f'{release_year}, {author}'
 
 # -- General configuration ---------------------------------------------------
@@ -55,7 +55,7 @@ suppress_warnings = ['ref.citation']
 html_theme = 'sphinx_rtd_theme'
 html_theme_path = ["_themes", ]
 html_js_files = ['pop_ver.js']
-html_css_files = ['theme_override.css']
+html_css_files = ['theme_override.css', 'custom.css']
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -67,7 +67,7 @@ html_static_path = ['_static']
 html_logo = os.path.join('_static','fasteddy_logo_large_vertical_2024_06.png')
 
 # -- Intersphinx control -----------------------------------------------------
-intersphinx_mapping = {'numpy':("https://docs.scipy.org/doc/numpy/", None)}
+intersphinx_mapping = {'numpy':("https://numpy.org/doc/stable/", None)}
 
 numfig = True
 

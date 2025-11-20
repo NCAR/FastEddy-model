@@ -25,15 +25,15 @@ __constant__ float b_hyb_d;                      /*hybrid advection scheme param
 */
 extern "C" int cuda_advectionDeviceSetup(){
    int errorCode = CUDA_ADVECTION_SUCCESS;
-   int Nelems;
+   size_t Nelems;
    
    cudaMemcpyToSymbol(advectionSelector_d, &advectionSelector, sizeof(int));
    cudaMemcpyToSymbol(ceilingAdvectionBC_d, &ceilingAdvectionBC, sizeof(int));
    cudaMemcpyToSymbol(b_hyb_d, &b_hyb, sizeof(float));
 
    /*Set the full memory block number of elements for hydroCore fields*/
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   fecuda_DeviceMalloc(Nelems*3*sizeof(float), &hydroFaceVels_d); /*Cell-face Velocities*/
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+   fecuda_DeviceMalloc(Nelems*3, &hydroFaceVels_d); /*Cell-face Velocities*/
 
    return(errorCode);
 } //end cuda_advectionDeviceSetup()
