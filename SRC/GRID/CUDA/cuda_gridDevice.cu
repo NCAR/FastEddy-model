@@ -176,10 +176,7 @@ extern "C" int cuda_gridDeviceCleanup(){
     /* metric tensor fields */
    cudaFree(J13_d); 
    cudaFree(J23_d); 
-<<<<<<< HEAD
-=======
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
->>>>>>> upstream/develop
    cudaFree(J31_d); 
    cudaFree(J32_d); 
    cudaFree(J33_d); 
