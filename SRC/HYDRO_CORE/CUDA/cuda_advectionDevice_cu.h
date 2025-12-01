@@ -50,6 +50,15 @@ __device__ void cudaDevice_calcFaceVelocities(float* hydroFlds_d, float* hydroFa
 __device__ void cudaDevice_UpstreamDivAdvFlux(float* scalarField, float* scalarFadv,
                                               float* u_cf, float* v_cf, float* w_cf, float* invD_Jac_d);
 
+/*----->>>>> __device__ void  cudaDevice_UpstreamDivAdvFluxX();  -------------------------------------------------- */
+__device__ void cudaDevice_UpstreamDivAdvFluxX(float* scalarField, float* scalarFadv, float* u_cf, float* invD_Jac_d);
+
+/*----->>>>> __device__ void  cudaDevice_UpstreamDivAdvFluxY();  -------------------------------------------------- */
+__device__ void cudaDevice_UpstreamDivAdvFluxY(float* scalarField, float* scalarFadv, float* v_cf, float* invD_Jac_d);
+
+/*----->>>>> __device__ void  cudaDevice_UpstreamDivAdvFluxZ();  -------------------------------------------------- */
+__device__ void cudaDevice_UpstreamDivAdvFluxZ(float* scalarField, float* scalarFadv, float* w_cf, float* invD_Jac_d);
+
 /*----->>>>> __device__ void  cudaDevice_SecondDivAdvFlux();  -------------------------------------------------- 
 */
 __device__ void cudaDevice_SecondDivAdvFlux(float* scalarField, float* scalarFadv,
@@ -67,11 +76,29 @@ __device__ void cudaDevice_QUICKDivAdvFlux(float* scalarField, float* scalarFadv
 __device__ void cudaDevice_HYB34DivAdvFlux(float* scalarField, float* scalarFadv,
                                               float* u_cf, float* v_cf, float* w_cf, float b_hyb_p, float* invD_Jac_d);
 
+/*----->>>>> __device__ void  cudaDevice_HYB34DivAdvFluxX();  -------------------------------------------------- */
+__device__ void cudaDevice_HYB34DivAdvFluxX(float* scalarField, float* scalarFadv, float* u_cf, float b_hyb_p, float* invD_Jac_d);
+
+/*----->>>>> __device__ void  cudaDevice_HYB34DivAdvFluxY();  -------------------------------------------------- */
+__device__ void cudaDevice_HYB34DivAdvFluxY(float* scalarField, float* scalarFadv, float* v_cf, float b_hyb_p, float* invD_Jac_d);
+
+/*----->>>>> __device__ void  cudaDevice_HYB34DivAdvFluxZ();  -------------------------------------------------- */
+__device__ void cudaDevice_HYB34DivAdvFluxZ(float* scalarField, float* scalarFadv, float* w_cf, float b_hyb_p, float* invD_Jac_d);
+
 /*----->>>>> __device__ void  cudaDevice_HYB56DivAdvFlux();  --------------------------------------------------
 * This is the cuda version of the HYB56DivAdvFlux routine from the HYDRO_CORE module
 */
 __device__ void cudaDevice_HYB56DivAdvFlux(float* scalarField, float* scalarFadv,
                                               float* u_cf, float* v_cf, float* w_cf, float b_hyb_p, float* invD_Jac_d);
+
+/*----->>>>> __device__ void  cudaDevice_HYB56DivAdvFluxX();  -------------------------------------------------- */
+__device__ void cudaDevice_HYB56DivAdvFluxX(float* scalarField, float* scalarFadv, float* u_cf, float b_hyb_p, float* invD_Jac_d);
+
+/*----->>>>> __device__ void  cudaDevice_HYB56DivAdvFluxY();  -------------------------------------------------- */
+__device__ void cudaDevice_HYB56DivAdvFluxY(float* scalarField, float* scalarFadv, float* v_cf, float b_hyb_p, float* invD_Jac_d);
+
+/*----->>>>> __device__ void  cudaDevice_HYB56DivAdvFluxZ();  -------------------------------------------------- */
+__device__ void cudaDevice_HYB56DivAdvFluxZ(float* scalarField, float* scalarFadv, float* w_cf, float b_hyb_p, float* invD_Jac_d);
 
 /*----->>>>> __device__ void  cudaDevice_WENO3DivAdvFluxX();  -------------------------------------------------- */
 __device__ void cudaDevice_WENO3DivAdvFluxX(float* scalarField, float* scalarFadv,float* u_cf, float* invD_Jac_d);

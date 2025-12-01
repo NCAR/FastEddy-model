@@ -161,6 +161,87 @@ __device__ void cudaDevice_UpstreamDivAdvFlux(float* scalarField, float* scalarF
 
 } //end cudaDevice_UpstreamDivAdvFlux(
 
+/*----->>>>> __device__ void  cudaDevice_UpstreamDivAdvFluxX();  --------------------------------------------------
+* This is the cuda version of the UpstreamDivAdvFluxX routine from the HYDRO_CORE module
+*/
+__device__ void cudaDevice_UpstreamDivAdvFluxX(float* scalarField, float* scalarFadv, float* u_cf, float* invD_Jac_d){
+  int i,j,k;
+  int ijk,im1jk,ip1jk;
+  int iStride,jStride,kStride;
+  float DscalarDx;
+
+  /*Establish necessary indices for spatial locality*/
+  i = (blockIdx.x)*blockDim.x + threadIdx.x;
+  j = (blockIdx.y)*blockDim.y + threadIdx.y;
+  k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+
+  iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+  jStride = (Nz_d+2*Nh_d);
+  kStride = 1;
+  ijk = i*iStride + j*jStride + k*kStride;
+  im1jk = (i-1)*iStride + j*jStride + k*kStride;
+  ip1jk = (i+1)*iStride + j*jStride + k*kStride;
+  DscalarDx = ( ( fmaxf(0.0,u_cf[ ip1jk ])*scalarField[  ijk  ]+fminf(0.0,u_cf[ ip1jk ])*scalarField[ ip1jk ])
+                 -( fmaxf(0.0,u_cf[  ijk  ])*scalarField[ im1jk ]+fminf(0.0,u_cf[  ijk  ])*scalarField[  ijk  ]) );
+  scalarFadv[ijk] = scalarFadv[ijk] -invD_Jac_d[ijk]*DscalarDx;
+
+} //end cudaDevice_UpstreamDivAdvFluxX(
+
+/*----->>>>> __device__ void  cudaDevice_UpstreamDivAdvFluxY();  --------------------------------------------------
+* This is the cuda version of the UpstreamDivAdvFluxY routine from the HYDRO_CORE module
+*/
+__device__ void cudaDevice_UpstreamDivAdvFluxY(float* scalarField, float* scalarFadv, float* v_cf, float* invD_Jac_d){
+  int i,j,k;
+  int ijk,ijm1k,ijp1k;
+  int iStride,jStride,kStride;
+  float DscalarDy;
+
+  /*Establish necessary indices for spatial locality*/
+  i = (blockIdx.x)*blockDim.x + threadIdx.x;
+  j = (blockIdx.y)*blockDim.y + threadIdx.y;
+  k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+
+  iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+  jStride = (Nz_d+2*Nh_d);
+  kStride = 1;
+  ijk = i*iStride + j*jStride + k*kStride;
+  ijm1k = i*iStride + (j-1)*jStride + k*kStride;
+  ijp1k = i*iStride + (j+1)*jStride + k*kStride;
+  DscalarDy = ( ( fmaxf(0.0,v_cf[ ijp1k ])*scalarField[  ijk  ]+fminf(0.0,v_cf[ ijp1k ])*scalarField[ ijp1k ])
+                 -( fmaxf(0.0,v_cf[  ijk  ])*scalarField[ ijm1k ]+fminf(0.0,v_cf[  ijk  ])*scalarField[  ijk  ]) );
+  scalarFadv[ijk] = scalarFadv[ijk] -invD_Jac_d[ijk]*DscalarDy;
+
+} //end cudaDevice_UpstreamDivAdvFluxY(
+
+/*----->>>>> __device__ void  cudaDevice_UpstreamDivAdvFluxZ();  --------------------------------------------------
+* This is the cuda version of the UpstreamDivAdvFluxZ routine from the HYDRO_CORE module
+*/
+__device__ void cudaDevice_UpstreamDivAdvFluxZ(float* scalarField, float* scalarFadv, float* w_cf, float* invD_Jac_d){
+  int i,j,k;
+  int ijk,ijkm1,ijkp1;
+  int iStride,jStride,kStride;
+  float DscalarDz;
+
+  /*Establish necessary indices for spatial locality*/
+  i = (blockIdx.x)*blockDim.x + threadIdx.x;
+  j = (blockIdx.y)*blockDim.y + threadIdx.y;
+  k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+
+  iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+  jStride = (Nz_d+2*Nh_d);
+  kStride = 1;
+  ijk = i*iStride + j*jStride + k*kStride;
+  ijkm1 = i*iStride + j*jStride + (k-1)*kStride;
+  ijkp1 = i*iStride + j*jStride + (k+1)*kStride;
+  DscalarDz = ( ( fmaxf(0.0,w_cf[ ijkp1 ])*scalarField[  ijk  ]+fminf(0.0,w_cf[ ijkp1 ])*scalarField[ ijkp1 ])
+               -( fmaxf(0.0,w_cf[  ijk  ])*scalarField[ ijkm1 ]+fminf(0.0,w_cf[  ijk  ])*scalarField[  ijk  ]) );
+  scalarFadv[ijk] = scalarFadv[ijk] -invD_Jac_d[ijk]*DscalarDz;
+
+} //end cudaDevice_UpstreamDivAdvFluxZ(
+
 /*----->>>>> __device__ void  cudaDevice_SecondDivAdvFlux();  -----------------------------------------------*/ 
 __device__ void cudaDevice_SecondDivAdvFlux(float* scalarField, float* scalarFadv,
                                               float* u_cf, float* v_cf, float* w_cf, float* invD_Jac_d){
@@ -315,6 +396,117 @@ __device__ void cudaDevice_HYB34DivAdvFlux(float* scalarField, float* scalarFadv
 
 } //end cudaDevice_HYB34DivAdvFlux()
 
+/*----->>>>> __device__ void  cudaDevice_HYB34DivAdvFluxX();  --------------------------------------------------
+* This is the cuda version of the hydro_coreHYB34DivAdvFluxX routine from the HYDRO_CORE module
+*/
+__device__ void cudaDevice_HYB34DivAdvFluxX(float* scalarField, float* scalarFadv, float* u_cf, float b_hyb_p, float* invD_Jac_d){
+
+  int i,j,k;
+  int ijk,im1jk,ip1jk,im2jk,ip2jk;
+  int iStride,jStride,kStride;
+  float DscalarDx;
+  float one_twelfth;
+  float flxx_ipf,flxx_imf;
+
+  one_twelfth = 1.0/12.0;
+
+  /*Establish necessary indices for spatial locality*/
+  i = (blockIdx.x)*blockDim.x + threadIdx.x;
+  j = (blockIdx.y)*blockDim.y + threadIdx.y;
+  k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+  iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+  jStride = (Nz_d+2*Nh_d);
+  kStride = 1;
+  ijk = i*iStride + j*jStride + k*kStride;
+  im1jk = (i-1)*iStride + j*jStride + k*kStride;
+  ip1jk = (i+1)*iStride + j*jStride + k*kStride;
+  im2jk = (i-2)*iStride + j*jStride + k*kStride;
+  ip2jk = (i+2)*iStride + j*jStride + k*kStride;
+
+  flxx_ipf  = one_twelfth * ( 7.0*(scalarField[ ip1jk ]+scalarField[  ijk  ])-(scalarField[ ip2jk ]+scalarField[ im1jk ])+
+                              (1.0-b_hyb_p)*copysign(1.0,u_cf[ ip1jk ])*((scalarField[ ip2jk ]-scalarField[ im1jk ])-3.0*(scalarField[ ip1jk ]-scalarField[  ijk  ])) );
+  flxx_imf  = one_twelfth * ( 7.0*(scalarField[  ijk  ]+scalarField[ im1jk ])-(scalarField[ ip1jk ]+scalarField[ im2jk ])+
+                              (1.0-b_hyb_p)*copysign(1.0,u_cf[  ijk  ])*((scalarField[ ip1jk ]-scalarField[ im2jk ])-3.0*(scalarField[  ijk  ]-scalarField[ im1jk ])) );
+  DscalarDx = u_cf[ ip1jk ]*flxx_ipf - u_cf[  ijk  ]*flxx_imf;
+  scalarFadv[ijk] = scalarFadv[ijk] -invD_Jac_d[ijk]*DscalarDx;
+
+} //end cudaDevice_HYB34DivAdvFluxX()
+
+/*----->>>>> __device__ void  cudaDevice_HYB34DivAdvFluxY();  --------------------------------------------------
+* This is the cuda version of the hydro_coreHYB34DivAdvFluxY routine from the HYDRO_CORE module
+*/
+__device__ void cudaDevice_HYB34DivAdvFluxY(float* scalarField, float* scalarFadv, float* v_cf, float b_hyb_p, float* invD_Jac_d){
+
+  int i,j,k;
+  int ijk,ijm1k,ijp1k,ijm2k,ijp2k;
+  int iStride,jStride,kStride;
+  float DscalarDy;
+  float one_twelfth;
+  float flxy_jpf,flxy_jmf;
+
+  one_twelfth = 1.0/12.0;
+
+  /*Establish necessary indices for spatial locality*/
+  i = (blockIdx.x)*blockDim.x + threadIdx.x;
+  j = (blockIdx.y)*blockDim.y + threadIdx.y;
+  k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+  iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+  jStride = (Nz_d+2*Nh_d);
+  kStride = 1;
+  ijk = i*iStride + j*jStride + k*kStride;
+  ijm1k = i*iStride + (j-1)*jStride + k*kStride;
+  ijp1k = i*iStride + (j+1)*jStride + k*kStride;
+  ijm2k = i*iStride + (j-2)*jStride + k*kStride;
+  ijp2k = i*iStride + (j+2)*jStride + k*kStride;
+
+  flxy_jpf  = one_twelfth * ( 7.0*(scalarField[ ijp1k ]+scalarField[  ijk  ])-(scalarField[ ijp2k ]+scalarField[ ijm1k ])+
+                              (1.0-b_hyb_p)*copysign(1.0,v_cf[ ijp1k ])*((scalarField[ ijp2k ]-scalarField[ ijm1k ])-3.0*(scalarField[ ijp1k ]-scalarField[  ijk  ])) );
+  flxy_jmf  = one_twelfth * ( 7.0*(scalarField[  ijk  ]+scalarField[ ijm1k ])-(scalarField[ ijp1k ]+scalarField[ ijm2k ])+
+                              (1.0-b_hyb_p)*copysign(1.0,v_cf[  ijk  ])*((scalarField[ ijp1k ]-scalarField[ ijm2k ])-3.0*(scalarField[  ijk  ]-scalarField[ ijm1k ])) );
+  DscalarDy = v_cf[ ijp1k ]*flxy_jpf - v_cf[  ijk  ]*flxy_jmf;
+  scalarFadv[ijk] = scalarFadv[ijk] -invD_Jac_d[ijk]*DscalarDy;
+
+} //end cudaDevice_HYB34DivAdvFluxY()
+
+/*----->>>>> __device__ void  cudaDevice_HYB34DivAdvFluxZ();  --------------------------------------------------
+* This is the cuda version of the hydro_coreHYB34DivAdvFluxZ routine from the HYDRO_CORE module
+*/
+__device__ void cudaDevice_HYB34DivAdvFluxZ(float* scalarField, float* scalarFadv, float* w_cf, float b_hyb_p, float* invD_Jac_d){
+
+  int i,j,k;
+  int ijk,ijkm1,ijkp1,ijkm2,ijkp2;
+  int iStride,jStride,kStride;
+  float DscalarDz;
+  float one_twelfth;
+  float flxz_kpf,flxz_kmf;
+
+  one_twelfth = 1.0/12.0;
+
+  /*Establish necessary indices for spatial locality*/
+  i = (blockIdx.x)*blockDim.x + threadIdx.x;
+  j = (blockIdx.y)*blockDim.y + threadIdx.y;
+  k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+  iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+  jStride = (Nz_d+2*Nh_d);
+  kStride = 1;
+  ijk = i*iStride + j*jStride + k*kStride;
+  ijkm1 = i*iStride + j*jStride + (k-1)*kStride;
+  ijkp1 = i*iStride + j*jStride + (k+1)*kStride;
+  ijkm2 = i*iStride + j*jStride + (k-2)*kStride;
+  ijkp2 = i*iStride + j*jStride + (k+2)*kStride;
+
+  flxz_kpf  = one_twelfth * ( 7.0*(scalarField[ ijkp1 ]+scalarField[  ijk  ])-(scalarField[ ijkp2 ]+scalarField[ ijkm1 ])+
+                              (1.0-b_hyb_p)*copysign(1.0,w_cf[ ijkp1 ])*((scalarField[ ijkp2 ]-scalarField[ ijkm1 ])-3.0*(scalarField[ ijkp1 ]-scalarField[  ijk  ])) );
+  flxz_kmf  = one_twelfth * ( 7.0*(scalarField[  ijk  ]+scalarField[ ijkm1 ])-(scalarField[ ijkp1 ]+scalarField[ ijkm2 ])+
+                              (1.0-b_hyb_p)*copysign(1.0,w_cf[  ijk  ])*((scalarField[ ijkp1 ]-scalarField[ ijkm2 ])-3.0*(scalarField[  ijk  ]-scalarField[ ijkm1 ])) );
+  DscalarDz = w_cf[ ijkp1 ]*flxz_kpf - w_cf[  ijk  ]*flxz_kmf;
+  scalarFadv[ijk] = scalarFadv[ijk] -invD_Jac_d[ijk]*DscalarDz;
+
+} //end cudaDevice_HYB34DivAdvFluxZ()
+
 /*----->>>>> __device__ void  cudaDevice_HYB56DivAdvFlux();  --------------------------------------------------
 * This is the cuda version of the hydro_coreHYB56DivAdvFlx routine from the HYDRO_CORE module
 */
@@ -381,6 +573,132 @@ __device__ void cudaDevice_HYB56DivAdvFlux(float* scalarField, float* scalarFadv
   scalarFadv[ijk] = scalarFadv[ijk] -invD_Jac_d[ijk]*(DscalarDx+DscalarDy+DscalarDz);
 
 } //end cudaDevice_HYB56DivAdvFlux(
+
+/*----->>>>> __device__ void  cudaDevice_HYB56DivAdvFluxX();  --------------------------------------------------
+* This is the cuda version of the hydro_coreHYB56DivAdvFluxX routine from the HYDRO_CORE module
+*/
+__device__ void cudaDevice_HYB56DivAdvFluxX(float* scalarField, float* scalarFadv, float* u_cf, float b_hyb_p, float* invD_Jac_d){
+
+  int i,j,k;
+  int ijk,im1jk,ip1jk;
+  int im2jk,ip2jk;
+  int im3jk,ip3jk;
+  int iStride,jStride,kStride;
+  float DscalarDx;
+  float one_sixtieth;
+  float flxx_ipf,flxx_imf;
+
+  one_sixtieth = 1.0/60.0;
+
+  /*Establish necessary indices for spatial locality*/
+  i = (blockIdx.x)*blockDim.x + threadIdx.x;
+  j = (blockIdx.y)*blockDim.y + threadIdx.y;
+  k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+  iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+  jStride = (Nz_d+2*Nh_d);
+  kStride = 1;
+  ijk = i*iStride + j*jStride + k*kStride;
+  im1jk = (i-1)*iStride + j*jStride + k*kStride;
+  ip1jk = (i+1)*iStride + j*jStride + k*kStride;
+  im2jk = (i-2)*iStride + j*jStride + k*kStride;
+  ip2jk = (i+2)*iStride + j*jStride + k*kStride;
+  im3jk = (i-3)*iStride + j*jStride + k*kStride;
+  ip3jk = (i+3)*iStride + j*jStride + k*kStride;
+
+  flxx_ipf  = one_sixtieth * ( 37.0*(scalarField[ ip1jk ]+scalarField[  ijk  ])-8.0*(scalarField[ ip2jk ]+scalarField[ im1jk ])+(scalarField[ ip3jk ]+scalarField[ im2jk ])-
+                              (1.0-b_hyb_p)*copysign(1.0,u_cf[ ip1jk ])*((scalarField[ ip3jk ]-scalarField[ im2jk ])-5.0*(scalarField[ ip2jk ]-scalarField[ im1jk ])+10.0*(scalarField[ ip1jk ]-scalarField[  ijk  ])) );
+  flxx_imf  = one_sixtieth * ( 37.0*(scalarField[  ijk  ]+scalarField[ im1jk ])-8.0*(scalarField[ ip1jk ]+scalarField[ im2jk ])+(scalarField[ ip2jk ]+scalarField[ im3jk ])-
+                              (1.0-b_hyb_p)*copysign(1.0,u_cf[  ijk  ])*((scalarField[ ip2jk ]-scalarField[ im3jk ])-5.0*(scalarField[ ip1jk ]-scalarField[ im2jk ])+10.0*(scalarField[  ijk  ]-scalarField[ im1jk ])) );
+
+  DscalarDx = u_cf[ ip1jk ]*flxx_ipf - u_cf[  ijk  ]*flxx_imf;
+  scalarFadv[ijk] = scalarFadv[ijk] -invD_Jac_d[ijk]*DscalarDx;
+
+} //end cudaDevice_HYB56DivAdvFluxX(
+
+/*----->>>>> __device__ void  cudaDevice_HYB56DivAdvFluxY();  --------------------------------------------------
+* This is the cuda version of the hydro_coreHYB56DivAdvFluxY routine from the HYDRO_CORE module
+*/
+__device__ void cudaDevice_HYB56DivAdvFluxY(float* scalarField, float* scalarFadv, float* v_cf, float b_hyb_p, float* invD_Jac_d){
+
+  int i,j,k;
+  int ijk,ijm1k,ijp1k;
+  int ijm2k,ijp2k;
+  int ijm3k,ijp3k;
+  int iStride,jStride,kStride;
+  float DscalarDy;
+  float one_sixtieth;
+  float flxy_jpf,flxy_jmf;
+
+  one_sixtieth = 1.0/60.0;
+
+  /*Establish necessary indices for spatial locality*/
+  i = (blockIdx.x)*blockDim.x + threadIdx.x;
+  j = (blockIdx.y)*blockDim.y + threadIdx.y;
+  k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+  iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+  jStride = (Nz_d+2*Nh_d);
+  kStride = 1;
+  ijk = i*iStride + j*jStride + k*kStride;
+  ijm1k = i*iStride + (j-1)*jStride + k*kStride;
+  ijp1k = i*iStride + (j+1)*jStride + k*kStride;
+  ijm2k = i*iStride + (j-2)*jStride + k*kStride;
+  ijp2k = i*iStride + (j+2)*jStride + k*kStride;
+  ijm3k = i*iStride + (j-3)*jStride + k*kStride;
+  ijp3k = i*iStride + (j+3)*jStride + k*kStride;
+
+  flxy_jpf  = one_sixtieth * ( 37.0*(scalarField[ ijp1k ]+scalarField[  ijk  ])-8.0*(scalarField[ ijp2k ]+scalarField[ ijm1k ])+(scalarField[ ijp3k ]+scalarField[ ijm2k ])-
+                              (1.0-b_hyb_p)*copysign(1.0,v_cf[ ijp1k ])*((scalarField[ ijp3k ]-scalarField[ ijm2k ])-5.0*(scalarField[ ijp2k ]-scalarField[ ijm1k ])+10.0*(scalarField[ ijp1k ]-scalarField[  ijk  ])) );
+  flxy_jmf  = one_sixtieth * ( 37.0*(scalarField[  ijk  ]+scalarField[ ijm1k ])-8.0*(scalarField[ ijp1k ]+scalarField[ ijm2k ])+(scalarField[ ijp2k ]+scalarField[ ijm3k ])-
+                              (1.0-b_hyb_p)*copysign(1.0,v_cf[  ijk  ])*((scalarField[ ijp2k ]-scalarField[ ijm3k ])-5.0*(scalarField[ ijp1k ]-scalarField[ ijm2k ])+10.0*(scalarField[  ijk  ]-scalarField[ ijm1k ])) );
+
+  DscalarDy = v_cf[ ijp1k ]*flxy_jpf - v_cf[  ijk  ]*flxy_jmf;
+  scalarFadv[ijk] = scalarFadv[ijk] -invD_Jac_d[ijk]*DscalarDy;
+
+} //end cudaDevice_HYB56DivAdvFluxY(
+
+/*----->>>>> __device__ void  cudaDevice_HYB56DivAdvFluxZ();  --------------------------------------------------
+* This is the cuda version of the hydro_coreHYB56DivAdvFluxZ routine from the HYDRO_CORE module
+*/
+__device__ void cudaDevice_HYB56DivAdvFluxZ(float* scalarField, float* scalarFadv, float* w_cf, float b_hyb_p, float* invD_Jac_d){
+
+  int i,j,k;
+  int ijk,ijkm1,ijkp1;
+  int ijkm2,ijkp2;
+  int ijkm3,ijkp3;
+  int iStride,jStride,kStride;
+  float DscalarDz;
+  float one_sixtieth;
+  float flxz_kpf,flxz_kmf;
+
+  one_sixtieth = 1.0/60.0;
+
+  /*Establish necessary indices for spatial locality*/
+  i = (blockIdx.x)*blockDim.x + threadIdx.x;
+  j = (blockIdx.y)*blockDim.y + threadIdx.y;
+  k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+  iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
+  jStride = (Nz_d+2*Nh_d);
+  kStride = 1;
+  ijk = i*iStride + j*jStride + k*kStride;
+  ijkm1 = i*iStride + j*jStride + (k-1)*kStride;
+  ijkp1 = i*iStride + j*jStride + (k+1)*kStride;
+  ijkm2 = i*iStride + j*jStride + (k-2)*kStride;
+  ijkp2 = i*iStride + j*jStride + (k+2)*kStride;
+  ijkm3 = i*iStride + j*jStride + (k-3)*kStride;
+  ijkp3 = i*iStride + j*jStride + (k+3)*kStride;
+
+  flxz_kpf  = one_sixtieth * ( 37.0*(scalarField[ ijkp1 ]+scalarField[  ijk  ])-8.0*(scalarField[ ijkp2 ]+scalarField[ ijkm1 ])+(scalarField[ ijkp3 ]+scalarField[ ijkm2 ])-
+                              (1.0-b_hyb_p)*copysign(1.0,w_cf[ ijkp1 ])*((scalarField[ ijkp3 ]-scalarField[ ijkm2 ])-5.0*(scalarField[ ijkp2 ]-scalarField[ ijkm1 ])+10.0*(scalarField[ ijkp1 ]-scalarField[  ijk  ])) );
+  flxz_kmf  = one_sixtieth * ( 37.0*(scalarField[  ijk  ]+scalarField[ ijkm1 ])-8.0*(scalarField[ ijkp1 ]+scalarField[ ijkm2 ])+(scalarField[ ijkp2 ]+scalarField[ ijkm3 ])-
+                              (1.0-b_hyb_p)*copysign(1.0,w_cf[  ijk  ])*((scalarField[ ijkp2 ]-scalarField[ ijkm3 ])-5.0*(scalarField[ ijkp1 ]-scalarField[ ijkm2 ])+10.0*(scalarField[  ijk  ]-scalarField[ ijkm1 ])) );
+
+  DscalarDz = w_cf[ ijkp1 ]*flxz_kpf - w_cf[  ijk  ]*flxz_kmf;
+  scalarFadv[ijk] = scalarFadv[ijk] -invD_Jac_d[ijk]*DscalarDz;
+
+} //end cudaDevice_HYB56DivAdvFluxZ(
 
 /*----->>>>> __device__ void  cudaDevice_WENO3DivAdvFluxX();  -----------------------------------------------*/ 
 __device__ void cudaDevice_WENO3DivAdvFluxX(float* scalarField, float* scalarFadv,float* u_cf, float* invD_Jac_d){
