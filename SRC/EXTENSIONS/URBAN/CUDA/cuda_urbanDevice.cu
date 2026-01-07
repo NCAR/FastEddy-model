@@ -41,8 +41,8 @@ extern "C" int cuda_urbanDeviceSetup(){
 
    cudaMemcpyToSymbol(delta_aware_bdg_d, &delta_aware_bdg, sizeof(float));
 
+   cudaMemcpyToSymbol(urban_heatRedis_d, &urban_heatRedis, sizeof(int));
    if(urban_heatRedis > 0){
-     cudaMemcpyToSymbol(urban_heatRedis_d, &urban_heatRedis, sizeof(int));
      Nelems = (Nxp+2*Nh)*(Nyp+2*Nh);
      fecuda_DeviceMalloc(Nelems, &urban_heat_redis_d);
      cudaMemcpy(urban_heat_redis_d, urban_heat_redis, Nelems*sizeof(float), cudaMemcpyHostToDevice);
