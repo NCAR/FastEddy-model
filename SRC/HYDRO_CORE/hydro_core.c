@@ -3436,7 +3436,7 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
         {"qskin",       "kg kg-1",       "Surface skin water vapor mixing ratio",                         NULL},
         {"z0m",         "m",             "Roughness length for momentum",                                 "surface_roughness_length_for_momentum_in_air"},
         {"z0t",         "m",             "Roughness length for heat",                                     "surface_roughness_length_for_heat_in_air"},
-        {"invOblen",    "m-1",           "Inverse Obukhov length",                                        "atmosphere_boundary_layer_thickness"},
+        {"invOblen",    "m-1",           "Inverse Obukhov length",                                        NULL},
         {"CanopyLAD",   "m-1",           "Leaf area density",                                             "leaf_area_density"},
         {"SeaMask",     "-",             "Sea mask",                                                      "sea_area_fraction"},
         {NULL, NULL, NULL, NULL} // End marker                                                                                                           

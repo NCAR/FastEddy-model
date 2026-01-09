@@ -29,7 +29,7 @@
     "qskin": ["kg kg-1", "Surface skin water vapor mixing ratio", null],
     "z0m": ["m", "Roughness length for momentum", "surface_roughness_length_for_momentum_in_air"],
     "z0t": ["m", "Roughness length for heat", "surface_roughness_length_for_heat_in_air"],
-    "invOblen": ["m-1", "Inverse Obukhov length", "atmosphere_boundary_layer_thickness"],
+    "invOblen": ["m-1", "Inverse Obukhov length", null],
     "cellpert_amp": ["K", "Cell perturbation amplitude", null],
     "cellpert_nts": ["-", "Cell perturbation number of time steps", null],
     "cellpert_ktop": ["-", "Cell perturbation top grid level", null],
