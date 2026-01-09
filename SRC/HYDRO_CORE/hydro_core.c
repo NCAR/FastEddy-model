@@ -3431,7 +3431,7 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
         {"ql",          "g kg-1",        "Cloud liquid water mixing ratio",                               "cloud_liquid_water_mixing_ratio"},
         {"fricVel",     "m s-1",         "Surface friction velocity",                                     "surface_friction_velocity"},
         {"htFlux",      "K m s-1",       "Surface sensible heat flux",                                    "surface_upward_sensible_heat_flux"},
-        {"qFlux",       "kg kg-1 m s-1", "Surface latent heat flux",                                      "surface_upward_latent_heat_flux"},
+        {"qFlux",       "g kg-1 m s-1",  "Surface latent heat flux",                                      "surface_upward_latent_heat_flux"},
         {"tskin",       "K",             "Surface skin temperature",                                      "surface_temperature"},
         {"qskin",       "kg kg-1",       "Surface skin water vapor mixing ratio",                         NULL},
         {"z0m",         "m",             "Roughness length for momentum",                                 "surface_roughness_length_for_momentum_in_air"},
