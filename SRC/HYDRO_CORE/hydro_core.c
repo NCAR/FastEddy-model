@@ -3433,7 +3433,7 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
         {"htFlux",      "K m s-1",       "Surface sensible heat flux",                                    "surface_upward_sensible_heat_flux"},
         {"qFlux",       "g kg-1 m s-1",  "Surface latent heat flux",                                      "surface_upward_latent_heat_flux"},
         {"tskin",       "K",             "Surface skin temperature",                                      "surface_temperature"},
-        {"qskin",       "kg kg-1",       "Surface skin water vapor mixing ratio",                         NULL},
+        {"qskin",       "g kg-1",        "Surface skin water vapor mixing ratio",                         NULL},
         {"z0m",         "m",             "Roughness length for momentum",                                 "surface_roughness_length_for_momentum_in_air"},
         {"z0t",         "m",             "Roughness length for heat",                                     "surface_roughness_length_for_heat_in_air"},
         {"invOblen",    "m-1",           "Inverse Obukhov length",                                        NULL},
