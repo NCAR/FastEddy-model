@@ -527,7 +527,9 @@ int hydro_coreGetParams(){
      errorCode = queryFloatParameter("moistureCondTscale", &moistureCondTscale, 1e-4, 1000.0, PARAM_MANDATORY);
      errorCode = queryIntegerParameter("moistureCondBasePres", &moistureCondBasePres, 0, 1, PARAM_MANDATORY);
      errorCode = queryFloatParameter("moistureMPcallTscale", &moistureMPcallTscale, 1e-4, 1000.0, PARAM_MANDATORY);
-     errorCode = queryFloatParameter("surflayer_wq", &surflayer_wq, -5e+0, 5e+0, PARAM_MANDATORY);
+     if (surflayerSelector == 1){
+       errorCode = queryFloatParameter("surflayer_wq", &surflayer_wq, -5e+0, 5e+0, PARAM_MANDATORY);
+     }
      if (surflayerSelector == 2){
        errorCode = queryFloatParameter("surflayer_qr", &surflayer_qr, -1e+1, 1e+1, PARAM_MANDATORY);
        errorCode = queryIntegerParameter("surflayer_qskin_input", &surflayer_qskin_input, 0, 1, PARAM_OPTIONAL);
