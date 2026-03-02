@@ -47,7 +47,7 @@ extern "C" int cuda_cellpertDeviceSetup(){
 
    Nelems1d_xy = (Nx/cellpert_gppc+min(Nx%cellpert_gppc,1))*(2*cellpert_ndbc+min(Ny%cellpert_gppc,1)) + (Ny/cellpert_gppc-2*cellpert_ndbc)*(2*cellpert_ndbc+min(Nx%cellpert_gppc,1));
    Nelems1d = (size_t)(Nelems1d_xy*(cellpert_ktop-cellpert_kbottom+1));
-   fecuda_DeviceMalloc(Nelems1d, &randcp_d);
+   fecuda_DeviceMalloc(Nelems1d*sizeof(float), &randcp_d);
 
    return(errorCode);
 } //end cuda_cellpertDeviceSetup()
