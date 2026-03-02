@@ -8,6 +8,7 @@ Tutorials
       
    getting_started
    cases
-   sensitivity
+   cases_real
+   cases_extensions
 
    

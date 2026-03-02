@@ -35,7 +35,6 @@ DEBUG_CFLAGS = -g
 
 DEFINES = -DCUB_IGNORE_DEPRECATED_CPP_DIALECT -DTHRUST_IGNORE_DEPRECATED_CPP_DIALECT
 
-
 TEST_CFLAGS = -Wall -m64 ${DEFINES} ${INCLUDES} ${OTHER_INCLUDES}
 ARCH_CU_FLAGS = -arch=sm_70
 TEST_CU_CFLAGS = ${ARCH_CU_FLAGS} -m64 -std=c++11 ${DEFINES} ${INCLUDES} ${OTHER_INCLUDES}
@@ -51,7 +50,6 @@ TEST_CU_LDFLAGS = -L.
 
 TEST_LIBS = -lm -lmpi -lstdc++ -lcurand -lcudart -lnetcdf
 TEST_CU_LIBS = -lm -lmpi -lcudart
-
 
 ################################################################################
 # Sub-directories to INCLUDE 
@@ -118,6 +116,30 @@ TEST_OBJS = ./FastEddy.o \
 	../PARAMETERS/parameters.o \
 	../PARAMETERS/hashTable.o
 
+
+################################################################################
+# Extensions 
+################################################################################
+WITH_GAD = 0
+ifeq ($(WITH_GAD),1)
+ DEFINES+=-DGAD_EXT
+ INCLUDES+=-I../EXTENSIONS/GAD/ \
+	   -I../EXTENSIONS/GAD/CUDA/
+ $(info WITH_GAD=1)
+ $(info ${DEFINES})
+ $(info ${INCLUDES})
+endif
+
+WITH_URBAN = 0
+ifeq ($(WITH_URBAN),1)
+ DEFINES+=-DURBAN_EXT
+ INCLUDES+=-I../EXTENSIONS/URBAN/ \
+	   -I../EXTENSIONS/URBAN/CUDA/
+ $(info WITH_URBAN=1)
+ $(info ${DEFINES})
+ $(info ${INCLUDES})
+endif
+
 ################################################################################
 # Targets
 # ###############################################################################
@@ -128,7 +150,6 @@ all: FastEddy
 # Generic compile rules
 # ################################################################################
 %.o: %.cu
-	rm -rf ./FastEddy_devlink.o; \
 	$(TEST_CU_CC) $(TEST_CU_CFLAGS) -dc $< -o $@
 
 .c.o:
@@ -138,9 +159,8 @@ all: FastEddy
 # Module=specific compile rules
 # ################################################################################
 
-../TIME_INTEGBRATION/CUDA/cuda_timeIntDevice.o: ../CUDA/cuda_timeIntDevice.cu \
-        ../TIME_INTEGRATION.CUDA/cuda_RKschemes.cu
-	rm -rf ./FastEddy_devlink.o; \
+../TIME_INTEGRATION/CUDA/cuda_timeIntDevice.o: ../TIME_INTEGRATION/CUDA/cuda_timeIntDevice.cu \
+        ../TIME_INTEGRATION/CUDA/cuda_RKschemes.cu
 	$(TEST_CU_CC) $(TEST_CU_CFLAGS) -dc $< -o $@
 
 ../IO/io.o: ../IO/io.c \
@@ -151,7 +171,6 @@ all: FastEddy
 ../FECUDA/fecuda_Device.o: ../FECUDA/fecuda_Device.cu \
 	../FECUDA/fecuda_Utils.cu \
 	../FECUDA/fecuda_PlugIns.cu 
-	rm -rf ./FastEddy_devlink.o; \
 	$(TEST_CU_CC) $(TEST_CU_CFLAGS) -dc $< -o $@
 
 ../HYDRO_CORE/CUDA/cuda_hydroCoreDevice.o: ../HYDRO_CORE/CUDA/cuda_hydroCoreDevice.cu \
@@ -169,8 +188,8 @@ all: FastEddy
 	../HYDRO_CORE/CUDA/cuda_canopyDevice.cu \
         ../HYDRO_CORE/CUDA/cuda_largeScaleForcingsDevice.cu \
         ../HYDRO_CORE/CUDA/cuda_moistureDevice.cu \
-        ../HYDRO_CORE/CUDA/cuda_filtersDevice.cu
-	rm -rf ./FastEddy_devlink.o; \
+        ../HYDRO_CORE/CUDA/cuda_filtersDevice.cu \
+	../HYDRO_CORE/CUDA/cuda_cellpertDevice.cu
 	$(TEST_CU_CC) $(TEST_CU_CFLAGS) -dc $< -o $@
 ################################################################################
 # Generic Executable
@@ -181,6 +200,7 @@ FastEddy: COMP_FLAGS = ${TEST_CC} ${TEST_CFLAGS}
 TEST_DEPENDENCIES = ${TEST_OBJS} ${TEST_HDRS} FastEddy_devlink.o
 
 FastEddy_devlink.o:
+	rm -rf ./FastEddy_devlink.o; \
 	$(TEST_CU_CC) ${ARCH_CU_FLAGS} ${TEST_OBJS} ${TEST_LDFLAGS} ${TEST_LIBS} -dlink -o FastEddy_devlink.o
 FastEddy: ${TEST_DEPENDENCIES}
 	${COMP_FLAGS} -o FastEddy ${TEST_OBJS} ./FastEddy_devlink.o ${TEST_LDFLAGS} ${TEST_LIBS}

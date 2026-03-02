@@ -26,17 +26,17 @@ float* hydroKappaM_d;  /*Base address for KappaM (eddy diffusivity for momentum)
 */
 extern "C" int cuda_sgsTurbDeviceSetup(){
    int errorCode = CUDA_SGSTURB_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    cudaMemcpyToSymbol(turbulenceSelector_d, &turbulenceSelector, sizeof(int));
    cudaMemcpyToSymbol(TKESelector_d, &TKESelector, sizeof(int));
    cudaMemcpyToSymbol(c_s_d, &c_s, sizeof(float));
    cudaMemcpyToSymbol(c_k_d, &c_k, sizeof(float));
 
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
 
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &hydroKappaM_d); 
-   fecuda_DeviceMalloc(Nelems*9*sizeof(float), &hydroTauFlds_d);
+   fecuda_DeviceMalloc(Nelems, &hydroKappaM_d); 
+   fecuda_DeviceMalloc(Nelems*9, &hydroTauFlds_d);
   
    /* Done */
    return(errorCode);
@@ -61,7 +61,7 @@ __device__ void cudaDevice_hydroCoreCalcStrainRateElements(float* u, float* v, f
                                                            float* S11, float* S21, float* S31,
                                                            float* S32, float* S22, float* S33,
                                                            float* STH1, float* STH2, float* STH3,
-                                                           float* J31_d, float* J32_d, float* J33_d,
+                                                           float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d,
                                                            float* rhoInv){
    int i,j,k,ijk;
    int im1jk,ijm1k,ijkm1;
@@ -94,22 +94,28 @@ __device__ void cudaDevice_hydroCoreCalcStrainRateElements(float* u, float* v, f
 
     /*S11 = 1/2*(du/dx+du/dx) @ (i-1/2,j,k), assuming A-grid  */
     S11[ijk] = (
-                dXi_d*( u[ijk]*rhoInv[ijk]   //du_dxi   
-                       -u[im1jk]*rhoInv[im1jk])
+                 dXi_d*( u[ijk]*rhoInv[ijk]   //du_dxi   
+                        -u[im1jk]*rhoInv[im1jk])
+	        +J13_d[ijk]
+		*dZi_d*( u[ijk]*rhoInv[ijk]   //du_dzeta 
+                        -u[ijkm1]*rhoInv[ijkm1])	
                ); //Done with S11 = 1/2*2*(du_dx) 
     /*S22 = 1/2*(dv/dy+dv/dy) @ (i,j-1/2,k), assuming A-grid  */
     S22[ijk] = (
                  dYi_d*( v[ijk]*rhoInv[ijk]   //dv_deta 
-                                    -v[ijm1k]*rhoInv[ijm1k])
+                        -v[ijm1k]*rhoInv[ijm1k])
+	        +J23_d[ijk]
+	        *dZi_d*( v[ijk]*rhoInv[ijk]   //du_dzeta
+                        -v[ijkm1]*rhoInv[ijkm1])
                ); //Done with S22 = 1/2*2*(dv_dy) 
     /*S33 = 1/2*(dw/dz+dw/dz) @ (i,j,k-1/2), assuming A-grid  */
     S33[ijk] = (
-                  J31_d[ijk]*dXi_d*( w[ijk]*rhoInv[ijk]   //dw_dxi   
-                                    -w[im1jk]*rhoInv[im1jk])
-                 +J32_d[ijk]*dYi_d*( w[ijk]*rhoInv[ijk]   //dw_deta  
-                                    -w[ijm1k]*rhoInv[ijm1k])
-                 +J33_d[ijk]*dZi_d*( w[ijk]*rhoInv[ijk]   //dw_dzeta 
-                                    -w[ijkm1]*rhoInv[ijkm1])
+                 J31_d[ijk]*dXi_d*( w[ijk]*rhoInv[ijk]   //dw_dxi   
+                                   -w[im1jk]*rhoInv[im1jk])
+                +J32_d[ijk]*dYi_d*( w[ijk]*rhoInv[ijk]   //dw_deta  
+                                   -w[ijm1k]*rhoInv[ijm1k])
+                +J33_d[ijk]*dZi_d*( w[ijk]*rhoInv[ijk]   //dw_dzeta 
+                                   -w[ijkm1]*rhoInv[ijkm1])
                ); //Done with S33 = 1/2*2*(dw_dz) 
     /*S21 = 1/2*(dv/dx+du/dy) @ (i-1/2,j-1/2,k), assuming A-grid  */
     S21[ijk] = 0.5*(
@@ -117,10 +123,26 @@ __device__ void cudaDevice_hydroCoreCalcStrainRateElements(float* u, float* v, f
                                   -v[im1jk]*rhoInv[im1jk])
                           +dXi_d*( v[ijm1k]*rhoInv[ijm1k]   //dv_dxi @i-1/2,j-1
                                   -v[im1jm1k]*rhoInv[im1jm1k]))
-                    +0.5*( dYi_d*( u[ijk]*rhoInv[ijk]   //du_deta 
+		    +0.25*(J13_d[ijk]*dZi_d*( v[ijk]*rhoInv[ijk]   //dv_dzeta @i,j,k-1/2
+                                             -v[ijkm1]*rhoInv[ijkm1])
+                          +J13_d[ijk]*dZi_d*( v[im1jk]*rhoInv[im1jk]   //dv_dzeta @i-1,j,k-1/2
+                                             -v[im1jkm1]*rhoInv[im1jkm1])
+                          +J13_d[ijk]*dZi_d*( v[ijm1k]*rhoInv[ijm1k]   //dv_dzeta @i,j-1,k-1/2
+                                             -v[ijm1km1]*rhoInv[ijm1km1])
+                          +J13_d[ijk]*dZi_d*( v[im1jm1k]*rhoInv[im1jm1k]   //dv_dzeta @i-1,j-1,k-1/2
+                                             -v[im1jm1km1]*rhoInv[im1jm1km1]))
+                    +0.5*( dYi_d*( u[ijk]*rhoInv[ijk]   //du_deta @i,j-1/2 
                                   -u[ijm1k]*rhoInv[ijm1k])
-                          +dYi_d*( u[im1jk]*rhoInv[im1jk]   //du_deta 
+                          +dYi_d*( u[im1jk]*rhoInv[im1jk]   //du_deta @i-1,j-1/2
                                   -u[im1jm1k]*rhoInv[im1jm1k]))
+                    +0.25*(J23_d[ijk]*dZi_d*( u[ijk]*rhoInv[ijk]   //du_dzeta 
+                                             -u[ijkm1]*rhoInv[ijkm1])
+                          +J23_d[ijk]*dZi_d*( u[im1jk]*rhoInv[im1jk]   //du_deta 
+                                             -u[im1jkm1]*rhoInv[im1jkm1])
+                          +J23_d[ijk]*dZi_d*( u[ijm1k]*rhoInv[ijm1k]   //du_deta 
+                                             -u[ijm1km1]*rhoInv[ijm1km1])
+                          +J23_d[ijk]*dZi_d*( u[im1jm1k]*rhoInv[im1jm1k]   //du_deta 
+                                             -u[im1jm1km1]*rhoInv[im1jm1km1]))
                    ); //Done with S21 = 1/2*(dv_dx + du_dy)  
     /*S31 = 1/2*(dw/dx+du/dz) @ (i-1/2,j,k-1/2), assuming A-grid  */
     S31[ijk] = 0.5*(
@@ -128,7 +150,10 @@ __device__ void cudaDevice_hydroCoreCalcStrainRateElements(float* u, float* v, f
                                   -w[im1jk]*rhoInv[im1jk])
                           +dXi_d*( w[ijkm1]*rhoInv[ijkm1]   //dw_dxi @i-1/2,j,k-1
                                   -w[im1jkm1]*rhoInv[im1jkm1]))
-
+                    +0.5*( J13_d[ijk]*dZi_d*( w[ijk]*rhoInv[ijk]   //dw_dzeta @i,j,k-1/2
+                                            -w[ijkm1]*rhoInv[ijkm1])
+                          +J13_d[ijk]*dZi_d*( w[im1jk]*rhoInv[im1jk]   //dw_dzeta @i-1,j,k-1/2
+                                            -w[im1jkm1]*rhoInv[im1jkm1]))
                     +0.5*( J31_d[ijk]*dXi_d*( u[ijk]*rhoInv[ijk]   //du_dxi @i-1/2,j,k
                                              -u[im1jk]*rhoInv[im1jk])
                           +J31_d[ijk]*dXi_d*( u[ijkm1]*rhoInv[ijkm1]   //du_dxi @i-1/2,j,k-1
@@ -152,7 +177,10 @@ __device__ void cudaDevice_hydroCoreCalcStrainRateElements(float* u, float* v, f
                                   -w[ijm1k]*rhoInv[ijm1k])
                           +dYi_d*( w[ijkm1]*rhoInv[ijkm1]   //dw_deta  @i,j-1/2,k-1
                                   -w[ijm1km1]*rhoInv[ijm1km1]))
-
+                    +0.5*( J23_d[ijk]*dZi_d*( w[ijk]*rhoInv[ijk]   //dw_dzeta @i,j,k-1/2
+                                             -w[ijkm1]*rhoInv[ijkm1])
+                          +J23_d[ijk]*dZi_d*( w[ijm1k]*rhoInv[ijm1k]   //dw_dzeta @i,j-1,k-1/2
+                                             -w[ijm1km1]*rhoInv[ijm1km1]))
                     +0.25*( J31_d[ijk]*dXi_d*( v[ijk]*rhoInv[ijk]   //dv_dxi @i-1/2,j,k   
                                               -v[im1jk]*rhoInv[im1jk])
                            +J31_d[ijk]*dXi_d*( v[ijm1k]*rhoInv[ijm1k]   //dv_dxi @i-1/2,j-1,k
@@ -165,22 +193,26 @@ __device__ void cudaDevice_hydroCoreCalcStrainRateElements(float* u, float* v, f
                                              -v[ijm1k]*rhoInv[ijm1k])
                           +J32_d[ijk]*dYi_d*( v[ijkm1]*rhoInv[ijkm1]   //dv_deta @i,j-1/2,k-1 
                                              -v[ijm1km1]*rhoInv[ijm1km1]))
-                    +0.5*(J33_d[ijk]*dZi_d*( v[ijk]*rhoInv[ijk]   //dv_dzeta @i,j,k-1/2
-                                            -v[ijkm1]*rhoInv[ijkm1])
-                    +J33_d[ijk]*dZi_d*( v[ijm1k]*rhoInv[ijm1k]   //dv_dzeta @i,j-1,k-1/2
-                                       -v[ijm1km1]*rhoInv[ijm1km1]))
+                    +0.5*( J33_d[ijk]*dZi_d*( v[ijk]*rhoInv[ijk]   //dv_dzeta @i,j,k-1/2
+                                             -v[ijkm1]*rhoInv[ijkm1])
+                          +J33_d[ijk]*dZi_d*( v[ijm1k]*rhoInv[ijm1k]   //dv_dzeta @i,j-1,k-1/2
+                                             -v[ijm1km1]*rhoInv[ijm1km1]))
               ); //Done with S32 = 1/2*(dw_dy + dv_dz)
 
     /*STH1 = (dTH/dx) @ (i-1/2), assuming A-grid  */
     STH1[ijk] = (                                   
                   (dXi_d*( theta[ijk]*rhoInv[ijk]   //dTH_dxi @i-1/2,j,k   
                           -theta[im1jk]*rhoInv[im1jk]))
+		  +(J13_d[ijk]*dZi_d*( theta[ijk]*rhoInv[ijk]   //dTH_dzeta @i,j,k-1/2
+                                      -theta[ijkm1]*rhoInv[ijkm1]))
                 ); //Done with STH1 = (dTH/dx)
 
     /*STH2 = (dTH/dy) @ (i,j-1/2,k), assuming A-grid  */
     STH2[ijk] = ( 
                  (dYi_d*( theta[ijk]*rhoInv[ijk]   //dTH_deta @i,j-1/2,k 
                          -theta[ijm1k]*rhoInv[ijm1k]))
+		 +(J23_d[ijk]*dZi_d*( theta[ijk]*rhoInv[ijk]   //dTH_dzeta @i,j,k-1/2
+                                     -theta[ijkm1]*rhoInv[ijkm1]))
                 ); //Done with STH2 = (dTH/dy)
 
     /*STH3 = (dTH/dz) @ (i,j,k-1/2), assuming A-grid  */
@@ -311,7 +343,7 @@ __device__ void cudaDevice_hydroCoreCalcTaus_PrognosticTKE_DeviatoricTerm(
                                              float* STH1, float* STH2, float* STH3,
                                              float* rho, float* Km, float* sgstke_ls,
                                              float* u, float* v, float* w, float* sgstke,
-                                             float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d){
+                                             float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d){
    int i,j,k,ijk;
    int im1jk,ijm1k,ijkm1;
    int iStride,jStride,kStride;
@@ -343,8 +375,12 @@ __device__ void cudaDevice_hydroCoreCalcTaus_PrognosticTKE_DeviatoricTerm(
       deviatoricTerm = (2.0/3.0)*rho[ijk]*(
                                            Km[ijk]*( dXi_d*( u[ijk]/rho[ijk]   //du_dxi   
                                                             -u[im1jk]/rho[im1jk])
+						    +J13_d[ijk]*dZi_d*( u[ijk]/rho[ijk]   //du_dzeta 
+                                                                       -u[ijkm1]/rho[ijkm1])
                                                     +dYi_d*( v[ijk]/rho[ijk]   //dv_deta 
                                                             -v[ijm1k]/rho[ijm1k])
+						    +J23_d[ijk]*dZi_d*( v[ijk]/rho[ijk]   //dv_dzeta
+                                                                       -v[ijkm1]/rho[ijkm1])
                                                     +J31_d[ijk]*dXi_d*( w[ijk]/rho[ijk]   //dw_dxi   
                                                                        -w[im1jk]/rho[im1jk])
                                                     +J32_d[ijk]*dYi_d*( w[ijk]/rho[ijk]   //dw_deta  
@@ -364,13 +400,13 @@ __device__ void cudaDevice_hydroCoreCalcTaus_PrognosticTKE_DeviatoricTerm(
 
    } //end if in the range of non-halo cells
 
-} //cudaDevice_hydroCoreCalcTausi_PrognosticTKE_DeviatoricTerm()
+} //cudaDevice_hydroCoreCalcTaus_PrognosticTKE_DeviatoricTerm()
 
 /*----->>>>> __device__ void  cudaDevice_GradScalarToFaces();  --------------------------------------------------
 * This cuda kernel calculates the spatial gradient of a scalar field: 1delta, gradient located at the cell face
 */
 __device__ void cudaDevice_GradScalarToFaces(float* scalar, float* rhoInv, float* dSdx, float* dSdy, float* dSdz,
-                                             float* J31_d, float* J32_d, float* J33_d){
+                                             float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d){
 
   int i,j,k,ijk;
   int im1jk,ijm1k,ijkm1;
@@ -389,9 +425,11 @@ __device__ void cudaDevice_GradScalarToFaces(float* scalar, float* rhoInv, float
 
   if((i >= iMin_d-1)&&(i < iMax_d+1) && (j >= jMin_d-1)&&(j < jMax_d+1) && (k >= kMin_d-1)&&(k < kMax_d+1)){
 
-    dSdx[ijk] =     (dXi_d*(scalar[ijk]*rhoInv[ijk]-scalar[im1jk]*rhoInv[im1jk]));
+    dSdx[ijk] =     (dXi_d*(scalar[ijk]*rhoInv[ijk]-scalar[im1jk]*rhoInv[im1jk])
+		    +J13_d[ijk]*dZi_d*(scalar[ijk]*rhoInv[ijk]-scalar[ijkm1]*rhoInv[ijkm1]));
 
-    dSdy[ijk] =     (dYi_d*(scalar[ijk]*rhoInv[ijk]-scalar[ijm1k]*rhoInv[ijm1k]));
+    dSdy[ijk] =     (dYi_d*(scalar[ijk]*rhoInv[ijk]-scalar[ijm1k]*rhoInv[ijm1k])
+		     +J23_d[ijk]*dZi_d*(scalar[ijk]*rhoInv[ijk]-scalar[ijkm1]*rhoInv[ijkm1]));
 
     dSdz[ijk] =     (J31_d[ijk]*dXi_d*(scalar[ijk]*rhoInv[ijk]-scalar[im1jk]*rhoInv[im1jk])
                     +J32_d[ijk]*dYi_d*(scalar[ijk]*rhoInv[ijk]-scalar[ijm1k]*rhoInv[ijm1k])
@@ -448,7 +486,7 @@ __device__ void cudaDevice_hydroCoreCalcTurbMixing(float* uFrhs, float* vFrhs, f
                                                    float* T11, float* T21, float* T31,
                                                    float* T32, float* T22, float* T33,
                                                    float* TH1, float* TH2, float* TH3,
-                                                   float* J31_d, float* J32_d, float* J33_d){
+                                                   float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d){
    int i,j,k,ijk;
    int ip1jk,ijp1k,ijkp1;
    int iStride,jStride,kStride;
@@ -476,7 +514,9 @@ __device__ void cudaDevice_hydroCoreCalcTurbMixing(float* uFrhs, float* vFrhs, f
     /*uFrhs = -d_dxj( -2*(Kappa_m*T1j) ), j=1,2,3 @ (i,j,k) cell-center, assuming A-grid  */
     uFrhs[ijk] = uFrhs[ijk] - (
                                 dXi_d*(T11[ip1jk] - T11[ijk])
+			       +J13_d[ijk]*dZi_d*(T11[ijkp1] - T11[ijk])
                                +dYi_d*(T21[ijp1k] - T21[ijk])
+			       +J23_d[ijk]*dZi_d*(T21[ijkp1] - T21[ijk])
                                +J31_d[ijk]*dXi_d*(T31[ip1jk] - T31[ijk])
                                +J32_d[ijk]*dYi_d*(T31[ijp1k] - T31[ijk])
                                +J33_d[ijk]*dZi_d*(T31[ijkp1] - T31[ijk])
@@ -484,7 +524,9 @@ __device__ void cudaDevice_hydroCoreCalcTurbMixing(float* uFrhs, float* vFrhs, f
     /*vFrhs = -d_dxj( -2*(Kappa_m*T2j) ), j=1,2,3 @ (i,j,k) cell-center, assuming A-grid  */
     vFrhs[ijk] = vFrhs[ijk] - (
                                 dXi_d*(T21[ip1jk] - T21[ijk])
+			       +J13_d[ijk]*dZi_d*(T21[ijkp1] - T21[ijk])
                                +dYi_d*(T22[ijp1k] - T22[ijk])
+			       +J23_d[ijk]*dZi_d*(T22[ijkp1] - T22[ijk])
                                +J31_d[ijk]*dXi_d*(T32[ip1jk] - T32[ijk])
                                +J32_d[ijk]*dYi_d*(T32[ijp1k] - T32[ijk])
                                +J33_d[ijk]*dZi_d*(T32[ijkp1] - T32[ijk])
@@ -492,14 +534,18 @@ __device__ void cudaDevice_hydroCoreCalcTurbMixing(float* uFrhs, float* vFrhs, f
     /*wFrhs = -d_dxj( -2*(Kappa_m*dT3j_dxj)), j=1,2,3 @ (i,j,k) cell-center, assuming A-grid  */
     wFrhs[ijk] = wFrhs[ijk] - (
                                 dXi_d*(T31[ip1jk] - T31[ijk])
+			       +J13_d[ijk]*dZi_d*(T31[ijkp1] - T31[ijk])
                                +dYi_d*(T32[ijp1k] - T32[ijk])
+			       +J23_d[ijk]*dZi_d*(T32[ijkp1] - T32[ijk])
                                +J31_d[ijk]*dXi_d*(T33[ip1jk] - T33[ijk])
                                +J32_d[ijk]*dYi_d*(T33[ijp1k] - T33[ijk])
                                +J33_d[ijk]*dZi_d*(T33[ijkp1] - T33[ijk])
           ); //Done with wFrhs = -2*(d_dx(Kappa_m*T31) + d_dy(Kappa_m*T32) + d_dz(Kappa_m*T33))  
     thetaFrhs[ijk] = thetaFrhs[ijk] - (
                                         dXi_d*(TH1[ip1jk] - TH1[ijk])
+				       +J13_d[ijk]*dZi_d*(TH1[ijkp1] - TH1[ijk])
                                        +dYi_d*(TH2[ijp1k] - TH2[ijk])
+				       +J23_d[ijk]*dZi_d*(TH2[ijkp1] - TH2[ijk])
                                        +J31_d[ijk]*dXi_d*(TH3[ip1jk] - TH3[ijk])
                                        +J32_d[ijk]*dYi_d*(TH3[ijp1k] - TH3[ijk])
                                        +J33_d[ijk]*dZi_d*(TH3[ijkp1] - TH3[ijk])
@@ -512,7 +558,7 @@ __device__ void cudaDevice_hydroCoreCalcTurbMixing(float* uFrhs, float* vFrhs, f
 * This is the cuda version of calculating forcing terms from subgrid-scale mixing of a scalar field
 */
 __device__ void cudaDevice_hydroCoreCalcTurbMixingScalar(float* mFrhs, float* M1, float* M2, float* M3,
-                                                         float* J31_d, float* J32_d, float* J33_d){
+                                                         float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d){
 
    int i,j,k,ijk;
    int ip1jk,ijp1k,ijkp1;
@@ -536,7 +582,9 @@ __device__ void cudaDevice_hydroCoreCalcTurbMixingScalar(float* mFrhs, float* M1
 
     mFrhs[ijk] = mFrhs[ijk] - (
                                 dXi_d*(M1[ip1jk] - M1[ijk])
+			       +J13_d[ijk]*dZi_d*(M1[ijkp1] - M1[ijk])
                                +dYi_d*(M2[ijp1k] - M2[ijk])
+			       +J23_d[ijk]*dZi_d*(M2[ijkp1] - M2[ijk])
                                +J31_d[ijk]*dXi_d*(M3[ip1jk] - M3[ijk])
                                +J32_d[ijk]*dYi_d*(M3[ijp1k] - M3[ijk])
                                +J33_d[ijk]*dZi_d*(M3[ijkp1] - M3[ijk])
@@ -551,7 +599,7 @@ __device__ void cudaDevice_hydroCoreCalcTurbMixingScalar(float* mFrhs, float* M1
 */
 __global__ void cudaDevice_TausScalar(int iFld, float* hydroRhoInv_d, float* hydroFlds_d, float* hydroKappaM_d, float* sgstke_ls_d,
                                       float* Scalars_d, float* ScalarsTauFlds_d,
-                                      float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d){
+                                      float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d){
    int i,j,k;
    int fldStride;
 
@@ -568,7 +616,7 @@ __global__ void cudaDevice_TausScalar(int iFld, float* hydroRhoInv_d, float* hyd
 
       cudaDevice_GradScalarToFaces(&Scalars_d[fldStride*iFld], &hydroRhoInv_d[0], &ScalarsTauFlds_d[fldStride*0],
                                    &ScalarsTauFlds_d[fldStride*1], &ScalarsTauFlds_d[fldStride*2],
-                                   &J31_d[0], &J32_d[0], &J33_d[0]);
+                                   &J13_d[0], &J23_d[0], &J31_d[0], &J32_d[0], &J33_d[0]);
       cudaDevice_hydroCoreCalcTausScalar(&ScalarsTauFlds_d[fldStride*0], &ScalarsTauFlds_d[fldStride*1], &ScalarsTauFlds_d[fldStride*2],
                                          &hydroFlds_d[fldStride*RHO_INDX], &hydroKappaM_d[0], &sgstke_ls_d[0], &D_Jac_d[0]); // calculate tau_sj
 
@@ -581,7 +629,7 @@ __global__ void cudaDevice_TausScalar(int iFld, float* hydroRhoInv_d, float* hyd
 * CUDA kernel for calculating SGS-Forcing (divergence of SGS-Tau fields)  for a given "scalar" field.
 */
 __global__ void cudaDevice_SGSforcing(int iFld, float* ScalarsTauFlds_d, float* ScalarsFrhs_d,
-                                      float* J31_d, float* J32_d, float* J33_d){
+                                      float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d){
    int i,j,k;
    int fldStride;
 
@@ -598,7 +646,7 @@ __global__ void cudaDevice_SGSforcing(int iFld, float* ScalarsTauFlds_d, float* 
 
       cudaDevice_hydroCoreCalcTurbMixingScalar(&ScalarsFrhs_d[fldStride*iFld], &ScalarsTauFlds_d[fldStride*0],
                                                &ScalarsTauFlds_d[fldStride*1], &ScalarsTauFlds_d[fldStride*2],
-                                               &J31_d[0], &J32_d[0], &J33_d[0]);
+                                               &J13_d[0], &J23_d[0], &J31_d[0], &J32_d[0], &J33_d[0]);
 
    }//end if in the range of non-halo cells
 } // end cudaDevice_SGSforcing()

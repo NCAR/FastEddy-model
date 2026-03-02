@@ -1,3 +1,18 @@
+/* FastEddy®: SRC/HYDRO_CORE/CUDA/cuda_canopyDevice.cu
+* ©2016 University Corporation for Atmospheric Research
+* 
+* This file is licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+* 
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 /*---CANOPY MODEL*/
 __constant__ int canopySelector_d;         /* canopy selector: 0=off, 1=on */
 __constant__ int canopySkinOpt_d;          /* canopy selector to use additional skin friction effect on drag coefficient: 0=off, 1=on */
@@ -11,9 +26,9 @@ float *canopy_lad_d;          /* Base Address of memory containing leaf area den
 */
 extern "C" int cuda_canopyDeviceSetup(){
    int errorCode = CUDA_CANOPY_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
 
    cudaMemcpyToSymbol(canopySelector_d, &canopySelector, sizeof(int));
    cudaMemcpyToSymbol(canopySkinOpt_d, &canopySkinOpt, sizeof(int));
@@ -21,7 +36,7 @@ extern "C" int cuda_canopyDeviceSetup(){
    cudaMemcpyToSymbol(canopy_lf_d, &canopy_lf, sizeof(float));
 
    Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &canopy_lad_d);
+   fecuda_DeviceMalloc(Nelems, &canopy_lad_d);
    cudaMemcpy(canopy_lad_d, canopy_lad, Nelems*sizeof(float), cudaMemcpyHostToDevice);
 
    return(errorCode);
@@ -41,7 +56,7 @@ extern "C" int cuda_canopyDeviceCleanup(){
 
 }//end cuda_canopyDeviceCleanup()
 
-__global__ void cudaDevice_hydroCoreUnitTestCompleteCanopy(float* hydroFlds_d, float* hydroRhoInv_d, float* canopy_lad_d, float* hydroFldsFrhs_d){
+__global__ void cudaDevice_hydroCoreCompleteCanopy(float* hydroFlds_d, float* hydroRhoInv_d, float* canopy_lad_d, float* hydroFldsFrhs_d){
 
    int fldStride;
 
@@ -52,7 +67,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteCanopy(float* hydroFlds_d, f
                             &hydroFldsFrhs_d[fldStride*U_INDX], &hydroFldsFrhs_d[fldStride*V_INDX],
                             &hydroFldsFrhs_d[fldStride*W_INDX]);
 
-} // end cudaDevice_hydroCoreUnitTestCompleteCanopy()
+} // end cudaDevice_hydroCoreCompleteCanopy()
 
 /*----->>>>> __device__ void  cudaDevice_canopyMomDrag();  --------------------------------------------------
 */

@@ -47,8 +47,15 @@ int timeGetParams();
 */
 int timeInit();
 
-/*----->>>>> int timeInitBdyPlaneUpdates();     -------------------------------------------------------------
+/*----->>>>> int timeAddTimeAttributes();       ----------------------------------------------------------------------
+* Add NetCDF attributes to time-related variables registered by the TIME_INTEGRATION module.
 */
+int timeAddTimeAttributes();
+
+/*----->>>>> int timeIntBdyPlaneUpdates();       ----------------------------------------------------------------------
+ * Used to broadcast and print parameters, allocate memory, and initialize configuration settings
+ * for the TIME_INTEGRATION module.
+ */
 int timeIntBdyPlaneUpdates();
 
 /*----->>>>> int timeCleanup();       ----------------------------------------------------------------------

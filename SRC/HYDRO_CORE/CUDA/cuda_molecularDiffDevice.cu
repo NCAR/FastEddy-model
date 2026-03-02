@@ -27,15 +27,15 @@ float* hydroNuGradZFlds_d;                 /* Base address for diffusion for nu*
 */
 extern "C" int cuda_molecularDiffDeviceSetup(){
    int errorCode = CUDA_MOLDIFF_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    cudaMemcpyToSymbol(diffusionSelector_d, &diffusionSelector, sizeof(int));
    cudaMemcpyToSymbol(nu_0_d, &nu_0, sizeof(float));
 
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   fecuda_DeviceMalloc(Nelems*(Nhydro-1)*sizeof(float), &hydroNuGradXFlds_d); // all Nhydro except density 
-   fecuda_DeviceMalloc(Nelems*(Nhydro-1)*sizeof(float), &hydroNuGradYFlds_d);  
-   fecuda_DeviceMalloc(Nelems*(Nhydro-1)*sizeof(float), &hydroNuGradZFlds_d); 
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+   fecuda_DeviceMalloc(Nelems*(Nhydro-1), &hydroNuGradXFlds_d); // all Nhydro except density 
+   fecuda_DeviceMalloc(Nelems*(Nhydro-1), &hydroNuGradYFlds_d);  
+   fecuda_DeviceMalloc(Nelems*(Nhydro-1), &hydroNuGradZFlds_d); 
 
    return(errorCode);
 } //end cuda_molecularDiffDeviceSetup()
@@ -56,12 +56,12 @@ extern "C" int cuda_molecularDiffDeviceCleanup(){
 
 }//end cuda_molecularDiffDeviceCleanup()
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCompleteMolecularDiffusion();  -------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreCompleteMolecularDiffusion();  -------------------------
 * Global Kernel for calculating/accumulating molecular diffusion Frhs terms   
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteMolecularDiffusion(float* hydroFlds, float* hydroFldsFrhs,
+__global__ void cudaDevice_hydroCoreCompleteMolecularDiffusion(float* hydroFlds, float* hydroFldsFrhs,
                                                                        float* hydroNuGradXFlds_d, float* hydroNuGradYFlds_d, float* hydroNuGradZFlds_d,
-                                                                       float* J31_d, float* J32_d, float* J33_d,
+                                                                       float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d,
                                                                        float* D_Jac_d, float* invD_Jac_d){ // calculate divergence of NuGrad
    int i,j,k;
    int iFld,fldStride;
@@ -81,18 +81,18 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteMolecularDiffusion(float* hy
                                   &hydroNuGradXFlds_d[fldStride*(iFld-1)],
                                   &hydroNuGradYFlds_d[fldStride*(iFld-1)],
                                   &hydroNuGradZFlds_d[fldStride*(iFld-1)],iFld,
-                                  J31_d, J32_d, J33_d, D_Jac_d, invD_Jac_d);
+                                  J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d, invD_Jac_d);
       }//for iFld
    }//end if in the range of non-halo cells
 
-} // end cudaDevice_hydroCoreUnitTestCompleteMolecularDiffusion()
+} // end cudaDevice_hydroCoreCompleteMolecularDiffusion()
 
 /*----->>>>> __device__ void cudaDevice_diffusionDriver();  --------------------------------------------------
 * This function drives the element-wise calls to cudaDevice_calcConstNuGrad() for molecular diffusion 
 * of an arbitrary field. 
 */
 __device__ void cudaDevice_diffusionDriver(float* fld, float* NuGradX, float* NuGradY,float* NuGradZ, float inv_pr,
-                                           float* J31_d, float* J32_d, float* J33_d,
+                                           float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d,
                                            float* D_Jac_d){
   
    int i,j,k,ijk;
@@ -134,7 +134,7 @@ __device__ void cudaDevice_diffusionDriver(float* fld, float* NuGradX, float* Nu
                                  &fld[ijk], &fld[im1jk], &fld[ijm1k], &fld[ijkm1], &fld[ip1jk], &fld[ijp1k], &fld[ijkp1],
                                  &fld[im1jm1k], &fld[im1jkm1], &fld[ijm1km1], &fld[im1jp1k], &fld[im1jkp1],&fld[ijm1kp1], 
                                  &fld[ip1jkm1], &fld[ip1jm1k], &fld[ijp1km1],inv_pr,
-                                 J31_d, J32_d, J33_d, D_Jac_d);
+                                 J13_d, J23_d, J31_d, J32_d, J33_d, D_Jac_d);
   }//end if in the range of non-halo cells
 }//end diffusionDriver()
 
@@ -147,13 +147,14 @@ __device__ void cudaDevice_calcConstNuGrad(float* NuGradX, float* NuGradY, float
                                            float* sFld_im1jm1k, float* sFld_im1jkm1, float* sFld_ijm1km1,
                                            float* sFld_im1jp1k, float* sFld_im1jkp1, float* sFld_ijm1kp1,
                                            float* sFld_ip1jkm1, float* sFld_ip1jm1k, float* sFld_ijp1km1, float inv_pr,
-                                           float* J31_d, float* J32_d, float* J33_d,
+                                           float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d,
                                            float* D_Jac_d){
    int i,j,k,ijk;
    int im1jk,ijm1k,ijkm1;
    int im1jkm1,ijm1km1;
    int iStride,jStride,kStride;
    float Txx,Tyy,Tzz;
+   float Tzx,Tzy;
    float Txz,Tyz;
    i = (blockIdx.x)*blockDim.x + threadIdx.x;
    j = (blockIdx.y)*blockDim.y + threadIdx.y;
@@ -170,26 +171,55 @@ __device__ void cudaDevice_calcConstNuGrad(float* NuGradX, float* NuGradY, float
 
    Txx = nu_0_d*inv_pr*(
                         dXi_d*(*sFld_ijk-(*sFld_im1jk))             //dphi_dXi @ i-1/2
+			+0.5*(J13_d[ijk]+J13_d[im1jk])       //Txx part-->dphi_dZeta
+                        *0.25*dZi_d*( (*sFld_ijkp1)+(*sFld_im1jkp1)   //dphi_dZeta @i-1/2
+                                     -(*sFld_ijkm1)-(*sFld_im1jkm1))
+                       );
+   //Tyx = 0 since this would involve a factor of J12 which is dx/d_eta = 0
+   
+   Tzx = nu_0_d*inv_pr*( 0.5*(J13_d[ijk]+J13_d[im1jk])
+                        *0.5*((J13_d[ijk]+J13_d[im1jk])       //Tzx part-->dphi_dXI
+                        *dXi_d*(*sFld_ijk-(*sFld_im1jk))             //dphi_dXi @ i-1/2
+			+(J23_d[ijk]+J23_d[im1jk])       //Tzx part-->dphi_dEta
+                        *0.25*dYi_d*( (*sFld_ijp1k)+(*sFld_im1jp1k)   //dphi_dEta @i-1/2
+                                     -(*sFld_ijm1k)-(*sFld_im1jm1k))
+                        +(J33_d[ijk]+J33_d[im1jk])       //Tzx part-->dphi_dZeta
+                        *0.25*dZi_d*( (*sFld_ijkp1)+(*sFld_im1jkp1)   //dphi_dZeta @i-1/2
+                                     -(*sFld_ijkm1)-(*sFld_im1jkm1))
+			));
+   //Txy = 0 since this would involve a factor of J12 which is dx/d_eta = 0
+   
+   Tyy = nu_0_d*inv_pr*(
+			dYi_d*(*sFld_ijk-(*sFld_ijm1k))             //dphi_dEta @ j-1/2
+                        +0.5*(J23_d[ijk]+J23_d[ijm1k])       //Tzy part-->dphi_dZeta
+                        *0.25*dZi_d*( (*sFld_ijkp1)+(*sFld_ijm1kp1)   //dphi_dZeta @j-1/2 
+                                     -(*sFld_ijkm1)-(*sFld_ijm1km1))
                        );
 
-   Tyy = nu_0_d*inv_pr*(
-                        dYi_d*(*sFld_ijk-(*sFld_ijm1k))             //dphi_dEta @ j-1/2
-                       );
+    Tzy = nu_0_d*inv_pr*( 0.5*(J23_d[ijk]+J23_d[ijm1k])
+                         *0.5*((J13_d[ijk]+J13_d[ijm1k])       //Tzy part-->dphi_dXI
+                           *0.25*dXi_d*( (*sFld_ip1jk)+(*sFld_ip1jm1k)   //dphi_dXi @j-1/2
+                                        -(*sFld_im1jk)-(*sFld_im1jm1k))
+                        +(J23_d[ijk]+J23_d[ijm1k])       //Tzy part-->dphi_dEta
+                             *dYi_d*(*sFld_ijk-(*sFld_ijm1k))             //dphi_dEta @ j-1/2
+                           +(J33_d[ijk]+J33_d[ijm1k])       //Tzy part-->dphi_dZeta
+                           *0.25*dZi_d*( (*sFld_ijkp1)+(*sFld_ijm1kp1)   //dphi_dZeta @j-1/2
+                                        -(*sFld_ijkm1)-(*sFld_ijm1km1))
+                       ));
 
    Txz = nu_0_d*inv_pr*( 0.5*(J31_d[ijk]+J31_d[ijkm1])
-                        *0.5*(
-                              +(J31_d[ijk]+J31_d[ijkm1])    //Txz part-->dphi_dXi
-                               *0.25*dXi_d*( (*sFld_ip1jk)+(*sFld_ip1jkm1)   //dphi_dXi @k-1/2
-                                            -(*sFld_im1jk)-(*sFld_im1jkm1))
-                              +(J32_d[ijk]+J32_d[ijkm1])    //Txz part-->dphi_dEta
-                               *0.25*dYi_d*( (*sFld_ijp1k)+(*sFld_ijp1km1)   //dphi_dEta @k-1/2
-                                            -(*sFld_ijm1k)-(*sFld_ijm1km1))
-                              +(J33_d[ijk]+J33_d[ijkm1])   //Txz part-->dphi_dZeta
+                        *0.5*((J31_d[ijk]+J31_d[ijkm1])    //Txz part-->dphi_dXi
+                           *0.25*dXi_d*( (*sFld_ip1jk)+(*sFld_ip1jkm1)   //dphi_dXi @k-1/2
+                                        -(*sFld_im1jk)-(*sFld_im1jkm1))
+                          +(J32_d[ijk]+J32_d[ijkm1])    //Txz part-->dphi_dEta
+                           *0.25*dYi_d*( (*sFld_ijp1k)+(*sFld_ijp1km1)   //dphi_dEta @k-1/2
+                                        -(*sFld_ijm1k)-(*sFld_ijm1km1))
+                          +(J33_d[ijk]+J33_d[ijkm1])   //Txz part-->dphi_dZeta
                                *dZi_d*(*sFld_ijk-(*sFld_ijkm1))           //dphi_dZeta @ k-1/2
                         ));
+
    Tyz = nu_0_d*inv_pr*( 0.5*(J32_d[ijk]+J32_d[ijkm1])
-                        *0.5*(
-                              +(J31_d[ijk]+J31_d[ijkm1])    //Tyz part-->dphi_dXi
+                        *0.5*((J31_d[ijk]+J31_d[ijkm1])    //Tyz part-->dphi_dXi
                                *0.25*dXi_d*( (*sFld_ip1jk)+(*sFld_ip1jkm1)   //dphi_dXi @k-1/2
                                             -(*sFld_im1jk)-(*sFld_im1jkm1))
                               +(J32_d[ijk]+J32_d[ijkm1])    //Tyz part-->dphi_dEta
@@ -199,8 +229,7 @@ __device__ void cudaDevice_calcConstNuGrad(float* NuGradX, float* NuGradY, float
                                *dZi_d*(*sFld_ijk-(*sFld_ijkm1))           //dphi_dZeta @ k-1/2
                         ));
    Tzz = nu_0_d*inv_pr*( 0.5*(J33_d[ijk]+J33_d[ijkm1])
-                        *0.5*(
-                              +(J31_d[ijk]+J31_d[ijkm1])    //Tzz part-->dphi_dXi
+                        *0.5*((J31_d[ijk]+J31_d[ijkm1])    //Tzz part-->dphi_dXi
                                *0.25*dXi_d*( (*sFld_ip1jk)+(*sFld_ip1jkm1)   //dphi_dXi @k-1/2
                                             -(*sFld_im1jk)-(*sFld_im1jkm1))
                               +(J32_d[ijk]+J32_d[ijkm1])    //Tzz part-->dphi_dEta
@@ -210,12 +239,14 @@ __device__ void cudaDevice_calcConstNuGrad(float* NuGradX, float* NuGradY, float
                                *dZi_d*(*sFld_ijk-(*sFld_ijkm1))           //dphi_dZeta @ k-1/2
                         ));
    Txx = Txx*D_Jac_d[ijk];
+   Tzx = Tzx*0.25*(D_Jac_d[ijk]+D_Jac_d[im1jk]+D_Jac_d[ijkm1]+D_Jac_d[im1jkm1]);
    Tyy = Tyy*D_Jac_d[ijk];
+   Tzy = Tzy*0.25*(D_Jac_d[ijk]+D_Jac_d[ijm1k]+D_Jac_d[ijkm1]+D_Jac_d[ijm1km1]);
    Txz = Txz*0.25*(D_Jac_d[ijk]+D_Jac_d[im1jk]+D_Jac_d[ijkm1]+D_Jac_d[im1jkm1]);
    Tyz = Tyz*0.25*(D_Jac_d[ijk]+D_Jac_d[ijm1k]+D_Jac_d[ijkm1]+D_Jac_d[ijm1km1]);
    Tzz = Tzz*D_Jac_d[ijk];
-   *NuGradX = Txx;
-   *NuGradY = Tyy;
+   *NuGradX = Txx+Tzx;
+   *NuGradY = Tyy+Tzy;
    *NuGradZ = Txz+Tyz+Tzz;
 
 } // end cudaDevice_calcConstNuGrad()
@@ -224,7 +255,7 @@ __device__ void cudaDevice_calcConstNuGrad(float* NuGradX, float* NuGradY, float
 * This is the cuda version of taking the divergence of nu_0 times the gradient of a field
 */
 __device__ void cudaDevice_calcDivNuGrad(float* scalarFrhs, float* rho, float* NuGradX, float* NuGradY, float* NuGradZ, int iFld,
-                                         float* J31_d, float* J32_d, float* J33_d,
+                                         float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d,
                                          float* D_Jac_d, float* invD_Jac_d){
 
    int i,j,k,ijk;
@@ -247,7 +278,9 @@ __device__ void cudaDevice_calcDivNuGrad(float* scalarFrhs, float* rho, float* N
     ijkp1 = i*iStride + j*jStride + (k+1)*kStride;
     Frhs_tmp = rho[ijk]*invD_Jac_d[ijk]*D_Jac_d[ijk]
                                         *( (NuGradX[ip1jk]-(NuGradX[im1jk]))*dXi_d*0.5
+                                          +(NuGradX[ijkp1]-(NuGradX[ijkm1]))*dZi_d*0.5*J13_d[ijk]
                                           +(NuGradY[ijp1k]-(NuGradY[ijm1k]))*dYi_d*0.5
+                                          +(NuGradY[ijkp1]-(NuGradY[ijkm1]))*dZi_d*0.5*J23_d[ijk]
                                           +(NuGradZ[ip1jk]-(NuGradZ[im1jk]))*dXi_d*0.5*J31_d[ijk]
                                           +(NuGradZ[ijp1k]-(NuGradZ[ijm1k]))*dYi_d*0.5*J32_d[ijk]
                                           +(NuGradZ[ijkp1]-(NuGradZ[ijkm1]))*dZi_d*0.5*J33_d[ijk]

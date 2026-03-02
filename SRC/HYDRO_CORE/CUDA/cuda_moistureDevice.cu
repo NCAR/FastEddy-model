@@ -35,7 +35,7 @@ float* fcond_d;                          /*Base address for f_cond array*/
 */
 extern "C" int cuda_moistureDeviceSetup(){
    int errorCode = CUDA_MOISTURE_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    cudaMemcpyToSymbol(moistureSelector_d, &moistureSelector, sizeof(int));
    if (moistureSelector > 0){
@@ -49,11 +49,11 @@ extern "C" int cuda_moistureDeviceSetup(){
      cudaMemcpyToSymbol(moistureCondBasePres_d, &moistureCondBasePres, sizeof(int));
      cudaMemcpyToSymbol(moistureMPcallTscale_d, &moistureMPcallTscale, sizeof(float));
 
-     Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-     fecuda_DeviceMalloc(Nelems*moistureNvars*sizeof(float), &moistScalars_d);
-     fecuda_DeviceMalloc(Nelems*moistureNvars*sizeof(float), &moistScalarsFrhs_d);
-     fecuda_DeviceMalloc(Nelems*moistureNvars*3*sizeof(float), &moistTauFlds_d);
-     fecuda_DeviceMalloc(Nelems*sizeof(float), &fcond_d);
+     Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+     fecuda_DeviceMalloc(Nelems*moistureNvars, &moistScalars_d);
+     fecuda_DeviceMalloc(Nelems*moistureNvars, &moistScalarsFrhs_d);
+     fecuda_DeviceMalloc(Nelems*moistureNvars*3, &moistTauFlds_d);
+     fecuda_DeviceMalloc(Nelems, &fcond_d);
    }
 
    return(errorCode);
@@ -76,10 +76,10 @@ extern "C" int cuda_moistureDeviceCleanup(){
 
 }//end cuda_moistureDeviceCleanup()
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCompleteMP(); ----------------------------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreCompleteMP(); ----------------------------------------------
 * Global Kernel for calculating/accumulating moisture (microphysics) forcing Frhs terms   
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteMP(float* hydroFlds_d, float* hydroFldsFrhs_d, float* moistScalars_d,
+__global__ void cudaDevice_hydroCoreCompleteMP(float* hydroFlds_d, float* hydroFldsFrhs_d, float* moistScalars_d,
                                                        float* moistScalarsFrhs_d, float* hydroRhoInv_d, 
                                                        float* hydroPres_d, float* fcond_d, float dt, float* hydroBaseStateFlds_d){ 
 
@@ -93,7 +93,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteMP(float* hydroFlds_d, float
    cudaDevice_thetaCondFrhs(&hydroPres_d[0], &hydroRhoInv_d[0],
                             &hydroFlds_d[fldStride*THETA_INDX], &fcond_d[0], &hydroFldsFrhs_d[fldStride*THETA_INDX]); // forcing to theta (energy exchange)
 
-} // end cudaDevice_hydroCoreUnitTestCompleteMP
+} // end cudaDevice_hydroCoreCompleteMP
 
 /*----->>>>> __device__ void cudaDevice_moistZerothOrder();  --------------------------------------------------
 */

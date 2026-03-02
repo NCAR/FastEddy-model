@@ -53,7 +53,7 @@ int timeGetParams(){
 
    /*query for each TIME_INTEGRATION parameter */
    timeMethod = 0;
-   errorCode = queryIntegerParameter("timeMethod", &timeMethod, 0, 0, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("timeMethod", &timeMethod, 0, 0, PARAM_OPTIONAL);
    Nt = 1000;
    errorCode = queryIntegerParameter("Nt", &Nt, 1, INT_MAX, PARAM_MANDATORY);
    dt = 1.0;
@@ -70,6 +70,7 @@ int timeInit(){
    int errorCode = TIME_INTEGRATION_SUCCESS;
    char *strelem;
    int strLength;
+   char varName[MAX_HC_FLDNAME_LENGTH];
 
    if(mpi_rank_world == 0){
       printComment("TIME_INTEGRATION parameters---");
@@ -108,6 +109,17 @@ int timeInit(){
           mpi_rank_world,mpi_size_world,simTime_it,simTime);
    fflush(stdout);
 
+   /*Register a time variable holding "simTime" or the master simulation time*/
+   errorCode = sprintf(&varName[0],"time");
+   errorCode = ioRegisterVar(&varName[0], "float", 1, dims1dTD, &simTime);
+   
+   /* Add NetCDF attributes for the time variable */
+   errorCode = timeAddTimeAttributes();
+   
+   printf(":Variable = %s stored at %p, has been registered with IO.\n",
+          &varName[0],&simTime);
+   fflush(stdout);
+
    // assign numRKstages and bcast
    if (timeMethod==0) { // 3rd-order Runge-Kutta
      numRKstages = 2;
@@ -117,6 +129,41 @@ int timeInit(){
    return(errorCode);
 } //end timeInit()
 
+/*----->>>>> int timeAddTimeAttributes();       ----------------------------------------------------------------------
+* Add NetCDF attributes to time-related variables registered by the TIME_INTEGRATION module.
+*/
+int timeAddTimeAttributes(){
+   int errorCode = TIME_INTEGRATION_SUCCESS;
+
+   /* Add standard CF convention attributes for the time variable */
+   errorCode = ioAddStandardAttrs("time", "s", "Simulation time", "time");
+   if(errorCode != TIME_INTEGRATION_SUCCESS){
+      printf("Error adding standard attributes to time variable: %d\n", errorCode);
+      return errorCode;
+   }
+
+   errorCode = ioAddVarAttr("time", "axis", "text", "T");
+   if(errorCode != TIME_INTEGRATION_SUCCESS){
+      printf("Error adding axis attribute to time variable: %d\n", errorCode);
+      return errorCode;
+   }
+
+   return errorCode;
+} //end timeAddTimeAttributes()
+
+/*----->>>>> int timeIntBdyPlaneUpdates();       ----------------------------------------------------------------------
+ * Used to broadcast and print parameters, allocate memory, and initialize configuration settings 
+ * for the TIME_INTEGRATION module.
+ */
+int timeIntBdyPlaneUpdates(){
+    int errorCode = TIME_INTEGRATION_SUCCESS;
+
+    //Time integration wrapped call to hydro_core BdyPlane BCs update
+    errorCode = hydro_coreReadNextBndyPlanesFile();
+
+    return(errorCode);
+} //end timeIntBdyPlaneUpdates(()
+  
 /*----->>>>> int timeCleanup();       ----------------------------------------------------------------------
 Used to free all malloced memory by the TIME_INTEGRATION module.
 */

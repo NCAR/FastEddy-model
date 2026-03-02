@@ -40,12 +40,12 @@ __device__ void cudaDevice_calcPerturbationPressureMoist(float* pres, float* rho
 * This is the cuda version of the calcPressureGradientForce routine from the HYDRO_CORE module
 */
 __device__ void cudaDevice_calcPressureGradientForce(float* Frhs_u, float* Frhs_v, float* Frhs_w, float* pres,
-                                                     float* J31_d, float* J32_d, float* J33_d);
+                                                     float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d);
 
 /*----->>>>> __device__ void  cudaDevice_calcPressureGradientForceMoist();  -----------------------------------------
 */ 
 __device__ void cudaDevice_calcPressureGradientForceMoist(float* Frhs_u, float* Frhs_v, float* Frhs_w, float* rho,
                                                           float* pres, float* moistScalars,
-                                                          float* J31_d, float* J32_d, float* J33_d);
+                                                          float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d);
 
 #endif // _PRESSURE_CUDADEV_CU_H

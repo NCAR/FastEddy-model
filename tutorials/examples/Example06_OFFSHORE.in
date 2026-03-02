@@ -79,7 +79,7 @@ surflayer_z0 = 0.1 # roughness length (momentum) when surflayerSelector > 0
 surflayer_z0t = 0.01 # roughness length (temperature) when surflayerSelector > 0
 surflayer_wth = 0.0 # kinematic sensible heat flux at the surface when surflayerSelector = 1
 surflayer_tr = 0.5 # temperature rate at the surface when surflayerSelector = 2 (>0 for warming; <0 for cooling)
-surflayer_wq = 0.0 # sensible heat flux at the surface (kg/kg m s-1) when surflayerSelector = 1
+surflayer_wq = 0.0 # latent heat flux at the surface (kg/kg m s-1) when surflayerSelector = 1
 surflayer_qr = 0.0 # water vapor rate (kg/kg h-1) when surflayerSelector = 2
 surflayer_idealsine = 0 # selector for idealized sinusoidal surface heat flux or skin temperature forcing
 surflayer_ideal_ts = 0.0 # start time in seconds for the idealized sinusoidal surface forcing

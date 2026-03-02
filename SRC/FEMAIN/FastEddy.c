@@ -35,6 +35,11 @@
 #include <time_integration.h>
 #include <cuda_timeInt.h>
 
+/*Model-Extensions includes*/
+#ifdef GAD_EXT
+  #include <GAD.h>
+#endif
+
 /***    main.c    ***/
 int main(int argc, char **argv){
   int errorCode;
@@ -213,7 +218,11 @@ int main(int argc, char **argv){
 #endif
     printf("Reading coordinates and input conditions from %s\n",inFile);
     fflush(stdout);
+#ifdef GAD_EXT
+    errorCode = ioReadNetCDFinFileSingleTime(0, Nx, Ny, Nz, Nh, GADNumTurbines);
+#else
     errorCode = ioReadNetCDFinFileSingleTime(0, Nx, Ny, Nz, Nh);
+#endif
   }else{
 #ifdef DEBUG_INITIALIZATION 
     printf("mpi_rank_world--%d/%d inFile == NULL !!\n",mpi_rank_world,mpi_size_world);
@@ -236,18 +245,19 @@ int main(int argc, char **argv){
   printf("mpi_rank_world--%d/%d Beginning secondary and CUDA preparations!\n",mpi_rank_world,mpi_size_world);
   fflush(stdout);
 #endif
-  /*Allow for Secondary Preparations*/
+  /*Allow for GRID Module Secondary Preparations*/
   errorCode = gridSecondaryPreparations();
+
 #ifdef DEBUG_INITIALIZATION 
   printf("mpi_rank_world--%d/%d Setting hydro_core Base State!\n",mpi_rank_world,mpi_size_world);
   fflush(stdout);
 #endif
-  /*Now that the grid is definitely defined, setup the base state  */
-  errorCode = hydro_coreSetBaseState();
+  /*Now that the grid is definitely defined, perform any secondary HYDRO_CORE module preparations  */
+  errorCode = hydro_coreSecondaryPreparations(dt);
 
   /* inFile exists, allow HYDRO_CORE to preparations specifically from initial conditions */
   if(inFile != NULL){
-    errorCode = hydro_corePrepareFromInitialConditions();
+    errorCode = hydro_corePrepareFromInitialConditions(simTime_itRestart, dt);
   }//end if inFile !=NULL
 
   /*** ---------------------------------------------------------------------------------------------- ***/
@@ -345,7 +355,20 @@ int main(int argc, char **argv){
        fflush(stdout);
      }//endif mpi_rank_world==0
 
-     itTmp = it; 
+     itTmp = it;
+     /*If appropriate timing to do so, update the nesting boundary conditions*/ 
+     if(hydroBCs == 1){
+       if((it%((int)roundf(dtBdyPlaneBCs/dt))==0)&&(it > simTime_itRestart)){    //If due for an update and after the simulation start
+         printf("FastEddy MAin timestepping loop: Reading new BdyPlanes at it=%d...\n",it);
+         fflush(stdout);
+         errorCode = timeIntBdyPlaneUpdates();
+         if((cellpertSelector==1)&&(cellpert_tvcp==1)){ // update CP parameters with dynamic LBCs
+           errorCode = hydro_coreTVCP(dt);
+         } // end if((cellpertSelector==1)&&(cellpert_tvcp==1))
+       }//end if hydroBCs == 1
+     }
+     MPI_Barrier(MPI_COMM_WORLD);
+ 
      if(it%frqOutput == 0){
        MPI_Barrier(MPI_COMM_WORLD); 
        if(mpi_rank_world == 0){
@@ -370,14 +393,23 @@ int main(int argc, char **argv){
        /* Dump the root output file. */
 #ifndef IO_OFF
        if(ioOutputMode==0){
+#ifdef GAD_EXT
+         errorCode = ioWriteNetCDFoutFileSingleTime(it, Nx, Ny, Nz, Nh, GADNumTurbines);
+#else
          errorCode = ioWriteNetCDFoutFileSingleTime(it, Nx, Ny, Nz, Nh);
+#endif
        }else if(ioOutputMode==1){
+#ifdef GAD_EXT
+         errorCode = ioWriteBinaryoutFileSingleTime(it, Nxp, Nyp, Nzp, Nh, GADNumTurbines);
+#else
          errorCode = ioWriteBinaryoutFileSingleTime(it, Nxp, Nyp, Nzp, Nh);
+#endif
        }
 #endif
        mpi_t4 = MPI_Wtime();    //Mark the walltime to measure IO duration
        if(mpi_rank_world == 0){
          printf("Dumped state at timestep = %d...\n",it);
+         fflush(stdout);
        } //if mpi_rank_world
      } //end if (it%frqOutput == 0) ....   (We log summary info and dump outputs)
 #ifdef NOTCUDA 
@@ -385,6 +417,12 @@ int main(int argc, char **argv){
 #else  /* ---------------  CUDA FASTEDDY !!!!! -------------------------  */
      /*Launch the GPU batch timestep kernel*/
      errorCode = cuda_timeIntCommence(itTmp);
+#ifdef GAD_EXT
+     if(GADSelector > 0){
+	//Update the turbine rotor mask output array from new rotorTheta values updated at device-level
+        errorCode = GADUpdateTurbineRotorMask();
+     }
+#endif
            /*Build an Frhs*/
            /*Update the prognostic variables*/
            /*Do any necessary halo exchange*/
@@ -430,11 +468,20 @@ int main(int argc, char **argv){
   /*Dump the final timestep*/
 #ifndef IO_OFF
   if(ioOutputMode==0){
+#ifdef GAD_EXT
+    errorCode = ioWriteNetCDFoutFileSingleTime(it, Nx, Ny, Nz, Nh, GADNumTurbines);
+#else
     errorCode = ioWriteNetCDFoutFileSingleTime(it, Nx, Ny, Nz, Nh);
+#endif
   }else if(ioOutputMode==1){
+#ifdef GAD_EXT
+    errorCode = ioWriteBinaryoutFileSingleTime(it, Nxp, Nyp, Nzp, Nh, GADNumTurbines);
+#else
     errorCode = ioWriteBinaryoutFileSingleTime(it, Nxp, Nyp, Nzp, Nh);
+#endif
   }
 #endif
+  MPI_Barrier(MPI_COMM_WORLD); 
   mpi_t4 = MPI_Wtime();    //Mark the walltime to measure IO duration
   mpi_t2 = MPI_Wtime();    //Mark the walltime to measure final timestep summary and performance.
   if(mpi_rank_world == 0){

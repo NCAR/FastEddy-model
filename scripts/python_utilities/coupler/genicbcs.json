@@ -1,0 +1,12 @@
+{
+  "ICBC_dir": "/path_FEsim/ICBC/",
+  "FE_simGrid": "/path_simgrid/simgrid.0",
+  "WRF_PrntDir": "/path_wrf_data/",
+  "WRF_PrntOutPrefix": "wrf_fasteddy_d01_",
+  "date0": "2024-02-16",
+  "timeHour0": 17,
+  "timeMinute0": 0,
+  "timeSecond0": 0,
+  "secMax": 5401,
+  "secInc": 300
+}

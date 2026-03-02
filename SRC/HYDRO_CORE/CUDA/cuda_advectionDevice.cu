@@ -16,6 +16,7 @@
 /*---ADVECTION*/ 
 float *hydroFaceVels_d; //cell face velocities
 __constant__ int advectionSelector_d;          /*advection scheme selector: 0= 1st-order upwind, 2= 3rd-order QUICK, 2= hybrid 3rd-4th order, 3= hybrid 5th-6th order */
+__constant__ int ceilingAdvectionBC_d; //selector to enforce no normal advection at the domain ceiling
 __constant__ float b_hyb_d;                      /*hybrid advection scheme parameter: 0.0= higer-order upwind, 1.0=lower-order cetered, 0.0 < b_hyb < 1.0 = hybrid */
 
 /*#################------------ ADVECTION submodule function definitions ------------------#############*/
@@ -24,14 +25,15 @@ __constant__ float b_hyb_d;                      /*hybrid advection scheme param
 */
 extern "C" int cuda_advectionDeviceSetup(){
    int errorCode = CUDA_ADVECTION_SUCCESS;
-   int Nelems;
+   size_t Nelems;
    
    cudaMemcpyToSymbol(advectionSelector_d, &advectionSelector, sizeof(int));
+   cudaMemcpyToSymbol(ceilingAdvectionBC_d, &ceilingAdvectionBC, sizeof(int));
    cudaMemcpyToSymbol(b_hyb_d, &b_hyb, sizeof(float));
 
    /*Set the full memory block number of elements for hydroCore fields*/
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   fecuda_DeviceMalloc(Nelems*3*sizeof(float), &hydroFaceVels_d); /*Cell-face Velocities*/
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+   fecuda_DeviceMalloc(Nelems*3, &hydroFaceVels_d); /*Cell-face Velocities*/
 
    return(errorCode);
 } //end cuda_advectionDeviceSetup()
@@ -52,6 +54,7 @@ extern "C" int cuda_advectionDeviceCleanup(){
 * This device function calculates the cell face velocities to prepare for use in the chosen advection scheme
 */
 __device__ void cudaDevice_calcFaceVelocities(float* hydroFlds_d, float* hydroFaceVels_d,
+		                              float* J13_d, float* J23_d,
                                               float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d){
    int i,j,k,ijk;
    int im1jk,ijm1k,ijkm1;
@@ -97,11 +100,11 @@ __device__ void cudaDevice_calcFaceVelocities(float* hydroFlds_d, float* hydroFa
                   ( (D_Jac_d[ijk]/rho[ijk])*(v[ijk] + w[ijk]*J32_d[ijk])
                    +(D_Jac_d[ijm1k]/rho[ijm1k])*(v[ijm1k] + w[ijm1k]*J32_d[ijm1k]));
       w_cf[ijk] = 0.5*dZi_d*
-                 ( (D_Jac_d[ijk]/rho[ijk])*(w[ijk]*J33_d[ijk])
-                  +(D_Jac_d[ijkm1]/rho[ijkm1])*(w[ijkm1]*J33_d[ijkm1]));
+                 ( (D_Jac_d[ijk]/rho[ijk])*(u[ijk]*J13_d[ijk] + v[ijk]*J23_d[ijk] + w[ijk]*J33_d[ijk])
+                  +(D_Jac_d[ijkm1]/rho[ijkm1])*(u[ijkm1]*J13_d[ijkm1] + v[ijkm1]*J23_d[ijkm1] + w[ijkm1]*J33_d[ijkm1]));
 
       //Ensure ground and ceiling face vertical velocity component is set to 0
-      if((k==kMin_d)||((k>=kMax_d))){
+      if((k==kMin_d)||((k>=kMax_d)&&(ceilingAdvectionBC_d==0))){
          w_cf[ijk] = 0.0;
       }//end if k==kMin_d || k>=kMax_d
 #ifdef CUDA_DEBUG

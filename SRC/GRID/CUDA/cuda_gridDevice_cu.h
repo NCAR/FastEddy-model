@@ -44,8 +44,10 @@ extern __constant__ int kMax_d;
 extern float *xPos_d;  /* Cell-center position in x (meters) */
 extern float *yPos_d;  /* Cell-center position in y (meters) */
 extern float *zPos_d;  /* Cell-center position in z (meters) */
-extern float *topoPos_d; /*Topography elevation (z in meters) at the cell center position in x and y. */
+extern float *topoPos_d; /*Terrain elevation (z in meters) at the cell center position in x and y. */
 
+extern float *J13_d;      // dx/d_zeta
+extern float *J23_d;      // dy/d_zeta
 extern float *J31_d;      // dz/d_xi
 extern float *J32_d;      // dz/d_eta
 extern float *J33_d;      // dz/d_zeta
@@ -70,7 +72,7 @@ extern "C" int cuda_gridDeviceCleanup();
 /*----->>>>> __global__ void  cudaDevice_calculateJacobians();  --------------------------------------------------
  * This is the cuda version of the calculateJacobians routine from the GRID module
  * */
-__global__ void cudaDevice_calculateJacobians(float *J31_d, float *J32_d, float *J33_d,
+__global__ void cudaDevice_calculateJacobians(float *J13_d, float *J23_d, float *J31_d, float *J32_d, float *J33_d,
                                               float *D_Jac_d, float *invD_Jac_d,
                                               float *xPos_d, float *yPos_d, float *zPos_d);
 

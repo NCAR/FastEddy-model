@@ -1,0 +1,2 @@
+**advectionSelector:** |br| Advection scheme selector: |br| 0=1st-order upwind |br| 1=3rd-order QUICK |br| 2=hybrid 3rd-4th order |br| 3=hybrid 5th-6th order |br| 4=3rd-order WENO |br| 5=5th-order WENO |br| 6=2nd-order centered, 0, 6, 3, O
+**b_hyb:** |br| Hybrid advection scheme parameter: |br| 0.0=lower-order upwind |br| 1.0=higher-order centered |br| 0.0 < b_hyb < 1.0 = hybrid |br| *C-M if advectionSelector==2 or 3*, 0.0, 1.0, 0.8, O; C-M

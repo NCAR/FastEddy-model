@@ -48,10 +48,10 @@ extern "C" int cuda_moistureDeviceSetup();
 */
 extern "C" int cuda_moistureDeviceCleanup();
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCompleteMP();  -------------------------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreCompleteMP();  -------------------------------------------
 * Global Kernel for calculating/accumulating moisture (microphysics) forcing Frhs terms   
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteMP(float* hydroFlds_d, float* hydroFldsFrhs_d, float* moistScalars_d,
+__global__ void cudaDevice_hydroCoreCompleteMP(float* hydroFlds_d, float* hydroFldsFrhs_d, float* moistScalars_d,
                                                        float* moistScalarsFrhs_d, float* hydroRhoInv_d, 
                                                        float* hydroPres_d, float* fcond_d, float dt, float* hydroBaseStateFlds_d);
 

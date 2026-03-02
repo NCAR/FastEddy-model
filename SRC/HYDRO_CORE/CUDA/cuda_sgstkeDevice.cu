@@ -31,13 +31,13 @@ float* dedxi_d; /*Base address for d(SGSTKE)/dxi field arrays*/
 */
 extern "C" int cuda_sgstkeDeviceSetup(){
    int errorCode = CUDA_SGSTKE_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   fecuda_DeviceMalloc(Nelems*TKESelector*sizeof(float), &sgstkeScalars_d);
-   fecuda_DeviceMalloc(Nelems*TKESelector*sizeof(float), &sgstkeScalarsFrhs_d);
-   fecuda_DeviceMalloc(Nelems*TKESelector*sizeof(float), &sgstke_ls_d);
-   fecuda_DeviceMalloc(Nelems*TKESelector*3*sizeof(float), &dedxi_d);
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+   fecuda_DeviceMalloc(Nelems*TKESelector, &sgstkeScalars_d);
+   fecuda_DeviceMalloc(Nelems*TKESelector, &sgstkeScalarsFrhs_d);
+   fecuda_DeviceMalloc(Nelems*TKESelector, &sgstke_ls_d);
+   fecuda_DeviceMalloc(Nelems*TKESelector*3, &dedxi_d);
 
    cudaMemcpyToSymbol(TKEAdvSelector_d, &TKEAdvSelector, sizeof(int));
    cudaMemcpyToSymbol(TKEAdvSelector_b_hyb_d, &TKEAdvSelector_b_hyb, sizeof(float));
@@ -62,13 +62,13 @@ extern "C" int cuda_sgstkeDeviceCleanup(){
 
 }//end cuda_sgstkeDeviceCleanup()
 
-/*----->>>>> __device__ void  cudaDevice_hydroCoreUnitTestCompleteSGSTKE();  ----------------------------------------
+/*----->>>>> __device__ void  cudaDevice_hydroCoreCompleteSGSTKE();  ----------------------------------------
 * Global Kernel for calculating/accumulating SGSTKE Frhs     
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteSGSTKE(float* hydroFlds_d, float* hydroRhoInv_d, float* hydroTauFlds_d,
+__global__ void cudaDevice_hydroCoreCompleteSGSTKE(float* hydroFlds_d, float* hydroRhoInv_d, float* hydroTauFlds_d,
                                                            float* hydroKappaM_d, float* dedxi_d, float* sgstke_ls_d,
                                                            float* sgstkeScalars_d, float* sgstkeScalarsFrhs_d, float* canopy_lad_d,
-                                                           float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d){ 
+                                                           float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d){ 
 
    int fldStride,iFld;
    fldStride = (Nx_d+2*Nh_d)*(Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
@@ -83,11 +83,11 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteSGSTKE(float* hydroFlds_d, f
                                    &hydroTauFlds_d[fldStride*4], &hydroTauFlds_d[fldStride*3], &hydroTauFlds_d[fldStride*5],
                                    &hydroFlds_d[fldStride*U_INDX], &hydroFlds_d[fldStride*V_INDX], &hydroFlds_d[fldStride*W_INDX],
                                    &hydroRhoInv_d[0], &sgstkeScalarsFrhs_d[fldStride*iFld],
-                                   J31_d, J32_d, J33_d); // shear production term
+                                   J13_d, J23_d, J31_d, J32_d, J33_d); // shear production term
         cudaDevice_sgstkeTurbTransport(&hydroKappaM_d[0], &dedxi_d[fldStride*(iFld*3+0)], &dedxi_d[fldStride*(iFld*3+1)],
                                        &dedxi_d[fldStride*(iFld*3+2)], &hydroFlds_d[fldStride*RHO_INDX],
                                        &sgstkeScalarsFrhs_d[fldStride*iFld],
-                                       J31_d, J32_d, J33_d); // turbulent transport term
+                                       J13_d, J23_d, J31_d, J32_d, J33_d); // turbulent transport term
          if(canopySelector_d==1){ // 1-eq SGSTKE with canopy model
             cudaDevice_canopySGSTKEtransfer(&hydroRhoInv_d[0], &hydroFlds_d[fldStride*U_INDX], &hydroFlds_d[fldStride*V_INDX],
                                             &hydroFlds_d[fldStride*W_INDX], &canopy_lad_d[0],
@@ -97,7 +97,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteSGSTKE(float* hydroFlds_d, f
 	cudaDevice_sgstkeTurbTransport(&hydroKappaM_d[0], &dedxi_d[fldStride*(iFld*3+0)], &dedxi_d[fldStride*(iFld*3+1)],
                                        &dedxi_d[fldStride*(iFld*3+2)], &hydroFlds_d[fldStride*RHO_INDX],
                                        &sgstkeScalarsFrhs_d[fldStride*iFld],
-                                       J31_d, J32_d, J33_d); // turbulent transport term
+                                       J13_d, J23_d, J31_d, J32_d, J33_d); // turbulent transport term
         cudaDevice_sgstkeDissip(&sgstkeScalars_d[fldStride*iFld], &hydroRhoInv_d[0], &sgstke_ls_d[fldStride*iFld],
                                 &sgstkeScalarsFrhs_d[fldStride*iFld], 0, D_Jac_d); // dissipation term
         cudaDevice_canopySGSTKEtransfer(&hydroRhoInv_d[0], &hydroFlds_d[fldStride*U_INDX], &hydroFlds_d[fldStride*V_INDX],
@@ -108,7 +108,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteSGSTKE(float* hydroFlds_d, f
       }
    }
 
-} // end cudaDevice_hydroCoreUnitTestCompleteSGSTKE()
+} // end cudaDevice_hydroCoreCompleteSGSTKE()
 
 /*----->>>>> __device__ void  cudaDevice_sgstkeLengthScale();  --------------------------------------------------
 */
@@ -255,7 +255,7 @@ __device__ void cudaDevice_sgstkeDissip(float* sgstke, float* rhoInv, float* sgs
 */
 __device__ void cudaDevice_sgstkeShearProd(float* tau_11, float* tau_12, float* tau_13, float* tau_22, float* tau_23, float* tau_33, 
                                            float* u, float* v, float* w, float* rhoInv, float* Frhs_sgstke,
-                                           float* J31_d, float* J32_d, float* J33_d){
+                                           float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d){
 
   float term_11,term_12,term_13,term_21,term_22,term_23,term_31,term_32,term_33;
   float f_sgstke_shear;
@@ -282,27 +282,33 @@ __device__ void cudaDevice_sgstkeShearProd(float* tau_11, float* tau_12, float* 
   if((i >= iMin_d)&&(i < iMax_d) && (j >= jMin_d)&&(j < jMax_d) && (k >= kMin_d)&&(k < kMax_d)){
 
     // term_11 = -tau_11*du/dx
-    term_11 = -tau_11[ijk]*0.5*(dXi_d*(u[ip1jk]*rhoInv[ip1jk]-u[im1jk]*rhoInv[im1jk]));
+    term_11 = -tau_11[ijk]*0.5*(dXi_d*(u[ip1jk]*rhoInv[ip1jk]-u[im1jk]*rhoInv[im1jk])
+		               +J13_d[ijk]*dZi_d*(u[ijkp1]*rhoInv[ijkp1]-u[ijkm1]*rhoInv[ijkm1]));
     // term_12 = -tau_12*du/dy
-    term_12 = -tau_12[ijk]*0.5*(dYi_d*(u[ijp1k]*rhoInv[ijp1k]-u[ijm1k]*rhoInv[ijm1k]));
+    term_12 = -tau_12[ijk]*0.5*(dYi_d*(u[ijp1k]*rhoInv[ijp1k]-u[ijm1k]*rhoInv[ijm1k])
+		               +J23_d[ijk]*dZi_d*(u[ijkp1]*rhoInv[ijkp1]-u[ijkm1]*rhoInv[ijkm1]));
     // term_13 = -tau_13*du/dz
     term_13 = -tau_13[ijk]*0.5*(J31_d[ijk]*dXi_d*(u[ip1jk]*rhoInv[ip1jk]-u[im1jk]*rhoInv[im1jk])
                                +J32_d[ijk]*dYi_d*(u[ijp1k]*rhoInv[ijp1k]-u[ijm1k]*rhoInv[ijm1k])
                                +J33_d[ijk]*dZi_d*(u[ijkp1]*rhoInv[ijkp1]-u[ijkm1]*rhoInv[ijkm1]));
 
     // term_21 = -tau_21*dv/dx
-    term_21 = -tau_12[ijk]*0.5*(dXi_d*(v[ip1jk]*rhoInv[ip1jk]-v[im1jk]*rhoInv[im1jk]));
+    term_21 = -tau_12[ijk]*0.5*(dXi_d*(v[ip1jk]*rhoInv[ip1jk]-v[im1jk]*rhoInv[im1jk])
+		               +J13_d[ijk]*dZi_d*(v[ijkp1]*rhoInv[ijkp1]-v[ijkm1]*rhoInv[ijkm1]));
     // term_22 = -tau_22*dv/dy
-    term_22 = -tau_22[ijk]*0.5*(dYi_d*(v[ijp1k]*rhoInv[ijp1k]-v[ijm1k]*rhoInv[ijm1k]));
+    term_22 = -tau_22[ijk]*0.5*(dYi_d*(v[ijp1k]*rhoInv[ijp1k]-v[ijm1k]*rhoInv[ijm1k])
+		               +J23_d[ijk]*dZi_d*(v[ijkp1]*rhoInv[ijkp1]-v[ijkm1]*rhoInv[ijkm1]));
     // term_23 = -tau_23*dv/dz
     term_23 = -tau_23[ijk]*0.5*(J31_d[ijk]*dXi_d*(v[ip1jk]*rhoInv[ip1jk]-v[im1jk]*rhoInv[im1jk])
                                +J32_d[ijk]*dYi_d*(v[ijp1k]*rhoInv[ijp1k]-v[ijm1k]*rhoInv[ijm1k])
                                +J33_d[ijk]*dZi_d*(v[ijkp1]*rhoInv[ijkp1]-v[ijkm1]*rhoInv[ijkm1]));
 
     // term_31 = -tau_31*dw/dx
-    term_31 = -tau_13[ijk]*0.5*(dXi_d*(w[ip1jk]*rhoInv[ip1jk]-w[im1jk]*rhoInv[im1jk]));
+    term_31 = -tau_13[ijk]*0.5*(dXi_d*(w[ip1jk]*rhoInv[ip1jk]-w[im1jk]*rhoInv[im1jk])
+		               +J13_d[ijk]*dZi_d*(w[ijkp1]*rhoInv[ijkp1]-w[ijkm1]*rhoInv[ijkm1]));
     // term_32 = -tau_32*dw/dy
-    term_32 = -tau_23[ijk]*0.5*(dYi_d*(w[ijp1k]*rhoInv[ijp1k]-w[ijm1k]*rhoInv[ijm1k]));
+    term_32 = -tau_23[ijk]*0.5*(dYi_d*(w[ijp1k]*rhoInv[ijp1k]-w[ijm1k]*rhoInv[ijm1k])
+		               +J23_d[ijk]*dZi_d*(w[ijkp1]*rhoInv[ijkp1]-w[ijkm1]*rhoInv[ijkm1]));
     // term_33 = -tau_33*dw/dz
     term_33 = -tau_33[ijk]*0.5*(J31_d[ijk]*dXi_d*(w[ip1jk]*rhoInv[ip1jk]-w[im1jk]*rhoInv[im1jk])
                                +J32_d[ijk]*dYi_d*(w[ijp1k]*rhoInv[ijp1k]-w[ijm1k]*rhoInv[ijm1k])
@@ -326,7 +332,7 @@ __device__ void cudaDevice_sgstkeShearProd(float* tau_11, float* tau_12, float* 
 /*----->>>>> __device__ void  cudaDevice_GradScalar();  --------------------------------------------------
 */
 __device__ void cudaDevice_GradScalar(float* scalar, float* rhoInv, float* dedx, float* dedy, float* dedz,
-                                      float* J31_d, float* J32_d, float* J33_d){
+                                      float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d){
 
   int i,j,k,ijk;
   int im1jk,ijm1k,ijkm1;
@@ -349,9 +355,11 @@ __device__ void cudaDevice_GradScalar(float* scalar, float* rhoInv, float* dedx,
 
   if((i >= iMin_d-1)&&(i < iMax_d+1) && (j >= jMin_d-1)&&(j < jMax_d+1) && (k >= kMin_d-1)&&(k < kMax_d+1)){
 
-    dedx[ijk] = 0.5*(dXi_d*(scalar[ip1jk]*rhoInv[ip1jk]-scalar[im1jk]*rhoInv[im1jk]));
+    dedx[ijk] = 0.5*(dXi_d*(scalar[ip1jk]*rhoInv[ip1jk]-scalar[im1jk]*rhoInv[im1jk])
+		    +J13_d[ijk]*dZi_d*(scalar[ijkp1]*rhoInv[ijkp1]-scalar[ijkm1]*rhoInv[ijkm1]));
 
-    dedy[ijk] = 0.5*(dYi_d*(scalar[ijp1k]*rhoInv[ijp1k]-scalar[ijm1k]*rhoInv[ijm1k]));
+    dedy[ijk] = 0.5*(dYi_d*(scalar[ijp1k]*rhoInv[ijp1k]-scalar[ijm1k]*rhoInv[ijm1k])
+		    +J23_d[ijk]*dZi_d*(scalar[ijkp1]*rhoInv[ijkp1]-scalar[ijkm1]*rhoInv[ijkm1]));
 
     dedz[ijk] = 0.5*(J31_d[ijk]*dXi_d*(scalar[ip1jk]*rhoInv[ip1jk]-scalar[im1jk]*rhoInv[im1jk])
                     +J32_d[ijk]*dYi_d*(scalar[ijp1k]*rhoInv[ijp1k]-scalar[ijm1k]*rhoInv[ijm1k])
@@ -364,7 +372,7 @@ __device__ void cudaDevice_GradScalar(float* scalar, float* rhoInv, float* dedx,
 /*----->>>>> __device__ void  cudaDevice_sgstkeTurbTransport();  --------------------------------------------------
 */
 __device__ void cudaDevice_sgstkeTurbTransport(float* Km, float* dedx, float* dedy, float* dedz, float* rho, float* Frhs_sgstke,
-                                               float* J31_d, float* J32_d, float* J33_d){
+                                               float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d){
 
   float term_x;
   float term_y;
@@ -393,9 +401,11 @@ __device__ void cudaDevice_sgstkeTurbTransport(float* Km, float* dedx, float* de
   if((i >= iMin_d)&&(i < iMax_d) && (j >= jMin_d)&&(j < jMax_d) && (k >= kMin_d)&&(k < kMax_d)){
 
     // -2.0*Km*de/dxi // 2.0 * 0.5 factor of the 2dx derivative cancel out
-    term_x = -(dXi_d*(dedx[ip1jk]*Km[ip1jk]*rho[ip1jk]-dedx[im1jk]*Km[im1jk]*rho[im1jk]));
+    term_x = -(dXi_d*(dedx[ip1jk]*Km[ip1jk]*rho[ip1jk]-dedx[im1jk]*Km[im1jk]*rho[im1jk])
+	       +J13_d[ijk]*dZi_d*(dedx[ijkp1]*Km[ijkp1]*rho[ijkp1]-dedx[ijkm1]*Km[ijkm1]*rho[ijkm1]));
 
-    term_y = -(dYi_d*(dedy[ijp1k]*Km[ijp1k]*rho[ijp1k]-dedy[ijm1k]*Km[ijm1k]*rho[ijm1k]));
+    term_y = -(dYi_d*(dedy[ijp1k]*Km[ijp1k]*rho[ijp1k]-dedy[ijm1k]*Km[ijm1k]*rho[ijm1k])
+	      +J23_d[ijk]*dZi_d*(dedy[ijkp1]*Km[ijkp1]*rho[ijkp1]-dedy[ijkm1]*Km[ijkm1]*rho[ijkm1]));
 
     term_z = -(J31_d[ijk]*dXi_d*(dedz[ip1jk]*Km[ip1jk]*rho[ip1jk]-dedz[im1jk]*Km[im1jk]*rho[im1jk])
               +J32_d[ijk]*dYi_d*(dedz[ijp1k]*Km[ijp1k]*rho[ijp1k]-dedz[ijm1k]*Km[ijm1k]*rho[ijm1k])

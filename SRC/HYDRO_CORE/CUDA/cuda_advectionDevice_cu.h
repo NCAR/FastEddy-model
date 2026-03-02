@@ -23,6 +23,7 @@
 /* Parameters */
 extern float *hydroFaceVels_d; //cell face velocities
 extern __constant__ int advectionSelector_d;  /*advection scheme selector: 0= 1st-order upwind, 1= 3rd-order QUICK, 2= hybrid 3rd-4th order, 3= hybrid 5th-6th order*/
+extern __constant__ int ceilingAdvectionBC_d; //selector to enforce no normal advection at the domain ceiling
 extern __constant__ float b_hyb_d;            /*hybrid advection scheme parameter: 0.0= higer-order upwind, 1.0=lower-order cetered, 0.0 < b_hyb < 1.0 = hybrid*/
 
 /*##############-------------- ADVECTION_CUDADEV submodule function declarations ------------------############*/
@@ -40,6 +41,7 @@ extern "C" int cuda_advectionDeviceCleanup();
 * This device function calculates the cell face velocities to prepare for use in the chosen advection scheme
 */
 __device__ void cudaDevice_calcFaceVelocities(float* hydroFlds_d, float* hydroFaceVels_d,
+		                              float* J13_d, float* J23_d,
                                               float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
 
 /*----->>>>> __device__ void  cudaDevice_UpstreamDivAdvFlux();  --------------------------------------------------

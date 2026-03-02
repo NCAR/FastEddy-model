@@ -3,55 +3,10 @@ import numpy as np
 import xarray as xr
 import pandas as pd
 import matplotlib.pyplot as plt
-from netCDF4 import Dataset
 import math
-from scipy.stats import skew
-from scipy.stats import kurtosis
 import matplotlib.colors as mcolors
 import scipy.fftpack as fftpack
-from scipy import interpolate
 from math import log10, floor
-
-def check_imports():
-   import pkg_resources
-   
-   imports = list(set(get_imports()))
-
-   # The only way I found to get the version of the root package
-   # from only the name of the package is to cross-check the names 
-   # of installed packages vs. imported packages
-   requirements = []
-   for m in pkg_resources.working_set:
-    if m.project_name in imports and m.project_name!="pip":
-        requirements.append((m.project_name, m.version))
-
-   for r in requirements:
-    print("{}=={}".format(*r))
-
-def get_imports():
-    import types
-    for name, val in globals().items():
-        if isinstance(val, types.ModuleType):
-            # Split ensures you get root package, 
-            # not just imported function
-            name = val.__name__.split(".")[0]
-
-        elif isinstance(val, type):
-            name = val.__module__.split(".")[0]
-
-        # Some packages are weird and have different
-        # imported names vs. system/pip names. Unfortunately,
-        # there is no systematic way to get pip names from
-        # a package's imported name. You'll have to had
-        # exceptions to this list manually!
-        poorly_named_packages = {
-            "PIL": "Pillow",
-            "sklearn": "scikit-learn"
-        }
-        if name in poorly_named_packages.keys():
-            name = poorly_named_packages[name]
-
-        yield name
 
 def compute_mean_profiles(FE_xr):
 
@@ -167,20 +122,20 @@ def plot_XY_UVWTHETA(case, case_open, zChoose, save_plot_opt, path_figure, plot_
     zPos = case_open.zPos.isel(time=0,zIndex=zChoose).values
     if (plot_qv_cont==1):
         wsfield = np.sqrt(np.power(ufield,2.0)+np.power(vfield,2.0))
-        ws_min = np.amin(np.amin(wsfield[zChoose,:,:]))
-        ws_max = np.amax(np.amax(wsfield[zChoose,:,:]))
+        ws_min = np.percentile(wsfield[zChoose,:,:].ravel(), 0.01)
+        ws_max = np.percentile(wsfield[zChoose,:,:].ravel(), 99.99)
         qvfield = case_open.qv.isel(time=0).values
-        qv_min = np.amin(np.amin(qvfield[zChoose,:,:]))
-        qv_max = np.amax(np.amax(qvfield[zChoose,:,:]))
-        
-    u_min = np.amin(np.amin(ufield[zChoose,:,:]))
-    u_max = np.amax(np.amax(ufield[zChoose,:,:]))
-    v_min = np.amin(np.amin(vfield[zChoose,:,:]))
-    v_max = np.amax(np.amax(vfield[zChoose,:,:]))
-    w_min = np.amin(np.amin(wfield[zChoose,:,:]))
-    w_max = np.amax(np.amax(wfield[zChoose,:,:]))
-    t_min = np.amin(np.amin(thetafield[zChoose,:,:]))
-    t_max = np.amax(np.amax(thetafield[zChoose,:,:]))
+        qv_min = np.percentile(qvfield[zChoose,:,:].ravel(), 0.01)
+        qv_max = np.percentile(qvfield[zChoose,:,:].ravel(), 99.99)
+
+    u_min = np.percentile(ufield[zChoose,:,:].ravel(), 0.01)
+    u_max = np.percentile(ufield[zChoose,:,:].ravel(), 99.99)
+    v_min = np.percentile(vfield[zChoose,:,:].ravel(), 0.01)
+    v_max = np.percentile(vfield[zChoose,:,:].ravel(), 99.99)
+    w_min = np.percentile(wfield[zChoose,:,:].ravel(), 0.01)
+    w_max = np.percentile(wfield[zChoose,:,:].ravel(), 99.99)
+    t_min = np.percentile(thetafield[zChoose,:,:].ravel(), 0.01)
+    t_max = np.percentile(thetafield[zChoose,:,:].ravel(), 99.99)
     
     fig_name = "UVWTHETA-XY-"+case+".png"
     if (plot_u_map==1):
@@ -297,23 +252,23 @@ def plot_XZ_UVWTHETA(case, case_open, z_max, sizeX_XZ, sizeY_XZ, save_plot_opt, 
     zPos_1d = zPos[:,0]
     diff_z = np.abs(zPos_1d - z_max)
     ind_zmax = np.where(diff_z==np.min(diff_z))[0][0]
-            
-    u_min = np.amin(np.amin(ufield[0:ind_zmax,yChoose,:]))
-    u_max = np.amax(np.amax(ufield[0:ind_zmax,yChoose,:]))
-    v_min = np.amin(np.amin(vfield[0:ind_zmax,yChoose,:]))
-    v_max = np.amax(np.amax(vfield[0:ind_zmax,yChoose,:]))
-    w_max = np.amax(np.amax(np.abs(wfield[0:ind_zmax,yChoose,:])))
+    
+    u_min = np.percentile(ufield[0:ind_zmax,yChoose,:].ravel(), 0.01)
+    u_max = np.percentile(ufield[0:ind_zmax,yChoose,:].ravel(), 99.99)
+    v_min = np.percentile(vfield[0:ind_zmax,yChoose,:].ravel(), 0.01)
+    v_max = np.percentile(vfield[0:ind_zmax,yChoose,:].ravel(), 99.99)
+    w_max = np.percentile(np.abs(wfield[0:ind_zmax,yChoose,:]).ravel(), 99.99)
     w_min = -w_max
-    t_min = np.amin(np.amin(thetafield[0:ind_zmax,yChoose,:]))
-    t_max = np.amax(np.amax(thetafield[0:ind_zmax,yChoose,:]))
+    t_min = np.percentile(thetafield[0:ind_zmax,yChoose,:].ravel(), 0.01)
+    t_max = np.percentile(thetafield[0:ind_zmax,yChoose,:].ravel(), 99.99)
 
     if (plot_qv_cont==1):
         wsfield = np.sqrt(np.power(ufield,2.0)+np.power(vfield,2.0))
-        ws_min = np.amin(np.amin(wsfield[0:ind_zmax,yChoose,:]))
-        ws_max = np.amax(np.amax(wsfield[0:ind_zmax,yChoose,:]))
+        ws_min = np.percentile(wsfield[0:ind_zmax,yChoose,:].ravel(), 0.01)
+        ws_max = np.percentile(wsfield[0:ind_zmax,yChoose,:].ravel(), 99.99)
         qvfield = case_open.qv.isel(time=0).values
-        qv_min = np.amin(np.amin(qvfield[0:ind_zmax,yChoose,:]))
-        qv_max = np.amax(np.amax(qvfield[0:ind_zmax,yChoose,:]))
+        qv_min = np.percentile(qvfield[0:ind_zmax,yChoose,:].ravel(), 0.01)
+        qv_max = np.percentile(qvfield[0:ind_zmax,yChoose,:].ravel(), 99.99)
 
     fig_name = "UVWTHETA-XZ-"+case+".png"
     colormap1 = 'viridis'
@@ -843,7 +798,8 @@ def plot_pdfs(fig, axs, FE_xr, case, save_plot_opt, path_figure):
     var0_max = np.max(var0)
     var1_min = np.min(var1)
     var1_max = np.max(var1)
-
+    print(f"var0 (min,max) = ({var0_min},{var0_max})")
+    print(f"var1 (min,max) = ({var1_min},{var1_max})")
     pdf_inc_0 = (var0_max-var0_min)/60
     pdf_inc_1 = (var1_max-var1_min)/60
     
@@ -1142,3 +1098,4 @@ def plot_YZ_DISPERSION(case, case_open, xDisper, min_c_val, max_c_val, save_plot
     if (save_plot_opt==1):
         print(path_figure + fig_name)
         plt.savefig(path_figure + fig_name,dpi=300,bbox_inches = "tight")
+

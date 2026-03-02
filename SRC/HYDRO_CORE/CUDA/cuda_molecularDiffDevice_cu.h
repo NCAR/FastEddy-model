@@ -40,12 +40,12 @@ extern "C" int cuda_molecularDiffDeviceSetup();
 */
 extern "C" int cuda_molecularDiffDeviceCleanup();
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCompleteMolecularDiffusion();  --------------------------------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreCompleteMolecularDiffusion();  --------------------------------------------------
 * Global Kernel for calculating/accumulating molecular diffusion Frhs terms   
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteMolecularDiffusion(float* hydroFlds, float* hydroFldsFrhs,
+__global__ void cudaDevice_hydroCoreCompleteMolecularDiffusion(float* hydroFlds, float* hydroFldsFrhs,
                                                                        float* hydroNuGradXFlds_d, float* hydroNuGradYFlds_d, float* hydroNuGradZFlds_d,
-                                                                       float* J31_d, float* J32_d, float* J33_d,
+                                                                       float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d,
                                                                        float* D_Jac_d, float* invD_Jac_d);
 
 /*----->>>>> __device__ void cudaDevice_diffusionDriver();  --------------------------------------------------
@@ -53,7 +53,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteMolecularDiffusion(float* hy
 * of an arbitrary field. 
 */
 __device__ void cudaDevice_diffusionDriver(float* fld, float* NuGradX, float* NuGradY,float* NuGradZ, float inv_pr,
-                                           float* J31_d, float* J32_d, float* J33_d,
+                                           float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d,
                                            float* D_Jac_d);
 
 
@@ -66,14 +66,14 @@ __device__ void cudaDevice_calcConstNuGrad(float* NuGradX, float* NuGradY, float
                                            float* sFld_im1jm1k, float* sFld_im1jkm1, float* sFld_ijm1km1,
                                            float* sFld_im1jp1k, float* sFld_im1jkp1, float* sFld_ijm1kp1,
                                            float* sFld_ip1jkm1, float* sFld_ip1jm1k, float* sFld_ijp1km1, float inv_pr,
-                                           float* J31_d, float* J32_d, float* J33_d,
+                                           float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d,
                                            float* D_Jac_d);
 
 /*----->>>>> __device__ void cudaDevice_calcDivNuGrad();  --------------------------------------------------
 * This is the cuda version of taking the divergence of nu_0 times the gradient of a field
 */
 __device__ void cudaDevice_calcDivNuGrad(float* scalarFrhs, float* rho, float* NuGradX, float* NuGradY, float* NuGradZ, int iFld,
-                                         float* J31_d, float* J32_d, float* J33_d,
+                                         float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d,
                                          float* D_Jac_d, float* invD_Jac_d);
 
 #endif // _MOLDIFF_CUDADEV_CU_H

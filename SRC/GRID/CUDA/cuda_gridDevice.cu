@@ -47,8 +47,10 @@ __constant__ int kMax_d;
 float *xPos_d;  // Cell-center position in x (meters) 
 float *yPos_d;  // Cell-center position in y (meters) 
 float *zPos_d;  // Cell-center position in z (meters) 
-float *topoPos_d; //Topography elevation (z in meters) at the cell center position in x and y. 
+float *topoPos_d; //Terrain elevation (z in meters) at the cell center position in x and y. 
 
+float *J13_d;      // dx/d_zeta
+float *J23_d;      // dy/d_zeta
 float *J31_d;      // dz/d_xi
 float *J32_d;      // dz/d_eta
 float *J33_d;      // dz/d_zeta
@@ -62,7 +64,7 @@ float *invD_Jac_d; //inverse Determinant of the Jacbian
 */
 extern "C" int cuda_gridDeviceSetup(){
    int errorCode = CUDA_GRID_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 #ifdef DEBUG 
    cudaEvent_t startE, stopE;
    float elapsedTime;
@@ -98,19 +100,21 @@ extern "C" int cuda_gridDeviceSetup(){
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
 
    /*Set the full memory block number of elements for grid fields*/
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh); 
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)); 
    /* Allocate the GRID arrays */
    /* Coordinate Arrays */
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &xPos_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &yPos_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &zPos_d);
-   fecuda_DeviceMalloc(((Nxp+2*Nh)*(Nyp+2*Nh))*sizeof(float), &topoPos_d);
+   fecuda_DeviceMalloc(Nelems, &xPos_d);
+   fecuda_DeviceMalloc(Nelems, &yPos_d);
+   fecuda_DeviceMalloc(Nelems, &zPos_d);
+   fecuda_DeviceMalloc((size_t)((Nxp+2*Nh)*(Nyp+2*Nh)), &topoPos_d);
    /* Metric Tensors Fields */
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J31_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J32_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &J33_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &D_Jac_d);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &invD_Jac_d);
+   fecuda_DeviceMalloc(Nelems, &J13_d);
+   fecuda_DeviceMalloc(Nelems, &J23_d);
+   fecuda_DeviceMalloc(Nelems, &J31_d);
+   fecuda_DeviceMalloc(Nelems, &J32_d);
+   fecuda_DeviceMalloc(Nelems, &J33_d);
+   fecuda_DeviceMalloc(Nelems, &D_Jac_d);
+   fecuda_DeviceMalloc(Nelems, &invD_Jac_d);
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
 
    /* cudaMemcpy the GRID arrays from Host to Device*/
@@ -119,6 +123,8 @@ extern "C" int cuda_gridDeviceSetup(){
    cudaMemcpy(yPos_d, yPos, Nelems*sizeof(float), cudaMemcpyHostToDevice);
    cudaMemcpy(zPos_d, zPos, Nelems*sizeof(float), cudaMemcpyHostToDevice);
    cudaMemcpy(topoPos_d, topoPos, ((Nxp+2*Nh)*(Nyp+2*Nh))*sizeof(float), cudaMemcpyHostToDevice);
+   cudaMemcpy(J13_d, J13, Nelems*sizeof(float), cudaMemcpyHostToDevice);
+   cudaMemcpy(J23_d, J23, Nelems*sizeof(float), cudaMemcpyHostToDevice);
    cudaMemcpy(J31_d, J31, Nelems*sizeof(float), cudaMemcpyHostToDevice);
    cudaMemcpy(J32_d, J32, Nelems*sizeof(float), cudaMemcpyHostToDevice);
    cudaMemcpy(J33_d, J33, Nelems*sizeof(float), cudaMemcpyHostToDevice);
@@ -134,7 +140,7 @@ extern "C" int cuda_gridDeviceSetup(){
    printf("Calling cudaDevice_calculateJacobians...\n");
    printf("grid = {%d, %d, %d}\n",grid.x, grid.y, grid.z);
    printf("tBlock = {%d, %d, %d}\n",tBlock.x, tBlock.y, tBlock.z);
-   cudaDevice_calculateJacobians<<<grid, tBlock>>>(J31_d, J32_d, J33_d,
+   cudaDevice_calculateJacobians<<<grid, tBlock>>>(J13_d, J23_d, J31_d, J32_d, J33_d,
                                                   D_Jac_d, invD_Jac_d, xPos_d, yPos_d, zPos_d);
    gpuErrchk( cudaPeekAtLastError() );
    gpuErrchk( cudaDeviceSynchronize() );
@@ -145,6 +151,8 @@ extern "C" int cuda_gridDeviceSetup(){
 
    /* cudaMemcpy the GPU-computed GRID arrays from Device Host*/
    /* Coordinate Arrays */
+   cudaMemcpy(J13, J13_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost);
+   cudaMemcpy(J23, J23_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost);
    cudaMemcpy(J31, J31_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost);
    cudaMemcpy(J32, J32_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost);
    cudaMemcpy(J33, J33_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost);
@@ -166,14 +174,19 @@ extern "C" int cuda_gridDeviceCleanup(){
 
    /* Free any GRID module arrays */
     /* metric tensor fields */
+   cudaFree(J13_d); 
+   cudaFree(J23_d); 
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    cudaFree(J31_d); 
    cudaFree(J32_d); 
    cudaFree(J33_d); 
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    cudaFree(D_Jac_d); 
    cudaFree(invD_Jac_d); 
     /* coordinate fields */
    cudaFree(xPos_d); 
    cudaFree(yPos_d); 
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    cudaFree(zPos_d); 
    cudaFree(topoPos_d); 
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
@@ -185,7 +198,7 @@ extern "C" int cuda_gridDeviceCleanup(){
 /*----->>>>> __global__ void  cudaDevice_calculateJacobians();  --------------------------------------------------
 This is the cuda version of the calculateJacobians routine from the GRID module
 */
-__global__ void cudaDevice_calculateJacobians(float *J31_d, float *J32_d, float *J33_d,
+__global__ void cudaDevice_calculateJacobians(float *J13_d, float *J23_d, float *J31_d, float *J32_d, float *J33_d,
                                               float *D_Jac_d, float *invD_Jac_d,
                                               float *xPos_d, float *yPos_d, float *zPos_d){
   int i,j,k;
@@ -252,14 +265,18 @@ __global__ void cudaDevice_calculateJacobians(float *J31_d, float *J32_d, float 
      }//finite check */
 #endif
      /*Set the elements*/
-     /*d(x,y,z)/d_zetaa*/
+     /*dx/d_zeta*/
+     J13_d[ijk] =  (T[1]*T[5] - T[2]*T[4])*invD_Jac_d[ijk];
+     /*dy/d_zeta*/
+     J23_d[ijk] = -(T[0]*T[5] - T[2]*T[3])*invD_Jac_d[ijk];
+     /*dz/d_(xi, eta, zeta)*/
      J31_d[ijk] = (T[3]*T[7] - T[4]*T[6])*invD_Jac_d[ijk];
-     J32_d[ijk] = (T[0]*T[7] - T[1]*T[6])*invD_Jac_d[ijk];
+     J32_d[ijk] = -(T[0]*T[7] - T[1]*T[6])*invD_Jac_d[ijk];
      J33_d[ijk] = (T[0]*T[4] - T[1]*T[3])*invD_Jac_d[ijk];
 #ifdef DEBUG
    if((i==64)&&(j==64)&&(k==64)){
-     printf("At (%d, %d, %d):\n\t\t J31=%f, J32=%f, J33=%f,\n\t\t D_Jac=%f, invD_Jac=%f\n",
-             i,j,k, J31_d[ijk],J32_d[ijk],J33_d[ijk],
+     printf("At (%d, %d, %d)::\n\t\t J13=%f, J23=%f,\n\t\t J31=%f, J32=%f, J33=%f,\n\t\t D_Jac=%f, invD_Jac=%f\n",
+             i,j,k, J13_d[ijk],J23_d[ijk],J31_d[ijk],J32_d[ijk],J33_d[ijk],
                     D_Jac_d[ijk],invD_Jac_d[ijk]);
    }
 #endif

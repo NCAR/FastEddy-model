@@ -81,6 +81,8 @@ int fempi_GetParams(){
    int errorCode = FEMPI_SUCCESS;
 
    /*query for each FEMPI parameter */
+   numProcsX=1; // default to 1
+   numProcsY=1; // default to 1
    errorCode = queryIntegerParameter("numProcsX", &numProcsX, 1, INT_MAX, PARAM_MANDATORY);
    errorCode = queryIntegerParameter("numProcsY", &numProcsY, 1, INT_MAX, PARAM_MANDATORY);
 
@@ -612,6 +614,7 @@ int fempi_ScatterVariable(int srcNx,int srcNy,int srcNz,
    int iMin,iMax,jMin,jMax,kMin;
    int rankStart;
    int destNhz;
+   void* memsetReturnVal;
 
    //Determine if this is 3-d or 2-d field and set/omit z-direction halos accordingly
    if(destNz > 1){
@@ -630,6 +633,13 @@ int fempi_ScatterVariable(int srcNx,int srcNy,int srcNz,
    k=0;
    /*Prepare a buffer data array to scatter the global data*/
    if(mpi_rank_world == 0){
+     /*Ensure the fempi_DataBuffer is set to zero everywhere on this call, note the full size of the buffer fixed regardless of the field being scattered*/
+     memsetReturnVal = memset(fempi_DataBuffer,0,(mpi_size_world)*(Nxp+2*destNh)*(Nyp+2*destNh)*(Nzp+2*destNh)*sizeof(float));
+     if(memsetReturnVal == NULL){
+       fprintf(stderr, "Rank %d/%d fempi_ScatterVariable():WARNING memsetReturnVal == NULL!\n",
+               mpi_rank_world,mpi_size_world);
+     }
+
      if(srcNz > 1){ //This must be a 3-D field
        for(iRank=0; iRank < numProcsX*numProcsY; iRank++){
          for(i=iMin; i < iMax; i++){
@@ -679,6 +689,7 @@ int fempi_GatherVariable(int srcNx,int srcNy,int srcNz, int srcNh,
    int iMin,iMax,jMin,jMax,kMin;
    int rankStart;
    int srcNhz;
+   void* memsetReturnVal;
 
    if(srcNz > 1){
     srcNhz = srcNh;
@@ -691,6 +702,15 @@ int fempi_GatherVariable(int srcNx,int srcNy,int srcNz, int srcNh,
    jMin = srcNh;
    jMax = srcNy+srcNh;
    kMin = srcNh;
+
+   if(mpi_rank_world == 0){
+     /*Ensure the fempi_DataBuffer is set to zero everywhere on this call, note the full size of the buffer fixed regardless of the field being scattered*/
+     memsetReturnVal = memset(fempi_DataBuffer,0,(mpi_size_world)*(Nxp+2*srcNh)*(Nyp+2*srcNh)*(Nzp+2*srcNh)*sizeof(float));
+     if(memsetReturnVal == NULL){
+       fprintf(stderr, "Rank %d/%d fempi_ScatterVariable():WARNING memsetReturnVal == NULL!\n",
+               mpi_rank_world,mpi_size_world);
+     }
+   } //end if mpi_rank_world == 0   
 
    //Gather the srcFld arrays back into fempi_DataBuffer and collect into fempi_DataBuffer
    MPI_Gather(srcFld,(srcNx+2*srcNh)*(srcNy+2*srcNh)*(srcNz+2*srcNhz),MPI_FLOAT,

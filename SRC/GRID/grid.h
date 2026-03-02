@@ -30,10 +30,10 @@ extern char *topoFile;  //A file containing a complete grid specification
 extern int Nh;          //Number of halo cells to be used (dependent on largest stencil extent)
 extern int Nx, Ny, Nz;  //Complete Cartesian Domain extents in the x, y, and z directions 
 extern float d_xi, d_eta, d_zeta; //Computational Domain fixed resolutions (i, j, k respectively)
-extern int coordHorizHalos; //switch to setup coordiante halos as periodic, or gradient following
+extern int coordHorizHalos; //switch to setup coordinate halos as periodic, or gradient following
 extern int verticalDeformSwitch; //switch to use vertical coordinate deformation
 extern float verticalDeformFactor; // factor used under vertical deformation (0.0-1.0)
-extern float verticalDeformQuadCoeff; // quadratic term coefficient in the deformtion scheme (default = 0.0)
+extern float verticalDeformQuadCoeff; // quadratic term coefficient in the deformation scheme (default = 0.0)
 extern int iMin, iMax; //Constant min and max bounds of i-index accounting for only non-halos cells of the mpi_rank subdomain
 extern int jMin, jMax; //Constant min and max bounds of j-index accounting for only non-halos cells of the mpi_rank subdomain
 extern int kMin, kMax; //Constant min and max bounds of k-index accounting for only non-halos cells of the mpi_rank subdomain
@@ -46,8 +46,17 @@ extern float dXi, dYi, dZi; //inverse of the reference computational model coord
 extern float *xPos;  /* Cell-center position in x (meters) */
 extern float *yPos;  /* Cell-center position in y (meters) */
 extern float *zPos;  /* Cell-center position in z (meters) */
-extern float *topoPos; /*Topography elevation (z in meters) at the cell center position in x and y. */
-extern float *topoPosGlobal; /*Topography elevation (z in meters) at the cell center position in x and y. (Global domain) */
+extern float *topoPos; /*Terrain elevation (z in meters) at the cell center position in x and y. */
+extern float *topoPosGlobal; /*Terrain elevation (z in meters) at the cell center position in x and y. (Global domain) */
+
+//extern float *J11;      // dx/d_xi  -- assumed = 1.0
+//extern float *J12;      // dx/d_eta -- assumed = 0.0
+
+//extern float *J21;      // dy/d_xi  -- assumed = 0.0
+//extern float *J22;      // dy/d_eta -- assumed = 1.0
+
+extern float *J13;      // dx/d_zeta
+extern float *J23;      // dy/d_zeta
 
 extern float *J31;      // dz/d_xi
 extern float *J32;      // dz/d_eta

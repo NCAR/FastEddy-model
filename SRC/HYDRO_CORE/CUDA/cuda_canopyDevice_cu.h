@@ -1,3 +1,18 @@
+/* FastEddy®: SRC/HYDRO_CORE/CUDA/cuda_canopyDevice_cu.h
+* ©2016 University Corporation for Atmospheric Research
+* 
+* This file is licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+* 
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef _CANOPY_CUDADEV_CU_H
 #define _CANOPY_CUDADEV_CU_H
 
@@ -24,10 +39,10 @@ extern "C" int cuda_canopyDeviceSetup();
 */
 extern "C" int cuda_canopyDeviceCleanup();
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCompleteCanopy();  ----------------------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreCompleteCanopy();  ----------------------------------------
  * Global Kernel for Canopy model
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteCanopy(float* hydroFlds_d, float* hydroRhoInv_d, float* canopy_lad_d, float* hydroFldsFrhs_d);
+__global__ void cudaDevice_hydroCoreCompleteCanopy(float* hydroFlds_d, float* hydroRhoInv_d, float* canopy_lad_d, float* hydroFldsFrhs_d);
 
 /*----->>>>> __device__ void  cudaDevice_canopyMomDrag();  --------------------------------------------------
 */ // This cuda kernel calculates the forcing term to the momentum equations due to canopy drag

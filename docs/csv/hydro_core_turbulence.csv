@@ -1,0 +1,6 @@
+**turbulenceSelector:** |br| Turbulence scheme selector: |br| 0=None |br| 1=Lilly/Smagorinsky, 0, 1, 0, M
+**TKESelector:** |br| Prognostic TKE selector: |br| 0=None |br| 1=Prognostic |br| 2=requires canopySelector=1, 0, 2, 1, O
+**TKEAdvSelector:** |br| SGSTKE advection selector, 0, 6, 0, O
+**TKEAdvSelector_b_hyb:** |br| Hybrid advection scheme parameter, 0.0, 1.0, 0.0, O
+**c_s:** |br| Smagorinsky turbulence model constant used for turbulenceSelector=1 with TKESelector=0, 1e-6, 1e6, 0.18, O
+**c_k:** |br| Lilly turbulence model constant used for turbulenceSelector=1 with TKESelector>0, 1e-6, 1e6, 0.10, O

@@ -1,0 +1,160 @@
+Description = This is an example of multiscale WRF-FE over Fort Collins (CO).
+#--MPI_AALES
+numProcsX = 4 # Number of cores to be used for horizontal domain decomposition in X
+numProcsY = 1 # Number of cores to be used for horizontal domain decomposition in Y
+#--CUDA_AALES
+tBx = 1 # Number of threads in x-dimension
+tBy = 8 # Number of threads in y-dimension
+tBz = 32 # Number of threads in z-dimension
+#--IO
+inPath = ./ICBC/ # Path where initial/restart file is read in from
+inFile = FE_interp_170000UTC.0 # name of the input file for coordinate system and initial or restart conditions
+outPath = ./output/ # ./output/ # Path where output files are to be written
+outFileBase = FE_ftCollins # Base name of the output file series as in (outFileBase).element-in-series
+frqOutput = 9600 # frequency (in timesteps) at which to produce output
+ioOutputMode = 0 # 0: N-to-1 gather and write to a netcdf file, 1:N-to-N writes of FastEddy binary files
+#--GRID
+Nx = 448 # Number of discretised domain elements in the x (zonal) direction
+Ny = 450 # Number of discretised domain elements in the y (meridional) direction
+Nz = 58 # Number of discretised domain elements in the z (vertical) direction
+Nh = 3 # Number of halo cells to be used (dependent on largest stencil extent)
+d_xi = 15.0 # Computational domain fixed resolution in the 'i' direction
+d_eta = 15.0 # Computational domain fixed resolution in the 'j' direction
+d_zeta = 67.0 # Computational domain fixed resolution in the 'k' direction
+coordHorizHalos = 1 # switch to setup coordiante halos as periodic=1 or gradient-following=0
+topoFile = ./FortCollinsCO_Topography_448x450.dat # A file containing topography (surface elevation in meters ASL)
+verticalDeformSwitch = 1 # switch to use vertical coordinate deformation 0=off, 1=on
+verticalDeformFactor = 0.42 # deformation factor (0.0=max compression,  1.0=no compression)
+verticalDeformQuadCoeff = 0.0 # deformation factor (0.0=max compression,  1.0=no compression)
+#--TIME_INTEGRATION
+timeMethod = 0 # Selector for time integration method. [0=RK3-WS2002 (default)]
+Nt = 163200 # Number of timesteps to perform
+dt = 0.03125 # timestep resolution in seconds
+NtBatch = 9600 # Number of timesteps to compute in batch launch, must have NtBatch <= Nt
+#--HYDRO_CORE
+##------------: HYDRO_CORE Submodule Selectors ---
+#----------: Boundary Conditions Set ---
+hydroBCs =  1 # Selector for hydro BC set. 2= periodicHorizVerticalAbl
+ceilingAdvectionBC = 1 #selector for normal advection at the domain ceiling (0=zero-valued w-BC, 1=non-zero w-BC)
+hydroBndysFileBase = ./ICBC/FE_Bndys # ./ICBC/FE_Bndys #
+hydroBndysFileStart = 0 #
+hydroBndysFileEnd = 16
+dtBdyPlaneBCs = 300.0
+##----------: HYDRO_IO/LOGGGING ---
+hydroForcingWrite = 0 # Switch for dumping hydroFldsFrhs for prognositic fields. 0 = off, 1=on
+hydroSubGridWrite = 0 # Switch for dumping Tauij fields. 0 = off, 1=on
+hydroForcingLog = 0 # switch for logging Frhs min/max, etc.
+##----------: ADVECTION ---
+advectionSelector = 3 # advection scheme selector: 0= 1st-order upwind, 1= 3rd-order QUICK, 2= hybrid 3rd-4th order, 3= hybrid 5th-6th order
+b_hyb = 0.0 # hybrid advection scheme parameter: 0.0= lower-order upwind, 1.0=higher-order cetered, 0.0 < b_hyb < 1.0 = hybrid
+##------------: MOISTURE ---
+moistureSelector = 1 # moisture selector: 0=off, 1=on
+moistureNvars = 2 # number of moisture species
+moistureAdvSelectorQv = 3 # water vapor advection scheme selector
+moistureAdvSelectorQv_b = 0.0 # hybrid advection scheme parameter for water vapor
+moistureAdvSelectorQi = 1 # moisture advection scheme selector for non-qv fields (non-oscillatory schemes)
+moistureSGSturb = 1 # selector to apply sub-grid scale diffusion to moisture fields
+moistureCond = 3 # selector to apply condensation to mositure fields
+moistureCondTscale = 1.0 # relaxation time in seconds
+moistureCondBasePres = 1 #selector to use base pressure for microphysics
+moistureMPcallTscale = 1.0 # time scale for microphysics to be called
+##------------: CORIOLIS ---
+coriolisSelector = 1  #Coriolis switch: 0 off, 1 on
+coriolisLatitude = 40.5948 # Charactersitc latitude in degrees from equator of the LES domain
+## ----------: TURBULENCE ---
+turbulenceSelector = 1 # turbulence scheme selector: 0= none, 1= Lilly/Smagorinsky
+TKESelector = 1 # Prognostic TKE selector: 0= none, 1= Prognostic
+TKEAdvSelector = 3 # SGSTKE advection selector
+TKEAdvSelector_b_hyb = 0.0
+c_s = 0.18 # Smagorinsky turbulence model constant used for turbulenceSelector = 1 with TKESelector = 0
+c_k = 0.10 # Lilly turbulence model constant used for turbulenceSelector = 1 with TKESelector > 0
+##------------: CANOPY ---
+canopySelector = 0 # canopy selector: 0=off, 1=on
+canopySkinOpt = 0 # canopy selector to use additional skin friction effect on drag coefficient: 0=off, 1=on
+canopy_cd = 0.15 # non-dimensional canopy drag coefficient cd coefficient
+canopy_lf = 0.1 # representative canopy element length scale
+##------------: DIFFUSION ---
+diffusionSelector = 0 # diffusivity selector: 0= none, 1= const.
+nu_0 = 0.0 # constant diffusivity used when diffusionSelector = 1
+##----------: AUXILIARY SCALARS ---
+NhydroAuxScalars = 0 # Number of prognostic auxiliary scalar fields
+AuxScAdvSelector = 0 # advection scheme for auxiliary scalar fields
+AuxScAdvSelector_b_hyb = 0.0
+AuxScSGSturb = 1 # selector to apply sub-grid scale diffusion to auxiliary scalar fields
+## ----------: AUXILIARY SCALAR SOURCES ---
+srcAuxScFile= #./Example07_sources.nc
+##------------: EXPLICIT FILTERS ---
+filterSelector = 1 # explicit filter selector: 0=off, 1=on
+filter_6thdiff_vert = 1
+filter_6thdiff_vert_coeff = 0.03 # vertical 6th-order filter factor: 0.0=off, 1.0=full
+##----------: RAYLEIGH DAMPING LAYER ---
+dampingLayerSelector = 0 # Rayleigh damping layer selector: 0= off, 1= on.
+dampingLayerDepth = 600.0 # Rayleigh damping layer depth in meters
+##----------: SURFACE LAYER ---
+surflayerSelector = 3 # surfacelayer selector: 0= off, 1= surface kinematic heat flux (surflayer_wth), 2=sking temperature rate (surflayer_tr)
+surflayer_z0 = 0.1 # roughness length (momentum) when surflayerSelector > 0
+surflayer_z0t = 0.1 # 0.01 # roughness length (temperature) when surflayerSelector > 0
+surflayer_z0tdyn = 1 # dynamic z0t calculation following Zilitinkevich (1995) approach: 0= off, 1= constant Zilitinkevich coeff, 2= variable Zilitinkevich coeff
+surflayer_wth = 0.25 # kinematic sensible heat flux at the surface when surflayerSelector = 1
+surflayer_tr = -0.50 # temperature rate at the surface when surflayerSelector = 2 (>0 for warming; <0 for cooling)
+surflayer_wq = 0.0 # latent heat flux at the surface (kg/kg m s-1) when surflayerSelector = 1
+surflayer_qr = 0.0 # water vapor rate (kg/kg h-1) when surflayerSelector = 2
+surflayer_idealsine = 0 # selector for idealized sinusoidal surface heat flux or skin temperature forcing
+surflayer_ideal_ts = 0.0 # start time in seconds for the idealized sinusoidal surface forcing
+surflayer_ideal_te = 43200 # end time in seconds for the idealized sinusoidal surface forcing
+surflayer_ideal_amp = 4.0 # maximum amplitude of the idealized sinusoidal surface forcing
+surflayer_ideal_qts = 1.75 # start time in seconds for the idealized sinusoidal surface forcing (qv)
+surflayer_ideal_qte = 10.0 # end time in seconds for the idealized sinusoidal surface forcing (qv)
+surflayer_ideal_qamp = 2.0 # maximum amplitude of the idealized sinusoidal surface forcing (qv)
+surflayer_offshore = 1 # offshore selector: 0=off, 1=on
+surflayer_offshore_opt = 4 # offshore roughness parameterization: ==0 (Charnock), ==1 (Charnock with variable alpha), ==2 (Taylor & Yelland), ==3 (Donelan), ==4 (Drennan), ==5 (Porchetta)
+#----------: CELL PERTURBATION METHOD ---
+cellpertSelector = 1 # CP method selector: 0= off, 1= on
+cellpert_sw2b = 0 # 2 #1 # only south and west bnds perturbed (for idealized cases): 0= off, 1= south & west, 2 = south
+cellpert_amp = 2.5 # 0.1 # maximum amplitude for the potential temperature perturbations
+cellpert_nts = 250 # 100 # number of time steps after which perturbations are seeded
+cellpert_gppc = 8 # number of grid points conforming the cell
+cellpert_ndbc = 3 # number of cells normal to domain lateral boundaries
+cellpert_kbottom = 1 # z-grid point where the perturbations start
+cellpert_ktop = 40 # z-grid point where the perturbations end
+cellpert_tvcp = 1 # time-varying CP method selector: 0= off, 1= on (hydroBCs == 1)
+cellpert_eckert = 0.05 # Eckert number for the potential temperature perturbations (hydroBCs == 1)
+cellpert_tsfact = 0.333 #0.5 # 1.0 # factor on the refreshing perturbation time scale (hydroBCs == 1)
+#------------: BASE-STATE ---
+stabilityScheme = 2 # Scheme used to set hydrostatic, stability-dependent Base-State EOS fields
+temp_grnd = 300.0 # Air Temperature (K) at the ground used to set hydrostatic Base-State EOS fields
+pres_grnd = 100000.0 # Pressure (Pa) at the ground used to set hydrostatic Base-State EOS fields
+zStableBottom = 500.0 # Height (m) of the first stable upper-layer when stabilityScheme = 1 or 2
+stableGradient = 0.003 # 0.08 # Vertical gradient (K/m) of the first stable upper-layer when stabilityScheme = 1 or 2
+zStableBottom2 = 650.0 # Height (m) of the second stable upper-layer when stabilityScheme = 2
+stableGradient2 = 0.003 # Vertical gradient (K/m) of the second stable upper-layer when stabilityScheme = 2
+zStableBottom3 = 50000.0 # Height (m) of the third stable upper-layer when stabilityScheme = 2
+stableGradient3 = 0.003 # Vertical gradient (K/m) of the third stable upper-layer when stabilityScheme = 2
+thetaPerturbationSwitch = 1 # Switch to include initial theta perturbations: 0=off, 1=on
+thetaHeight = 375.0 # Height below which to include initial theta perturbations: (meters)
+thetaAmplitude = 0.25 # Maximum amplitude for theta perturbations: thetaAmplitude*[-1,+1] K
+U_g = 8.0 # Zonal (West-East) component of the geostrophic wind (m/s)
+V_g = 0.0 # Meridional (South-North) component of the geostrophic wind (m/s)
+z_Ug = 10000.0 # Height (m) above ground for linear geostrophic wind gradient (zonal component)
+z_Vg = 10000.0 # Height (m) above ground for linear geostrophic wind gradient (meridional component)
+Ug_grad = 0.0 # U_g gradient above z_Ug (ms-1/m)
+Vg_grad = 0.0 # V_g gradient above z_Vg (ms-1/m)
+# ----------: LARGE SCALE FORCINGS ---
+lsfSelector = 0 # large-scale forcings selector: 0=off, 1=on
+lsf_horMnSubTerms = 0 # large-scale subsidence terms Switch: 0= off, 1= on
+lsf_freq = 1.0 # large-scale forcing frequency (seconds)
+lsf_w_surf = 0.0 # lsf to w at the surface
+lsf_w_lev1 = -23.4 # lsf to w at the first specified level
+lsf_w_lev2 = 0.0 # lsf to w at the second specified level
+lsf_w_zlev1 = 1500.0 # lsf to w height 1
+lsf_w_zlev2 = 2100.0 # lsf to w height 2
+lsf_th_surf = -0.0833333 # lsf to theta at the surface
+lsf_th_lev1 = -0.0833333 # lsf to theta at the first specified level
+lsf_th_lev2 = 0.0 # lsf to theta at the second specified level
+lsf_th_zlev1 = 1500.0 # lsf to theta height 1
+lsf_th_zlev2 = 3000.0 # lsf to theta height 2
+lsf_qv_surf = -0.0432 # large-scale forcing to qv at the first specified level
+lsf_qv_lev1 = -0.0432 # large-scale forcing qv at height 1
+lsf_qv_lev2 = 0.0 # large-scale forcing qv at height 2
+lsf_qv_zlev1 = 300.0 # large-scale forcing qv height 1
+lsf_qv_zlev2 = 500.0 # large-scale forcing qv height 2

@@ -1,0 +1,18 @@
+**lsfSelector:** |br| Large-scale forcings selector: |br| 0=off; 1=on, 0, 1, 0, M
+**lsf_horMnSubTerms:** |br| Large-scale subsidence terms switch: |br| 0=off; 1=on |br| *C-M if lsfSelector > 0*, 0, 1, 0, C-M
+**lsf_freq:** |br| Large-scale forcing frequency (seconds) |br| *C-M if lsfSelector > 0*, 1e-3, 1e+3, 1.0, C-M
+**lsf_w_surf:** |br| Large-scale forcing to w at the surface |br| *C-M if lsfSelector > 0*, -1e+4, 1e+4, 0.0, C-M
+**lsf_w_lev1:** |br| Large-scale forcing to w at the first specified level |br| *C-M if lsfSelector > 0*, -1e+4, 1e+4, 0.0, C-M 
+**lsf_w_lev2:** |br| Large-scale forcing to w at the second specified level |br| *C-M if lsfSelector > 0*, -1e+4, 1e+4, 0.0, C-M
+**lsf_w_zlev1:** |br| Large-scale forcing to w height 1 |br| *C-M if lsfSelector > 0*, 0.0, 1e+4, 100.0, C-M 
+**lsf_w_zlev2:** |br| Large-scale forcing to w height 2 |br| *C-M if lsfSelector > 0*, 0.0, 1e+4, 200.0, C-M
+**lsf_th_surf:** |br| Large-scale forcing to theta at the surface |br| *C-M if lsfSelector > 0*, -1e+4, 1e+4, 0.0, C-M
+**lsf_th_lev1:** |br| Large-scale forcing to theta at the first specified level |br| *C-M if lsfSelector > 0*, -1e+4, 1e+4, 0.0, C-M 
+**lsf_th_lev2:** |br| Large-scale forcing to theta at the second specified level |br| *C-M if lsfSelector > 0*, -1e+4, 1e+4, 0.0, C-M
+**lsf_th_zlev1:** |br| Large-scale forcing to theta height 1 |br| *C-M if lsfSelector > 0*, 0.0, 1e+4, 100.0, C-M 
+**lsf_th_zlev2:** |br| Large-scale forcing to theta height 2 |br| *C-M if lsfSelector > 0*, 0.0, 1e+4, 200.0, C-M
+**lsf_qv_surf:** |br| Large-scale forcing to qv at the first specified level |br| *C-M if lsfSelector > 0*, -1e+4, 1e+4, 0.0, C-M 
+**lsf_qv_lev1:** |br| Large-scale forcing to qv at the first specified level |br| *C-M if lsfSelector > 0*, -1e+4, 1e+4, 0.0, C-M 
+**lsf_qv_lev2:** |br| Large-scale forcing to qv at the second specified level |br| *C-M if lsfSelector > 0*, -1e+4, 1e+4, 0.0, C-M
+**lsf_qv_zlev1:** |br| Large-scale forcing to qv height 1 |br| *C-M if lsfSelector > 0*, 0.0, 1e+4, 100.0, C-M 
+**lsf_qv_zlev2:** |br| Large-scale forcing to qv height 2 |br| *C-M if lsfSelector > 0*, 0.0, 1e+4, 200.0, C-M 

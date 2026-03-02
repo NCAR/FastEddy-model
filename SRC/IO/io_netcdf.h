@@ -25,7 +25,10 @@ extern int dims4d[];
 extern int dims3d[];  
 extern int dims2dTD[];  
 extern int dims2d[];  
-
+extern int dims1dTD[];
+#ifdef GAD_EXT
+extern int dims1dTD_GAD[];
+#endif
 
 /*######################------------------- IO module function declarations ---------------------#################*/
 
@@ -38,7 +41,11 @@ int ioReadNetCDFgridFile(char* gridFile, int Nx, int Ny, int Nz, int Nh);
 /*----->>>>> int ioReadNetCDFinFileSingleTime();  ---------------------------------------------------------------
 * Used to read a NetCDF file for a single timestep.
 */
+#ifdef GAD_EXT
+int ioReadNetCDFinFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh, int Nturbines);
+#else
 int ioReadNetCDFinFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh);
+#endif
 
 /*----->>>>> int ioOpenNetCDFoutFile();    ---------------------------------------------------------------------
 * Used to open a NetCDF file for reading.
@@ -48,13 +55,21 @@ int ioOpenNetCDFinFile(char *fileName, int *ncidptr);
 /*----->>>>> int ioGetNetCDFinFileVars();    ---------------------------------------------------------------------
 * Used to get(read) all variables in the regiter list in(to) the appropriately registered module memory. 
 */
+#ifdef GAD_EXT
+int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh, int Nturbines);
+#else
 int ioGetNetCDFinFileVars(int ncid, int Nx, int Ny, int Nz, int Nh);
+#endif
 
 //////////***********************  OUTPUT FUNCTIONS  *********************************////////
 /*----->>>>> int ioWriteNetCDFoutFileSingleTime();  ---------------------------------------------------------------
 * Used to write a NetCDF file for a single timestep.
 */
+#ifdef GAD_EXT
+int ioWriteNetCDFoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh, int Nturbines);
+#else
 int ioWriteNetCDFoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh);
+#endif
 
 /*----->>>>> int ioCreateNetCDFoutFile();    ---------------------------------------------------------------------
 * Used to create NetCDF file for writing.
@@ -64,7 +79,11 @@ int ioCreateNetCDFoutFile(char *outFileName, int *ncidptr);
 /*----->>>>> int ioDefineNetCDFoutFileDims();    ---------------------------------------------------------------------
 * Used to complete the sequence of dimension definitions involved in "define mode" for a NetCDF file to be written.
 */
+#ifdef GAD_EXT
+int ioDefineNetCDFoutFileDims(int ncid, int Nx, int Ny, int Nz, int Nh, int Nturbines);
+#else
 int ioDefineNetCDFoutFileDims(int ncid, int Nx, int Ny, int Nz, int Nh);
+#endif
 
 /*----->>>>> int ioDefineNetCDFoutFileVars();    ---------------------------------------------------------------------
 * Used to complete the sequence of variable definitions involved in "define mode" for a NetCDF file to be written.
@@ -74,15 +93,32 @@ int ioDefineNetCDFoutFileVars(int ncid);
 /*----->>>>> int ioEndNetCDFdefineMode();    ---------------------------------------------------------------------
 * Used to close the sequence steps involved in "define mode" for a NetCDF file to be written.
 */
+#ifdef GAD_EXT
+int ioEndNetCDFdefineMode(int ncid, int Nx, int Ny, int Nz, int Nh, int Nturbines);
+#else
 int ioEndNetCDFdefineMode(int ncid, int Nx, int Ny, int Nz, int Nh);
+#endif
 
 /*----->>>>> int ioiPutNetCDFoutFileVars();    ---------------------------------------------------------------------
 * Used to put(write) all variables in the regiter list in(to) the NetCDF file.
 */
+#ifdef GAD_EXT
+int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh, int Nturbines);
+#else
 int ioPutNetCDFoutFileVars(int ncid, int Nx, int Ny, int Nz, int Nh);
+#endif
+
+/*----->>>>> int ioDefineNetCDFoutFileAttrs();    ---------------------------------------------------------------------
+* Used to define NetCDF variable attributes.
+*/
+int ioDefineNetCDFoutFileAttrs(int ncid);
+
+/*----->>>>> int ioDefineNetCDFcoordVarAttrs();    ---------------------------------------------------------------------
+* Used to define attributes for dimension coordinate variables.
+*/
+int ioDefineNetCDFcoordVarAttrs(int ncid);
 
 /*----->>>>> int ioCloseNetCDFfile();    ---------------------------------------------------------------------
 * Used to close a netCDF file
 */
 int ioCloseNetCDFfile(int ncid);
-

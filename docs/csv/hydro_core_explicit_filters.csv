@@ -1,0 +1,6 @@
+**filterSelector:** |br| Explicit filter selector: |br| 0=off; 1=on, 0, 1, 0, O
+**filter_6thdiff_vert:** |br| Vertical 6th-order filter on w selector: |br| 0=off; 1=on |br| *C-O if filterSelector == 1*, 0, 1, 0, C-O
+**filter_6thdiff_hori:** |br| Horizontal 6th-order filter on rho; theta; qv selector: |br| 0=off; 1=on |br| *C-O if filterSelector == 1*, 0, 1, 0, C-O
+**filter_6thdiff_vert_coeff:** |br| Vertical 6th-order filter factor: |br| 0.0=off; 1.0=full |br| *C-M if filterSelector == 1 and* |br| *filter_6thdiff_vert == 1*, 0.0, 1.0, 0.03, C-M
+**filter_6thdiff_hori_coeff:** |br| Horizontal 6th-order filter factor: |br| 0.0=off; 1.0=full |br| *C-M if filterSelector == 1 and* |br| *filter_6thdiff_hori == 1*, 0.0, 1.0, 0.03, C-M
+**filter_divdamp:** |br| Divergence damping selector: |br| 0=off; 1=on |br| *C-O if filterSelector == 1*, 0, 1, 0, C-O

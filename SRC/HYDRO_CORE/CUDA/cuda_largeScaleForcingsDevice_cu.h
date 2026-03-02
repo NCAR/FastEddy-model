@@ -60,10 +60,10 @@ extern "C" int cuda_lsfDeviceCleanup();
 */
 extern "C" int cuda_lsfSlabMeans();
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCompleteLSF();  --------------------------------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreCompleteLSF();  --------------------------------------------------
 * Global Kernel for calculating/accumulating large-scale forcing Frhs terms   
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteLSF(float temp_freq_fac, float* hydroFlds_d, float* lsf_slabMeanPhiProfiles_d, float* hydroFldsFrhs_d, float* moistScalarsFrhs_d, float* zPos_d);
+__global__ void cudaDevice_hydroCoreCompleteLSF(float temp_freq_fac, float* hydroFlds_d, float* lsf_slabMeanPhiProfiles_d, float* hydroFldsFrhs_d, float* moistScalarsFrhs_d, float* zPos_d);
 
 /*----->>>>> __device__ void  cudaDevice_lsfRHS();  --------------------------------------------------
 */ // This cuda kernel calculates the large-scale forcing terms

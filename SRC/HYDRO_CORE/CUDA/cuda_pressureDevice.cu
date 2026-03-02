@@ -23,14 +23,14 @@ float *hydroPres_d;            /*Base Adress of memory containing the diagnostic
 */
 extern "C" int cuda_pressureDeviceSetup(){
    int errorCode = CUDA_PRESSURE_SUCCESS;
-   int Nelems;
+   size_t Nelems;
 
    //Copy the pgfSelector constant to device constant-memory
    cudaMemcpyToSymbol(pgfSelector_d, &pgfSelector, sizeof(int));
 
    /*Set the full memory block number of elements for hydroCore fields*/
-   Nelems = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
-   fecuda_DeviceMalloc(Nelems*sizeof(float), &hydroPres_d);
+   Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
+   fecuda_DeviceMalloc(Nelems, &hydroPres_d);
 
    return(errorCode);
 } //end cuda_pressureDeviceSetup()
@@ -150,7 +150,7 @@ __device__ void cudaDevice_calcPerturbationPressureMoist(float* pres, float* rho
 * This is the cuda version of the calcPressureGradientForce routine from the HYDRO_CORE module
 */
 __device__ void cudaDevice_calcPressureGradientForce(float* Frhs_u, float* Frhs_v, float* Frhs_w, float* pres,
-                                                     float* J31_d, float* J32_d, float* J33_d){
+                                                     float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d){
   int i,j,k,ijk,iStride,jStride,kStride;
   int ip1jk,im1jk,ijp1k,ijm1k,ijkp1,ijkm1;
 
@@ -174,8 +174,10 @@ __device__ void cudaDevice_calcPressureGradientForce(float* Frhs_u, float* Frhs_
     ijm1k = i*iStride + (j-1)*jStride + k*kStride;
     ijkm1 = i*iStride + j*jStride + (k-1)*kStride;
 
-    Frhs_u[ijk] = Frhs_u[ijk]-0.5*dXi_d*(pres[ip1jk] - pres[im1jk]);
-    Frhs_v[ijk] = Frhs_v[ijk]-0.5*dYi_d*(pres[ijp1k] - pres[ijm1k]);
+    Frhs_u[ijk] = Frhs_u[ijk]-0.5*( dXi_d*(pres[ip1jk] - pres[im1jk])
+		                   +dZi_d*J13_d[ijk]*(pres[ijkp1] - pres[ijkm1]) );
+    Frhs_v[ijk] = Frhs_v[ijk]-0.5*( dYi_d*(pres[ijp1k] - pres[ijm1k])
+		                   +dZi_d*J23_d[ijk]*(pres[ijkp1] - pres[ijkm1]) );
     Frhs_w[ijk] = Frhs_w[ijk]-0.5*( dXi_d*J31_d[ijk]*(pres[ip1jk] - pres[im1jk])
                                    +dYi_d*J32_d[ijk]*(pres[ijp1k] - pres[ijm1k])
                                    +dZi_d*J33_d[ijk]*(pres[ijkp1] - pres[ijkm1]) );
@@ -186,7 +188,7 @@ __device__ void cudaDevice_calcPressureGradientForce(float* Frhs_u, float* Frhs_
 */
 __device__ void cudaDevice_calcPressureGradientForceMoist(float* Frhs_u, float* Frhs_v, float* Frhs_w, float* rho,
                                                           float* pres, float* moistScalars,
-                                                          float* J31_d, float* J32_d, float* J33_d){
+                                                          float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d){
 
   int i,j,k,ijk,iStride,jStride,kStride,fldStride;
   int ip1jk,im1jk,ijp1k,ijm1k,ijkp1,ijkm1;
@@ -219,8 +221,10 @@ __device__ void cudaDevice_calcPressureGradientForceMoist(float* Frhs_u, float* 
     }
     rhodm_ijk = 1.0/rhomd_ijk;
 
-    Frhs_u[ijk] = Frhs_u[ijk] -rhodm_ijk*0.5*dXi_d*(pres[ip1jk] - pres[im1jk]);
-    Frhs_v[ijk] = Frhs_v[ijk] -rhodm_ijk*0.5*dYi_d*(pres[ijp1k] - pres[ijm1k]);
+    Frhs_u[ijk] = Frhs_u[ijk] -rhodm_ijk*0.5*( dXi_d*(pres[ip1jk] - pres[im1jk])
+		                              +dZi_d*J13_d[ijk]*(pres[ijkp1] - pres[ijkm1]) );
+    Frhs_v[ijk] = Frhs_v[ijk] -rhodm_ijk*0.5*( dYi_d*(pres[ijp1k] - pres[ijm1k])
+		                              +dZi_d*J23_d[ijk]*(pres[ijkp1] - pres[ijkm1]) );
     Frhs_w[ijk] = Frhs_w[ijk] -rhodm_ijk*0.5*( dXi_d*J31_d[ijk]*(pres[ip1jk] - pres[im1jk])
                                               +dYi_d*J32_d[ijk]*(pres[ijp1k] - pres[ijm1k])
                                               +dZi_d*J33_d[ijk]*(pres[ijkp1] - pres[ijkm1]) );

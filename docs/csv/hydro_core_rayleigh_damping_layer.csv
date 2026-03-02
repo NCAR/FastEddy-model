@@ -1,0 +1,2 @@
+**dampingLayerSelector:** |br| Rayleigh Damping Layer selector, 0, 1, 0, O
+**dampingLayerDepth:** |br| Rayleigh Damping Layer Depth |br| *C-O if dampingLayerSelector==1*, 0.0, FLT_MAX, 100.0, C-O

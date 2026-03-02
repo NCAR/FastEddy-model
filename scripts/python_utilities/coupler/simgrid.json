@@ -1,0 +1,11 @@
+{
+  "name_dom": "FortCollinsCO",
+  "FE_ref_GIS_nc": "geospec_file.nc",
+  "FE_params_file": "FE_parameters_file.in",
+  "center_lat": 40.5948,
+  "center_lon": -105.1380,
+  "urban_opt": 0,
+  "FE_new_nc_path": "/path_simgrid/",
+  "name_dom_add": "",
+  "save_plot_opt": 1
+}

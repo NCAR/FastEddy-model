@@ -44,13 +44,13 @@ extern "C" int cuda_sgstkeDeviceSetup();
 */
 extern "C" int cuda_sgstkeDeviceCleanup();
 
-/*----->>>>> __device__ void  cudaDevice_hydroCoreUnitTestCompleteSGSTKE();  ----------------------------------------
+/*----->>>>> __device__ void  cudaDevice_hydroCoreCompleteSGSTKE();  ----------------------------------------
  * Global Kernel for calculating/accumulating SGSTKE Frhs     
 */
-__global__ void cudaDevice_hydroCoreUnitTestCompleteSGSTKE(float* hydroFlds_d, float* hydroRhoInv_d, float* hydroTauFlds_d,
+__global__ void cudaDevice_hydroCoreCompleteSGSTKE(float* hydroFlds_d, float* hydroRhoInv_d, float* hydroTauFlds_d,
                                                            float* hydroKappaM_d, float* dedxi_d, float* sgstke_ls_d,
                                                            float* sgstkeScalars_d, float* sgstkeScalarsFrhs_d,
-                                                           float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
+                                                           float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
 
 /*----->>>>> __device__ void  cudaDevice_sgstkeLengthScale();  --------------------------------------------------
 * This cuda kernel calculates the sub-grid length scale
@@ -72,19 +72,19 @@ __device__ void cudaDevice_sgstkeDissip(float* sgstke, float* rhoInv, float* sgs
 */ 
 __device__ void cudaDevice_sgstkeShearProd(float* tau_11, float* tau_12, float* tau_13, float* tau_22, float* tau_23, float* tau_33, 
                                            float* u, float* v, float* w, float* rhoInv, float* Frhs_sgstke,
-                                           float* J31_d, float* J32_d, float* J33_d);
+                                           float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d);
 
 /*----->>>>> __device__ void  cudaDevice_GradScalar();  --------------------------------------------------
 * This cuda kernel calculates the spatial gradient of a scalar field: 2delta, gradient located at the cell center
 */ 
 __device__ void cudaDevice_GradScalar(float* scalar, float* rhoInv, float* dedx, float* dedy, float* dedz,
-                                      float* J31_d, float* J32_d, float* J33_d);
+                                      float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d);
 
 /*----->>>>> __device__ void  cudaDevice_sgstkeTurbTransport();  --------------------------------------------------
 * This cuda kernel calculates the Turbulent Transport term in the SGSTKE equation
 */ 
 __device__ void cudaDevice_sgstkeTurbTransport(float* Km, float* dedx, float* dedy, float* dedz, float* rho, float* Frhs_sgstke,
-                                               float* J31_d, float* J32_d, float* J33_d);
+                                               float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d);
 
 
 #endif // _SGSTKE_CUDADEV_CU_H

@@ -1,6 +1,8 @@
-*****************
-Sensitivity Tests
-*****************
+:orphan:
+
+*************************
+Sensitivity Tests (Ideal)
+*************************
 
 Instructions
 ============

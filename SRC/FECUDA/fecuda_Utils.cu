@@ -180,19 +180,19 @@ extern "C" int fecuda_UtilsDeallocateHaloBuffers(){
 /*----->>>>> void fecuda_DeviceMalloc();    -----------------------------------------------------------
 * Used to allocate device memory float blocks and set the  host memory addresses of device memory pointers.
 */
-extern "C" void fecuda_DeviceMalloc(int Nelems, float** memBlock_d) {
-    cudaMalloc((void**)memBlock_d,sizeof(float)*Nelems);
+extern "C" void fecuda_DeviceMalloc(size_t Nelems, float** memBlock_d) {
+    cudaMalloc((void**)memBlock_d,(size_t)(sizeof(float))*Nelems);
     gpuErrchk( cudaPeekAtLastError() );
-    cudaMemset(*memBlock_d,'\0',sizeof(float)*Nelems);    
+    cudaMemset(*memBlock_d,'\0',(size_t)(sizeof(float))*Nelems);    
     gpuErrchk( cudaPeekAtLastError() );
 #ifdef DEBUG
     printf("New device memory allocation, device pointer is stored at host address %p as %p\n",memBlock_d, *memBlock_d);
 #endif
 }
-extern "C" void fecuda_DeviceMallocInt(int Nelems, int** memBlock_d) {
-    cudaMalloc((void**)memBlock_d,sizeof(int)*Nelems);
+extern "C" void fecuda_DeviceMallocInt(size_t Nelems, int** memBlock_d) {
+    cudaMalloc((void**)memBlock_d,(size_t)(sizeof(int))*Nelems);
     gpuErrchk( cudaPeekAtLastError() );
-    cudaMemset(*memBlock_d,'\0',sizeof(int)*Nelems);
+    cudaMemset(*memBlock_d,'\0',(size_t)(sizeof(int))*Nelems);
     gpuErrchk( cudaPeekAtLastError() );
 #ifdef DEBUG
     printf("New device memory allocation, device pointer is stored at host address %p as %p\n",memBlock_d, *memBlock_d);

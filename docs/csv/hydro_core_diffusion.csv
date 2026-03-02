@@ -1,0 +1,2 @@
+**diffusionSelector:** |br| Diffusion term-type selector: |br| 0=none |br| 1=constant |br| 2=scalar turbulent-diffusivity, 0, 1, 0, O
+**nu_0:** |br| Constant diffusivity used when diffusionSelector=1, 0, FLT_MAX, 1.0, O

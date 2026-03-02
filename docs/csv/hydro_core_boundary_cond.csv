@@ -1,0 +1,6 @@
+**hydroBCs:** |br| Selector for hydro BC set. |br| 1=Dirichlet lateral ceiling and surface boundary conditions (Limited Area Domain--LAD) |br| 2=periodicHorizVerticalAbl, 1, 2, 2, M
+**ceilingAdvectionBC:** |br| Selector for normal advection at the domain ceiling |br| 0=zero-valued w-BC |br| 1=non-zero w-BC, 0, 1, 0, O
+**hydroBndysFileBase:** |br| Base file name LAD BC set |br| *C-M if hydroBCs==1*, N/A, N/A, , C-M
+**hydroBndysFileStart:** |br| Start counter value for LAD BC set files |br| *C-M if hydroBCs==1*, 0, 500000, 0, C-M 
+**hydroBndysFileEnd:** |br| End counter value for LAD BC set files |br| *C-M if hydroBCs==1*, 0, 500000, 0, C-M 
+**dtBdyPlaneBCs:** |br| Delta in time (seconds) between BdyPlane sets |br| *C-M if hydroBCs==1*, 0.0, 6e5, 0.0, C-M 

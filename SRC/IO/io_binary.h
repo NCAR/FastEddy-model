@@ -19,9 +19,16 @@
 /*----->>>>> int ioWriteiBinaryoutFileSingleTime();  ---------------------------------------------------------------
  * Used to have N-ranks write N-binary files of registered variables for a single timestep.
  */
+#ifdef GAD_EXT
+int ioWriteBinaryoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh, int Nturbines);
+#else
 int ioWriteBinaryoutFileSingleTime(int tstep, int Nx, int Ny, int Nz, int Nh);
+#endif
 /*----->>>>> int ioPutBinaryoutFileVars();    ---------------------------------------------------------------------
  * Used to put(write) all variables in the register list in(to) the Binary file. 
 */
+#ifdef GAD_EXT
+int ioPutBinaryoutFileVars(FILE *outptr, int Nx, int Ny, int Nz, int Nh, int Nturbines);
+#else
 int ioPutBinaryoutFileVars(FILE *outptr, int Nx, int Ny, int Nz, int Nh);
-
+#endif

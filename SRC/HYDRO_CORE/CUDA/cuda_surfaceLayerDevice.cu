@@ -60,7 +60,7 @@ float *sea_mask_d;
 */
 extern "C" int cuda_surfaceLayerDeviceSetup(){
    int errorCode = CUDA_SURFLAYER_SUCCESS;
-   int Nelems2d;
+   size_t Nelems2d;
 
    cudaMemcpyToSymbol(surflayerSelector_d, &surflayerSelector, sizeof(int));
    cudaMemcpyToSymbol(surflayer_z0_d, &surflayer_z0, sizeof(float));
@@ -80,19 +80,19 @@ extern "C" int cuda_surfaceLayerDeviceSetup(){
    cudaMemcpyToSymbol(surflayer_ideal_qte_d, &surflayer_ideal_qte, sizeof(float));
    cudaMemcpyToSymbol(surflayer_ideal_qamp_d, &surflayer_ideal_qamp, sizeof(float));
 
-   Nelems2d = (Nxp+2*Nh)*(Nyp+2*Nh);  //2-d element count
+   Nelems2d = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh));  //2-d element count
 
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &cdFld_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &chFld_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &cqFld_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &fricVel_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &htFlux_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &qFlux_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &tskin_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &qskin_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &invOblen_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &z0m_d);
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &z0t_d);
+   fecuda_DeviceMalloc(Nelems2d, &cdFld_d);
+   fecuda_DeviceMalloc(Nelems2d, &chFld_d);
+   fecuda_DeviceMalloc(Nelems2d, &cqFld_d);
+   fecuda_DeviceMalloc(Nelems2d, &fricVel_d);
+   fecuda_DeviceMalloc(Nelems2d, &htFlux_d);
+   fecuda_DeviceMalloc(Nelems2d, &qFlux_d);
+   fecuda_DeviceMalloc(Nelems2d, &tskin_d);
+   fecuda_DeviceMalloc(Nelems2d, &qskin_d);
+   fecuda_DeviceMalloc(Nelems2d, &invOblen_d);
+   fecuda_DeviceMalloc(Nelems2d, &z0m_d);
+   fecuda_DeviceMalloc(Nelems2d, &z0t_d);
 
    // offshore
    cudaMemcpyToSymbol(surflayer_offshore_d, &surflayer_offshore, sizeof(int));
@@ -104,7 +104,7 @@ extern "C" int cuda_surfaceLayerDeviceSetup(){
    cudaMemcpyToSymbol(surflayer_offshore_theta_d, &surflayer_offshore_theta, sizeof(float));
    cudaMemcpyToSymbol(surflayer_offshore_visc_d, &surflayer_offshore_visc, sizeof(int));
 
-   fecuda_DeviceMalloc(Nelems2d*sizeof(float), &sea_mask_d);
+   fecuda_DeviceMalloc(Nelems2d, &sea_mask_d);
    if (surflayer_offshore > 0){
      cudaMemcpy(sea_mask_d, sea_mask, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
    }
@@ -154,6 +154,7 @@ __device__ void cudaDevice_SurfaceLayerLSMdry(float simTime, int simTime_it, int
    float tsk_p,tsk_c;
    float tsk_inc,simTimePrev;
    float z0temp;
+   float constant_1;
 
    temp_freq = roundf(10.0/dt); // make it so temp_freq is ~ 10 seconds
    temp_freq_f = __int2float_rn(temp_freq); // make it so temp_freq is ~ 10 seconds
@@ -175,7 +176,8 @@ __device__ void cudaDevice_SurfaceLayerLSMdry(float simTime, int simTime_it, int
      *ch_iter = powf(kappa_d,2.0)/powf(logf(z1ozt0),2.0); // move this initialization to the CPU
    } else if((simTime_it==simTime_itRestart) && (simTime_it!=0)){ // restart
      *cd_iter = powf(*fricVel,2.0)/(powf(U1,2.0));
-     th0 = *tskin*powf((refPressure_d/pres_grnd_d),R_cp_d);
+     constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+     th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
      *ch_iter = *htFlux/(U1*(th0-th1));
    } // otherwise uses values from previous time step
 
@@ -218,9 +220,15 @@ __device__ void cudaDevice_SurfaceLayerLSMdry(float simTime, int simTime_it, int
      }else{ // keep skin temperature from previous time step
        tsk_c = *tskin;
      }
-     th0 = tsk_c*powf((refPressure_d/pres_grnd_d),R_cp_d);
+     constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+     th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
      *htFlux = *ch_iter*U1*(th0-th1);
-   }//end if (surflayerSelector_d==1), elseif (surflayerSelector_d==2) 
+   } else if (surflayerSelector_d==3){ // skin temperature supplied by BdyPlanes (i.e. hydroBCs_d == 1)
+     tsk_c = *tskin;
+     constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+     th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
+     *htFlux = *ch_iter*U1*(th0-th1);
+   }//end if (surflayerSelector_d==1), elseif (surflayerSelector_d==2), elseif (surflayerSelector_d==3)
 
 } //end cudaDevice_SurfaceLayerLSMdry(...
 
@@ -244,6 +252,7 @@ __device__ void cudaDevice_SurfaceLayerLSMmoist(float simTime, int simTime_it, i
    float z0temp;
    float qsk_p,qsk_c,qsk_inc;
    float q0,q1,qsk_input;
+   float constant_1;
 
    temp_freq = roundf(10.0/dt); // make it so temp_freq is ~ 10 seconds
    temp_freq_f = __int2float_rn(temp_freq); // make it so temp_freq is ~ 10 seconds
@@ -270,7 +279,8 @@ __device__ void cudaDevice_SurfaceLayerLSMmoist(float simTime, int simTime_it, i
      *cq_iter = powf(kappa_d,2.0)/powf(logf(z1ozt0),2.0); // move this initialization to the CPU
    } else if((simTime_it==simTime_itRestart) && (simTime_it!=0)){ // restart
      *cd_iter = powf(*fricVel,2.0)/(powf(U1,2.0));
-     th0 = *tskin*powf((refPressure_d/pres_grnd_d),R_cp_d);
+     constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+     th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
      *ch_iter = *htFlux/(U1*(th0-th1));
      q0 = *qskin;
      *cq_iter = *qFlux/(U1*(q0-q1));
@@ -336,14 +346,23 @@ __device__ void cudaDevice_SurfaceLayerLSMmoist(float simTime, int simTime_it, i
        tsk_c = *tskin;
        qsk_c = *qskin;
      }
-     th0 = tsk_c*powf((refPressure_d/pres_grnd_d),R_cp_d);
+     constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+     th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
      *htFlux = *ch_iter*U1*(th0-th1);
      q0 = qsk_c;
      *qFlux = *cq_iter*U1*(q0-q1); // M factor here as well
      if (surflayer_qskin_input_d == 1){
        *qskin = qsk_input;
      }
-   }//end if (surflayerSelector_d==1), elseif (surflayerSelector_d==2) 
+   } else if (surflayerSelector_d==3){ // skin temperature supplied by BdyPlanes (i.e. hydroBCs_d == 1)
+     tsk_c = *tskin;
+     constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+     th0 = tsk_c*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
+     *htFlux = *ch_iter*U1*(th0-th1);
+     qsk_c = *qskin;
+     q0 = qsk_c;
+     *qFlux = *cq_iter*U1*(q0-q1); // M factor here as well
+   }//end if (surflayerSelector_d==1), elseif (surflayerSelector_d==2), elseif (surflayerSelector_d==3) 
 
 } //end cudaDevice_SurfaceLayerLSMmoist(...
 
@@ -363,16 +382,22 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
    float xi;
    float psi_m;
    float psi_h;
-   float beta = 5.0;
+   float a_coeff = 6.1;
+   float b_coeff = 2.5;
+   float c_coeff = 5.3;
+   float d_coeff = 1.1;
    float pi = acosf(-1.0);
-   float ol_lim = 1.0; // limit Obukhov length (in meters)
+   float zol_lim = 2.5; // limit (z1+z0m)/L
    int it_n;
    float z0temp;
    float it_max;
+   float constant_1;
+   float ci_ulim = 1.0;
+
    if (surflayer_stab_d==0){
-     it_max = 5;
-   }else{
      it_max = 1;
+   }else{
+     it_max = 5;
    }
 
    z0 = *z0m;
@@ -385,42 +410,33 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
    v1 = *v/ *rho;
    U1 = sqrtf(powf(u1,2.0)+powf(v1,2.0));
    th1 = (*theta)/(*rho);
-   th0 = (*tskin)*powf((refPressure_d/pres_grnd_d),R_cp_d);
+   constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+   th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
    cd_0 = *cd_iter;
 
    it_n = 0;
    // iterative solve for exchange coefficients
    do {
 
-     tauxz = -cd_0*U1*u1;
-     tauyz = -cd_0*U1*v1;
-     *fricVel = powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25);
      it_n = it_n + 1;
 
-     if (surflayer_stab_d==0){
-       // calculate inverse Obukhov length
-       if (*fricVel > 0.0){
-          *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
-          *invOblen = fmaxf(fminf(*invOblen,ol_lim),-ol_lim);
-       }else{            //ust < 0.0...
-          *invOblen = -ol_lim;  //Technically this would be infinite, but we will use iol_fc...
-       }
-     }else{
-       *invOblen = 0.0;
-     }
-     zol = (*invOblen)*(z1+z0);
+     tauxz = -cd_0*U1*u1;
+     tauyz = -cd_0*U1*v1;
+     *fricVel = fmaxf(0.0001,powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25));
+     *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
+     zol = fmaxf(fminf((*invOblen)*(z1+z0),zol_lim),-zol_lim);
 
      if (zol < 0.0) { // convective ABL
        xi = powf(1.0-16.0*zol,0.25);
        psi_m = logf(0.5*(1.0+powf(xi,2.0))*powf(0.5*(1.0+xi),2.0)) - 2.0*atanf(xi)+0.5*pi;
        psi_h = 2.0*logf(0.5*(1.0+powf(xi,2.0)));
      } else { // stable ABL
-       psi_m = -beta*zol;
-       psi_h = -beta*zol;
+       psi_m = -a_coeff*logf(zol+powf(1.0+powf(zol,b_coeff),1.0/b_coeff));
+       psi_h = -c_coeff*logf(zol+powf(1.0+powf(zol,d_coeff),1.0/d_coeff));
      }
 
      cd_i = powf(kappa_d,2.0)/powf(logf(z1oz0)-psi_m,2.0);
-     ch_i = powf(kappa_d,2.0)/((logf(z1ozt0)-psi_m)*(logf(z1ozt0)-psi_h));
+     ch_i = powf(kappa_d,2.0)/((logf(z1oz0)-psi_m)*(logf(z1ozt0)-psi_h));
 
      if (surflayerSelector_d > 1){
         *htFlux = ch_i*U1*(th0-th1);
@@ -431,23 +447,26 @@ __device__ void cudaDevice_SurfaceLayerMOSTdry(int ijk, float* u, float* v, floa
    } while(it_n<=it_max);
    // end of iterative process
 
+   cd_i = fmaxf(fminf(cd_i,ci_ulim),0.0);
+   ch_i = fmaxf(fminf(ch_i,ci_ulim),0.0);
+   *cd_iter = cd_i;
+   *ch_iter = ch_i;
+   if (surflayerSelector_d > 1){
+        *htFlux = ch_i*U1*(th0-th1);
+   }//endif surflayerSelector_d==2
    *cd_iter = cd_i;
    *ch_iter = ch_i;
    tauxz = -cd_i*sqrtf(powf(*u/ *rho,2.0)+powf(*v/ *rho,2.0))*(*u);
    tauyz = -cd_i*sqrtf(powf(*u/ *rho,2.0)+powf(*v/ *rho,2.0))*(*v);
    *tau31 = tauxz;
    *tau32 = tauyz;
-   *fricVel = powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25);
+   *fricVel = powf(powf(tauxz/(*rho),2.0)+powf(tauyz/(*rho),2.0),0.25);
    tauthz = (*htFlux)*(*rho);
    *tauTH3 = tauthz;
    *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
 
    if (surflayer_offshore_d==1){ // offshore point
       cudaDevice_offshoreRoughness(z0m, z0t, fricVel, u1, v1, sea_mask);
-   }
-
-   if ( (surflayer_z0tdyn_d>0) && ((surflayer_offshore_d==0) || ((surflayer_offshore_d==1) && (*sea_mask<1e-4))) ){ // dynamic z0t calculation
-      cudaDevice_z0tdyn(z0m, z0t, fricVel);
    }
 
 } //end cudaDevice_SurfaceLayerMOSTdry(...
@@ -468,17 +487,23 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    float xi;
    float psi_m;
    float psi_h;
-   float beta = 5.0;
+   float a_coeff = 6.1;
+   float b_coeff = 2.5;
+   float c_coeff = 5.3;
+   float d_coeff = 1.1;
    float pi = acosf(-1.0);
-   float ol_lim = 1.0; // limit Obukhov length (in meters)
+   float zol_lim = 2.5; // limit (z1+z0m)/L
    int it_n;
    float z0temp;
    float q0,q1,cq_i,psi_q,tauqz;
    int it_max;
+   float constant_1;
+   float ci_ulim = 1.0;
+
    if (surflayer_stab_d==0){
-     it_max = 5;
-   }else{
      it_max = 1;
+   }else{
+     it_max = 5;
    }
 
    z0 = *z0m;
@@ -492,7 +517,8 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    U1 = sqrtf(powf(u1,2.0)+powf(v1,2.0));
    th1 = (*theta)/(*rho);
    q1 = (*qv)/(*rho);
-   th0 = (*tskin)*powf((refPressure_d/pres_grnd_d),R_cp_d);
+   constant_1 = R_gas_d/powf( refPressure_d, R_cp_d);
+   th0 = (*tskin)*powf((refPressure_d/(powf((*theta)*constant_1, cp_cv_d))),R_cp_d);
    q0 = *qskin;
    cd_0 = *cd_iter;
 
@@ -500,23 +526,13 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    // iterative solve for exchange coefficients
    do {
 
-     tauxz = -cd_0*U1*u1;
-     tauyz = -cd_0*U1*v1;
-     *fricVel = powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25);
      it_n = it_n + 1;
 
-     if (surflayer_stab_d==0){
-       // calculate inverse Obukhov length
-       if (*fricVel > 0.0){
-          *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
-          *invOblen = fmaxf(fminf(*invOblen,ol_lim),-ol_lim);
-       }else{            //ust < 0.0...
-          *invOblen = -ol_lim;  //Technically this would be infinite, but we will use iol_fc...
-       }
-     }else{
-       *invOblen = 0.0;
-     }
-     zol = (*invOblen)*(z1+z0);
+     tauxz = -cd_0*U1*u1;
+     tauyz = -cd_0*U1*v1;
+     *fricVel = fmaxf(0.0001,powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25));
+     *invOblen = -(kappa_d*accel_g_d*(*htFlux))/(powf((*fricVel),3.0)*th1);
+     zol = fmaxf(fminf((*invOblen)*(z1+z0),zol_lim),-zol_lim);
 
      if (zol < 0.0) { // convective ABL
        xi = powf(1.0-16.0*zol,0.25);
@@ -524,14 +540,14 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
        psi_h = 2.0*logf(0.5*(1.0+powf(xi,2.0)));
        psi_q = psi_h;
      } else { // stable ABL
-       psi_m = -beta*zol;
-       psi_h = -beta*zol;
+       psi_m = -a_coeff*logf(zol+powf(1.0+powf(zol,b_coeff),1.0/b_coeff));
+       psi_h = -c_coeff*logf(zol+powf(1.0+powf(zol,d_coeff),1.0/d_coeff));
        psi_q = psi_h;
      }
 
      cd_i = powf(kappa_d,2.0)/powf(logf(z1oz0)-psi_m,2.0);
-     ch_i = powf(kappa_d,2.0)/((logf(z1ozt0)-psi_m)*(logf(z1ozt0)-psi_h));
-     cq_i = powf(kappa_d,2.0)/((logf(z1ozt0)-psi_m)*(logf(z1ozt0)-psi_q));
+     ch_i = powf(kappa_d,2.0)/((logf(z1oz0)-psi_m)*(logf(z1ozt0)-psi_h));
+     cq_i = powf(kappa_d,2.0)/((logf(z1oz0)-psi_m)*(logf(z1ozt0)-psi_q));
 
      if (surflayerSelector_d > 1){
         *htFlux = ch_i*U1*(th0-th1);
@@ -543,14 +559,21 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
    } while(it_n<=it_max);
    // end of iterative process
 
+   cd_i = fmaxf(fminf(cd_i,ci_ulim),0.0);
+   ch_i = fmaxf(fminf(ch_i,ci_ulim),0.0);
+   cq_i = fmaxf(fminf(cq_i,ci_ulim),0.0);
    *cd_iter = cd_i;
    *ch_iter = ch_i;
    *cq_iter = cq_i;
+   if (surflayerSelector_d > 1){
+        *htFlux = ch_i*U1*(th0-th1);
+        *qFlux = cq_i*U1*(q0-q1);
+   }//endif surflayerSelector_d==2
    tauxz = -cd_i*sqrtf(powf(*u/ *rho,2.0)+powf(*v/ *rho,2.0))*(*u);
    tauyz = -cd_i*sqrtf(powf(*u/ *rho,2.0)+powf(*v/ *rho,2.0))*(*v);
    *tau31 = tauxz;
    *tau32 = tauyz;
-   *fricVel = powf(powf(tauxz,2.0)+powf(tauyz,2.0),0.25);
+   *fricVel = powf(powf(tauxz/(*rho),2.0)+powf(tauyz/(*rho),2.0),0.25);
    tauthz = (*htFlux)*(*rho);
    *tauTH3 = tauthz;
    tauqz = (*qFlux)*(*rho); // specified qflux or delta-qv-based flux assumes qv units of g/kg
@@ -559,10 +582,6 @@ __device__ void cudaDevice_SurfaceLayerMOSTmoist(int ijk, float* u, float* v, fl
 
    if (surflayer_offshore_d==1){ // offshore point
       cudaDevice_offshoreRoughness(z0m, z0t, fricVel, u1, v1, sea_mask);
-   }
-
-   if ( (surflayer_z0tdyn_d>0) && ((surflayer_offshore_d==0) || ((surflayer_offshore_d==1) && (*sea_mask<1e-4))) ){ // dynamic z0t calculation
-      cudaDevice_z0tdyn(z0m, z0t, fricVel);
    }
 
 } //end cudaDevice_SurfaceLayerMOSTmoist(...
@@ -574,7 +593,7 @@ __device__ void cudaDevice_offshoreRoughness(float* z0m, float* z0t, float* fric
   float alpha_charnock = 0.018;
   float alpha_charnock_mod;
   float wspd_1;
-  float air_vis = 1.5e-5; // kinematic air viscosity (DME: make it T dependent ...)
+  float air_vis = 1.5e-5; // kinematic air viscosity (make it T dependent ...)
   float z0_m2t_fact = 0.1; // ratio of z0t/z0m
   int z0_m2t_opt = 1; // 0; // ==0 (constant), ==1 (roughness Re dependent)
   float Ren;
@@ -645,6 +664,32 @@ __device__ void cudaDevice_offshoreRoughness(float* z0m, float* z0t, float* fric
   *z0t = *sea_mask*z0t_tmp + (*z0t)*(1.0-*sea_mask);
 
 } // cudaDevice_offshoreRoughness()
+
+__global__ void cudaDevice_dynamicz0tLand(float* z0m, float* z0t, float* fricVel, float* sea_mask){
+
+   int i,j,k,ij;
+   int iStride2d,jStride2d;
+
+   /*Establish necessary indices for spatial locality*/
+   i = (blockIdx.x)*blockDim.x + threadIdx.x;
+   j = (blockIdx.y)*blockDim.y + threadIdx.y;
+   k = (blockIdx.z)*blockDim.z + threadIdx.z;
+
+   iStride2d = (Ny_d+2*Nh_d);
+   jStride2d = 1;
+
+   if((i >= iMin_d)&&(i < iMax_d) &&
+      (j >= jMin_d)&&(j < jMax_d) &&
+      (k == kMin_d) ){
+      ij = i*iStride2d + j*jStride2d; // 2-dimensional (horizontal index)
+
+      if ( (surflayer_z0tdyn_d>0) && ((surflayer_offshore_d==0) || ((surflayer_offshore_d==1) && (sea_mask[ij]<1e-4))) ){ // dynamic z0t calculation
+        cudaDevice_z0tdyn(&z0m[ij], &z0t[ij], &fricVel[ij]);
+      }
+
+   }//end if in the range of non-halo cells
+
+} // end cudaDevice_dynamicz0tLand()
 
 /*----->>>>> __device__ void cudaDevice_z0tdyn();  --------------------------------------------------
 */

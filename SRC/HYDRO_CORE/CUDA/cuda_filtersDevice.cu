@@ -49,7 +49,7 @@ extern "C" int cuda_filtersDeviceCleanup(){
 
 }//end cuda_filtersDeviceCleanup()
 
-__global__ void cudaDevice_hydroCoreUnitTestCompleteFilters(float* hydroFlds_d, float* hydroFldsFrhs_d, float dt,
+__global__ void cudaDevice_hydroCoreCompleteFilters(float* hydroFlds_d, float* hydroFldsFrhs_d, float dt,
                                                             float* moistScalars_d, float* moistScalarsFrhs, float* hydroPres_d,
                                                             float* hydroBaseStatePres_d, int timeStage){
    int i,j,k;
@@ -95,7 +95,7 @@ __global__ void cudaDevice_hydroCoreUnitTestCompleteFilters(float* hydroFlds_d, 
      }
    }//end if in the range of non-halo cells
 
-} // end cudaDevice_hydroCoreUnitTestCompleteFilters
+} // end cudaDevice_hydroCoreCompleteFilters
 
 /*----->>>>> __device__ void cudaDevice_filter6th();  --------------------------------------------------
 */ // 6th-order filter to remove 2dx noise: Xue (2000), Knievel et al. (2007)

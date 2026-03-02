@@ -22,7 +22,6 @@
 /*##############------------------- HYDRO_CORE module variable declarations ---------------------#################*/
 /* Parameters */
 extern __constant__ int Nhydro_d;       // Number of hydro_core prognostic variable fields
-extern __constant__ int hydroBCs_d;       // hydro_core BC set selector
 
 /* array fields */
 extern float *hydroFlds_d;     //Base Adress of memory containing all prognostic variable fields under hydro_core
@@ -78,6 +77,18 @@ extern float *hydroRhoInv_d;   //storage for 1.0/rho
 /*EXPLICIT FILTERS */
 #include <cuda_filtersDevice_cu.h>
 
+/*---CELL PERTURBATION METHOD*/
+#include <cuda_cellpertDevice_cu.h>
+
+#ifdef URBAN_EXT
+  /*URBAN */
+  #include <cuda_urbanDevice_cu.h>
+#endif
+#ifdef GAD_EXT
+  /*GENERALIZED ACTUATOR DISK */
+  #include <cuda_GADDevice_cu.h>
+#endif
+
 /*Switch for Last-RK stage physics */
 extern __constant__ int physics_oneRKonly_d; /* selector to apply physics RHS forcing only at the latest RK stage: 0= off, 1= on */
 
@@ -115,16 +126,19 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 
 /*#########--------------- HYDRO_CORE_CUDADEV module device function declarations ------------############*/
 
-/*----->>>>> __global__ void  cudaDevice_hydroCoreUnitTestCommence();  ------------------------------------------
+/*----->>>>> __global__ void  cudaDevice_hydroCoreCommence();  ------------------------------------------
 * This is the gloabl-entry kernel routine used by the HYDRO_CORE module
 */
-__global__ void cudaDevice_hydroCoreUnitTestCommence(int simTime_it, float* hydroFlds_d, float* hydroFldsFrhs_d, 
+__global__ void cudaDevice_hydroCoreCommence(int simTime_it, float* hydroFlds_d, float* hydroFldsFrhs_d, 
                                                      float*  hydroBaseStateFlds_d,
+						     float* YZBdyPlanes_d, float* XZBdyPlanes_d, float* XYBdyPlanes_d,
+                                                     float* YZBdyPlanesNext_d, float* XZBdyPlanesNext_d, float* XYBdyPlanesNext_d,
+                                                     float* SURFBdyPlanes_d, float* SURFBdyPlanesNext_d,
                                                      float* tskin_d, float* qskin_d,
                                                      float* sgstkeScalars_d, float* sgstkeScalarsFrhs_d, float* Km_d, 
                                                      float* moistScalars_d, float* moistScalarsFrhs_d, 
                                                      float* hydroAuxScalars_d, float* hydroAuxScalarsFrhs_d, float* zPos_d);
-__global__ void cudaDevice_hydroCoreUnitTestCommenceRhoInvPresPert(float* hydroFlds_d, float* hydroRhoInv_d,
+__global__ void cudaDevice_hydroCoreCommenceRhoInvPresPert(float* hydroFlds_d, float* hydroRhoInv_d,
                                                      float* hydroBaseStateFlds_d,
                                                      float* hydroPres_d, float* hydroBaseStatePres_d,
                                                      float* moistScalars_d, float* zPos_d); 
@@ -142,13 +156,13 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
                                                        float* sgstkeScalars_d, float* sgstke_ls_d,
                                                        float* dedxi_d, float* moistScalars_d,
                                                        float* moistTauFlds_d, float* moistScalarsFrhs_d,
-                                                       float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
-__global__ void cudaDevice_hydroCoreUnitTestComplete(float simTime, int simTime_it, float dt, int timeStage, int numRKstages,
+                                                       float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
+__global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, float dt, int timeStage, int numRKstages,
                                                      float* hydroFlds,float* hydroFldsFrhs,
                                                      float* hydroFaceVels, float* hydroBaseStateFlds, float* hydroTauFlds, 
                                                      float* sgstkeScalars, float* sgstkeScalarsFrhs,
                                                      float* moistScalars, float* moistScalarsFrhs, float* moistTauFlds,
-                                                     float* J31_d, float* J32_d, float* J33_d, float* invD_Jac_d, float* zPos_d);
+                                                     float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* invD_Jac_d, float* zPos_d);
 /*----->>>>> __device__ void  cudaDevice_SetRhoInv();  --------------------------------------------------
 * This is the cuda version of the SetRhoInv routine from the HYDRO_CORE module
 */
@@ -158,5 +172,17 @@ __device__ void cudaDevice_SetRhoInv(float* hydroFlds, float* hydroRhoInv);
 * This sets every element of a device "field"-array to zero
 */
 __device__ void cudaDevice_setToZero(float* fld);
+
+/*----->>>>> extern "C" int cuda_hydroCoreInitFieldsDevice();  -----------------------------------------------------------
+* This function handles the one-time initializations of state fields on-device (GPU) memory by executing the appropriate sequence
+* of cudaMemcpyHostToDevice data transfers.
+*/
+extern "C" int cuda_hydroCoreInitFieldsDevice();
+
+/*----->>>>> extern "C" int cuda_hydroCoreSynchFieldsFromDevice();  --------------------------------------------------
+* This function handles the synchronization to host of on-device (GPU) fields  by executing the appropriate sequence
+* of cudaMemcpyDeviceiToHost data transfers.
+*/
+extern "C" int cuda_hydroCoreSynchFieldsFromDevice();
 
 #endif // _HYDRO_CORE_CUDADEV_CU_H
