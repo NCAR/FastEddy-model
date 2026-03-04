@@ -430,14 +430,13 @@ int hydro_coreGetParams(){
    //
    cellpertSelector = 0; // Default to off
    errorCode = queryIntegerParameter("cellpertSelector", &cellpertSelector, 0, 1, PARAM_OPTIONAL);
-   cellpert_nts = 500; // Default to 500 time steps
-   errorCode = queryIntegerParameter("cellpert_nts", &cellpert_nts, 0, 1e+6, PARAM_OPTIONAL);
    if (cellpertSelector > 0){
-     errorCode = queryIntegerParameter("cellpertSelector", &cellpertSelector, 0, 1, PARAM_OPTIONAL);
      cellpert_sw2b = 0; // Default to 0
      errorCode = queryIntegerParameter("cellpert_sw2b", &cellpert_sw2b, 0, 3, PARAM_OPTIONAL);
      cellpert_amp = 0.5; // Default to 0.5 K
      errorCode = queryFloatParameter("cellpert_amp", &cellpert_amp, 0.0, 20.0, PARAM_OPTIONAL);
+     cellpert_nts = 500; // Default to 500 time steps
+     errorCode = queryIntegerParameter("cellpert_nts", &cellpert_nts, 0, 1e+6, PARAM_OPTIONAL);
      cellpert_gppc = 8; // Default to 8 grid points per cell
      errorCode = queryIntegerParameter("cellpert_gppc", &cellpert_gppc, 0, 50, PARAM_OPTIONAL);
      cellpert_ndbc = 3; // Default to 3 cells
@@ -446,15 +445,19 @@ int hydro_coreGetParams(){
      errorCode = queryIntegerParameter("cellpert_kbottom", &cellpert_kbottom, 1, 10, PARAM_OPTIONAL);
      cellpert_ktop = 20; // Default to 20th grid point above surface
      errorCode = queryIntegerParameter("cellpert_ktop", &cellpert_ktop, 0, 200, PARAM_OPTIONAL);
-     if (cellpert_ktop > Nz){
-       cellpert_ktop = Nz-10;
-     }
      cellpert_tvcp = 0; // Default to off 
      errorCode = queryIntegerParameter("cellpert_tvcp", &cellpert_tvcp, 0, 1, PARAM_OPTIONAL);
      cellpert_eckert = 0.2; // Default to Ec = 0.2
      errorCode = queryFloatParameter("cellpert_eckert", &cellpert_eckert, 0.0, 10.0, PARAM_OPTIONAL);
      cellpert_tsfact = 1.0; // Default to cellpert_tsfact = 1.0
      errorCode = queryFloatParameter("cellpert_tsfact", &cellpert_tsfact, 0.0, 10.0, PARAM_OPTIONAL);
+     if (cellpert_tvcp == 1){
+         cellpert_ktop = Nz;
+     } else{
+       if (cellpert_ktop > Nz){
+         cellpert_ktop = Nz;
+       }
+     }
    }
    //
    lsfSelector = 0; // Default to off 
