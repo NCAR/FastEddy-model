@@ -95,11 +95,11 @@ def smoothTerrain(tPos0,dx):
         print(f'Elapsed time [s]: {np.round(end-start,3)}')
     return tPos1
 
-def interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent):
+def interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent,parent_model):
     dsWRF = xr.Dataset()
     for i in range(ll_iindx,ll_iindx+i_extent):
         for j in range(ll_jindx,ll_jindx+j_extent):
-            dsWRF1=get_dsWRFStandardZprof(it0,j,i,ds_ref,varsList,surfVarsList,zRect)
+            dsWRF1=get_dsWRFStandardZprof(it0,j,i,ds_ref,varsList,surfVarsList,zRect,parent_model)
 
             if(j == ll_jindx):
                 dsWRFj=dsWRF1.expand_dims(dim={'yIndex':1})
@@ -111,58 +111,65 @@ def interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll
             dsWRF=xr.concat([dsWRF,dsWRFj.expand_dims(dim={'xIndex':1})],dim='xIndex')
     return dsWRF
 
-def get_dsWRFStandardZprof(it0,j0,i0,ds_ref,varsList,surfVarsList,zProf):
-    ds_ij=getFEProfileDS(getWRFProfileDS(it0,j0,i0,ds_ref,varsList,surfVarsList),varsList,surfVarsList,zProf)
+def get_dsWRFStandardZprof(it0,j0,i0,ds_ref,varsList,surfVarsList,zProf,parent_model):
+    ds_ij=getFEProfileDS(getWRFProfileDS(it0,j0,i0,ds_ref,varsList,surfVarsList,parent_model),varsList,surfVarsList,zProf,parent_model)
 
     return ds_ij
 
-def getFEProfileDS(dsWrf,varsList,surfVarsList,zFE): ##### Map (Interp/Extrap-olate) a collected set of WRF vertical profiles from
+def getFEProfileDS(dsWrf,varsList,surfVarsList,zFE,parent_model): ##### Map (Interp/Extrap-olate) a collected set of WRF vertical profiles from
                                                      ##### the WRF vertical coordinate to a specified cartesian z-coord (zFE)
     ds_ret=xr.Dataset()
-    fromRestart = False
-    if fromRestart:
-        varDict = {'Z':'zPos','U_1':'u','V_1':'v','W_1':'w','T':'theta','QVAPOR':'qv','QCLOUD':'ql','ALT':'rho','ALB':'BS_0','PB':'BS_4'}
-    else:
-        varDict = {'Z':'zPos','U':'u','V':'v','W':'w','T':'theta','QVAPOR':'qv','QCLOUD':'ql','ALT':'rho'}
-    surfVarDict = {'TSK':'tskin','Q2':'qskin','HGT':'topoWRF','T2':'t2','PSFC':'psfc'} #Note using Q2 instead of QVG since QVG not default in wrfout files
-    for var in varsList:
-        if var !=  'Z':
-            f1=interpolate.interp1d(dsWrf['Z'],dsWrf[var],kind='linear',fill_value='extrapolate')
-            if var != 'ALT' and var != 'ALB':
-                ds_ret[varDict[var]] = xr.DataArray(f1(zFE),dims=['zIndex']) #,coords={'zIndex':np.array0:zFE.size}
-            else:
-                ds_ret[varDict[var]] = xr.DataArray(1.0/f1(zFE),dims=['zIndex']) #,coords={'zIndex':np.array0:zFE.size}
+    if (parent_model == 0):
+        surfVarDict = {'TSK':'tskin','Q2':'qskin','HGT':'topoWRF','T2':'t2','PSFC':'psfc'} #Note using Q2 instead of QVG since QVG not default in wrfout files
+        for var in varsList:
+            if var !=  'Z':
+                f1=interpolate.interp1d(dsWrf['Z'],dsWrf[var],kind='linear',fill_value='extrapolate')
+                if var != 'ALT' and var != 'ALB':
+                    ds_ret[varDict[var]] = xr.DataArray(f1(zFE),dims=['zIndex'])
+                else:
+                    ds_ret[varDict[var]] = xr.DataArray(1.0/f1(zFE),dims=['zIndex'])
+    elif (parent_model == 1):
+        surfVarDict = {'tskin':'tskin','qskin':'qskin','topoPos':'topoParent'}
+        for var in varsList:
+            if var !=  'zPos':
+                f1=interpolate.interp1d(dsWrf['zPos'],dsWrf[var],kind='linear',fill_value='extrapolate')
+                ds_ret[var] = xr.DataArray(f1(zFE),dims=['zIndex'])
     for surfVar in surfVarsList:
         ds_ret[surfVarDict[surfVar]] = xr.DataArray(dsWrf[surfVar])
+
     return ds_ret
 
-def getWRFProfileDS(it,j,i,dsWrf,varsList,surfVarsList): ##### Destagger and collect a set of required WRF vertical profiles from a given i,j location in WRF
+def getWRFProfileDS(it,j,i,dsWrf,varsList,surfVarsList,parent_model): ##### Destagger and collect a set of required WRF vertical profiles from a given i,j location in WRF
     ds_ret=xr.Dataset()
-    fromRestart = False
-    for var in varsList:
-        if var == 'Z':
-            if fromRestart:
-                ds_ret[var] = xr.DataArray((0.5*(dsWrf.PH_1[it,0:-1,j,i]+dsWrf.PH_1[it,1:,j,i])
-                                           +0.5*(dsWrf.PHB[it,0:-1,j,i]+dsWrf.PHB[it,1:,j,i]))/9.81,
+    fromRestart = False # DME TO DO: remove the fromRestart option...
+    if (parent_model == 0):
+        for var in varsList:
+            if var == 'Z':
+                if fromRestart:
+                    ds_ret[var] = xr.DataArray((0.5*(dsWrf.PH_1[it,0:-1,j,i]+dsWrf.PH_1[it,1:,j,i])
+                                               +0.5*(dsWrf.PHB[it,0:-1,j,i]+dsWrf.PHB[it,1:,j,i]))/9.81,
+                                               dims=(['bottom_top']))
+                else:
+                    ds_ret[var] = xr.DataArray((0.5*(dsWrf.PH[it,0:-1,j,i]+dsWrf.PH[it,1:,j,i])
+                                               +0.5*(dsWrf.PHB[it,0:-1,j,i]+dsWrf.PHB[it,1:,j,i]))/9.81,
+                                               dims=(['bottom_top']))
+            elif 'west_east_stag' in dsWrf[var].dims:
+                ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,:,j,i]+dsWrf[var][it,:,j,i+1]),
+                                           dims=(['bottom_top']))
+            elif 'south_north_stag' in dsWrf[var].dims:
+                ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,:,j,i]+dsWrf[var][it,:,j+1,i]),
+                                           dims=(['bottom_top']))
+            elif 'bottom_top_stag' in dsWrf[var].dims:
+                ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,0:-1,j,i]+dsWrf[var][it,1:,j,i]),
                                            dims=(['bottom_top']))
             else:
-                ds_ret[var] = xr.DataArray((0.5*(dsWrf.PH[it,0:-1,j,i]+dsWrf.PH[it,1:,j,i])
-                                           +0.5*(dsWrf.PHB[it,0:-1,j,i]+dsWrf.PHB[it,1:,j,i]))/9.81,
+                ds_ret[var] = xr.DataArray(dsWrf[var][it,:,j,i],
                                            dims=(['bottom_top']))
-        elif 'west_east_stag' in dsWrf[var].dims:
-            ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,:,j,i]+dsWrf[var][it,:,j,i+1]),
-                                       dims=(['bottom_top']))
-        elif 'south_north_stag' in dsWrf[var].dims:
-            ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,:,j,i]+dsWrf[var][it,:,j+1,i]),
-                                       dims=(['bottom_top']))
-        elif 'bottom_top_stag' in dsWrf[var].dims:
-            ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,0:-1,j,i]+dsWrf[var][it,1:,j,i]),
-                                       dims=(['bottom_top']))
-        else:
-            ds_ret[var] = xr.DataArray(dsWrf[var][it,:,j,i],
-                                       dims=(['bottom_top']))
-        if var == 'T':
-            ds_ret[var] = 300.0+ds_ret[var]
+            if var == 'T':
+                ds_ret[var] = 300.0+ds_ret[var]
+    elif (parent_model == 1):
+        for var in varsList:
+            ds_ret[var] = xr.DataArray(dsWrf[var][it,:,j,i],dims=(['zIndex']))
 
     for surfVar in surfVarsList:
         ds_ret[surfVar] = xr.DataArray(dsWrf[surfVar][it,j,i])#,
@@ -200,22 +207,26 @@ def interp2DForFE(ds,ds_FE,XvWRF,YvWRF,xVec,yVec):
         print('{:s} required {:f} s for ij-interpolation'.format(var,t1e-t1s))
     return dsFENew
 
-def create_dsFEFinal(ds_FE):
+def create_dsFEFinal(ds_FE,parent_model):
     dsFEFinal=ds_FE.copy(deep=True)
     dsFEFinal.load()
-    for var in ['rho', 'u', 'v', 'w', 'theta', 'TKE_0', 'qv', 'pressure']:
+    # for var in ['rho', 'u', 'v', 'w', 'theta', 'TKE_0', 'qv', 'pressure']:
+    for var in ['rho', 'u', 'v', 'w', 'theta', 'TKE_0', 'qv', 'ql', 'pressure']: # DME: included ql here...
         dsFEFinal[var]=0.0*dsFEFinal['xPos'] 
     for var in ['fricVel','htFlux','invOblen','qFlux']:
-        dsFEFinal[var]=0.0*dsFEFinal['z0m'] 
-    for var in ['ql', 'XLAT','XLONG','topoWRF','t2','psfc']:
-      if var in list(dsFEFinal.variables):
-        if var in ['ql']:
-            dsFEFinal[var]=0.0*dsFEFinal['rho']
-        elif var in ['XLAT','XLONG','topoWRF','t2','psfc']:
-            dsFEFinal[var]=0.0*dsFEFinal['tskin']
+        dsFEFinal[var]=0.0*dsFEFinal['z0m']
+    if (parent_model == 0):
+        # for var in ['ql', 'XLAT','XLONG','topoWRF','t2','psfc']:
+        for var in ['XLAT','XLONG','topoWRF','t2','psfc']:
+            if var in list(dsFEFinal.variables):
+#               if var in ['ql']:
+#                   dsFEFinal[var]=0.0*dsFEFinal['rho']
+#           elif var in ['XLAT','XLONG','topoWRF','t2','psfc']:
+                if var in ['XLAT','XLONG','topoWRF','t2','psfc']:
+                    dsFEFinal[var]=0.0*dsFEFinal['tskin']
     return dsFEFinal
 
-def verticalInterpFinal(ds_FE,dsFENew,dsFEFinal,zRect):
+def verticalInterpFinal(ds_FE,dsFENew,dsFEFinal,zRect,parent_model):
     z3d=ds_FE['zPos'][:,:,:].values.squeeze()
     for var in dsFENew.variables:
         print(var)
@@ -244,13 +255,13 @@ def verticalInterpFinal(ds_FE,dsFENew,dsFEFinal,zRect):
                   dsFEFinal[var]=xr.DataArray(tmp,dims=('yIndex','xIndex'))
         t1e = time.perf_counter()
         print('{:s} required {:f} s for vertical interpolation of the i,j-set'.format(var,t1e-t1s))
-    if 'qv' in list(dsFEFinal.variables):
-      #Scale the water vapor mixing ratio from kg/kg (WRF) to g/kg (FE)
-      dsFEFinal['qv'] = 1e3*dsFEFinal['qv']
-    if 'ql' in list(dsFEFinal.variables):
-      dsFEFinal['ql'] = 1e3*dsFEFinal['ql']
-    if 'qskin' in list(dsFEFinal.variables):
-      dsFEFinal['qskin'] = 1e3*dsFEFinal['qskin']
+    if (parent_model == 0): #Scale the water vapor mixing ratio from kg/kg (WRF) to g/kg (FE)
+        if 'qv' in list(dsFEFinal.variables):
+            dsFEFinal['qv'] = 1e3*dsFEFinal['qv']
+        if 'ql' in list(dsFEFinal.variables):
+            dsFEFinal['ql'] = 1e3*dsFEFinal['ql']
+        if 'qskin' in list(dsFEFinal.variables):
+            dsFEFinal['qskin'] = 1e3*dsFEFinal['qskin']
 
 def interpolateIrregularVertical(zRect,fld3dRect,z3d):
     NzR,NyR,NxR = fld3dRect.shape
@@ -262,7 +273,7 @@ def interpolateIrregularVertical(zRect,fld3dRect,z3d):
             tmpVar3d[:,j,i]=tmp
     return tmpVar3d
 
-def create_dsBdy(ds_FE,FEvarsList,FEsurfVarsList):
+def create_dsBdy(ds_FE,FEvarsList,FEsurfVarsList,parent_model):
     ds_Bdy=xr.Dataset()
     notit=0
     for var in FEvarsList:
@@ -274,12 +285,21 @@ def create_dsBdy(ds_FE,FEvarsList,FEsurfVarsList):
             ds_Bdy[var+'_XZH']=xr.DataArray(ds_FE[var][:,:,ds_FE.sizes['yIndex']-1,:])
             ds_Bdy[var+'_XYL']=xr.DataArray(ds_FE[var][:,0,:,:])
             ds_Bdy[var+'_XYH']=xr.DataArray(ds_FE[var][:,ds_FE.sizes['zIndex']-1,:,:])
-    for surfVar in FEsurfVarsList:
-        print('{:s}: notit={:d}'.format(surfVar,notit))
-        if surfVar in ['topoWRF','t2','psfc','tskin','qskin']:
-            notit +=1
-        else:
-            ds_Bdy[surfVar]=xr.DataArray(ds_FE[surfVar][:,:])
+    if (parent_model == 0): 
+        for surfVar in FEsurfVarsList:
+            print('{:s}: notit={:d}'.format(surfVar,notit))
+            if surfVar in ['topoWRF','topoParent','t2','psfc','tskin','qskin']:
+                notit +=1
+            else:
+                ds_Bdy[surfVar]=xr.DataArray(ds_FE[surfVar][:,:])
+    elif (parent_model == 1):
+        for surfVar in FEsurfVarsList:
+            print('{:s}: notit={:d}'.format(surfVar,notit))
+            if surfVar in ['tskin','qskin']:
+                notit +=1
+            else:
+                ds_Bdy[surfVar]=xr.DataArray(ds_FE[surfVar][:,:])
+
     return ds_Bdy
 
 def createBdysFrom3D(ds_Bdy,ds3D,FEvarsList,FEsurfVarsList):
