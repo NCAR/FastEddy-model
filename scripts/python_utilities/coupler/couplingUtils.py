@@ -141,18 +141,12 @@ def getFEProfileDS(dsWrf,varsList,surfVarsList,zFE,parent_model): ##### Map (Int
 
 def getWRFProfileDS(it,j,i,dsWrf,varsList,surfVarsList,parent_model): ##### Destagger and collect a set of required WRF vertical profiles from a given i,j location in WRF
     ds_ret=xr.Dataset()
-    fromRestart = False # DME TO DO: remove the fromRestart option...
     if (parent_model == 0):
         for var in varsList:
             if var == 'Z':
-                if fromRestart:
-                    ds_ret[var] = xr.DataArray((0.5*(dsWrf.PH_1[it,0:-1,j,i]+dsWrf.PH_1[it,1:,j,i])
-                                               +0.5*(dsWrf.PHB[it,0:-1,j,i]+dsWrf.PHB[it,1:,j,i]))/9.81,
-                                               dims=(['bottom_top']))
-                else:
-                    ds_ret[var] = xr.DataArray((0.5*(dsWrf.PH[it,0:-1,j,i]+dsWrf.PH[it,1:,j,i])
-                                               +0.5*(dsWrf.PHB[it,0:-1,j,i]+dsWrf.PHB[it,1:,j,i]))/9.81,
-                                               dims=(['bottom_top']))
+                ds_ret[var] = xr.DataArray((0.5*(dsWrf.PH[it,0:-1,j,i]+dsWrf.PH[it,1:,j,i])
+                                            +0.5*(dsWrf.PHB[it,0:-1,j,i]+dsWrf.PHB[it,1:,j,i]))/9.81,
+                                            dims=(['bottom_top']))
             elif 'west_east_stag' in dsWrf[var].dims:
                 ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,:,j,i]+dsWrf[var][it,:,j,i+1]),
                                            dims=(['bottom_top']))

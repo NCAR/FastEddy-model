@@ -25,7 +25,7 @@ mpi_rank = MPI.COMM_WORLD.Get_rank()
 mpi_name = MPI.Get_processor_name()
 
 print("{:d}/{:d}: Hello World! on {:s}.".format(mpi_rank, mpi_size, mpi_name))
-DEBUG_COUPLER = True # False #True # DME TO DO: set back to False ...
+DEBUG_COUPLER = False
 
 ######################################################
 ### Parse the command line arguments                ###
@@ -55,6 +55,8 @@ itMin = params["itMin"]
 dt_FE = params["dt_FE"]
 outputFrequency = params["outputFrequency"]
 timeLengthSec = params["timeLengthSec"]
+nest_tke_opt = params["nest_tke_opt"]
+ideal_opt = params["ideal_opt"]
 
 print(f"{mpi_rank}/{mpi_size}: Writing coupler outputs to {ICBC_dir}")
 print(f"{mpi_rank}/{mpi_size}: Interpolating to FE-domain from {FE_simGrid}")
@@ -105,7 +107,7 @@ elif (parent_model == 1): # FastEddy
     name_concat_dim = 'time'
 
     itInc=np.int32(np.floor(outputFrequency/dt_FE))
-    itMax = itMin + itInc*np.int32(np.floor(timeLengthSec/outputFrequency)) #241 #60
+    itMax = itMin + itInc*np.int32(np.floor(timeLengthSec/outputFrequency))
     print(f"Creating file list spanning timestep {itMin} to {itMax} in increments of {itInc} timesteps.")
     timeMin = itMin*dt_FE
     timeMax = itMax*dt_FE
@@ -181,11 +183,6 @@ ds_WRFRef=xr.open_dataset(files_list[0], engine="netcdf4")
 ## Find the the WRF d02 profiler locations
 itargs=[]
 jtargs=[]
-#print('WRF:')
-#print('(j,i):')
-
-latFE = ds_FEGrid.lat.values
-lonFE = ds_FEGrid.lon.values
 
 if (parent_model == 0):
     dx_parent = ds_WRFRef.attrs['DX']
@@ -198,17 +195,52 @@ elif (parent_model == 1):
     Ngpx = ds_WRFRef.sizes['xIndex']
     Ngpy = ds_WRFRef.sizes['yIndex']
 
-# DME TO DO: here to include an option for idealized cases (using xPos,yPos instead of lat,lon) !!!
-corners_lat = np.asarray([latFE[0,0], latFE[0,-1],latFE[-1,-1], latFE[-1,0]])
-corners_lon = np.asarray([lonFE[0,0], lonFE[0,-1],lonFE[-1,-1], lonFE[-1,0]])
-print('corners_lat.shape=',corners_lat.shape)
-print('corners_lon.shape=',corners_lon.shape)
-print('corners_lat=',corners_lat)
-print('corners_lon=',corners_lon)
+if (not ideal_opt):
 
-for indx in range(len(corners_lat)):
-    blah3=np.sqrt( (ds_WRFRef[name_lat][0,:,:].values-corners_lat[indx])**2
-                  +(ds_WRFRef[name_lon][0,:,:].values-corners_lon[indx])**2)
+    latFE = ds_FEGrid.lat.values
+    lonFE = ds_FEGrid.lon.values
+
+    corners_lat = np.asarray([latFE[0,0], latFE[0,-1],latFE[-1,-1], latFE[-1,0]])
+    corners_lon = np.asarray([lonFE[0,0], lonFE[0,-1],lonFE[-1,-1], lonFE[-1,0]])
+    print('corners_lat.shape=',corners_lat.shape)
+    print('corners_lon.shape=',corners_lon.shape)
+    print('corners_lat=',corners_lat)
+    print('corners_lon=',corners_lon)
+
+    len_corners = len(corners_lat)
+
+    corners_var_y = corners_lat
+    corners_var_x = corners_lon
+
+else:
+
+    name_lat = 'yPos'
+    name_lon = 'xPos'
+
+    xcoordFE = ds_FEGrid.xPos.isel(zIndex=0).values
+    ycoordFE = ds_FEGrid.yPos.isel(zIndex=0).values
+    print("xcoordFE.shape=",xcoordFE.shape)
+
+    corners_x = np.asarray([xcoordFE[0,0], xcoordFE[0,-1], xcoordFE[-1,-1], xcoordFE[-1,0]])
+    corners_y = np.asarray([ycoordFE[0,0], ycoordFE[0,-1], ycoordFE[-1,-1], ycoordFE[-1,0]])
+    print('corners_x.shape=',corners_x.shape)
+    print('corners_y.shape=',corners_y.shape)
+    print('corners_x=',corners_x)
+    print('corners_y=',corners_y)
+
+    len_corners = len(corners_y)
+
+    corners_var_y = corners_x
+    corners_var_x = corners_y
+
+for indx in range(len_corners):
+    if (not ideal_opt):
+        blah3=np.sqrt( (ds_WRFRef[name_lat][0,:,:].values-corners_lat[indx])**2
+                          +(ds_WRFRef[name_lon][0,:,:].values-corners_lon[indx])**2)
+    else:
+        blah3=np.sqrt( (ds_WRFRef[name_lat][0,0,:,:].values-corners_y[indx])**2
+                          +(ds_WRFRef[name_lon][0,0,:,:].values-corners_x[indx])**2)
+
     locCount=0
     for jtarg, itarg in np.argwhere(blah3 == np.min(blah3,axis=(0,1))): 
         if locCount < 1:
@@ -219,74 +251,142 @@ for indx in range(len(corners_lat)):
         else:
             #skip this redundant location of minimum distance
             if(mpi_rank == 0):
-              print('Skipping redundant closest corner location: ',jtarg,itarg)
+                print('Skipping redundant closest corner location: ',jtarg,itarg)
 
 #### Append the corner index pairs to the WRFref dataset dFE_jindxs and dFE_iindxs  
 ds_WRFRef['dFE_jindxs']=xr.DataArray(np.asarray(jtargs,dtype=np.int32),dims=["corners"])
 ds_WRFRef['dFE_iindxs']=xr.DataArray(np.asarray(itargs,dtype=np.int32),dims=["corners"])
-for indx in range(len(corners_lat)):
-  if(mpi_rank == 0):
-    print(f"corner({indx}) @ WRF({ds_WRFRef['dFE_jindxs'][indx].values},{ds_WRFRef['dFE_iindxs'][indx].values})")
-    print('[WRF,corner({:d})]: lats = [{:f},{:f}], lons = [{:f},{:f}]'.format(indx,ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
-                                                                                 corners_lat[indx],
-                                                                                 ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
-                                                                                 corners_lon[indx]))
+
+print("ds_WRFRef['dFE_jindxs'].values=",ds_WRFRef['dFE_jindxs'].values)
+print("ds_WRFRef['dFE_iindxs'].values=",ds_WRFRef['dFE_iindxs'].values)
+
+if (not ideal_opt):
+
+    for indx in range(len_corners):
+        if(mpi_rank == 0):
+            print(f"corner({indx}) @ WRF({ds_WRFRef['dFE_jindxs'][indx].values},{ds_WRFRef['dFE_iindxs'][indx].values})")
+            print('[WRF,corner({:d})]: lats = [{:f},{:f}], lons = [{:f},{:f}]'.format(indx,ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
+                                                                                     corners_lat[indx],
+                                                                                     ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
+                                                                                     corners_lon[indx]))
     
+    ### Compute FE-domain corner lat/lon offsets from closest dsWRFRef cell-centered lat/lons
+    print('\t Pre-correction offsets:')        
+    for indx in range(len_corners):  
+        latOff = ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lat[indx]
+        lonOff = ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lon[indx]
+        if(mpi_rank == 0):
+            print('\t corner({:d}): latOff = {:f}, lonOff = {:f}'.format(indx,latOff,lonOff))
+        yoffset = -(ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lat[indx])\
+                *(dy_parent/( ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx]+1,ds_WRFRef['dFE_iindxs'][indx]]
+                                           -ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))
+        xoffset = -(ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lon[indx])\
+                 *(dx_parent/( ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]+1]
+                                           -ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))   
+        if(mpi_rank == 0):
+            print('\t corner({:d}): yOff = {:f}, xOff = {:f}'.format(indx,yoffset.values,xoffset.values))
+        if indx<2:   ## 0=southwest, or 1=southeast corner
+            if yoffset < 0.0:  #FE domain SW/SE corner is south of the closest wrf cell, decrement the bounding jindx
+                ds_WRFRef['dFE_jindxs'][indx]-=1 
+            if indx < 1: 
+                if xoffset < 0.0: #FE domain SW corner is west of the closest wrf cell, decrement the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]-=1
+            else: 
+                if xoffset > 0.0: #FE domain SE corner is east of the closest wrf cell, increment the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]+=1
+        else:   ## 3=northwest, or 2=northeast corner
+            if yoffset > 0.0:  #FE domain NE/NW corner is north of the closest wrf cell, increment the bounding jindx
+                ds_WRFRef['dFE_jindxs'][indx]+=1
+            if indx < 3: 
+                if xoffset > 0.0: #FE domain NE corner is east of the closest wrf cell, increment the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]+=1
+            else: 
+                if xoffset < 0.0: #FE domain NW corner is west of the closest wrf cell, decrement the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]-=1 
+    if(mpi_rank == 0):
+        print('Bounding-box corrected offsets:')
+
+    for indx in range(len_corners):  
+        latOff = ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lat[indx]
+        lonOff = ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lon[indx]
+        yoffset = -(ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lat[indx])\
+                  *(dy_parent/( ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx]+1,ds_WRFRef['dFE_iindxs'][indx]]
+                                           -ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))
+        xoffset = -(ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lon[indx])\
+                  *(dx_parent/( ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]+1]
+                                           -ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))   
+        if(mpi_rank == 0):
+            print('corner({:d}):latOff = {:f}, lonOff = {:f} -- yOff = {:f}, xOff = {:f}'.format(indx,latOff,lonOff,yoffset.values,xoffset.values))
+        if indx == 0:
+            ll_yoffset=yoffset.values
+            ll_xoffset=xoffset.values
+    for indx in range(len_corners):
+        if(mpi_rank == 0):
+            print('{:d},{:d}'.format(ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values))
+
+else:
+
+    for indx in range(len_corners):
+        if(mpi_rank == 0):
+            print(f"corner({indx}) @ WRF({ds_WRFRef['dFE_jindxs'][indx].values},{ds_WRFRef['dFE_iindxs'][indx].values})")
+            print('[WRF,corner({:d})]: yPos = [{:f},{:f}], xPos = [{:f},{:f}]'.format(indx,ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
+                                                                                     corners_y[indx],
+                                                                                     ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
+                                                                                     corners_y[indx]))
     
-### Compute FE-domain corner lat/lon offsets from closest dsWRFRef cell-centered lat/lons
-print('\t Pre-correction offsets:')        
-for indx in range(len(corners_lat)):  
-    latOff = ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lat[indx]
-    lonOff = ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lon[indx]
+    ### Compute FE-domain corner lat/lon offsets from closest dsWRFRef cell-centered lat/lons
+    print('\t Pre-correction offsets:')        
+    for indx in range(len_corners):  
+        xcoordOff = ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_y[indx]
+        ycoordOff = ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_x[indx]
+        if(mpi_rank == 0):
+            print('\t corner({:d}): ycoordOff = {:f}, xcoordOff = {:f}'.format(indx,ycoordOff,xcoordOff))
+        yoffset = -(ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_y[indx])\
+                *(dy_parent/( ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx]+1,ds_WRFRef['dFE_iindxs'][indx]]
+                                           -ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))
+        xoffset = -(ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_x[indx])\
+                 *(dx_parent/( ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]+1]
+                                           -ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))   
+        if(mpi_rank == 0):
+            print('\t corner({:d}): yOff = {:f}, xOff = {:f}'.format(indx,yoffset.values,xoffset.values))
+        if indx<2:   ## 0=southwest, or 1=southeast corner
+            if yoffset < 0.0:  #FE domain SW/SE corner is south of the closest wrf cell, decrement the bounding jindx
+                ds_WRFRef['dFE_jindxs'][indx]-=1 
+            if indx < 1: 
+                if xoffset < 0.0: #FE domain SW corner is west of the closest wrf cell, decrement the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]-=1
+            else: 
+                if xoffset > 0.0: #FE domain SE corner is east of the closest wrf cell, increment the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]+=1
+        else:   ## 3=northwest, or 2=northeast corner
+            if yoffset > 0.0:  #FE domain NE/NW corner is north of the closest wrf cell, increment the bounding jindx
+                ds_WRFRef['dFE_jindxs'][indx]+=1
+            if indx < 3: 
+                if xoffset > 0.0: #FE domain NE corner is east of the closest wrf cell, increment the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]+=1
+            else: 
+                if xoffset < 0.0: #FE domain NW corner is west of the closest wrf cell, decrement the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]-=1 
     if(mpi_rank == 0):
-      print('\t corner({:d}): latOff = {:f}, lonOff = {:f}'.format(indx,latOff,lonOff))
-    yoffset = -(ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lat[indx])\
-              *(dy_parent/( ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx]+1,ds_WRFRef['dFE_iindxs'][indx]]
-                                       -ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))
-    xoffset = -(ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lon[indx])\
-              *(dx_parent/( ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]+1]
-                                       -ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))   
-    if(mpi_rank == 0):
-      print('\t corner({:d}): yOff = {:f}, xOff = {:f}'.format(indx,yoffset.values,xoffset.values))
-    if indx<2:   ## 0=southwest, or 1=southeast corner
-        if yoffset < 0.0:  #FE domain SW/SE corner is south of the closest wrf cell, decrement the bounding jindx
-            ds_WRFRef['dFE_jindxs'][indx]-=1 
-        if indx < 1: 
-            if xoffset < 0.0: #FE domain SW corner is west of the closest wrf cell, decrement the bounding iindx
-                ds_WRFRef['dFE_iindxs'][indx]-=1
-        else: 
-            if xoffset > 0.0: #FE domain SE corner is east of the closest wrf cell, increment the bounding iindx
-                ds_WRFRef['dFE_iindxs'][indx]+=1
-    else:   ## 3=northwest, or 2=northeast corner
-        if yoffset > 0.0:  #FE domain NE/NW corner is north of the closest wrf cell, increment the bounding jindx
-            ds_WRFRef['dFE_jindxs'][indx]+=1
-        if indx < 3: 
-            if xoffset > 0.0: #FE domain NE corner is east of the closest wrf cell, increment the bounding iindx
-                ds_WRFRef['dFE_iindxs'][indx]+=1
-        else: 
-            if xoffset < 0.0: #FE domain NW corner is west of the closest wrf cell, decrement the bounding iindx
-                ds_WRFRef['dFE_iindxs'][indx]-=1 
-if(mpi_rank == 0):
-  print('Bounding-box corrected offsets:')        
-for indx in range(len(corners_lat)):  
-    latOff = ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lat[indx]
-    lonOff = ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lon[indx]
-    yoffset = -(ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lat[indx])\
-              *(dy_parent/( ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx]+1,ds_WRFRef['dFE_iindxs'][indx]]
-                                       -ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))
-    xoffset = -(ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lon[indx])\
-              *(dx_parent/( ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]+1]
-                                       -ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))   
-    if(mpi_rank == 0):
-      print('corner({:d}):latOff = {:f}, lonOff = {:f} -- yOff = {:f}, xOff = {:f}'.format(indx,latOff,lonOff,yoffset.values,xoffset.values))
-    if indx == 0:
-        ll_yoffset=yoffset.values
-        ll_xoffset=xoffset.values
-#print('WRF:')
-#print('(j,i):')
-for indx in range(len(corners_lat)):
-    if(mpi_rank == 0):
-      print('{:d},{:d}'.format(ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values))
+        print('Bounding-box corrected offsets:')        
+    for indx in range(len_corners):  
+        xcoordOff = ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_y[indx]
+        ycoordOff = ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_x[indx]
+        yoffset = -(ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_y[indx])\
+                  *(dy_parent/( ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx]+1,ds_WRFRef['dFE_iindxs'][indx]]
+                                           -ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))
+        xoffset = -(ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_x[indx])\
+                  *(dx_parent/( ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]+1]
+                                           -ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))   
+    for indx in range(len_corners):  
+        if(mpi_rank == 0):
+            print('corner({:d}):ycoordOff = {:f}, xcoordOff = {:f} -- yOff = {:f}, xOff = {:f}'.format(indx,ycoordOff,xcoordOff,yoffset.values,xoffset.values))
+        if indx == 0:
+            ll_yoffset=yoffset.values
+            ll_xoffset=xoffset.values
+    for indx in range(len_corners):
+        if(mpi_rank == 0):
+            print('{:d},{:d}'.format(ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values))
     
 #Nesting configuration parameters
 ll_jindx=ds_WRFRef['dFE_jindxs'].min(dim='corners').values
@@ -337,9 +437,6 @@ print(stepX,stepY)
 ##Given the correct x,y vectors create 2-d grids of x and y coordinates
 YvWRF,XvWRF=np.meshgrid(yWRF,xWRF, sparse=False, indexing='ij')
 print(XvWRF.shape,XvWRF.shape)
-
-
-#print(ds_WRFRef['HGT'][0,ll_jindx:ll_jindx+j_extent,ll_iindx:ll_iindx+i_extent].values) # DME TO DO: remove since it was a debugging print and requires customization for different parent_model options...
 
 ####################################################################################
 ### Map the target FE domain into the WRF bounding-grid relative x,y coordinates ###
@@ -394,9 +491,13 @@ if (parent_model == 0):
     FEvarsList = ['rho','u','v','w','theta','qv','ql']
     FEsurfVarsList = ['tskin','qskin','topoWRF','psfc','SeaMask'] # DME: should be able to simply remove 'topoWRF','psfc','SeaMask' so these are not in Bdy files...
 elif (parent_model == 1):
-    varsList = ['zPos','rho','u','v','w','theta','qv','ql','TKE_0']
+    if (nest_tke_opt):
+        varsList = ['zPos','rho','u','v','w','theta','qv','ql','TKE_0']
+        FEvarsList = ['rho','u','v','w','theta','qv','ql','TKE_0']
+    else:
+        varsList = ['zPos','rho','u','v','w','theta','qv','ql']
+        FEvarsList = ['rho','u','v','w','theta','qv','ql']
     surfVarsList = ['tskin','qskin','topoPos']
-    FEvarsList = ['rho','u','v','w','theta','qv','ql','TKE_0']
     FEsurfVarsList = ['tskin','qskin'] # ,'SeaMask']
 
 #######################################################################
