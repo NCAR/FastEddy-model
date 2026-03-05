@@ -25,6 +25,7 @@ extern __constant__ int coriolisSelector_d;   /*coriolis Force selector: 0= none
 extern __constant__ float corioConstHorz_d;          /*coriolis horizontal term constant */
 extern __constant__ float corioConstVert_d;          /*coriolis vertical term constant */
 extern __constant__ float corioLS_fact_d;            /*large-scale factor on Coriolis term*/
+extern float* lat_d; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
 
 /*##############-------------- CORIOLIS_CUDADEV submodule function declarations ------------------############*/
 
@@ -43,6 +44,7 @@ extern "C" int cuda_coriolisDeviceCleanup();
 */
 __device__ void cudaDevice_calcCoriolis(float* Frhs_u, float* Frhs_v, float* Frhs_w,
                                         float* rho, float* uMom, float* vMom, float* wMom,
-                                        float* rhoBS, float* uBS, float* vBS, float* wBS);
+                                        float* rhoBS, float* uBS, float* vBS, float* wBS,
+					float* lat);
 
 #endif // _CORIOLIS_CUDADEV_CU_H

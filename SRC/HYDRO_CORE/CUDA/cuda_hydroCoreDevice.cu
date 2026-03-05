@@ -508,7 +508,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    cudaDevice_hydroCoreComplete<<<grid, tBlock>>>(simTime, simTime_it, dt, timeStage, numRKstages, hydroFlds_d, hydroFldsFrhs_d,
                                                           hydroFaceVels_d, hydroBaseStateFlds_d, hydroTauFlds_d,
                                                           sgstkeScalars_d, sgstkeScalarsFrhs_d, moistScalars_d, moistScalarsFrhs_d, moistTauFlds_d,
-                                                          J13_d, J23_d, J31_d, J32_d, J33_d, invD_Jac_d, zPos_d);
+                                                          J13_d, J23_d, J31_d, J32_d, J33_d, invD_Jac_d, zPos_d, lat_d);
    gpuErrchk( cudaGetLastError() );
    gpuErrchk( cudaDeviceSynchronize() );
 
@@ -869,11 +869,12 @@ __global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, floa
                                                      float* hydroTauFlds,
                                                      float* sgstkeScalars, float* sgstkeScalarsFrhs, 
                                                      float* moistScalars, float* moistScalarsFrhs, float* moistTauFlds,
-                                                     float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* invD_Jac_d, float* zPos_d){
+                                                     float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* invD_Jac_d, float* zPos_d, float* lat_d){
 
-   int i,j,k,ijk; 
+   int i,j,k,ijk,ij;
    int iFld,fldStride;
    int iStride,jStride,kStride;
+   int iStride2d,jStride2d;
    float* rho;
    float* rho_BS;
    float* u_cf;
@@ -894,6 +895,8 @@ __global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, floa
    iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
    jStride = (Nz_d+2*Nh_d);
    kStride = 1;
+   iStride2d = (Ny_d+2*Nh_d);
+   jStride2d = 1;
    rho = &hydroFlds[fldStride*RHO_INDX];
    rho_BS = &hydroBaseStateFlds[fldStride*RHO_INDX_BS];
    u_cf = &hydroFaceVels[fldStride*0];
@@ -1083,6 +1086,7 @@ __global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, floa
       }  //end if buoyancySelector > 0
       if(coriolisSelector_d > 0){
         ijk = i*iStride + j*jStride + k*kStride;
+	ij = i*iStride2d + j*jStride2d;
         cudaDevice_MomentumBS(U_INDX, zPos_d[ijk], &hydroBaseStateFlds[RHO_INDX_BS*fldStride+ijk], &MomBSval[0]);
         cudaDevice_MomentumBS(V_INDX, zPos_d[ijk], &hydroBaseStateFlds[RHO_INDX_BS*fldStride+ijk], &MomBSval[1]);
         cudaDevice_MomentumBS(W_INDX, zPos_d[ijk], &hydroBaseStateFlds[RHO_INDX_BS*fldStride+ijk], &MomBSval[2]);
@@ -1096,7 +1100,8 @@ __global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, floa
                                 &hydroBaseStateFlds[RHO_INDX_BS*fldStride+ijk],
                                 &MomBSval[0],
                                 &MomBSval[1],
-                                &MomBSval[2]);
+                                &MomBSval[2],
+				&lat_d[ij]);
       }  //end if coriolisSelector_d > 0 
    }//end if in the range of non-halo cells
 
