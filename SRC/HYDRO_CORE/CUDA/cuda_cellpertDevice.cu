@@ -46,7 +46,7 @@ extern "C" int cuda_cellpertDeviceSetup(){
    cudaMemcpyToSymbol(cellpert_ktop_d, &cellpert_ktop, sizeof(int));
 
    Nelems1d_xy = (Nx/cellpert_gppc+min(Nx%cellpert_gppc,1))*(2*cellpert_ndbc+min(Ny%cellpert_gppc,1)) + (Ny/cellpert_gppc-2*cellpert_ndbc)*(2*cellpert_ndbc+min(Nx%cellpert_gppc,1));
-   Nelems1d = (size_t)(Nelems1d_xy*(cellpert_ktop-cellpert_kbottom+1));
+   Nelems1d = (size_t)(Nelems1d_xy*(Nz-cellpert_kbottom+1));
    fecuda_DeviceMalloc(Nelems1d, &randcp_d);
 
    return(errorCode);
@@ -92,7 +92,7 @@ extern "C" int cuda_hydroCoreDeviceBuildCPmethod(int simTime_it){
 
 // uniform distribution of pseudo-random numbers on randcp_d (1d-array)
    n_xy = (Nx/cellpert_gppc+min(Nx%cellpert_gppc,1))*(2*cellpert_ndbc+min(Ny%cellpert_gppc,1)) + (Ny/cellpert_gppc-2*cellpert_ndbc)*(2*cellpert_ndbc+min(Nx%cellpert_gppc,1));
-   n_tot = n_xy*(cellpert_ktop-cellpert_kbottom+1);
+   n_tot = n_xy*(Nz-cellpert_kbottom+1);
 
    curandCreateGenerator(&gen,CURAND_RNG_PSEUDO_DEFAULT);
    curandSetPseudoRandomGeneratorSeed(gen,(unsigned long long)simTime_it);
@@ -218,7 +218,7 @@ __device__ void cudaDevice_CellPerturbation(int i_ind, int j_ind, int k_ind, int
   ncx = (Nx_tot/gppc)+ ncx_p;
   ncy_p = min(Ny_tot%gppc,1);
   ncy = (Ny_tot/gppc);
-  ncz = cellpert_ktop_d-cellpert_kbottom_d+1;
+  ncz = Nz-cellpert_kbottom_d+1;
 
 // only domain boundary ring
   nc_xy = ncx*(2*ndbc+ncy_p) + (ncy-2*ndbc)*(2*ndbc+ncx_p);
@@ -313,7 +313,7 @@ __device__ void cudaDevice_CellPerturbationMasked(int i_ind, int j_ind, int k_in
   ncx = (Nx_tot/gppc)+ ncx_p;
   ncy_p = min(Ny_tot%gppc,1);
   ncy = (Ny_tot/gppc);
-  ncz = cellpert_ktop_d-cellpert_kbottom_d+1;
+  ncz = Nz-cellpert_kbottom_d+1;
 
 // only domain boundary ring
   nc_xy = ncx*(2*ndbc+ncy_p) + (ncy-2*ndbc)*(2*ndbc+ncx_p);

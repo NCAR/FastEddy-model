@@ -451,12 +451,8 @@ int hydro_coreGetParams(){
      errorCode = queryFloatParameter("cellpert_eckert", &cellpert_eckert, 0.0, 10.0, PARAM_OPTIONAL);
      cellpert_tsfact = 1.0; // Default to cellpert_tsfact = 1.0
      errorCode = queryFloatParameter("cellpert_tsfact", &cellpert_tsfact, 0.0, 10.0, PARAM_OPTIONAL);
-     if (cellpert_tvcp == 1){
-         cellpert_ktop = Nz;
-     } else{
-       if (cellpert_ktop > Nz){
-         cellpert_ktop = Nz;
-       }
+     if (cellpert_ktop > Nz){
+       cellpert_ktop = Nz;
      }
    }
    //
