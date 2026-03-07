@@ -110,6 +110,8 @@ extern float corioConstHorz;     /*Latitude dependent horizontal Coriolis term c
 extern float corioConstVert;     /*Latitude dependent Vertical Coriolis term constant */
 extern int coriolis_LAD;         /*Coriolis force selector for LAD BC cases (hydroBCs==1): 0=off, 1=on*/
 extern float corioLS_fact;       /*large-scale factor on Coriolis term*/
+extern float* lat; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
+extern float* lon; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
 
 /*---TURBULENCE*/
 extern int turbulenceSelector;    /*turbulence scheme selector: 0= none, 1= Lilly/Smagorinsky */
