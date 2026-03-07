@@ -104,6 +104,8 @@ float corioConstHorz;   /*Latitude dependent horizontal Coriolis term constant *
 float corioConstVert;   /*Latitude dependent Vertical Coriolis term constant */
 int coriolis_LAD = 0;       /*Coriolis force selector for LAD BC cases (hydroBCs==1): 0=off, 1=on*/
 float corioLS_fact;     /*large-scale factor on Coriolis term*/
+float* lat; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
+float* lon; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
 
 /*----Turbulence*/ 
 int turbulenceSelector;         /*turbulence scheme selector: 0= none, 1= Lilly/Smagorinsky */
@@ -679,7 +681,6 @@ int hydro_coreInit(){
    char moistName[MAX_HC_FLDNAME_LENGTH];
    char moistName_base[MAX_HC_FLDNAME_LENGTH];
    char moistName_tmp[MAX_HC_FLDNAME_LENGTH];
-   float pi;
    int fldStride;
    float z1oz0,z1,z1ozt0;
    int strLength;
@@ -1379,6 +1380,34 @@ int hydro_coreInit(){
      }
    } // end of surflayerSelector > 0
 
+   // 2d arrays of latitude and longitude
+   lat = memAllocateFloat2DField(Nxp, Nyp, Nh, "lat");
+   errorCode = sprintf(&fldName[0],"lat");
+   errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, lat);
+   // Add NetCDF attributes for the registered variable
+   errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
+   printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
+           &fldName[0],lat);
+   fflush(stdout);
+
+   lon = memAllocateFloat2DField(Nxp, Nyp, Nh, "lon");
+   errorCode = sprintf(&fldName[0],"lon");
+   errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, lon);
+   // Add NetCDF attributes for the registered variable
+   errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
+   printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
+           &fldName[0],lon);
+   fflush(stdout);
+   if(inFile == NULL){ // fill-in lat/lon arrays if fresh start (no initial condition file)
+     for(i=iMin-Nh; i < iMax+Nh; i++){
+       for(j=jMin-Nh; j < jMax+Nh; j++){
+         ij = i*(Nyp+2*Nh)+j;
+	 lat[ij] = coriolisLatitude;
+	 lon[ij] = 0.0; // longitude is zero in idealized fresh start runs
+       }
+     }
+   }
+
    if(surflayer_offshore>0){
      sea_mask = memAllocateFloat2DField(Nxp, Nyp, Nh, "sea_mask");
      errorCode = sprintf(&fldName[0],"SeaMask");
@@ -1559,11 +1588,10 @@ int hydro_coreInit(){
    Rv_Rg = R_vapor/R_gas;     /* Ratio R_vapor/R_gas*/
 
    /* Coriolis-term constants */
-   pi = acos(-1);   
    if(coriolisSelector > 0){
-     corioConstHorz = 1.45842e-4*sin(pi/180.0*coriolisLatitude); //1.45842e-4 = 2*Earth-Omega
+     corioConstHorz = 1.45842e-4; //1.45842e-4 = 2*Earth-Omega
      if(coriolisSelector > 1){  
-       corioConstVert = 1.45842e-4*cos(pi/180.0*coriolisLatitude);
+       corioConstVert = 1.45842e-4;
      }else{
        corioConstVert = 0.0;
      } //end if vert
@@ -3438,6 +3466,8 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
         {"invOblen",    "m-1",           "Inverse Obukhov length",                                        NULL},
         {"CanopyLAD",   "m-1",           "Leaf area density",                                             "leaf_area_density"},
         {"SeaMask",     "-",             "Sea mask",                                                      "sea_area_fraction"},
+        {"lat",         "degree_north",  "Latitude",                                                      "latitude"},
+        {"lon",         "degree_east",   "Longitude",                                                     "longitude"},
         {NULL, NULL, NULL, NULL} // End marker                                                                                                           
     };
 
