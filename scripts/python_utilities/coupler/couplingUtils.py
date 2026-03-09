@@ -120,6 +120,7 @@ def getFEProfileDS(dsWrf,varsList,surfVarsList,zFE,parent_model): ##### Map (Int
                                                      ##### the WRF vertical coordinate to a specified cartesian z-coord (zFE)
     ds_ret=xr.Dataset()
     if (parent_model == 0):
+        varDict = {'Z':'zPos','U':'u','V':'v','W':'w','T':'theta','QVAPOR':'qv','QCLOUD':'ql','ALT':'rho','QKE':'TKE_0'}
         surfVarDict = {'TSK':'tskin','Q2':'qskin','HGT':'topoWRF','T2':'t2','PSFC':'psfc'} #Note using Q2 instead of QVG since QVG not default in wrfout files
         for var in varsList:
             if var !=  'Z':
@@ -147,6 +148,25 @@ def getWRFProfileDS(it,j,i,dsWrf,varsList,surfVarsList,parent_model): ##### Dest
                 ds_ret[var] = xr.DataArray((0.5*(dsWrf.PH[it,0:-1,j,i]+dsWrf.PH[it,1:,j,i])
                                             +0.5*(dsWrf.PHB[it,0:-1,j,i]+dsWrf.PHB[it,1:,j,i]))/9.81,
                                             dims=(['bottom_top']))
+            elif var == 'QKE':
+                tke_infile = dsWrf.get(var)
+                if tke_infile is not None:
+                    tke_var = 1
+                else: # try with TKE_PBL alternatively
+                    tke_infile = dsWrf.get('TKE_PBL')
+                    if tke_infile is not None:
+                        tke_var = 2
+                    else:
+                        tke_var = 0
+                if (tke_var == 1):
+                    ds_ret[var] = xr.DataArray(0.5*dsWrf[var][it,:,j,i], # QKE is 2.0*TKE
+                                               dims=(['bottom_top']))
+                elif (tke_var == 2): # TKE_PBL is bottom_top_stag
+                    ds_ret[var] = xr.DataArray(0.5*(dsWrf['TKE_PBL'][it,0:-1,j,i]+dsWrf['TKE_PBL'][it,1:,j,i]),
+                                           dims=(['bottom_top']))
+                else: # tke_var == 0 (no tke variable present)
+                    ds_ret[var] = xr.DataArray(dsWrf['T'][it,:,j,i]*0.0+1e-10,
+                                               dims=(['bottom_top']))
             elif 'west_east_stag' in dsWrf[var].dims:
                 ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,:,j,i]+dsWrf[var][it,:,j,i+1]),
                                            dims=(['bottom_top']))
@@ -204,18 +224,13 @@ def interp2DForFE(ds,ds_FE,XvWRF,YvWRF,xVec,yVec):
 def create_dsFEFinal(ds_FE,parent_model):
     dsFEFinal=ds_FE.copy(deep=True)
     dsFEFinal.load()
-    # for var in ['rho', 'u', 'v', 'w', 'theta', 'TKE_0', 'qv', 'pressure']:
-    for var in ['rho', 'u', 'v', 'w', 'theta', 'TKE_0', 'qv', 'ql', 'pressure']: # DME: included ql here...
+    for var in ['rho', 'u', 'v', 'w', 'theta', 'TKE_0', 'qv', 'ql', 'pressure']:
         dsFEFinal[var]=0.0*dsFEFinal['xPos'] 
     for var in ['fricVel','htFlux','invOblen','qFlux']:
         dsFEFinal[var]=0.0*dsFEFinal['z0m']
     if (parent_model == 0):
-        # for var in ['ql', 'XLAT','XLONG','topoWRF','t2','psfc']:
         for var in ['XLAT','XLONG','topoWRF','t2','psfc']:
             if var in list(dsFEFinal.variables):
-#               if var in ['ql']:
-#                   dsFEFinal[var]=0.0*dsFEFinal['rho']
-#           elif var in ['XLAT','XLONG','topoWRF','t2','psfc']:
                 if var in ['XLAT','XLONG','topoWRF','t2','psfc']:
                     dsFEFinal[var]=0.0*dsFEFinal['tskin']
     return dsFEFinal
@@ -296,7 +311,7 @@ def create_dsBdy(ds_FE,FEvarsList,FEsurfVarsList,parent_model):
 
     return ds_Bdy
 
-def createBdysFrom3D(ds_Bdy,ds3D,FEvarsList,FEsurfVarsList):
+def createBdysFrom3D(ds_Bdy,ds3D,FEvarsList,FEsurfVarsList,nest_tke_opt,fe_low_tke):
     for var in FEvarsList:
         if var in ds3D.variables:
             ds_Bdy[var+'_YZL']=ds3D[var][0,:,:,0].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)
@@ -317,6 +332,13 @@ def createBdysFrom3D(ds_Bdy,ds3D,FEvarsList,FEsurfVarsList):
             ds_Bdy[surfVar]=ds3D[surfVar][0,:,:].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)
         else:
             ds_Bdy[surfVar]=0.0*ds3D['tskin'][0,:,:].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)
+    if (not nest_tke_opt):
+        ds_Bdy['TKE_0_YZL'] = 0.0*ds3D['rho'][0,:,:,0].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)+fe_low_tke;
+        ds_Bdy['TKE_0_YZH'] = 0.0*ds3D['rho'][0,:,:,-1].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)+fe_low_tke;
+        ds_Bdy['TKE_0_XZL'] = 0.0*ds3D['rho'][0,:,0,:].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)+fe_low_tke;
+        ds_Bdy['TKE_0_XZH'] = 0.0*ds3D['rho'][0,:,-1,:].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)+fe_low_tke;
+        ds_Bdy['TKE_0_XYL'] = 0.0*ds3D['rho'][0,0,:,:].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)+fe_low_tke;
+        ds_Bdy['TKE_0_XYH'] = 0.0*ds3D['rho'][0,-1,:,:].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)+fe_low_tke;
     return ds_Bdy
 
 def writeBdyFile(path_out_analysis,fileName,ds_Bdy):

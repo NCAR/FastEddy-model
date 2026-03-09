@@ -485,20 +485,15 @@ if(mpi_rank == 0) and DEBUG_COUPLER:
 ##############################################################################
 ### Create lists of relevant variable names in the WRF-FE coupling process ###
 ##############################################################################
+fe_low_tke = 1.0e-10;
+FEvarsList = ['rho','u','v','w','theta','qv','ql','TKE_0']
+FEsurfVarsList = ['tskin','qskin']
 if (parent_model == 0):
-    varsList = ['Z','ALT','U','V','W','T','QVAPOR','QCLOUD']
+    varsList = ['Z','ALT','U','V','W','T','QVAPOR','QCLOUD','QKE']
     surfVarsList = ['TSK','Q2','HGT','PSFC']  #Note: Q2 in absence of QVG (which is not in wrfout by deafult) from WRF
-    FEvarsList = ['rho','u','v','w','theta','qv','ql']
-    FEsurfVarsList = ['tskin','qskin','topoWRF','psfc','SeaMask'] # DME: should be able to simply remove 'topoWRF','psfc','SeaMask' so these are not in Bdy files...
 elif (parent_model == 1):
-    if (nest_tke_opt):
-        varsList = ['zPos','rho','u','v','w','theta','qv','ql','TKE_0']
-        FEvarsList = ['rho','u','v','w','theta','qv','ql','TKE_0']
-    else:
-        varsList = ['zPos','rho','u','v','w','theta','qv','ql']
-        FEvarsList = ['rho','u','v','w','theta','qv','ql']
+    varsList = ['zPos','rho','u','v','w','theta','qv','ql','TKE_0']
     surfVarsList = ['tskin','qskin','topoPos']
-    FEsurfVarsList = ['tskin','qskin'] # ,'SeaMask']
 
 #######################################################################
 ### Finally go ahead and create the initial and boundary conditions ###
@@ -533,6 +528,9 @@ for Bdy_file_num in range(it00,it11):
        for var in ['u','v','w','ql','TKE_0']:
           if var in list(dsFEFinal.variables):
             dsFEFinal[var][:,:,:]=dsFEFinal[var][:,:,:]*np.where((dsFEFinal['BuildingMask'][:,:,:]>1e-3),0.0,1.0)
+    if (not nest_tke_opt):
+        print(f"Zeroing out TKE_0 since nest_tke_opt={nest_tke_opt}")
+        dsFEFinal['TKE_0'][:,:,:]= fe_low_tke;
     t3e = time.perf_counter()
     print('{:d}/{:d}: t3_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t3e-t3s))
     addTimeDim_FEfinal(dsFEFinal)
@@ -545,7 +543,7 @@ for Bdy_file_num in range(it00,it11):
     t4e = time.perf_counter()
     print('{:d}/{:d}: t4_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t4e-t4s))
     t5s = time.perf_counter()
-    createBdysFrom3D(ds_Bdy,dsFEFinal,FEvarsList,FEsurfVarsList)
+    createBdysFrom3D(ds_Bdy,dsFEFinal,FEvarsList,FEsurfVarsList,nest_tke_opt,fe_low_tke)
     new_fileName="FE_Bndys.{:d}".format(Bdy_file_num)
     writeBdyFile(ICBC_dir,new_fileName,ds_Bdy)
     t5e = time.perf_counter()
