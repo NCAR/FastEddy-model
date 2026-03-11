@@ -1551,12 +1551,12 @@ int hydro_coreInit(){
        fflush(stdout);
      }
      if( moistureSelector > 0){
-       nBndyVars = Nhydro+moistureNvars;
+       nBndyVars = Nhydro+1+moistureNvars; // +1 is for TKE_0
        nSurfBndyVars = 2;   //Only allows tskin and qskin
      }else{
-       nBndyVars = Nhydro;
+       nBndyVars = Nhydro+1; // +1 is for TKE_0
        nSurfBndyVars = 1;   //Only allows tskin
-     } //end if moisture is on else not   //NOTE: Doesn't handle any AuxScalars or TKE-related Prog. variables.
+     } //end if moisture is on else not   //NOTE: Doesn't handle any AuxScalars Prog. variables.
      XZBdyPlanesGlobal = (float *) malloc( 2*(nBndyVars)*Nx*Nz*sizeof(float) );
      YZBdyPlanesGlobal = (float *) malloc( 2*(nBndyVars)*Ny*Nz*sizeof(float) );
      XYBdyPlanesGlobal = (float *) malloc( 2*(nBndyVars)*Nx*Ny*sizeof(float) );
@@ -2000,19 +2000,17 @@ int hydro_coreSetupBndyPlanesAllRanks(){
        sprintf(fieldName,"theta");
        fieldIndex = 4;
        errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
+       sprintf(fieldName,"TKE_0");
+       fieldIndex = 5;
+       errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
        if(moistureSelector > 0){
          if(moistureNvars > 0){
            sprintf(fieldName,"qv");
-           fieldIndex = 5;
+           fieldIndex = 6;
            errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
          }
          if(moistureNvars > 1){
            sprintf(fieldName,"ql");
-           fieldIndex = 6;
-           errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
-         }
-         if(moistureNvars > 2){
-           sprintf(fieldName,"qr");
            fieldIndex = 7;
            errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
          }
