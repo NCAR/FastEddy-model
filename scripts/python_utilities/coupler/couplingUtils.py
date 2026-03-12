@@ -311,7 +311,7 @@ def create_dsBdy(ds_FE,FEvarsList,FEsurfVarsList,parent_model):
 
     return ds_Bdy
 
-def createBdysFrom3D(ds_Bdy,ds3D,FEvarsList,FEsurfVarsList,nest_tke_opt,fe_low_tke):
+def createBdysFrom3D(ds_Bdy,ds3D,FEvarsList,FEsurfVarsList):
     for var in FEvarsList:
         if var in ds3D.variables:
             ds_Bdy[var+'_YZL']=ds3D[var][0,:,:,0].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)
@@ -332,13 +332,6 @@ def createBdysFrom3D(ds_Bdy,ds3D,FEvarsList,FEsurfVarsList,nest_tke_opt,fe_low_t
             ds_Bdy[surfVar]=ds3D[surfVar][0,:,:].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)
         else:
             ds_Bdy[surfVar]=0.0*ds3D['tskin'][0,:,:].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)
-    if (not nest_tke_opt):
-        ds_Bdy['TKE_0_YZL'] = 0.0*ds3D['rho'][0,:,:,0].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)+fe_low_tke;
-        ds_Bdy['TKE_0_YZH'] = 0.0*ds3D['rho'][0,:,:,-1].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)+fe_low_tke;
-        ds_Bdy['TKE_0_XZL'] = 0.0*ds3D['rho'][0,:,0,:].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)+fe_low_tke;
-        ds_Bdy['TKE_0_XZH'] = 0.0*ds3D['rho'][0,:,-1,:].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)+fe_low_tke;
-        ds_Bdy['TKE_0_XYL'] = 0.0*ds3D['rho'][0,0,:,:].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)+fe_low_tke;
-        ds_Bdy['TKE_0_XYH'] = 0.0*ds3D['rho'][0,-1,:,:].expand_dims(dim={'time':ds3D.sizes['time']},axis=0)+fe_low_tke;
     return ds_Bdy
 
 def writeBdyFile(path_out_analysis,fileName,ds_Bdy):

@@ -530,7 +530,9 @@ for Bdy_file_num in range(it00,it11):
             dsFEFinal[var][:,:,:]=dsFEFinal[var][:,:,:]*np.where((dsFEFinal['BuildingMask'][:,:,:]>1e-3),0.0,1.0)
     if (not nest_tke_opt):
         print(f"Zeroing out TKE_0 since nest_tke_opt={nest_tke_opt}")
-        dsFEFinal['TKE_0'][:,:,:]= fe_low_tke;
+        dsFEFinal['TKE_0'][:,:,:] = fe_low_tke;
+    else: # clip TKE_0 to avoid very small and negative values
+        dsFEFinal['TKE_0'][:,:,:] = np.clip(dsFEFinal['TKE_0'][:,:,:],a_min=fe_low_tke,a_max=None)
     t3e = time.perf_counter()
     print('{:d}/{:d}: t3_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t3e-t3s))
     addTimeDim_FEfinal(dsFEFinal)
@@ -543,7 +545,7 @@ for Bdy_file_num in range(it00,it11):
     t4e = time.perf_counter()
     print('{:d}/{:d}: t4_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t4e-t4s))
     t5s = time.perf_counter()
-    createBdysFrom3D(ds_Bdy,dsFEFinal,FEvarsList,FEsurfVarsList,nest_tke_opt,fe_low_tke)
+    createBdysFrom3D(ds_Bdy,dsFEFinal,FEvarsList,FEsurfVarsList)
     new_fileName="FE_Bndys.{:d}".format(Bdy_file_num)
     writeBdyFile(ICBC_dir,new_fileName,ds_Bdy)
     t5e = time.perf_counter()
