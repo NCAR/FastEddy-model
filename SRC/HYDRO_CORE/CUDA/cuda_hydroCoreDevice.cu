@@ -761,18 +761,34 @@ __global__ void cudaDevice_hydroCoreCommence(int simTime_it, float* hydroFlds_d,
        fldBS = &sgstkeScalarsFrhs_d[fldStride*iFld]; // Frhs forcing iwas set to zero, so it can be used here as zero-valued base state
        if(hydroBCs_d == 1){ //Using LAD BCs
 	cudaDevice_VerticalAblZeroGradBCs(fld);
-	if(rankXid_d == 0){
+	if (iFld == 0){ // TKE_0
+	  if(rankXid_d == 0){
+           cudaDevice_westBdyBCs(iFld+Nhydro_d, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
+          }
+          if(rankXid_d == numProcsX_d-1){
+           cudaDevice_eastBdyBCs(iFld+Nhydro_d, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
+          }
+          if(rankYid_d == 0){
+           cudaDevice_southBdyBCs(iFld+Nhydro_d, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
+          }
+          if(rankYid_d == numProcsY_d-1){
+           cudaDevice_northBdyBCs(iFld+Nhydro_d, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
+          }
+          cudaDevice_ceilingBdyBCs(iFld+Nhydro_d, timeWeight, fld, XYBdyPlanes_d, XYBdyPlanesNext_d);
+	}else{ // all other TKE scales
+	  if(rankXid_d == 0){
            cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 0);
-         }
-         if(rankXid_d == numProcsX_d-1){
+          }
+          if(rankXid_d == numProcsX_d-1){
            cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 1);
-         }
-         if(rankYid_d == 0){
+          }
+          if(rankYid_d == 0){
            cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 2);
-         }
-         if(rankYid_d == numProcsY_d-1){
+          }
+          if(rankYid_d == numProcsY_d-1){
            cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 3);
-         }
+          }
+	} // end if (iFld == 0)
        }else if (hydroBCs_d == 2){
 	 cudaDevice_VerticalAblZeroGradBCs(fld);
          if(numProcsX_d==1){
@@ -795,18 +811,18 @@ __global__ void cudaDevice_hydroCoreCommence(int simTime_it, float* hydroFlds_d,
        if(hydroBCs_d == 1){ //Using LAD BCs
          cudaDevice_VerticalAblBCs(iFld, fld, fldBS);
          if(rankXid_d == 0){
-           cudaDevice_westBdyBCs(iFld+Nhydro_d, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
+           cudaDevice_westBdyBCs(iFld+Nhydro_d+1, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
          }
          if(rankXid_d == numProcsX_d-1){
-           cudaDevice_eastBdyBCs(iFld+Nhydro_d, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
+           cudaDevice_eastBdyBCs(iFld+Nhydro_d+1, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
          }
          if(rankYid_d == 0){
-           cudaDevice_southBdyBCs(iFld+Nhydro_d, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
+           cudaDevice_southBdyBCs(iFld+Nhydro_d+1, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
          }
          if(rankYid_d == numProcsY_d-1){
-           cudaDevice_northBdyBCs(iFld+Nhydro_d, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
+           cudaDevice_northBdyBCs(iFld+Nhydro_d+1, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
          }
-         cudaDevice_ceilingBdyBCs(iFld+Nhydro_d, timeWeight, fld, XYBdyPlanes_d, XYBdyPlanesNext_d);
+         cudaDevice_ceilingBdyBCs(iFld+Nhydro_d+1, timeWeight, fld, XYBdyPlanes_d, XYBdyPlanesNext_d);
        }else if (hydroBCs_d == 2){
          cudaDevice_VerticalAblZeroGradBCs(fld); // to apply zero-gradient bottom/top BCs
          if(numProcsX_d==1){
