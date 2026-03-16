@@ -147,6 +147,7 @@ def getFEProfileDS(dsWrf,varsList,surfVarsList,zFE): ##### Map (Interp/Extrap-ol
     ds_ret=xr.Dataset()
     varDict = {'Z':'zPos','U':'u','V':'v','W':'w','T':'theta','QVAPOR':'qv','QCLOUD':'ql','ALT':'rho','QKE':'TKE_0'}
     surfVarDict = {'TSK':'tskin','Q2':'qskin','HGT':'topoWRF','T2':'t2','PSFC':'psfc'} #Note using Q2 instead of QVG since QVG not default in wrfout files
+    #print(f"kMaxPrnt = {dsWrf.sizes['bottom_top']}")
     for var in varsList:
         if var !=  'Z':
             f1=interpolate.interp1d(dsWrf['Z'],dsWrf[var],kind='linear',fill_value='extrapolate')
@@ -206,7 +207,7 @@ def getWRFProfileDS(it,j,i,dsWrf,varsList,surfVarsList,zTargTop): ##### Destagge
         ds_ret[surfVar] = xr.DataArray(dsWrf[surfVar][it,j,i])#,
     ## Determine a kMaxPrnt for this i,j to be used for the interpolation step in the calling function  
 
-    return ds_ret.isel(bottom_top=slice(0,kPrntMax))
+    return ds_ret.isel(bottom_top=slice(0,kMaxPrnt))
 
 
 def copyAndTranspose(dsWRF):
