@@ -6,6 +6,7 @@ import numpy as np
 import xarray as xr
 from scipy import interpolate
 from scipy.interpolate import RectBivariateSpline
+from scipy.interpolate import BSpline, make_interp_spline
 
 def parse_args():
     """ parse the command line arguments """
@@ -95,11 +96,36 @@ def smoothTerrain(tPos0,dx):
         print(f'Elapsed time [s]: {np.round(end-start,3)}')
     return tPos1
 
-def interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent,parent_model):
+def interpFEToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent,kMaxPrnt):
+    verbose = False
+    surfVarDict = {'tskin':'tskin','qskin':'qskin','topoPos':'topoParent'}
+    dsFE = xr.Dataset()
+    zPrntArray = ds_ref['zPos'][it0,:kMaxPrnt,ll_jindx:ll_jindx+j_extent,ll_iindx:ll_iindx+i_extent].values   
+    for var in varsList:
+        tmpArray=np.zeros((zRect.shape[0],j_extent,i_extent))
+        if var !=  'zPos':
+         varPrntArray=ds_ref[var][it0,:kMaxPrnt,ll_jindx:ll_jindx+j_extent,ll_iindx:ll_iindx+i_extent].values
+         for i in range(i_extent):
+             for j in range(j_extent):
+                 f1=make_interp_spline(zPrntArray[:,j,i],varPrntArray[:,j,i],
+                                       k=3, bc_type='natural')
+                 tmpArray[:,j,i] = f1(zRect)
+         dsFE[var] = xr.DataArray(tmpArray,dims=('zIndex','yIndex','xIndex'))
+        if verbose:
+           print(f"interpFEToGrids: {var}--({dsFE[var].values.shape})")
+    for surfVar in surfVarsList:
+        tmpArray=ds_ref[surfVar][it0,ll_jindx:ll_jindx+j_extent,ll_iindx:ll_iindx+i_extent].values
+        dsFE[surfVarDict[surfVar]] = xr.DataArray(tmpArray,dims=('yIndex','xIndex'))
+        if verbose:
+           print(f"interpFEToGrids: {surfVarDict[surfVar]}--({dsFE[surfVarDict[surfVar]].values.shape})")
+
+    return dsFE
+
+def interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent):
     dsWRF = xr.Dataset()
     for i in range(ll_iindx,ll_iindx+i_extent):
         for j in range(ll_jindx,ll_jindx+j_extent):
-            dsWRF1=get_dsWRFStandardZprof(it0,j,i,ds_ref,varsList,surfVarsList,zRect,parent_model)
+            dsWRF1=get_dsWRFStandardZprof(it0,j,i,ds_ref,varsList,surfVarsList,zRect)
 
             if(j == ll_jindx):
                 dsWRFj=dsWRF1.expand_dims(dim={'yIndex':1})
@@ -111,83 +137,77 @@ def interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll
             dsWRF=xr.concat([dsWRF,dsWRFj.expand_dims(dim={'xIndex':1})],dim='xIndex')
     return dsWRF
 
-def get_dsWRFStandardZprof(it0,j0,i0,ds_ref,varsList,surfVarsList,zProf,parent_model):
-    ds_ij=getFEProfileDS(getWRFProfileDS(it0,j0,i0,ds_ref,varsList,surfVarsList,parent_model),varsList,surfVarsList,zProf,parent_model)
+def get_dsWRFStandardZprof(it0,j0,i0,ds_ref,varsList,surfVarsList,zProf):
+    ds_ij=getFEProfileDS(getWRFProfileDS(it0,j0,i0,ds_ref,varsList,surfVarsList,zProf[-1]),varsList,surfVarsList,zProf)
 
     return ds_ij
 
-def getFEProfileDS(dsWrf,varsList,surfVarsList,zFE,parent_model): ##### Map (Interp/Extrap-olate) a collected set of WRF vertical profiles from
+def getFEProfileDS(dsWrf,varsList,surfVarsList,zFE): ##### Map (Interp/Extrap-olate) a collected set of WRF vertical profiles from
                                                      ##### the WRF vertical coordinate to a specified cartesian z-coord (zFE)
     ds_ret=xr.Dataset()
-    if (parent_model == 0):
-        varDict = {'Z':'zPos','U':'u','V':'v','W':'w','T':'theta','QVAPOR':'qv','QCLOUD':'ql','ALT':'rho','QKE':'TKE_0'}
-        surfVarDict = {'TSK':'tskin','Q2':'qskin','HGT':'topoWRF','T2':'t2','PSFC':'psfc'} #Note using Q2 instead of QVG since QVG not default in wrfout files
-        for var in varsList:
-            if var !=  'Z':
-                f1=interpolate.interp1d(dsWrf['Z'],dsWrf[var],kind='linear',fill_value='extrapolate')
-                if var != 'ALT' and var != 'ALB':
-                    ds_ret[varDict[var]] = xr.DataArray(f1(zFE),dims=['zIndex'])
-                else:
-                    ds_ret[varDict[var]] = xr.DataArray(1.0/f1(zFE),dims=['zIndex'])
-    elif (parent_model == 1):
-        surfVarDict = {'tskin':'tskin','qskin':'qskin','topoPos':'topoParent'}
-        for var in varsList:
-            if var !=  'zPos':
-                f1=interpolate.interp1d(dsWrf['zPos'],dsWrf[var],kind='linear',fill_value='extrapolate')
-                ds_ret[var] = xr.DataArray(f1(zFE),dims=['zIndex'])
+    varDict = {'Z':'zPos','U':'u','V':'v','W':'w','T':'theta','QVAPOR':'qv','QCLOUD':'ql','ALT':'rho','QKE':'TKE_0'}
+    surfVarDict = {'TSK':'tskin','Q2':'qskin','HGT':'topoWRF','T2':'t2','PSFC':'psfc'} #Note using Q2 instead of QVG since QVG not default in wrfout files
+    for var in varsList:
+        if var !=  'Z':
+            f1=interpolate.interp1d(dsWrf['Z'],dsWrf[var],kind='linear',fill_value='extrapolate')
+            if var != 'ALT' and var != 'ALB':
+                ds_ret[varDict[var]] = xr.DataArray(f1(zFE),dims=['zIndex'])
+            else:
+                ds_ret[varDict[var]] = xr.DataArray(1.0/f1(zFE),dims=['zIndex'])
     for surfVar in surfVarsList:
         ds_ret[surfVarDict[surfVar]] = xr.DataArray(dsWrf[surfVar])
 
     return ds_ret
 
-def getWRFProfileDS(it,j,i,dsWrf,varsList,surfVarsList,parent_model): ##### Destagger and collect a set of required WRF vertical profiles from a given i,j location in WRF
+def getWRFProfileDS(it,j,i,dsWrf,varsList,surfVarsList,zTargTop): ##### Destagger and collect a set of required WRF vertical profiles from a given i,j location in WRF
     ds_ret=xr.Dataset()
-    if (parent_model == 0):
-        for var in varsList:
-            if var == 'Z':
-                ds_ret[var] = xr.DataArray((0.5*(dsWrf.PH[it,0:-1,j,i]+dsWrf.PH[it,1:,j,i])
-                                            +0.5*(dsWrf.PHB[it,0:-1,j,i]+dsWrf.PHB[it,1:,j,i]))/9.81,
-                                            dims=(['bottom_top']))
-            elif var == 'QKE':
-                tke_infile = dsWrf.get(var)
+    for var in varsList:
+        if var == 'Z':
+           ds_ret[var] = xr.DataArray((0.5*(dsWrf.PH[it,0:-1,j,i]+dsWrf.PH[it,1:,j,i])
+                                       +0.5*(dsWrf.PHB[it,0:-1,j,i]+dsWrf.PHB[it,1:,j,i]))/9.81,
+                                       dims=(['bottom_top']))
+           ## Determine a kMaxPrnt for this i,j to be used for the interpolation step in the calling function 
+           kMaxPrnt = np.min(np.where(ds_ret[var].values>zTargTop))+1
+        elif var == 'QKE':
+            tke_infile = dsWrf.get(var)
+            if tke_infile is not None:
+                tke_var = 1
+            else: # try with TKE_PBL alternatively
+                tke_infile = dsWrf.get('TKE_PBL')
                 if tke_infile is not None:
-                    tke_var = 1
-                else: # try with TKE_PBL alternatively
-                    tke_infile = dsWrf.get('TKE_PBL')
-                    if tke_infile is not None:
-                        tke_var = 2
-                    else:
-                        tke_var = 0
-                if (tke_var == 1):
-                    ds_ret[var] = xr.DataArray(0.5*dsWrf[var][it,:,j,i], # QKE is 2.0*TKE
-                                               dims=(['bottom_top']))
-                elif (tke_var == 2): # TKE_PBL is bottom_top_stag
-                    ds_ret[var] = xr.DataArray(0.5*(dsWrf['TKE_PBL'][it,0:-1,j,i]+dsWrf['TKE_PBL'][it,1:,j,i]),
+                    tke_var = 2
+                else:
+                    tke_var = 0
+            if (tke_var == 1):
+                ds_ret[var] = xr.DataArray(0.5*dsWrf[var][it,:,j,i], # QKE is 2.0*TKE
                                            dims=(['bottom_top']))
-                else: # tke_var == 0 (no tke variable present)
-                    ds_ret[var] = xr.DataArray(dsWrf['T'][it,:,j,i]*0.0+1e-10,
-                                               dims=(['bottom_top']))
-            elif 'west_east_stag' in dsWrf[var].dims:
-                ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,:,j,i]+dsWrf[var][it,:,j,i+1]),
+            elif (tke_var == 2): # TKE_PBL is bottom_top_stag
+                ds_ret[var] = xr.DataArray(0.5*(dsWrf['TKE_PBL'][it,0:-1,j,i]+dsWrf['TKE_PBL'][it,1:,j,i]),
+                                       dims=(['bottom_top']))
+            else: # tke_var == 0 (no tke variable present)
+                ds_ret[var] = xr.DataArray(dsWrf['T'][it,:,j,i]*0.0+1e-10,
                                            dims=(['bottom_top']))
-            elif 'south_north_stag' in dsWrf[var].dims:
-                ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,:,j,i]+dsWrf[var][it,:,j+1,i]),
-                                           dims=(['bottom_top']))
-            elif 'bottom_top_stag' in dsWrf[var].dims:
-                ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,0:-1,j,i]+dsWrf[var][it,1:,j,i]),
-                                           dims=(['bottom_top']))
-            else:
-                ds_ret[var] = xr.DataArray(dsWrf[var][it,:,j,i],
-                                           dims=(['bottom_top']))
-            if var == 'T':
-                ds_ret[var] = 300.0+ds_ret[var]
-    elif (parent_model == 1):
-        for var in varsList:
-            ds_ret[var] = xr.DataArray(dsWrf[var][it,:,j,i],dims=(['zIndex']))
+        elif 'west_east_stag' in dsWrf[var].dims:
+            ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,:,j,i]+dsWrf[var][it,:,j,i+1]),
+                                       dims=(['bottom_top']))
+        elif 'south_north_stag' in dsWrf[var].dims:
+            ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,:,j,i]+dsWrf[var][it,:,j+1,i]),
+                                       dims=(['bottom_top']))
+        elif 'bottom_top_stag' in dsWrf[var].dims:
+            ds_ret[var] = xr.DataArray(0.5*(dsWrf[var][it,0:-1,j,i]+dsWrf[var][it,1:,j,i]),
+                                       dims=(['bottom_top']))
+        else:
+            ds_ret[var] = xr.DataArray(dsWrf[var][it,:,j,i],
+                                       dims=(['bottom_top']))
+        if var == 'T':
+            ds_ret[var] = 300.0+ds_ret[var]
 
     for surfVar in surfVarsList:
         ds_ret[surfVar] = xr.DataArray(dsWrf[surfVar][it,j,i])#,
-    return ds_ret
+    ## Determine a kMaxPrnt for this i,j to be used for the interpolation step in the calling function  
+
+    return ds_ret.isel(bottom_top=slice(0,kPrntMax))
+
 
 def copyAndTranspose(dsWRF):
     ds=xr.Dataset()
@@ -198,7 +218,8 @@ def copyAndTranspose(dsWRF):
             ds[var]=xr.DataArray(dsWRF[var].values,dims=('yIndex','xIndex'))  #Note no transpose needed here...
     return ds
 
-def interp2DForFE(ds,ds_FE,XvWRF,YvWRF,xVec,yVec):
+#def interp2DForFE(ds,ds_FE,XvWRF,YvWRF,xVec,yVec):
+def interp2DForFE(ds,ds_FE,XvWRF,YvWRF,xVec,yVec,parent_model):
     k_val = 1
     k_val_surf = 3
     dsFENew=xr.Dataset()
@@ -208,12 +229,19 @@ def interp2DForFE(ds,ds_FE,XvWRF,YvWRF,xVec,yVec):
             tmpVar3d = np.zeros((ds.sizes['zIndex'],ds_FE.sizes['yIndex'],ds_FE.sizes['xIndex']))
             print(tmpVar3d.shape)
             for k in range(ds.sizes['zIndex']):
-                fInterp2 = RectBivariateSpline(YvWRF[:,0],XvWRF[0,:],ds[var][k,:,:].values.transpose(), kx=k_val, ky=k_val)
+                if parent_model == 0:
+                    fInterp2 = RectBivariateSpline(YvWRF[:,0],XvWRF[0,:],ds[var][k,:,:].values.transpose(), kx=k_val, ky=k_val)
+                else:
+                    fInterp2 = RectBivariateSpline(YvWRF[:,0],XvWRF[0,:],ds[var][k,:,:].values, kx=k_val, ky=k_val)
                 tmp=fInterp2(yVec,xVec)
                 tmpVar3d[k,:,:]=tmp
             dsFENew[var]=xr.DataArray(tmpVar3d,dims=('zIndex','yIndex','xIndex'))
         elif len(ds[var].sizes) == 2:
-            fInterp = RectBivariateSpline(YvWRF[:,0],XvWRF[0,:],ds[var].values.transpose(), kx=k_val_surf, ky=k_val_surf)
+            if parent_model == 0:
+               fInterp = RectBivariateSpline(YvWRF[:,0],XvWRF[0,:],ds[var].values.transpose(), kx=k_val_surf, ky=k_val_surf)
+            else:
+               fInterp = RectBivariateSpline(YvWRF[:,0],XvWRF[0,:],ds[var].values, kx=k_val_surf, ky=k_val_surf)
+
             tmp=fInterp(yVec,xVec)
             print(tmp.shape)
             dsFENew[var]=xr.DataArray(tmp,dims=('yIndex','xIndex'))

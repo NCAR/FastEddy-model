@@ -482,6 +482,14 @@ zRect = np.linspace(zBottom,zTop,NzWRFInterp)
 if(mpi_rank == 0) and DEBUG_COUPLER:
   print(zRect[0],zRect[-1])
 
+## Establish a kMaxPrnt that minimizes the length of the interpolating function (for performance)
+if parent_model == 1:
+  if np.min(ds_WRFRef['zPos'][0,-1,:,:].values, axis=(0,1)) > zTop and zTop > np.max(ds_WRFRef['zPos'][0,0,:,:].values,axis=(0,1)):  
+    kMaxPrnt = np.min(np.where(np.min(ds_WRFRef['zPos'][0,:,:,:].values,axis=(1,2))>zTop))+1
+    print(f"Established kMaxPrnt = {kMaxPrnt} of {ds_WRFRef.sizes['zIndex']} total k-levels...")
+  else:
+    print(f"Error zTop = {zTop} is not within parent domain vertical bounds.\n Exiting Now!")
+    exit()
 ##############################################################################
 ### Create lists of relevant variable names in the WRF-FE coupling process ###
 ##############################################################################
@@ -507,18 +515,27 @@ for Bdy_file_num in range(it00,it11):
   if not(os.path.isfile(bdyFileName)):
     print('{:d}{:d}: {:s} does not exist, creating it...'.format(mpi_rank, mpi_size, bdyFileName))
     print("{:d}{:d}: Working on file {:s}".format(mpi_rank, mpi_size, files_list[Bdy_file_num]))
-    ds_ref = xr.open_mfdataset(files_list[Bdy_file_num],combine='nested',concat_dim=name_concat_dim)
+    #ds_ref = xr.open_mfdataset(files_list[Bdy_file_num],combine='nested',concat_dim=name_concat_dim)
+    ds_ref = xr.open_dataset(files_list[Bdy_file_num])
 
     t0s = time.perf_counter()
-    dsWRF=interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent,parent_model)
+    if parent_model == 0:
+       dsWRF=interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent)
+    else:
+       dsWRF=interpFEToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent,kMaxPrnt)
+
     t0e = time.perf_counter()
     print('{:d}/{:d}: t0_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t0e-t0s))
     t1s = time.perf_counter()
-    ds=copyAndTranspose(dsWRF)
+    if parent_model == 0:  ### Only needed if parent model is WRF
+       ds=copyAndTranspose(dsWRF)
+    else:
+       ds=dsWRF
     t1e = time.perf_counter()
     print('{:d}/{:d}: t1_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t1e-t1s))
     t2s = time.perf_counter()
-    dsFENew=interp2DForFE(ds,ds_FEGrid,XvWRF,YvWRF,xVec,yVec)
+    #dsFENew=interp2DForFE(ds,ds_FEGrid,XvWRF,YvWRF,xVec,yVec)
+    dsFENew=interp2DForFE(ds,ds_FEGrid,XvWRF,YvWRF,xVec,yVec,parent_model)
     t2e = time.perf_counter()
     print('{:d}/{:d}: t2_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t2e-t2s))
     t3s = time.perf_counter()
