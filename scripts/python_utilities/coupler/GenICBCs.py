@@ -496,6 +496,7 @@ if parent_model == 1:
 fe_low_tke = 1.0e-10;
 FEvarsList = ['rho','u','v','w','theta','qv','ql','TKE_0']
 FEsurfVarsList = ['tskin','qskin']
+FEvar_mp = ['qv','ql']
 if (parent_model == 0):
     varsList = ['Z','ALT','U','V','W','T','QVAPOR','QCLOUD','QKE']
     surfVarsList = ['TSK','Q2','HGT','PSFC']  #Note: Q2 in absence of QVG (which is not in wrfout by deafult) from WRF
@@ -550,6 +551,10 @@ for Bdy_file_num in range(it00,it11):
         dsFEFinal['TKE_0'][:,:,:] = fe_low_tke;
     else: # clip TKE_0 to avoid very small and negative values
         dsFEFinal['TKE_0'][:,:,:] = np.clip(dsFEFinal['TKE_0'][:,:,:],a_min=fe_low_tke,a_max=None)
+    # ensure moisture and hydrometeors are not negative
+    for var_mp in FEvar_mp:
+        if var_mp in FEvarsList:
+            dsFEFinal[var_mp][:,:,:] = np.clip(dsFEFinal[var_mp][:,:,:],a_min=0.0,a_max=None)
     t3e = time.perf_counter()
     print('{:d}/{:d}: t3_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t3e-t3s))
     addTimeDim_FEfinal(dsFEFinal)
