@@ -375,3 +375,65 @@ def addTimeDim_FEfinal(dsFEFinal):
         if len(dsFEFinal[var].values.shape) != 1:
             dsFEFinal[var] = dsFEFinal[var].expand_dims(dim={'time':1},axis=0)
     return
+
+def read_lc_table(filepath):
+    df = pd.read_csv(filepath)
+    z0_original = {int(k): float(v) for k, v in zip(df.iloc[:,0], df.iloc[:,2])}
+    z0_modified = {int(k): float(v) for k, v in zip(df.iloc[:,0], df.iloc[:,3])}
+    return z0_original, z0_modified
+
+def SHFR_process_polygons(landcover, buildings, z1, z0_original, z0_modified, nodata=0, N0 = 10, Nmin = 25, fmin = 0.10):
+    result = np.zeros_like(landcover, dtype=np.float32)
+    labels = np.zeros_like(landcover, dtype=np.int32)
+    current_label = 1
+    #-------
+    r0 = 0
+    r1 = 0
+    r2 = 0
+    r3 = 0
+    r4 = 0
+    #-------
+    for category in np.unique(landcover):
+        category_mask = landcover == category
+        category_labels, num_labels = ndimage.label(category_mask, structure = ndimage.generate_binary_structure(2,2))
+        for i in range(1, num_labels + 1):
+            labels[category_labels == i] = current_label
+            current_label += 1
+    num_polygons = current_label - 1
+    print(f'Number of land cover polygons: {num_polygons}')
+    for label in range(1, num_polygons + 1):
+        polygon_mask = labels == label
+        total_area = np.sum(polygon_mask)
+        building_mask = (buildings > nodata) & polygon_mask
+        building_area = np.sum(building_mask)
+        no_building_area = total_area - building_area
+        Nreq = np.maximum(Nmin, total_area*fmin)
+        lc = landcover[polygon_mask][0]
+        if building_area == 0:
+            no_building_value = 1.0
+            r0 += 1
+        else:
+            if no_building_area <= N0:
+                no_building_value = 1.0
+                r1 += 1
+            else:
+                z = z1[polygon_mask].mean()
+                z0lc = z0_original[lc]
+                z0st = z0_modified[lc] if z0_modified[lc] > 0.0 else z0lc
+                factor_z0 = (np.log(z/z0st+1)*np.log(z/(0.1*z0st)+1)) / (np.log(z/z0lc+1)*np.log(z/(0.1*z0lc)+1))
+                if no_building_area < Nreq:
+                    w = (no_building_area-N0)/(Nreq-N0)
+                    no_building_value = 1.0 + w * np.minimum( 4, (building_area/no_building_area)*factor_z0 )
+                    r2 += 1
+                else:
+                    if (building_area / no_building_area)*factor_z0 > 4:
+                        no_building_value = 5.0
+                        r4 += 1
+                    else:
+                        no_building_value = 1.0 + (building_area / no_building_area)*factor_z0
+                        r3 += 1
+            if (z0_modified[lc] == 0.0) & (no_building_value < 1.1):
+                no_building_value = 1.0
+        result[polygon_mask & ~building_mask] = no_building_value
+    print(f'R0 = {r0}, R1 = {r1}, R2 = {r2}, R3 = {r3}, R4 = {r4}')
+    return result

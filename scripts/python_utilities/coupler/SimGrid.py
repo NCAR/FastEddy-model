@@ -29,6 +29,8 @@ center_lon = params["center_lon"]
 urban_opt = params["urban_opt"]
 FE_new_nc_path = params["FE_new_nc_path"]
 name_dom_add = params["name_dom_add"]
+urban_heatRedis_opt = params["urban_heatRedis_opt"]
+landcover_table = params["landcover_table"]
 save_plot_opt = params["save_plot_opt"]
 
 #######################################
@@ -299,6 +301,13 @@ else:
     lon_dom_b = f_lon(xPos_1d_new, yPos_1d_new).T
     lat_dom = lat_dom_b[0:Ny,0:Nx]
     lon_dom = lon_dom_b[0:Ny,0:Nx]
+
+# Surface heat flux redistribution
+
+if (urban_opt == 1 and urban_heatRedis_opt == 1):
+    z0_original, z0_modified = read_lc_table(landcover_table)
+    z1 = zarr[0,:,:]-data_topo
+    shfr = SHFR_process_polygons(data_landc,data_bmask,z1,z0_original,z0_modified)
 
 # Save to netCDF file
 
