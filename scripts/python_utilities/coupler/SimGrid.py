@@ -324,6 +324,8 @@ ds_data['LandCover']= xr.DataArray(data_landc.astype(dtype=np.int32),dims=(['yIn
 if (urban_opt == 1):
     ds_data['BuildingMask']= xr.DataArray(bdg3d_tmp.astype(dtype=np.float32),dims=(['zIndex','yIndex','xIndex']))
     ds_data['BuildingHeights']= xr.DataArray(data_bmask.astype(dtype=np.float32),dims=(['yIndex','xIndex']))
+    if (urban_heatRedis_opt == 1):
+        ds_data['UrbanHeatRedis']= xr.DataArray(shfr.astype(dtype=np.float32),dims=(['yIndex','xIndex']))
 ds_data['lat']= xr.DataArray(lat_dom.astype(dtype=np.float64),dims=(['yIndex','xIndex']))
 ds_data['lon']= xr.DataArray(lon_dom.astype(dtype=np.float64),dims=(['yIndex','xIndex']))
 ds_data['xIndex']= xr.DataArray(np.arange(0,xarr.shape[2],dtype=np.int32),dims='xIndex')
