@@ -1,7 +1,7 @@
 import argparse
 import math
 import time
-from scipy.ndimage import gaussian_filter
+import scipy.ndimage as ndimage
 import numpy as np
 import xarray as xr
 from scipy import interpolate
@@ -72,7 +72,7 @@ def smoothTerrain(tPos0,dx):
                     min_col = max(0, max_idx[1] - n//2)
                     max_col = min(tPos1.shape[1], max_idx[1] + n//2+1)
                     local_area = tPos1[min_row:max_row, min_col:max_col]
-                    local_blur_center = gaussian_filter(local_area, sigma=sigTry)
+                    local_blur_center = ndimage.gaussian_filter(local_area, sigma=sigTry)
                     for i in range(min_row, max_row):
                         for j in range(min_col, max_col):
                             if ((i, j) == max_idx):
@@ -432,7 +432,7 @@ def SHFR_process_polygons(landcover, buildings, z1, z0_original, z0_modified, no
                     else:
                         no_building_value = 1.0 + (building_area / no_building_area)*factor_z0
                         r3 += 1
-            if (z0_modified[lc] == 0.0) & (no_building_value < 1.1):
+            if (z0_modified[lc] == 0.0 and no_building_value < 1.1):
                 no_building_value = 1.0
         result[polygon_mask & ~building_mask] = no_building_value
     print(f'R0 = {r0}, R1 = {r1}, R2 = {r2}, R3 = {r3}, R4 = {r4}')
