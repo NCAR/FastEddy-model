@@ -118,3 +118,17 @@ With these additions, WRF will generate a set of timestamped *wrf_fasteddy_* fil
    python ./GenICBCs.py -f genicbcs.json
 
 Successful completion will create an initial condition file (*FE_interp_170000UTC.0*) and a set of boundary condition files (*FE_Bndys.**) where the index indicates the number of second increments from the initial time (frequency in seconds is specified by the parameter :code:`secInc` in **genicbcs.json**).
+
+
+Addendum: Using MPAS forecasts as input data
+--------
+If one wishes to use MPAS forecast files as inputs to FastEddy, a series of steps may be performed to prepare the data for use before the **GenICBCs.py** preprocessing step. The required data from MPAS forecasts are the **history.YYYY-MM-DD_HH.mm.ss.nc**, **diag.YYYY-MM-DD_HH.mm.ss.nc**, and **init.nc** files. These files must first be converted from the MPAS unstructured grid to match the WRF lat-lon grid. Various tools are available to perform the interpolation, including **MPASSIT** (https://github.com/NOAA-GSL/MPASSIT). An example batch submission script, **run_mpassit.sh**, and variable lists (**varlists_mpassit_fasteddy**) are available in **scripts/batch_jobs/**, which can be configured with paths to MPAS outputs, a build of MPASSIT, and a set of run parameters to determine the date and time corresponding to input data. The resulting output will be named **proc.YYYY-MM-DD_HH.mm.ss.nc**.
+
+A further conversion step must then be performed in order to ensure that the variables output by MPAS match the requirements of **GenICBCs.py**. A conversion script is available in **/scripts/python_utilities/coupler/**. You may configure **mpassit_to_fasteddy.py** with the input file **mpassit_to_fasteddy.json**, similar to the configurationf of **genicbcs.json**. The conversion script is run with 
+
+.. code-block:: none
+
+   python ./mpassit_to_fasteddy.py -f mpassit_to_fasteddy.json
+
+
+Once completed, the resulting output files should be created with a naming scheme that matches the WRF filename date formatting, and can then be used as input to **GenICBCs.py** to generate FastEddy input data.
