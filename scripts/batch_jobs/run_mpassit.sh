@@ -31,7 +31,7 @@ diag_output_interval=300 #interval between lbc files in seconds
 FCST_RANGE=7200 #length of forecast in seconds
 MPAS_EXPT_DIR=/glade/derecho/scratch/wmayfield/dtc_ncar_mpas/expt_dirs/DTC_NCAR_hrrrIC/conus_3km_fasteddy/mpas_atm/2024021617/ens_1 #directory containing diag, history, init files 
 MPASSIT_CODE_DIR=/glade/campaign/ral/jntp/mayfield/fasteddy/MPASSIT #path to base MPASSIT code directory (contains ./bin/mpassit)
-VARLIST_DIR=/glade/campaign/ral/jntp/mayfield/fasteddy/run_mpassit/varlists_fasteddy #directory containing the variable lists
+VARLIST_DIR=/glade/campaign/ral/jntp/mayfield/fasteddy/run_mpassit/varlists_mpassit_fasteddy #directory containing the variable lists
 TOOL_DIR=/glade/u/home/schwartz/utils/derecho #directory with compiled WRFDA tools, in order to use "da_advance_time.exe"
 
 # Load modules:
