@@ -21,7 +21,7 @@ with open(args.file) as file:
 name_dom = params["name_dom"]
 gis_root = params["gis_root"]
 gis_file = params["gis_file"]
-nlcd_name = params["nlcd_name"]
+landcover_table = params["landcover_table"]
 water_cats = params["water_cats"]
 urban_opt = params["urban_opt"]
 
@@ -34,7 +34,7 @@ save_plot_opt = params["save_plot_opt"]
 
 # derived paths
 
-file_nlcd = gis_root + nlcd_name
+file_nlcd = gis_root + landcover_table
 FE_new_nc = FE_dataset_path + name_dom + name_dom_add + '.nc'
 FE_plot = FE_dataset_path + name_dom + name_dom_add + '_geospec.png'
 print('FE_new_nc:', FE_new_nc)
