@@ -7,15 +7,15 @@ Publications
 .. _urban_nature_2026:
 
 | Cui, Y., S. Chen, L. Xue, D. Muñoz-Esparza, J.A. Sauer, L. Hu, J.D. Albertson, Q. Li. “Local cloud
-| enhancement associated with urban morphology: evidence from observations and idealized large-
-| eddy simulations”. *Nature Communications*, 17, 2378 (2026)
-| https://doi.org/10.1038/s41467-026-68986-0
+|   enhancement associated with urban morphology: evidence from observations and idealized large-
+|   eddy simulations”. *Nature Communications*, 17, 2378 (2026)
+|   https://doi.org/10.1038/s41467-026-68986-0
 
 .. _submeter_LEStoLES_2025:
 
 | Muñoz‐Esparza, D., J.A. Sauer, and B. Kosović. “Explicit modeling of near‐surface ABL turbulence
-| at sub‐meter grid spacings via one‐way LES‐to‐LES nesting”. *JGR Atmospheres*, 130(24), 2025
-| https://doi.org/10.1029/2025JD044934
+|   at sub‐meter grid spacings via one‐way LES‐to‐LES nesting”. *JGR Atmospheres*, 130(24), 2025
+|   https://doi.org/10.1029/2025JD044934
 
 .. _eloisa_terrainflilt_2025:
 
