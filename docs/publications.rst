@@ -7,8 +7,8 @@ Publications
 .. _urban_nature_2026:
 
 | Cui, Y., S. Chen, L. Xue, D. Muñoz-Esparza, J.A. Sauer, L. Hu, J.D. Albertson, Q. Li. “Local cloud
-|   enhancement associated with urban morphology: evidence from observations and idealized large-
-|   eddy simulations”. *Nature Communications*, 17, 2378 (2026)
+|   enhancement associated with urban morphology: evidence from observations and idealized
+|   large-eddy simulations”. *Nature Communications*, 17, 2378 (2026)
 |   https://doi.org/10.1038/s41467-026-68986-0
 
 .. _submeter_LEStoLES_2025:
