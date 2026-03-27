@@ -40,6 +40,8 @@ web: https://ral.ucar.edu/, email: fasteddy@ucar.edu
   * Jeremy Sauer 
   * Domingo Muñoz-Esparza
   * Julie Prestopnik
+  * Eloisa Raluy-López
+  * Will Mayfield
   * Eric Hendricks
 
 Building FastEddy on AMD GPUs: Fluid Numerics

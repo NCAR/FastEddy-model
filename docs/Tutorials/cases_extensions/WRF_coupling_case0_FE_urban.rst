@@ -34,3 +34,30 @@ The model used to represent buildings follows the immersed body force approach d
   :alt: Alternative text
 
 Full citation references can be found in the :doc:`Publications <../../publications>` section.
+
+Surface Heat Flux Redistribution
+--------------------------------
+
+The Surface Heat Flux Redistribution (SHFR) option is included in the FastEddy URBAN module and therefore requires the urban capability enabled (:code:`urban_opt : 1`). When buildings are explicitly represented in FastEddy, surface sensible and latent heat fluxes are masked to zero over building-covered grid cells. This masking can reduce the total heat input in densely built areas.
+
+The SHFR option compensates for this effect by redistributing the suppressed surface heat flux over the surrounding non-building grid cells. The redistribution is computed during the preprocessing stage with **SimGrid.py** and stored as a 2d field named :code:`UrbanHeatRedis`. During the FastEddy simulation, this factor is applied multiplicatively to the surface heat fluxes.
+
+When buildings are explicitly resolved, using conventional urban roughness lengths derived for unresolved urban canopies may lead to a double counting of building-induced drag. To avoid this issue, SHFR is designed to operate together with a modified "street-like" roughness length for urban land-cover categories. This reduced roughness represents the aerodynamic properties of streets and open urban surfaces. The modified roughness values must therefore be used during the execution of **GeoSpec.py** (see section 3.1.1).
+
+The SHFR algorithm accounts for the difference between fluxes computed with the original land-cover roughness and those computed with the modified street-like roughness. For this reason, SHFR requires a land-cover table with both values: *z0* and *z0urbanLES*. *z0urbanLES* must be set to 0.0 for non-urban categories.
+
+To create the :code:`UrbanHeatRedis` field, add the following entries to the **simgrid.json** file:
+
+.. code-block:: none
+
+        "urban_heatRedis_opt": 1,
+        "landcover_table": "/path_to_landcover_table/landcover_table.csv"
+
+Note that `landcover_table` entry is the same as the landcover table specified in **geospec.json**. If :code:`urban_heatRedis_opt : 0`, no redistribution is applied and the :code:`landcover_table` entry can be left empty.
+
+To run a building-resolving FastEddy simulation with SHFR, the capability must also be activated in the FastEddy parameters file:
+
+.. code-block:: none
+
+        #-- URBAN
+        urban_heatRedis = 1 # selector to activate surface heat redistribution

@@ -4,9 +4,29 @@
 Publications
 ************
 
+.. _urban_nature_2026:
+
+| Cui, Y., S. Chen, L. Xue, D. Muñoz-Esparza, J.A. Sauer, L. Hu, J.D. Albertson, Q. Li. “Local cloud
+| enhancement associated with urban morphology: evidence from observations and idealized large-eddy
+| simulations”. *Nature Communications*, 17, 2378 (2026)
+| https://doi.org/10.1038/s41467-026-68986-0
+
+.. _submeter_LEStoLES_2025:
+
+| Muñoz‐Esparza, D., J.A. Sauer, and B. Kosović. “Explicit modeling of near‐surface ABL turbulence
+| at sub‐meter grid spacings via one‐way LES‐to‐LES nesting”. *JGR Atmospheres*, 130(24), 2025
+| https://doi.org/10.1029/2025JD044934
+
+.. _eloisa_terrainflilt_2025:
+
+| Raluy-López, E., D. Muñoz-Esparza, and J.P. Montávez. “A local terrain smoothing approach for
+|   stabilizing microscale and high-resolution mesoscale simulations: A case study using
+|   FastEddy\ :sup:`®` (v3.0) and WRF (v4.6.0)”. *Geoscientific Model Development* (2025)
+|   https://doi.org/10.5194/egusphere-2025-3744
+
 .. _bowen_pressurewaves_2025:
 
-| Lin, Yi, and Bowen Zhou. “A theory for the spurious pressure waves in compressible large
+| Lin, Y., and B. Zhou. “A theory for the spurious pressure waves in compressible large
 |   eddy simulations of shallow cumulus clouds”. *Geophysical Research Letters*, 52 (2025)
 |   https://doi.org/10.1029/2025GL118786
 
@@ -41,7 +61,7 @@ Publications
 
 .. _advances_modeling_earth_systems_2022:
 
-| Muñoz-Esparza, D., J.A. Sauer, A.A. Jensen, L. Xue, W.W. Grabowski. "The FastEddy®
+| Muñoz-Esparza, D., J.A. Sauer, A.A. Jensen, L. Xue, W.W. Grabowski. "The FastEddy\ :sup:`®`
 |   resident-GPU accelerated large-eddy simulation framework: Moist Dynamics Extension,
 |   Validation and Sensitivities of Modeling Non-Precipitating Shallow Cumulus Clouds".
 |   *Journal of Advances in Modeling Earth Systems*, vol. 14 (2022)
@@ -65,13 +85,13 @@ Publications
 
 | Muñoz-Esparza, D., J.A. Sauer, H.H. Shin, R. Sharman, B. Kosović, S. Meech,
 |   C. García-Sánchez, M. Steiner, J. Knievel, J. Pinto, S. Swerdlin. "Inclusion of
-|   building-resolving capabilities into the FastEddy® GPU-LES model using an immersed
+|   building-resolving capabilities into the FastEddy\ :sup:`®` GPU-LES model using an immersed
 |   body force method". *Journal of Advances in Modeling Earth Systems*, vol. 12 (2020)
 |   https://doi.org/10.1029/2020MS002141
 
 .. _framework_advances_modeling_earth_systems_2020:
 
-| Sauer, J., and D. Muñoz-Esparza. "The FastEddy resident-GPU accelerated large-eddy
+| Sauer, J., and D. Muñoz-Esparza. "The FastEddy\ :sup:`®` resident-GPU accelerated large-eddy
 |   simulation framework: model formulation, dynamical-core validation and performance
 |   benchmarks". *Journal of Advances in Modeling Earth Systems*, vol. 12 (2020)
 |   https://doi.org/10.1029/2020MS002100
