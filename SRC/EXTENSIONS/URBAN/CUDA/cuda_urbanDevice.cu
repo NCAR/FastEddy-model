@@ -34,18 +34,21 @@ extern "C" int cuda_urbanDeviceSetup(){
    cudaMemcpyToSymbol(urbanSelector_d, &urbanSelector, sizeof(int));
    cudaMemcpyToSymbol(cd_build_d, &cd_build, sizeof(float));
    cudaMemcpyToSymbol(ct_build_d, &ct_build, sizeof(float));
-
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
+   
    Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh));
    fecuda_DeviceMalloc(Nelems, &building_mask_d);
    cudaMemcpy(building_mask_d, building_mask, Nelems*sizeof(float), cudaMemcpyHostToDevice);
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
 
    cudaMemcpyToSymbol(delta_aware_bdg_d, &delta_aware_bdg, sizeof(float));
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
 
-   cudaMemcpyToSymbol(urban_heatRedis_d, &urban_heatRedis, sizeof(int));
    if(urban_heatRedis > 0){
      Nelems = (Nxp+2*Nh)*(Nyp+2*Nh);
      fecuda_DeviceMalloc(Nelems, &urban_heat_redis_d);
      cudaMemcpy(urban_heat_redis_d, urban_heat_redis, Nelems*sizeof(float), cudaMemcpyHostToDevice);
+     gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
    }
 
    return(errorCode);
@@ -58,7 +61,7 @@ extern "C" int cuda_urbanDeviceCleanup(){
    int errorCode = CUDA_URBAN_SUCCESS;
 
    /* Free any URBAN submodule arrays */
-   cudaFree(building_mask_d);
+   //cudaFree(building_mask_d);
    if(urban_heatRedis > 0){
      cudaFree(urban_heat_redis_d);
    }
@@ -157,10 +160,19 @@ __global__ void cudaDevice_URBANfinal(float* hydroFlds_d, float* hydroFldsFrhs_d
       (k >= kMin_d)&&(k < kMax_d) ){
       ijk = i*iStride + j*jStride + k*kStride;
 
-      cudaDevice_UrbanDragMethod(&hydroFlds_d[fldStride*RHO_INDX+ijk],&hydroFlds_d[fldStride*U_INDX+ijk],&hydroFlds_d[fldStride*V_INDX+ijk],&hydroFlds_d[fldStride*W_INDX+ijk],
-                                 &hydroFlds_d[fldStride*THETA_INDX+ijk],&hydroBaseStateFlds_d[fldStride*THETA_INDX+ijk],&hydroBaseStateFlds_d[fldStride*RHO_INDX+ijk],
-                                 &hydroFldsFrhs_d[fldStride*U_INDX+ijk],&hydroFldsFrhs_d[fldStride*V_INDX+ijk],&hydroFldsFrhs_d[fldStride*W_INDX+ijk],
-                                 &hydroFldsFrhs_d[fldStride*THETA_INDX+ijk],&hydroFldsFrhs_d[fldStride*RHO_INDX+ijk],&building_mask_d[ijk]);
+      cudaDevice_UrbanDragMethod(&hydroFlds_d[fldStride*RHO_INDX+ijk],
+                                 &hydroFlds_d[fldStride*U_INDX+ijk],
+                                 &hydroFlds_d[fldStride*V_INDX+ijk],
+                                 &hydroFlds_d[fldStride*W_INDX+ijk],
+                                 &hydroFlds_d[fldStride*THETA_INDX+ijk],
+                                 &hydroBaseStateFlds_d[fldStride*THETA_INDX_BS+ijk],
+                                 &hydroBaseStateFlds_d[fldStride*RHO_INDX_BS+ijk],
+                                 &hydroFldsFrhs_d[fldStride*U_INDX+ijk],
+                                 &hydroFldsFrhs_d[fldStride*V_INDX+ijk],
+                                 &hydroFldsFrhs_d[fldStride*W_INDX+ijk],
+                                 &hydroFldsFrhs_d[fldStride*THETA_INDX+ijk],
+                                 &hydroFldsFrhs_d[fldStride*RHO_INDX+ijk],
+                                 &building_mask_d[ijk]);
       if(NhydroAuxScalars_d > 0){
         for(iFld=0; iFld < NhydroAuxScalars_d; iFld++){
           cudaDevice_UrbanDragMethodAuxScalar(&hydroAuxScalars_d[fldStride*iFld+ijk], &hydroAuxScalarsFrhs_d[fldStride*iFld+ijk], &building_mask_d[ijk]);
