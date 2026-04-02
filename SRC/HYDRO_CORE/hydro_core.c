@@ -104,6 +104,8 @@ float corioConstHorz;   /*Latitude dependent horizontal Coriolis term constant *
 float corioConstVert;   /*Latitude dependent Vertical Coriolis term constant */
 int coriolis_LAD = 0;       /*Coriolis force selector for LAD BC cases (hydroBCs==1): 0=off, 1=on*/
 float corioLS_fact;     /*large-scale factor on Coriolis term*/
+float* lat; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
+float* lon; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
 
 /*----Turbulence*/ 
 int turbulenceSelector;         /*turbulence scheme selector: 0= none, 1= Lilly/Smagorinsky */
@@ -430,14 +432,13 @@ int hydro_coreGetParams(){
    //
    cellpertSelector = 0; // Default to off
    errorCode = queryIntegerParameter("cellpertSelector", &cellpertSelector, 0, 1, PARAM_OPTIONAL);
-   cellpert_nts = 500; // Default to 500 time steps
-   errorCode = queryIntegerParameter("cellpert_nts", &cellpert_nts, 0, 1e+6, PARAM_OPTIONAL);
    if (cellpertSelector > 0){
-     errorCode = queryIntegerParameter("cellpertSelector", &cellpertSelector, 0, 1, PARAM_OPTIONAL);
      cellpert_sw2b = 0; // Default to 0
      errorCode = queryIntegerParameter("cellpert_sw2b", &cellpert_sw2b, 0, 3, PARAM_OPTIONAL);
      cellpert_amp = 0.5; // Default to 0.5 K
      errorCode = queryFloatParameter("cellpert_amp", &cellpert_amp, 0.0, 20.0, PARAM_OPTIONAL);
+     cellpert_nts = 500; // Default to 500 time steps
+     errorCode = queryIntegerParameter("cellpert_nts", &cellpert_nts, 0, 1e+6, PARAM_OPTIONAL);
      cellpert_gppc = 8; // Default to 8 grid points per cell
      errorCode = queryIntegerParameter("cellpert_gppc", &cellpert_gppc, 0, 50, PARAM_OPTIONAL);
      cellpert_ndbc = 3; // Default to 3 cells
@@ -446,15 +447,15 @@ int hydro_coreGetParams(){
      errorCode = queryIntegerParameter("cellpert_kbottom", &cellpert_kbottom, 1, 10, PARAM_OPTIONAL);
      cellpert_ktop = 20; // Default to 20th grid point above surface
      errorCode = queryIntegerParameter("cellpert_ktop", &cellpert_ktop, 0, 200, PARAM_OPTIONAL);
-     if (cellpert_ktop > Nz){
-       cellpert_ktop = Nz-10;
-     }
      cellpert_tvcp = 0; // Default to off 
      errorCode = queryIntegerParameter("cellpert_tvcp", &cellpert_tvcp, 0, 1, PARAM_OPTIONAL);
      cellpert_eckert = 0.2; // Default to Ec = 0.2
      errorCode = queryFloatParameter("cellpert_eckert", &cellpert_eckert, 0.0, 10.0, PARAM_OPTIONAL);
      cellpert_tsfact = 1.0; // Default to cellpert_tsfact = 1.0
      errorCode = queryFloatParameter("cellpert_tsfact", &cellpert_tsfact, 0.0, 10.0, PARAM_OPTIONAL);
+     if (cellpert_ktop > Nz){
+       cellpert_ktop = Nz;
+     }
    }
    //
    lsfSelector = 0; // Default to off 
@@ -527,7 +528,9 @@ int hydro_coreGetParams(){
      errorCode = queryFloatParameter("moistureCondTscale", &moistureCondTscale, 1e-4, 1000.0, PARAM_MANDATORY);
      errorCode = queryIntegerParameter("moistureCondBasePres", &moistureCondBasePres, 0, 1, PARAM_MANDATORY);
      errorCode = queryFloatParameter("moistureMPcallTscale", &moistureMPcallTscale, 1e-4, 1000.0, PARAM_MANDATORY);
-     errorCode = queryFloatParameter("surflayer_wq", &surflayer_wq, -5e+0, 5e+0, PARAM_MANDATORY);
+     if (surflayerSelector == 1){
+       errorCode = queryFloatParameter("surflayer_wq", &surflayer_wq, -5e+0, 5e+0, PARAM_MANDATORY);
+     }
      if (surflayerSelector == 2){
        errorCode = queryFloatParameter("surflayer_qr", &surflayer_qr, -1e+1, 1e+1, PARAM_MANDATORY);
        errorCode = queryIntegerParameter("surflayer_qskin_input", &surflayer_qskin_input, 0, 1, PARAM_OPTIONAL);
@@ -678,7 +681,6 @@ int hydro_coreInit(){
    char moistName[MAX_HC_FLDNAME_LENGTH];
    char moistName_base[MAX_HC_FLDNAME_LENGTH];
    char moistName_tmp[MAX_HC_FLDNAME_LENGTH];
-   float pi;
    int fldStride;
    float z1oz0,z1,z1ozt0;
    int strLength;
@@ -1378,6 +1380,34 @@ int hydro_coreInit(){
      }
    } // end of surflayerSelector > 0
 
+   // 2d arrays of latitude and longitude
+   lat = memAllocateFloat2DField(Nxp, Nyp, Nh, "lat");
+   errorCode = sprintf(&fldName[0],"lat");
+   errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, lat);
+   // Add NetCDF attributes for the registered variable
+   errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
+   printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
+           &fldName[0],lat);
+   fflush(stdout);
+
+   lon = memAllocateFloat2DField(Nxp, Nyp, Nh, "lon");
+   errorCode = sprintf(&fldName[0],"lon");
+   errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, lon);
+   // Add NetCDF attributes for the registered variable
+   errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
+   printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
+           &fldName[0],lon);
+   fflush(stdout);
+   if(inFile == NULL){ // fill-in lat/lon arrays if fresh start (no initial condition file)
+     for(i=iMin-Nh; i < iMax+Nh; i++){
+       for(j=jMin-Nh; j < jMax+Nh; j++){
+         ij = i*(Nyp+2*Nh)+j;
+	 lat[ij] = coriolisLatitude;
+	 lon[ij] = 0.0; // longitude is zero in idealized fresh start runs
+       }
+     }
+   }
+
    if(surflayer_offshore>0){
      sea_mask = memAllocateFloat2DField(Nxp, Nyp, Nh, "sea_mask");
      errorCode = sprintf(&fldName[0],"SeaMask");
@@ -1521,12 +1551,12 @@ int hydro_coreInit(){
        fflush(stdout);
      }
      if( moistureSelector > 0){
-       nBndyVars = Nhydro+moistureNvars;
+       nBndyVars = Nhydro+1+moistureNvars; // +1 is for TKE_0
        nSurfBndyVars = 2;   //Only allows tskin and qskin
      }else{
-       nBndyVars = Nhydro;
+       nBndyVars = Nhydro+1; // +1 is for TKE_0
        nSurfBndyVars = 1;   //Only allows tskin
-     } //end if moisture is on else not   //NOTE: Doesn't handle any AuxScalars or TKE-related Prog. variables.
+     } //end if moisture is on else not   //NOTE: Doesn't handle any AuxScalars Prog. variables.
      XZBdyPlanesGlobal = (float *) malloc( 2*(nBndyVars)*Nx*Nz*sizeof(float) );
      YZBdyPlanesGlobal = (float *) malloc( 2*(nBndyVars)*Ny*Nz*sizeof(float) );
      XYBdyPlanesGlobal = (float *) malloc( 2*(nBndyVars)*Nx*Ny*sizeof(float) );
@@ -1558,11 +1588,10 @@ int hydro_coreInit(){
    Rv_Rg = R_vapor/R_gas;     /* Ratio R_vapor/R_gas*/
 
    /* Coriolis-term constants */
-   pi = acos(-1);   
    if(coriolisSelector > 0){
-     corioConstHorz = 1.45842e-4*sin(pi/180.0*coriolisLatitude); //1.45842e-4 = 2*Earth-Omega
+     corioConstHorz = 1.45842e-4; //1.45842e-4 = 2*Earth-Omega
      if(coriolisSelector > 1){  
-       corioConstVert = 1.45842e-4*cos(pi/180.0*coriolisLatitude);
+       corioConstVert = 1.45842e-4;
      }else{
        corioConstVert = 0.0;
      } //end if vert
@@ -1971,19 +2000,17 @@ int hydro_coreSetupBndyPlanesAllRanks(){
        sprintf(fieldName,"theta");
        fieldIndex = 4;
        errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
+       sprintf(fieldName,"TKE_0");
+       fieldIndex = 5;
+       errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
        if(moistureSelector > 0){
          if(moistureNvars > 0){
            sprintf(fieldName,"qv");
-           fieldIndex = 5;
+           fieldIndex = 6;
            errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
          }
          if(moistureNvars > 1){
            sprintf(fieldName,"ql");
-           fieldIndex = 6;
-           errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
-         }
-         if(moistureNvars > 2){
-           sprintf(fieldName,"qr");
            fieldIndex = 7;
            errorCode = hydro_coreReadFieldBndyPlanes(ncid, fieldName, fieldIndex);
          }
@@ -3429,14 +3456,16 @@ int hydro_coreAddFieldAttributes(char *fieldName, int isForcing) {
         {"ql",          "g kg-1",        "Cloud liquid water mixing ratio",                               "cloud_liquid_water_mixing_ratio"},
         {"fricVel",     "m s-1",         "Surface friction velocity",                                     "surface_friction_velocity"},
         {"htFlux",      "K m s-1",       "Surface sensible heat flux",                                    "surface_upward_sensible_heat_flux"},
-        {"qFlux",       "kg kg-1 m s-1", "Surface latent heat flux",                                      "surface_upward_latent_heat_flux"},
+        {"qFlux",       "g kg-1 m s-1",  "Surface latent heat flux",                                      "surface_upward_latent_heat_flux"},
         {"tskin",       "K",             "Surface skin temperature",                                      "surface_temperature"},
-        {"qskin",       "kg kg-1",       "Surface skin water vapor mixing ratio",                         NULL},
+        {"qskin",       "g kg-1",        "Surface skin water vapor mixing ratio",                         NULL},
         {"z0m",         "m",             "Roughness length for momentum",                                 "surface_roughness_length_for_momentum_in_air"},
         {"z0t",         "m",             "Roughness length for heat",                                     "surface_roughness_length_for_heat_in_air"},
-        {"invOblen",    "m-1",           "Inverse Obukhov length",                                        "atmosphere_boundary_layer_thickness"},
+        {"invOblen",    "m-1",           "Inverse Obukhov length",                                        NULL},
         {"CanopyLAD",   "m-1",           "Leaf area density",                                             "leaf_area_density"},
         {"SeaMask",     "-",             "Sea mask",                                                      "sea_area_fraction"},
+        {"lat",         "degree_north",  "Latitude",                                                      "latitude"},
+        {"lon",         "degree_east",   "Longitude",                                                     "longitude"},
         {NULL, NULL, NULL, NULL} // End marker                                                                                                           
     };
 

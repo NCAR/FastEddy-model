@@ -63,6 +63,15 @@ float *topoPos; /*Terrain elevation (z in meters) at the cell center position in
 float *J13;      // dx/d_zeta
 float *J23;      // dy/d_zeta
 
+//float *J11;      // dx/d_xi  -- assumed = 1.0
+//float *J12;      // dx/d_eta -- assumed = 0.0
+
+//float *J21;      // dy/d_xi  -- assumed = 0.0
+//float *J22;      // dy/d_eta -- assumed = 1.0
+
+float *J13;      // dx/d_zeta
+float *J23;      // dy/d_zeta
+
 float *J31;      // dz/d_xi
 float *J32;      // dz/d_eta
 float *J33;      // dz/d_zeta

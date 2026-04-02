@@ -508,7 +508,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
    cudaDevice_hydroCoreComplete<<<grid, tBlock>>>(simTime, simTime_it, dt, timeStage, numRKstages, hydroFlds_d, hydroFldsFrhs_d,
                                                           hydroFaceVels_d, hydroBaseStateFlds_d, hydroTauFlds_d,
                                                           sgstkeScalars_d, sgstkeScalarsFrhs_d, moistScalars_d, moistScalarsFrhs_d, moistTauFlds_d,
-                                                          J13_d, J23_d, J31_d, J32_d, J33_d, invD_Jac_d, zPos_d);
+                                                          J13_d, J23_d, J31_d, J32_d, J33_d, invD_Jac_d, zPos_d, lat_d);
    gpuErrchk( cudaGetLastError() );
    gpuErrchk( cudaDeviceSynchronize() );
 
@@ -760,21 +760,37 @@ __global__ void cudaDevice_hydroCoreCommence(int simTime_it, float* hydroFlds_d,
        fld = &sgstkeScalars_d[fldStride*iFld];
        fldBS = &sgstkeScalarsFrhs_d[fldStride*iFld]; // Frhs forcing iwas set to zero, so it can be used here as zero-valued base state
        if(hydroBCs_d == 1){ //Using LAD BCs
-        cudaDevice_VerticalAblBCs(iFld, fld, fldBS); 
-	if(rankXid_d == 0){
+	cudaDevice_VerticalAblZeroGradBCs(fld);
+	if (iFld == 0){ // TKE_0
+	  if(rankXid_d == 0){
+           cudaDevice_westBdyBCs(iFld+Nhydro_d, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
+          }
+          if(rankXid_d == numProcsX_d-1){
+           cudaDevice_eastBdyBCs(iFld+Nhydro_d, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
+          }
+          if(rankYid_d == 0){
+           cudaDevice_southBdyBCs(iFld+Nhydro_d, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
+          }
+          if(rankYid_d == numProcsY_d-1){
+           cudaDevice_northBdyBCs(iFld+Nhydro_d, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
+          }
+          cudaDevice_ceilingBdyBCs(iFld+Nhydro_d, timeWeight, fld, XYBdyPlanes_d, XYBdyPlanesNext_d);
+	}else{ // all other TKE scales
+	  if(rankXid_d == 0){
            cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 0);
-         }
-         if(rankXid_d == numProcsX_d-1){
+          }
+          if(rankXid_d == numProcsX_d-1){
            cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 1);
-         }
-         if(rankYid_d == 0){
+          }
+          if(rankYid_d == 0){
            cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 2);
-         }
-         if(rankYid_d == numProcsY_d-1){
+          }
+          if(rankYid_d == numProcsY_d-1){
            cudaDevice_lateralTKEBdyBCs(iFld, fld, fldBS, 3);
-         }
+          }
+	} // end if (iFld == 0)
        }else if (hydroBCs_d == 2){
-         cudaDevice_VerticalAblBCs(iFld, fld, fldBS); // to apply zero-gradient lower boundary BCs
+	 cudaDevice_VerticalAblZeroGradBCs(fld);
          if(numProcsX_d==1){
            cudaDevice_HorizontalPeriodicXdirBCs(iFld, fld);
          }//periodic and single rank in X-dir --> implies no MPI exchanges made so perform on-device exchange
@@ -795,18 +811,18 @@ __global__ void cudaDevice_hydroCoreCommence(int simTime_it, float* hydroFlds_d,
        if(hydroBCs_d == 1){ //Using LAD BCs
          cudaDevice_VerticalAblBCs(iFld, fld, fldBS);
          if(rankXid_d == 0){
-           cudaDevice_westBdyBCs(iFld+Nhydro_d, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
+           cudaDevice_westBdyBCs(iFld+Nhydro_d+1, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
          }
          if(rankXid_d == numProcsX_d-1){
-           cudaDevice_eastBdyBCs(iFld+Nhydro_d, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
+           cudaDevice_eastBdyBCs(iFld+Nhydro_d+1, timeWeight, fld, YZBdyPlanes_d, YZBdyPlanesNext_d);
          }
          if(rankYid_d == 0){
-           cudaDevice_southBdyBCs(iFld+Nhydro_d, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
+           cudaDevice_southBdyBCs(iFld+Nhydro_d+1, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
          }
          if(rankYid_d == numProcsY_d-1){
-           cudaDevice_northBdyBCs(iFld+Nhydro_d, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
+           cudaDevice_northBdyBCs(iFld+Nhydro_d+1, timeWeight, fld, XZBdyPlanes_d, XZBdyPlanesNext_d);
          }
-         cudaDevice_ceilingBdyBCs(iFld+Nhydro_d, timeWeight, fld, XYBdyPlanes_d, XYBdyPlanesNext_d);
+         cudaDevice_ceilingBdyBCs(iFld+Nhydro_d+1, timeWeight, fld, XYBdyPlanes_d, XYBdyPlanesNext_d);
        }else if (hydroBCs_d == 2){
          cudaDevice_VerticalAblZeroGradBCs(fld); // to apply zero-gradient bottom/top BCs
          if(numProcsX_d==1){
@@ -869,11 +885,12 @@ __global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, floa
                                                      float* hydroTauFlds,
                                                      float* sgstkeScalars, float* sgstkeScalarsFrhs, 
                                                      float* moistScalars, float* moistScalarsFrhs, float* moistTauFlds,
-                                                     float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* invD_Jac_d, float* zPos_d){
+                                                     float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* invD_Jac_d, float* zPos_d, float* lat_d){
 
-   int i,j,k,ijk; 
+   int i,j,k,ijk,ij;
    int iFld,fldStride;
    int iStride,jStride,kStride;
+   int iStride2d,jStride2d;
    float* rho;
    float* rho_BS;
    float* u_cf;
@@ -894,6 +911,8 @@ __global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, floa
    iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
    jStride = (Nz_d+2*Nh_d);
    kStride = 1;
+   iStride2d = (Ny_d+2*Nh_d);
+   jStride2d = 1;
    rho = &hydroFlds[fldStride*RHO_INDX];
    rho_BS = &hydroBaseStateFlds[fldStride*RHO_INDX_BS];
    u_cf = &hydroFaceVels[fldStride*0];
@@ -902,7 +921,7 @@ __global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, floa
 
    if((i >= iMin_d)&&(i < iMax_d) &&
       (j >= jMin_d)&&(j < jMax_d) &&
-      (k >= kMin_d)&&(k < kMax_d) ){
+      (k >= kMin_d+3)&&(k < kMax_d) ){ // skipping the first 3 vertical levels
       for(iFld=0; iFld < Nhydro_d; iFld++){   
          fld = &hydroFlds[fldStride*iFld];
          fldFrhs = &hydroFldsFrhs[fldStride*iFld];
@@ -926,24 +945,6 @@ __global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, floa
          } else { // defaults to 1st-order upwinding
            cudaDevice_UpstreamDivAdvFlux(fld, fldFrhs, u_cf, v_cf, w_cf, invD_Jac_d);
          }
-         if(iFld==W_INDX){
-           if(dampingLayerSelector_d > 0){          // RAYLEIGH DAMPING ON W   ******!!!!!!!!
-             cudaDevice_topRayleighDampingLayerForcing(fld, fldFrhs,
-                                                       &rho[0], &rho_BS[0], zPos_d);
-           }  //end if dampingLayerSelector > 0 
-           if(buoyancySelector_d > 0){              // BUOYANCY SOURCE?SINK OF W   ******!!!!!!!!
-             ijk = i*iStride + j*jStride + k*kStride;
-             if (moistureSelector_d>0){
-                if(moistureNvars_d==1){ 
-                  cudaDevice_calcBuoyancyMoistNvar1(&fldFrhs[ijk], &rho[ijk], &rho_BS[ijk],&moistScalars[ijk]);
-                }else if(moistureNvars_d==2){ 
-                  cudaDevice_calcBuoyancyMoistNvar2(&fldFrhs[ijk], &rho[ijk], &rho_BS[ijk],&moistScalars[ijk],&moistScalars[fldStride+ijk]);
-                }
-             }else{
-               cudaDevice_calcBuoyancy(&fldFrhs[ijk], &rho[ijk], &rho_BS[ijk]);
-             }
-           }  //end if buoyancySelector > 0 
-         }//end if iFld==W_INDX
       }//for iFld
       if ((turbulenceSelector_d>0) && (TKESelector_d>0)){ // : advection of SGSTKE fields
         for(iFld=0; iFld < TKESelector_d; iFld++){
@@ -1012,9 +1013,96 @@ __global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, floa
           }
         }
       }
+   }//end if in the range of non-halo cells (skipping the first 3 vertical levels)
 
+   // lower the order of adection as the surface is approached
+   if((i >= iMin_d)&&(i < iMax_d) &&
+      (j >= jMin_d)&&(j < jMax_d) &&
+      (k >= kMin_d)&&(k < kMin_d+3) ){ // only first 3 vertical grid levels
+      for(iFld=0; iFld < Nhydro_d; iFld++){
+         fld = &hydroFlds[fldStride*iFld];
+         fldFrhs = &hydroFldsFrhs[fldStride*iFld];
+         /* Calculate scalar, cell-valued divergence of the advective flux */
+         cudaDevice_HYB34DivAdvFluxX(fld, fldFrhs, u_cf, b_hyb_d, invD_Jac_d);
+         cudaDevice_HYB34DivAdvFluxY(fld, fldFrhs, v_cf, b_hyb_d, invD_Jac_d);
+         if (k == kMin_d+2) { //  hybrid 3rd-4th order
+           cudaDevice_HYB34DivAdvFluxZ(fld, fldFrhs, w_cf, b_hyb_d, invD_Jac_d);
+	 } else { // 1st-order upwinding
+	   cudaDevice_UpstreamDivAdvFluxZ(fld, fldFrhs, w_cf, invD_Jac_d);
+         }
+      }//for iFld
+      if ((turbulenceSelector_d>0) && (TKESelector_d>0)){ // : advection of SGSTKE fields
+        for(iFld=0; iFld < TKESelector_d; iFld++){
+          fld = &sgstkeScalars[fldStride*iFld];
+          fldFrhs = &sgstkeScalarsFrhs[fldStride*iFld];
+          TKEAdvSelector_flag = TKEAdvSelector_d;
+          TKEAdvSelector_b_hyb_flag = TKEAdvSelector_b_hyb_d;
+          /* Calculate scalar, cell-valued divergence of the advective flux */
+          cudaDevice_HYB34DivAdvFluxX(fld, fldFrhs, u_cf, TKEAdvSelector_b_hyb_flag, invD_Jac_d);
+          cudaDevice_HYB34DivAdvFluxY(fld, fldFrhs, v_cf, TKEAdvSelector_b_hyb_flag, invD_Jac_d);
+          if (k == kMin_d+2) { //  hybrid 3rd-4th order
+            cudaDevice_HYB34DivAdvFluxZ(fld, fldFrhs, w_cf, TKEAdvSelector_b_hyb_flag, invD_Jac_d);
+          } else { // 1st-order upwinding
+            cudaDevice_UpstreamDivAdvFluxZ(fld, fldFrhs, w_cf, invD_Jac_d);
+          }
+        }
+      }
+
+      if ((moistureSelector_d>0) && (moistureNvars_d>0)){ // : advection of moisture fields
+        for(iFld=0; iFld < moistureNvars_d; iFld++){
+          fld = &moistScalars[fldStride*iFld];
+          fldFrhs = &moistScalarsFrhs[fldStride*iFld];
+          if (iFld==0){ // water vapor
+            cudaDevice_HYB34DivAdvFluxX(fld, fldFrhs, u_cf, moistureAdvSelectorQv_b_d, invD_Jac_d);
+            cudaDevice_HYB34DivAdvFluxY(fld, fldFrhs, v_cf, moistureAdvSelectorQv_b_d, invD_Jac_d);
+            if (k == kMin_d+2) { //  hybrid 3rd-4th order
+              cudaDevice_HYB34DivAdvFluxZ(fld, fldFrhs, w_cf, moistureAdvSelectorQv_b_d, invD_Jac_d);
+            } else { // 1st-order upwinding
+              cudaDevice_UpstreamDivAdvFluxZ(fld, fldFrhs, w_cf, invD_Jac_d);
+            }
+          } else { // non-qv moisture species (non-oscillatory schemes)
+            if (moistureAdvSelectorQi_d == 0) { // 1st-order upstream
+              cudaDevice_UpstreamDivAdvFlux(fld, fldFrhs, u_cf, v_cf, w_cf, invD_Jac_d);
+            } else {
+              cudaDevice_WENO3DivAdvFluxX(fld, fldFrhs, u_cf, invD_Jac_d);
+              cudaDevice_WENO3DivAdvFluxY(fld, fldFrhs, v_cf, invD_Jac_d);
+              if (k == kMin_d+2) { // 3rd-order WENO
+                cudaDevice_WENO3DivAdvFluxZ(fld, fldFrhs, w_cf, invD_Jac_d);
+	      } else { // 1st-order upstream
+		cudaDevice_UpstreamDivAdvFluxZ(fld, fldFrhs, w_cf, invD_Jac_d);
+	      }
+            }
+          }
+        }
+      }
+   }//end if in the range of non-halo cells (only first 3 vertical grid levels)
+
+   if((i >= iMin_d)&&(i < iMax_d) &&
+      (j >= jMin_d)&&(j < jMax_d) &&
+      (k >= kMin_d)&&(k < kMax_d) ){
+      // W terms
+      iFld=W_INDX;
+      fld = &hydroFlds[fldStride*iFld];
+      fldFrhs = &hydroFldsFrhs[fldStride*iFld];
+      if(dampingLayerSelector_d > 0){          // RAYLEIGH DAMPING ON W   ******!!!!!!!!
+        cudaDevice_topRayleighDampingLayerForcing(fld, fldFrhs,
+                                                  &rho[0], &rho_BS[0], zPos_d);
+      }  //end if dampingLayerSelector > 0
+      if(buoyancySelector_d > 0){              // BUOYANCY SOURCE?SINK OF W   ******!!!!!!!!
+        ijk = i*iStride + j*jStride + k*kStride;
+        if (moistureSelector_d>0){
+           if(moistureNvars_d==1){
+             cudaDevice_calcBuoyancyMoistNvar1(&fldFrhs[ijk], &rho[ijk], &rho_BS[ijk],&moistScalars[ijk]);
+           }else if(moistureNvars_d==2){
+             cudaDevice_calcBuoyancyMoistNvar2(&fldFrhs[ijk], &rho[ijk], &rho_BS[ijk],&moistScalars[ijk],&moistScalars[fldStride+ijk]);
+           }
+        }else{
+          cudaDevice_calcBuoyancy(&fldFrhs[ijk], &rho[ijk], &rho_BS[ijk]);
+        }
+      }  //end if buoyancySelector > 0
       if(coriolisSelector_d > 0){
         ijk = i*iStride + j*jStride + k*kStride;
+	ij = i*iStride2d + j*jStride2d;
         cudaDevice_MomentumBS(U_INDX, zPos_d[ijk], &hydroBaseStateFlds[RHO_INDX_BS*fldStride+ijk], &MomBSval[0]);
         cudaDevice_MomentumBS(V_INDX, zPos_d[ijk], &hydroBaseStateFlds[RHO_INDX_BS*fldStride+ijk], &MomBSval[1]);
         cudaDevice_MomentumBS(W_INDX, zPos_d[ijk], &hydroBaseStateFlds[RHO_INDX_BS*fldStride+ijk], &MomBSval[2]);
@@ -1028,9 +1116,11 @@ __global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, floa
                                 &hydroBaseStateFlds[RHO_INDX_BS*fldStride+ijk],
                                 &MomBSval[0],
                                 &MomBSval[1],
-                                &MomBSval[2]);
+                                &MomBSval[2],
+				&lat_d[ij]);
       }  //end if coriolisSelector_d > 0 
    }//end if in the range of non-halo cells
+
    if((turbulenceSelector_d > 0) && ((physics_oneRKonly_d==0) || (timeStage==numRKstages))){
      cudaDevice_hydroCoreCalcTurbMixing(
                                        &hydroFldsFrhs[fldStride*U_INDX], 
