@@ -1,4 +1,4 @@
-**stabilityScheme:** |br| Scheme used to set hydrostatic stability-dependent Base-State EOS fields |br| 0=none |br| 1=laboratory scale |br| 2=atmospheric scale, 1, 2, 2, M
+**stabilityScheme:** |br| Scheme used to set hydrostatic stability-dependent Base-State EOS fields |br| 1=laboratory scale |br| 2=atmospheric scale, 1, 2, 2, M
 **temp_grnd:** |br| Air Temperature (K) at the ground used to set hydrostatic Base-State EOS fields, FLT_MIN, FLT_MAX, 300.0, M 
 **pres_grnd:** |br| Pressure (Pa) at the ground used to set hydrostatic Base-State EOS fields, FLT_MIN, FLT_MAX, 1.0e5, M 
 **zStableBottom:** |br| Height (m) of the first stable upper-layer when stabilityScheme = 2, 0, FLT_MAX, 1000.0, M
