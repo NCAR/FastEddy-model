@@ -1,0 +1,9 @@
+zgrid				PHB
+w				W
+theta				T
+uReconstructZonal		U
+uReconstructMeridional		V
+qv				QVAPOR
+qc				QCLOUD
+rho				MUB
+pressure			P_HYD
