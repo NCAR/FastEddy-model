@@ -128,7 +128,7 @@ If one wishes to use MPAS forecast files as inputs to FastEddy, a series of step
 
    qsub run_mpassit.sh
 
-The resulting output will be named **proc.YYYY-MM-DD_HH.mm.ss.nc**. The proc files required to run this addendum are provided at this `Zenodo record <https://zenodo.org/records/19410452>`_.
+The resulting output will be named **proc.YYYY-MM-DD_HH.mm.ss.nc**. The proc files required to run this addendum are provided at this `MPAS Zenodo record <https://zenodo.org/records/19410452>`_.
 
 A further conversion step must then be performed in order to ensure that the variables output by MPAS match the requirements of **GenICBCs.py** and FastEddy. In this step, density and geopotential heights not provided in the standard MPAS output are derived and appended to the WRF-like output files created by MPASSIT. A conversion script is available in **scripts/python_utilities/coupler/**. You may configure **mpassit_to_fasteddy.py** with the input file **mpassit_to_fasteddy.json**, similar to the configuration of **genicbcs.json** by setting file name prefixes and date and time information for the ICBC data. The conversion script is run with 
 
