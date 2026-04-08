@@ -20,7 +20,7 @@ The first preprocessing step is **GeoSpec.py**. The purpose of this step is to c
 
 Two required fields from an external GIS source are the terrain topography (:code:`elevation`, in m above seal level) and the categorical land cover (:code:`LandCover`). Note that high-resolution fields are desirable as inputs. Terrain can usually be obtained from lidar data at a few meters resolution, while land cover datasets are typically coarser. For U.S. locations we recommend using the National Land Cover Database (NLCD) dataset that comes at a high resolution of 30 m. The input NetCDF file should also include the corresponding latitude and longitude 2d fields (:code:`lat` and :code:`lon`) provided as double precision due to the high-resolution typically used in these FastEddy simulations. All fields must be projected consistently and discretized in the projected coordinate frame at the same resolution (:code:`cellsize`, in m). 
 
-Input parameters to **GeoSpec.py** are specified in the **geospec.json** file. These include the path and file name of the input GIS data (*gis_root* and *gis_file*, respectively), along with other parameters including the output path of the standard format, reference NetCDF output file of this step (*FE_dataset_path*). In order to convert the land cover class into a roughness length value, a look-up table must be provided (*landcover_table*). In this tutorial, a lookup table is provided based on the 16-class NLCD dataset (:code:`LandCoverMetadata_NLCD16.csv`). Finally, the JSON file entry *water_cats* needs to list all of the land cover categories that correspond to water bodies, so an appropriate roughness length parameterization can be used by FastEddy. Once all the required input files are ready, **GeoSpec.py** can be executed:
+Input parameters to **GeoSpec.py** are specified in the **geospec.json** file. These include the path and file name of the input GIS data (*gis_root* and *gis_file*, respectively), along with other parameters including the output path of the standard format, reference NetCDF output file of this step (*FE_dataset_path*). In order to convert the land cover class into a roughness length value, a look-up table must be provided (*nlcd_name*). In this tutorial, a lookup table is provided based on the 16-class NLCD dataset (:code:`LandCoverMetadata_NLCD16.csv`). Finally, the JSON file entry *water_cats* needs to list all of the land cover categories that correspond to water bodies, so an appropriate roughness length parameterization can be used by FastEddy. Once all the required input files are ready, **GeoSpec.py** can be executed:
 
 .. code-block:: none
 
@@ -118,3 +118,23 @@ With these additions, WRF will generate a set of timestamped *wrf_fasteddy_* fil
    python ./GenICBCs.py -f genicbcs.json
 
 Successful completion will create an initial condition file (*FE_interp_170000UTC.0*) and a set of boundary condition files (*FE_Bndys.**) where the index indicates the number of second increments from the initial time (frequency in seconds is specified by the parameter :code:`secInc` in **genicbcs.json**).
+
+
+Addendum: Using MPAS Forecasts as Input Data
+--------------------------------------------
+If one wishes to use MPAS forecast files as inputs to FastEddy, a series of steps may be performed to prepare the data for use before the **GenICBCs.py** preprocessing step. The required data from MPAS forecasts are the **history.YYYY-MM-DD_HH.mm.ss.nc**, **diag.YYYY-MM-DD_HH.mm.ss.nc**, and **init.nc** files. These files must first be converted from the MPAS unstructured grid to match the WRF lat-lon grid. Various tools are available to perform the interpolation, including `MPASSIT <https://github.com/NOAA-GSL/MPASSIT>`_. An example batch submission script, **run_mpassit.sh**, and variable lists, **varlists_mpassit_fasteddy**, are available in **scripts/batch_jobs/**, which can be configured with paths to MPAS outputs, a build of MPASSIT, and a set of run parameters to determine the date and time corresponding to input data. This batch submission script is run with
+
+.. code-block:: none
+
+   qsub run_mpassit.sh
+
+The resulting output will be named **proc.YYYY-MM-DD_HH.mm.ss.nc**. The proc files required to run this addendum are provided at this `Zenodo record <https://zenodo.org/records/19410452>`_.
+
+A further conversion step must then be performed in order to ensure that the variables output by MPAS match the requirements of **GenICBCs.py** and FastEddy. In this step, density and geopotential heights not provided in the standard MPAS output are derived and appended to the WRF-like output files created by MPASSIT. A conversion script is available in **scripts/python_utilities/coupler/**. You may configure **mpassit_to_fasteddy.py** with the input file **mpassit_to_fasteddy.json**, similar to the configuration of **genicbcs.json** by setting file name prefixes and date and time information for the ICBC data. The conversion script is run with 
+
+.. code-block:: none
+
+   python ./mpassit_to_fasteddy.py -f mpassit_to_fasteddy.json
+
+
+Once completed, the resulting output files should appear with a naming scheme that matches the WRF filename date formatting and can then be used as input to **GenICBCs.py** to generate FastEddy input data.
