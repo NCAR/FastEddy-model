@@ -618,7 +618,7 @@ int hydro_coreGetParams(){
      } //endif srcAuxScFile == NULL...
    }// endif NhydroAuxScalars > 0
    stabilityScheme = 2; //Default to 2
-   errorCode = queryIntegerParameter("stabilityScheme", &stabilityScheme, 2, 2, PARAM_MANDATORY);
+   errorCode = queryIntegerParameter("stabilityScheme", &stabilityScheme, 1, 2, PARAM_MANDATORY);
    temp_grnd = 300.0; //Default to 300.0-(Kelvin) = 80.33-(Fahrenheit) = 26.85-(Celsius) 
    errorCode = queryFloatParameter("temp_grnd", &temp_grnd, FLT_MIN, FLT_MAX, PARAM_MANDATORY);
    pres_grnd = 1.0e5; //Default to refPressure 100,000-(pascals) = 1000-(millibars)
@@ -842,9 +842,9 @@ int hydro_coreInit(){
       printParameter("stabilityScheme", "Scheme used to set hydrostatic, stability-dependent Base-State EOS fields");
       printParameter("temp_grnd", "Air Temperature (K) at the ground used to set hydrostatic Base-State EOS fields");
       printParameter("pres_grnd", "Pressure (Pa) at the ground used to set hydrostatic Base-State EOS fields");
-      printParameter("zStableBottom", "Height (m) of the first stable upper-layer when stabilityScheme = 1 or 2");
+      printParameter("zStableBottom", "Height (m) of the first stable upper-layer when stabilityScheme = 2");
       printParameter("stableGradient", 
-                     "Vertical gradient (K/m) of the first stable upper-layer when stabilityScheme = 1 or 2");
+                     "Vertical gradient (K/m) of the first stable upper-layer when stabilityScheme = 2");
       printParameter("zStableBottom2", "Height (m) of the second stable upper-layer when stabilityScheme = 2");
       printParameter("zStableBottom3", "Height (m) of the third stable upper-layer when stabilityScheme = 2");
       printParameter("stableGradient2",
@@ -1765,7 +1765,7 @@ int hydro_coreSetBaseState(){
    rhoBase = &hydroBaseStateFlds[RHO_INDX_BS*fldStride];
    thetaBase = &hydroBaseStateFlds[THETA_INDX_BS*fldStride];
    /* ----Based on stabilityScheme setup Base-State rho,theta, and pressure profiles */ 
-   if(stabilityScheme == 0){   /* None, constant density, theta (potential temperature), and pressure fields */
+   if(stabilityScheme == 1){   /* None, constant density, theta (potential temperature), and pressure fields -> laboratory scale simulations */
      for(i=iMin-Nh; i < iMax+Nh; i++){       // Cover the halos in X 
        for(j=jMin-Nh; j < jMax+Nh; j++){     // Cover the halos in Y 
          for(k=kMin-Nh; k < kMax+Nh; k++){   // Cover the halos in Z 
@@ -1773,38 +1773,6 @@ int hydro_coreSetBaseState(){
            rhoBase[ijk] = rho_grnd;
            thetaBase[ijk] = rho_grnd*theta_grnd;
            hydroBaseStatePres[ijk] = pow(thetaBase[ijk]*constant_1,cp_cv);
-         } //end for(k...
-       } // end for(j...
-     } // end for(i...
-     printf("stabilityScheme == 0: Base State setup complete.\n");
-   }else if(stabilityScheme == 1){  /* stable linear potential temperature profile above some height zStableBottom, 
-                                       neutral below zStableBottom*/
-     for(i=iMin-Nh; i < iMax+Nh; i++){       // Cover the halos in X 
-       for(j=jMin-Nh; j < jMax+Nh; j++){     // Cover the halos in Y 
-         for(k=kMin-Nh; k < kMax+Nh; k++){   // Cover the halos in Z 
-           ijk = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+k;
-           if(zPos[ijk] <= zStableBottom){ //This point is within the neutral lower-layer
-             thetaBase[ijk] = theta_grnd;
-             hydroBaseStatePres[ijk] = refPressure*pow( (-accel_g/cp_gas)*( zPos[ijk]/theta_grnd )
-                                                        +pow(pres_grnd/refPressure,R_cp)  //base of the first pow (...)
-                                                        ,cp_R);  //exponent of the first pow(...)
-           }else{ //This point is within the stable upper-layer
-             //Set theta
-             thetaBase[ijk] = theta_grnd + stableGradient*(zPos[ijk]-zStableBottom);
-             //set base state  pressure
-             hydroBaseStatePres[ijk] = refPressure*pow( (-accel_g/cp_gas)*( zStableBottom/theta_grnd 
-                                                                     +(1.0/stableGradient)*log(1.0+stableGradient*(zPos[ijk]-zStableBottom)/theta_grnd))
-                                                        +pow(pres_grnd/refPressure,R_cp)  //base of the first pow (...)
-                                                        ,cp_R);  //exponent of the first pow(...)
-           } //end zPos[ijk >= zStableBottom
-           //back out base state air temperature
-           BS_Temp = thetaBase[ijk]*pow( hydroBaseStatePres[ijk]/refPressure,R_cp);
-           //back out base state density
-           rhoBase[ijk] = hydroBaseStatePres[ijk]/(BS_Temp*R_gas);
-           //Given this density set the flux form of the potential temperature prognostic field (rho*theta)
-           thetaBase[ijk] = thetaBase[ijk]*rhoBase[ijk];           
-           //Finally recast the base state pressure in a "discretisation-consistent" manner
-           hydroBaseStatePres[ijk] = pow(thetaBase[ijk]*constant_1, cp_cv); //This minimizes round off under the pressure formulation in calcPerturbationPRessure()
          } //end for(k...
        } // end for(j...
      } // end for(i...
@@ -1859,25 +1827,6 @@ int hydro_coreSetBaseState(){
        } // end for(j...
      } // end for(i...
      printf("stabilityScheme == 2: Base State setup complete.\n");
-   }else if(stabilityScheme == 3){ 
-     printf("stabilityScheme == 3: ERROR: No scheme implemented for stabilityScheme == 3, use instead 1, 2, or 4!! \n");
-   }else if(stabilityScheme == 4){ /*Experimental setup for constant rho and constant theta profiles.
-                                     Use only for total domain vertical extent < 10m. */
-      rho_grnd = 1.1;
-      for(i=iMin-Nh; i < iMax+Nh; i++){       // Cover the halos in X 
-       for(j=jMin-Nh; j < jMax+Nh; j++){     // Cover the halos in Y 
-         for(k=kMin-Nh; k < kMax+Nh; k++){   // Cover the halos in Z 
-           ijk = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+k;
-           if(zPos[ijk] <= 0.5){
-             rhoBase[ijk] = rho_grnd;
-           }else{
-             rhoBase[ijk] = rho_grnd;
-           }
-           thetaBase[ijk] = rho_grnd*theta_grnd;
-           hydroBaseStatePres[ijk] = pow(thetaBase[ijk]*constant_1,cp_cv);
-         } //end for(k...
-       } // end for(j...
-     } // end for(i...
    } //end if-else... stabilityScheme...
 
    if(inFile == NULL){
@@ -1939,30 +1888,6 @@ int hydro_coreSetBaseState(){
          } // end for(j...
        } // end for(i...
      } //endif thetaPerturbationSwitch==1
-
-   }else{ //Initial conditions were provided...
-     if(stabilityScheme==3){
-      for(iFld=0; iFld < 2; iFld++){
-         switch (iFld){
-           case 0:
-             fldBase = &hydroFlds[RHO_INDX*fldStride];
-             fldBaseBS = &hydroBaseStateFlds[RHO_INDX_BS*fldStride];
-             break;
-           case 1:
-             fldBase = &hydroFlds[THETA_INDX*fldStride];
-             fldBaseBS = &hydroBaseStateFlds[THETA_INDX_BS*fldStride];
-             break;
-         }
-         for(i=iMin-Nh; i < iMax+Nh; i++){       // Cover the halos in X 
-           for(j=jMin-Nh; j < jMax+Nh; j++){     // Cover the halos in Y 
-             for(k=kMin-Nh; k < kMax+Nh; k++){   // Cover the halos in Z 
-               ijk = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+k;
-               fldBaseBS[ijk] = fldBase[ijk];
-             } //end for(k...
-           } // end for(j...
-         } // end for(i...
-       }//end if-else iFld==0    
-     }//end if stabilityScheme==3
    }//If no initial conditions were specified
    return(errorCode);
 }// end coreSetBaseState
