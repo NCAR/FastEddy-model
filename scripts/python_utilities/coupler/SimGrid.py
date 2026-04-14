@@ -11,6 +11,7 @@ import matplotlib
 import math
 import struct
 from scipy.interpolate import RectBivariateSpline, NearestNDInterpolator
+from skimage.measure import block_reduce
 from couplingUtils import *
 
 #######################################
@@ -31,6 +32,7 @@ FE_new_nc_path = params["FE_new_nc_path"]
 name_dom_add = params["name_dom_add"]
 urban_heatRedis_opt = params["urban_heatRedis_opt"]
 landcover_table = params["landcover_table"]
+topo_average_opt = params["topo_average_opt"]
 save_plot_opt = params["save_plot_opt"]
 
 #######################################
@@ -115,7 +117,9 @@ else:
     print('Grid is not an even factor of GIS resolution, use interpolation')
     interp_flag = 1
 print('interp_flag=',interp_flag)
-
+if (topo_average_opt==1):
+    print('Using block averaging for topography')
+    
 verticalDeformSwitch = int(str(FE_params['verticalDeformSwitch'][0]))
 print('verticalDeformSwitch=',verticalDeformSwitch)
 if (verticalDeformSwitch==1):
@@ -132,23 +136,27 @@ print('c1,fCoeff=',c1,fCoeff)
 ## Read in terrain elevation array
 topo = ds_GIS.topoPos.values
 if (interp_flag==0):
-    data_topo0 = topo[y_s:y_e:npy_inc,x_s:x_e:npx_inc]
+    if (topo_average_opt==0):
+        data_topo0 = topo[y_s:y_e:npy_inc,x_s:x_e:npx_inc]
+    else:
+        data_topo0 = block_reduce(topo[y_s:y_e,x_s:x_e], block_size=(int(d_eta/dy_inter),int(d_xi/dx_inter)), func=np.mean)
 else:
     xPos_2d_dom_ori = xPos_2d[y_s:y_e,x_s:x_e]
     yPos_2d_dom_ori = yPos_2d[y_s:y_e,x_s:x_e]
-    topo_dom_ori = topo[y_s:y_e,x_s:x_e]
     print('xPos_2d_dom_ori.shape=',xPos_2d_dom_ori.shape)
-    f_topo = RectBivariateSpline(xPos_2d_dom_ori[0,:], yPos_2d_dom_ori[:,0], topo_dom_ori.T, kx=3, ky=3)
-
     xPos_1d_new = np.arange(x_box_corners[0],x_box_corners[1],d_xi)
     yPos_1d_new = np.arange(y_box_corners[0],y_box_corners[2],d_eta)
-
-    data_topo0_b = f_topo(xPos_1d_new, yPos_1d_new).T
     xPos_2d_new_b, yPos_2d_new_b = np.meshgrid(xPos_1d_new, yPos_1d_new)
-
-    data_topo0 = data_topo0_b[0:Ny,0:Nx]
     xPos_2d_new = xPos_2d_new_b[0:Ny,0:Nx]
     yPos_2d_new = yPos_2d_new_b[0:Ny,0:Nx]
+
+    topo_dom_ori = topo[y_s:y_e,x_s:x_e]
+    if (topo_average_opt==0):
+        f_topo = RectBivariateSpline(xPos_2d_dom_ori[0,:], yPos_2d_dom_ori[:,0], topo_dom_ori.T, kx=3, ky=3)
+        data_topo0_b = f_topo(xPos_1d_new, yPos_1d_new).T
+        data_topo0 = data_topo0_b[0:Ny,0:Nx]
+    else:
+        data_topo0 = block_average_topo(topo_dom_ori,dx_inter,dy_inter,d_xi,d_eta,Nx,Ny)
 
 data_topo = smoothTerrain(data_topo0,d_xi)
 
