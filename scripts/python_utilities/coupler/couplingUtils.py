@@ -45,6 +45,40 @@ def zDeform(zRect, zGround, zCeiling, c1, fCoeff):
 
     return zStretch
 
+def block_average_topo(topo_dom_ori,dx_inter,dy_inter,d_xi,d_eta,Nx,Ny):
+    ny_src, nx_src = topo_dom_ori.shape
+    data_topo0 = np.zeros((Ny, Nx), dtype=float)
+    x_edges_src = np.arange(nx_src + 1) * dx_inter
+    y_edges_src = np.arange(ny_src + 1) * dy_inter
+    x_edges_dst = np.arange(Nx + 1) * d_xi
+    y_edges_dst = np.arange(Ny + 1) * d_eta
+    for j in range(Ny):
+        for i in range(Nx):
+            x0 = x_edges_dst[i]
+            x1 = x_edges_dst[i + 1]
+            y0 = y_edges_dst[j]
+            y1 = y_edges_dst[j + 1]
+            val = 0.0
+            wsum = 0.0
+            ix0 = np.searchsorted(x_edges_src, x0, side="right") - 1
+            ix1 = np.searchsorted(x_edges_src, x1, side="left")
+            iy0 = np.searchsorted(y_edges_src, y0, side="right") - 1
+            iy1 = np.searchsorted(y_edges_src, y1, side="left")
+            for iy in range(max(iy0, 0), min(iy1 + 1, ny_src)):
+                for ix in range(max(ix0, 0), min(ix1 + 1, nx_src)):
+                    xs0 = x_edges_src[ix]
+                    xs1 = x_edges_src[ix + 1]
+                    ys0 = y_edges_src[iy]
+                    ys1 = y_edges_src[iy + 1]
+                    overlap_x = min(x1, xs1) - max(x0, xs0)
+                    overlap_y = min(y1, ys1) - max(y0, ys0)
+                    if overlap_x > 0.0 and overlap_y > 0.0:
+                        w = overlap_x * overlap_y
+                        val += topo_dom_ori[iy, ix] * w
+                        wsum += w
+            data_topo0[j, i] = val / wsum
+    return data_topo0
+
 def smoothTerrain(tPos0,dx):
     start = time.time()
     slopeThresh=math.tan(math.radians(35.0))
