@@ -89,16 +89,14 @@ print('yPos_2d[y_s,x_s]=',yPos_2d[y_s,x_s],'m')
 
 ##
 
-npx_inc = int(d_xi/dx_inter)
-npy_inc = int(d_eta/dy_inter)
-if (npx_inc==0):
-    npx_inc = d_xi/dx_inter
-    npy_inc = d_eta/dy_inter
-    x_e = x_s + int(np.ceil(Nx*npx_inc))
-    y_e = y_s + int(np.ceil(Ny*npy_inc))
+npx_inc = d_xi/dx_inter
+npy_inc = d_eta/dy_inter
+if ((d_xi % dx_inter) == 0.0 and d_xi >= dx_inter):
+    x_e = x_s + Nx*int(npx_inc)
+    y_e = y_s + Ny*int(npy_inc)
 else:
-    x_e = x_s + Nx*npx_inc
-    y_e = y_s + Ny*npy_inc
+    x_e = x_s + int(np.ceil((Nx-1)*npx_inc)) + 1
+    y_e = y_s + int(np.ceil((Ny-1)*npy_inc)) + 1
 print('x_s,x_e,y_s,y_e=',x_s,x_e,y_s,y_e)
 
 box_indx = [x_s,x_e,x_e,x_s,x_s]
@@ -246,7 +244,7 @@ if (urban_opt == 1):
     if (interp_flag==0):
         data_bmask = bdg_heights[y_s:y_e:npy_inc,x_s:x_e:npx_inc]
     else:
-        f_bdg = NearestNDInterpolator(list(zip(xPos_2d_dom_ori.flatten(), yPos_2d_dom_ori.flatten())), data_bmask[y_s:y_e,x_s:x_e].flatten())
+        f_bdg = NearestNDInterpolator(list(zip(xPos_2d_dom_ori.flatten(), yPos_2d_dom_ori.flatten())), bdg_heights[y_s:y_e,x_s:x_e].flatten())
         data_bmask = f_bdg(xPos_2d_new, yPos_2d_new)
 
     bdg3d_tmp = np.zeros((Nz,Ny,Nx),dtype=np.float32)
