@@ -89,12 +89,14 @@ print('yPos_2d[y_s,x_s]=',yPos_2d[y_s,x_s],'m')
 
 ##
 
-npx_inc = d_xi/dx_inter
-npy_inc = d_eta/dy_inter
 if ((d_xi % dx_inter) == 0.0 and d_xi >= dx_inter):
-    x_e = x_s + Nx*int(npx_inc)
-    y_e = y_s + Ny*int(npy_inc)
+    npx_inc = int(d_xi/dx_inter)
+    npy_inc = int(d_eta/dy_inter)
+    x_e = x_s + Nx*npx_inc
+    y_e = y_s + Ny*npy_inc
 else:
+    npx_inc = d_xi/dx_inter
+    npy_inc = d_eta/dy_inter
     x_e = x_s + int(np.ceil((Nx-1)*npx_inc)) + 1
     y_e = y_s + int(np.ceil((Ny-1)*npy_inc)) + 1
 print('x_s,x_e,y_s,y_e=',x_s,x_e,y_s,y_e)
