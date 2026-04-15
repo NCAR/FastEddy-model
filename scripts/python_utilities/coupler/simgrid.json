@@ -9,5 +9,6 @@
   "name_dom_add": "",
   "urban_heatRedis_opt": 0,
   "landcover_table": "/path/to/LandCoverMetadata_NLCD16.csv",
+  "topo_average_opt": 0,
   "save_plot_opt": 1
 }
