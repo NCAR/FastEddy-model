@@ -119,10 +119,18 @@ With these additions, WRF will generate a set of timestamped *wrf_fasteddy_* fil
 
 Successful completion will create an initial condition file (*FE_interp_170000UTC.0*) and a set of boundary condition files (*FE_Bndys.**) where the index indicates the number of second increments from the initial time (frequency in seconds is specified by the parameter :code:`secInc` in **genicbcs.json**).
 
+Nested LES-to-LES with FastEddy input data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**GenICBCs.py** has been extended to allow nesting within FastEddy LES model data. In order to enable that option, *parent_model* variable in **genicbcs.json** needs to be set to 1. In the case of using an idealized FastEddy simulation as the source input data (i.e., constant latitude and longitude throughout the domain), the variable *ideal_opt* needs to be activated, in order for the horizontal coordinates to be used as reference to locate the domain instead of geographic coordinates used for real cases. 
 
-Addendum: Using MPAS Forecasts as Input Data
---------------------------------------------
-If one wishes to use MPAS forecast files as inputs to FastEddy, a series of steps may be performed to prepare the data for use before the **GenICBCs.py** preprocessing step. The required data from MPAS forecasts are the **history.YYYY-MM-DD_HH.mm.ss.nc**, **diag.YYYY-MM-DD_HH.mm.ss.nc**, and **init.nc** files. These files must first be converted from the MPAS unstructured grid to match the WRF lat-lon grid. Various tools are available to perform the interpolation, including `MPASSIT <https://github.com/NOAA-GSL/MPASSIT>`_. An example batch submission script, **run_mpassit.sh**, and variable lists, **varlists_mpassit_fasteddy**, are available in **scripts/batch_jobs/**, which can be configured with paths to MPAS outputs, a build of MPASSIT, and a set of run parameters to determine the date and time corresponding to input data. This batch submission script is run with
+.. note::
+
+   * The *parent_model* option needs to be set to 0 for WRF nesting and to 1 for nesting within FastEddy model data.
+   * The *nest_tke_opt* option allows for using TKE from the parent model as initial and boundary conditions. If not activated, a uniform value of 1.0e-10 m2/s2 is used (initial versions of the coupling capabilities preceding FastEddy v5.0).
+
+Addendum: Using MPAS model data as input
+----------------------------------------
+If one wishes to use MPAS model files as inputs to FastEddy, a series of steps may be performed to prepare the data for use before the **GenICBCs.py** preprocessing step. The required data from MPAS forecasts are the **history.YYYY-MM-DD_HH.mm.ss.nc**, **diag.YYYY-MM-DD_HH.mm.ss.nc**, and **init.nc** files. These files must first be converted from the MPAS unstructured grid to match the WRF lat-lon grid. Various tools are available to perform the interpolation, including `MPASSIT <https://github.com/NOAA-GSL/MPASSIT>`_. An example batch submission script, **run_mpassit.sh**, and variable lists, **varlists_mpassit_fasteddy**, are available in **scripts/batch_jobs/**, which can be configured with paths to MPAS outputs, a build of MPASSIT, and a set of run parameters to determine the date and time corresponding to input data. This batch submission script is run with
 
 .. code-block:: none
 
