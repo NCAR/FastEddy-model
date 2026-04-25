@@ -13,6 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "cuda_cellpertDevice_cu.h"
 /*---CELL PERTURBATION METHOD*/
 __constant__ int cellpertSelector_d;    /*CP method selector: 0= off, 1= on */
 __constant__ int cellpert_sw2b_d;       /* switch to do: 0= all four lateral boundaries, 1= only south & west boundaries, 2= only south boundary */

@@ -13,6 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "cuda_largeScaleForcingsDevice_cu.h"
 /*---LARGE SCALE FORCINGS*/ 
 __constant__ int lsfSelector_d;         /* large-scale forcings selector: 0=off, 1=on */
 __constant__ float lsf_w_surf_d;        /* lsf to w at the surface */

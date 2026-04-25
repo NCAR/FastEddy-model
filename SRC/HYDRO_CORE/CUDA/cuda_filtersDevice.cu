@@ -13,6 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "cuda_filtersDevice_cu.h"
 /*---EXPLICIT FILTERS*/ 
 __constant__ int filter_6thdiff_vert_d;          /* vertical 6th-order filter on w selector: 0=off, 1=on */
 __constant__ float filter_6thdiff_vert_coeff_d;  /* vertical 6th-order filter w factor: 0.0=off, 1.0=full */

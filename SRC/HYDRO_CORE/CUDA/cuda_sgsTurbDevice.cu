@@ -13,6 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "cuda_sgsTurbDevice_cu.h"
 /*---TURBULENCE*/
 __constant__ int turbulenceSelector_d;    /*turbulence scheme selector: 0= none, 1= Lilly/Smagorinsky */
 __constant__ int TKESelector_d;        /* Prognostic TKE selector: 0= none, 1= Prognostic */

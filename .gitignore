@@ -6,3 +6,9 @@
 
 # sphinx output
 docs/_build
+
+# local vscode/settings.json
+.vscode/settings.json
+
+# local build
+build/

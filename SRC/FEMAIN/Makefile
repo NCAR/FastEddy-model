@@ -55,6 +55,7 @@ TEST_CU_LIBS = -lm -lmpi -lcudart
 # Sub-directories to INCLUDE 
 # ################################################################################
 
+# List of necessary include directories
 INCLUDES = \
 	-I. \
 	-I../TIME_INTEGRATION/ \

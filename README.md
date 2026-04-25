@@ -31,6 +31,79 @@ Sauer, J., and D. Muñoz-Esparza. "The FastEddy resident-GPU accelerated large-e
   https://doi.org/10.1029/2020MS002100
 
 
+## Building FastEddy
+
+### Prerequisites
+
+The following dependencies are required to build FastEddy:
+
+| Dependency | Description |
+|---|---|
+| **CUDA Toolkit** (≥ 11.0) | NVIDIA CUDA compiler (`nvcc`) and runtime libraries |
+| **MPI** | Message Passing Interface (e.g., OpenMPI, MPICH) |
+| **NetCDF C Library** | NetCDF C interface for I/O operations |
+| **CMake** (≥ 3.21) | Build system generator |
+| **GNU Make** or **Ninja** | Build tool |
+
+### Build Configuration
+
+FastEddy uses CMake. Configure the build from an out-of-source directory:
+
+```bash
+mkdir build && cd build
+cmake .. [options]
+```
+
+#### CMake Options
+
+| Option | Description | Default |
+|---|---|---|
+| `-DUSE_HIP=ON/OFF` | Use AMD HIP/ROCm backend instead of NVIDIA CUDA | `OFF` |
+| `-DWITH_GAD=ON/OFF` | Enable the GAD (Generalized Actuator Disk) extension module | `OFF` |
+| `-DWITH_URBAN=ON/OFF` | Enable the building-resolving URBAN extension module | `OFF` |
+| `-DCMAKE_CUDA_ARCHITECTURES=<archs>` | CUDA GPU architectures to compile for (semicolon-separated, e.g., `75;80;86;90`) | `75;80;86;90` |
+| `-DCMAKE_HIP_ARCHITECTURES=<archs>` | HIP GPU architectures to compile for (semicolon-separated) | `gfx942` |
+| `-DHIP_COMPILER_FLAGS=<compiler_flags>` | HIP compiler flags (semicolon-separated) | `-Rpass-analysis=kernel-resource-usage;--gpu-max-threads-per-block=256` |
+| `-DCMAKE_BUILD_TYPE=Type` | Build type (`Release`, `Debug`, `RelWithDebInfo`, `MinSizeRel`) | (CMake default) |
+
+#### Example Configurations
+
+Basic build with defaults:
+```bash
+mkdir build && cd build
+cmake ..
+```
+
+Build with GAD extension and specific GPU architectures:
+```bash
+mkdir build && cd build
+cmake .. -DWITH_GAD=ON -DCMAKE_CUDA_ARCHITECTURES="80;86"
+```
+
+Build with both extensions enabled in Debug mode:
+```bash
+mkdir build && cd build
+cmake .. -DWITH_GAD=ON -DWITH_URBAN=ON -DCMAKE_BUILD_TYPE=Debug
+```
+
+### Building
+
+Once configured, compile the project:
+
+```bash
+make -j$(nproc)
+```
+
+The executable `FastEddy_model` will be produced in the `build/` directory.
+
+### Cleaning
+
+To clean the build artifacts:
+
+```bash
+rm -rf build
+```
+
 ## Documentation
 [FastEddy documentation](https://fasteddy-model.readthedocs.io/) for this version and previous versions are available through Read the Docs.
 

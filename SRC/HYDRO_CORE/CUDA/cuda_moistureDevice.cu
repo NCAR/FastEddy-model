@@ -13,6 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "cuda_moistureDevice_cu.h"
 /*---MOISTURE*/ 
 __constant__ int moistureSelector_d;     /* moisture selector: 0=off, 1=on */
 __constant__ int moistureNvars_d;        /* number of moisture species */

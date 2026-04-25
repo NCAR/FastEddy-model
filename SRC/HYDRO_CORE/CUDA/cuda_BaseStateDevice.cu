@@ -13,6 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "cuda_BaseStateDevice_cu.h"
 /*##############------------------- BASESTATE submodule variable declarations ---------------------#################*/
 /*---BASESTATE*/
 float *hydroBaseStateFlds_d;   /*Base Adress of memory containing all prognostic variable fields base-states */
