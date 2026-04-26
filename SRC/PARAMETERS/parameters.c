@@ -120,65 +120,74 @@ int parameters_readFile(char *paramFile){
      if(valueBuff != NULL){
        *valueBuff = 0; //Set the termination of this string at the starting point of any comment (i.e. #)
      }
-     /* If the entire line was not a comment parse the name-value pair */
-     if(strlen(strBuff)>0){
-        valueBuff = strchr(strBuff, '=');
-        /*if there is an '=' set the valueBuff to begin one character beyond the '=' */
-        if(valueBuff != NULL){
-          *valueBuff++ = 0;
+
+     /* Trim whitespace and skip empty/comment-only lines */
+     paramBuff = str_trim(strBuff);
+     if(strlen(paramBuff) == 0){
+        continue;
+     }
+
+     valueBuff = strchr(paramBuff, '=');
+     if(valueBuff == NULL){
+        returnCode = PARAM_ERROR_INVALID_FORMAT;
+        numErrors++;
+        printf("ERROR: Malformed parameter entry missing '=' in file %s: %s\n", paramFile, paramBuff);
+        continue;
+     }
+
+     /*if there is an '=' set the valueBuff to begin one character beyond the '=' */
+     *valueBuff++ = 0;
+     /*trim the delimited parameter name*/
+     paramBuff = str_trim(paramBuff);
+     /*trim the delimited parameter value*/
+     valueBuff = str_trim(valueBuff);
+
+     /* Search the hash table for this parameter */
+     if(lookup_pair(parameters_table, paramBuff) != NULL){
+       /* Ooops Found a duplicate parameter name!! Bail Out! */
+       returnCode = PARAM_ERROR_DUPLICATE;
+       numErrors++;
+       printf("ERROR: Duplicate entries for parameter name--%s.\n",paramBuff);
+     }else{ /*This parameter name is unique and does not exist in the hash table yet */
+        /* Allocate memory for the parameter name */
+        pair_name_t *name = (pair_name_t *) malloc((strlen(paramBuff)+1)*sizeof(pair_name_t));
+        if(name == NULL){
+           printf("ERROR: Cannot allocate memory for parameter name--%s.\n",paramBuff);
+           exit(PARAM_ERROR_MALLOC);
         }
-        /*trim the delimited parameter name*/
-        paramBuff = str_trim(strBuff);
-        /*trim the delimited parameter value*/
-        valueBuff = str_trim(valueBuff);
+        strcpy(name, paramBuff);
 
-        /* Search the hash table for this parameter */
-        if(lookup_pair(parameters_table, paramBuff) != NULL){
-          /* Ooops Found a duplicate parameter name!! Bail Out! */
-          returnCode = PARAM_ERROR_DUPLICATE;
-          numErrors++;
-          printf("ERROR: Duplicate entries for parameter name--%s.\n",paramBuff);
-        }else{ /*This parameter name is unique and does not exist in the hash table yet */
-           /* Allocate memory for the parameter name */
-           pair_name_t *name = (pair_name_t *) malloc((strlen(paramBuff)+1)*sizeof(pair_name_t));
-           if(name == NULL){
-              printf("ERROR: Cannot allocate memory for parameter name--%s.\n",paramBuff);
-              exit(PARAM_ERROR_MALLOC);
-           }
-           strcpy(name, paramBuff);
+        /* Allocate memory for the parameter value (string phase) */
+        pair_value_t *value = (pair_value_t *) malloc(sizeof(pair_value_t));
+        if(value == NULL){
+           printf("ERROR: Cannot allocate memory for the value segment of parameter name--%s.\n",paramBuff);
+           exit(PARAM_ERROR_MALLOC);
+        }
 
-           /* Allocate memory for the parameter value (string phase) */
-           pair_value_t *value = (pair_value_t *) malloc(sizeof(pair_value_t));
-           if(value == NULL){
-              printf("ERROR: Cannot allocate memory for the value segment of parameter name--%s.\n",paramBuff);
-              exit(PARAM_ERROR_MALLOC);
-           }
+        /* If non-blank allocate and copy otherwise set to NULL*/
+        if(strlen(valueBuff) > 0){
+          value->inputStr = (char *) malloc(strlen(valueBuff)+1);
+          if(value->inputStr == NULL){
+            printf("ERROR: Cannot allocate memory for the value->inputStr field of parameter name--%s.\n",paramBuff); 
+            exit(PARAM_ERROR_MALLOC);
+          }
+          strcpy(value->inputStr, valueBuff);
+        }else{
+            value->inputStr = NULL;
+        }
 
-           /* If non-blank allocate and copy otherwise set to NULL*/
-           if(strlen(valueBuff) > 0){
-             value->inputStr = (char *) malloc(strlen(valueBuff)+1);
-             if(value->inputStr == NULL){
-               printf("ERROR: Cannot allocate memory for the value->inputStr field of parameter name--%s.\n",paramBuff); 
-               exit(PARAM_ERROR_MALLOC);
-             }
-             strcpy(value->inputStr, valueBuff);
-           }else{
-               value->inputStr = NULL;
-           }
-
-           /* set the remaining value_t fields */
-           value->type = VALUE_TYPE_UNKNOWN;
-           value->state = VALUE_STATE_NOT_USED;
-           /* add the name-value pair to the hash table */
-           add_pair(parameters_table, name, value);
+        /* set the remaining value_t fields */
+        value->type = VALUE_TYPE_UNKNOWN;
+        value->state = VALUE_STATE_NOT_USED;
+        /* add the name-value pair to the hash table */
+        add_pair(parameters_table, name, value);
 #ifdef DEBUG
-           int hashval;
-           /*Query the hashval of this entry */
-           hashval = hash(parameters_table, paramBuff);
-           printf("Adding Parameter = %s to parameters_table->table[%d]\n",paramBuff,hashval);
+        int hashval;
+        /*Query the hashval of this entry */
+        hashval = hash(parameters_table, paramBuff);
+        printf("Adding Parameter = %s to parameters_table->table[%d]\n",paramBuff,hashval);
 #endif
-        }//end if(duplicate)-else
-     }//Non-comment section has length greater than 0
+     }//end if(duplicate)-else
   } //end 2nd pass-- while all lines have not yet been read 
 
   /* Close the paramFile */

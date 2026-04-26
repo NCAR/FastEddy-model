@@ -31,6 +31,7 @@
 #define PARAM_ERROR_DUPLICATE       207  
 #define PARAM_ERROR_OVERWRITE_FAILED 208  
 #define PARAM_ERROR_NOT_FOUND       209 /* not found - internal code error */
+#define PARAM_ERROR_INVALID_FORMAT  210
 
 /* parameters requirement states */
 #define PARAM_NOT_REQUIRED   0   /* must be 0 to match switch off */
