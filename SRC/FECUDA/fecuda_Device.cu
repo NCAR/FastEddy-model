@@ -155,20 +155,30 @@ extern "C" int fecuda_DeviceSetBlocksPerGrid(int Nx, int Ny, int Nz){ //These ex
 This routine logs (to stdout) the CudaDeviceProperties on a given architecture
 */
 void fecuda_logDeviceProperties(cudaDeviceProp dProps, int dNum){
+   int clockRate = 0;
+   int asyncEngineCount = 0;
+   int computeMode = 0;
+   int kernelExecTimeout = 0;
+
+   cudaDeviceGetAttribute(&clockRate, cudaDevAttrClockRate, dNum);
+   cudaDeviceGetAttribute(&asyncEngineCount, cudaDevAttrAsyncEngineCount, dNum);
+   cudaDeviceGetAttribute(&computeMode, cudaDevAttrComputeMode, dNum);
+   cudaDeviceGetAttribute(&kernelExecTimeout, cudaDevAttrKernelExecTimeout, dNum);
+
    printf("Device Number:          %d\n", dNum);
    printf("---------------------------------------------------------------------\n");
    printf("\n__General__\n");
-   printf("   Name                               : %s\n",dProps.name);
-   printf("   Compute Capability                 : %d.%d\n",dProps.major,dProps.minor);
-   printf("   Clock Rate                         : %d\n",dProps.clockRate);
-   printf("   Number of multiprocessors          : %d\n",dProps.multiProcessorCount);
-   printf("   Max Threads/multiprocessor         : %d\n",dProps.maxThreadsPerMultiProcessor);
-   printf("   Concurrent Copy/Execution          : %s\n",(dProps.deviceOverlap ? "Yes" : "No"));
-   printf("   Concurrent Kernels                 : %d\n",dProps.concurrentKernels);
-   printf("   Compute Mode                       : %d\n",dProps.computeMode);
-   printf("   Kernel Timeout Enabled             : %s\n",(dProps.kernelExecTimeoutEnabled ? "Yes" : "No"));
-   printf("   Integrated                         : %s\n",(dProps.integrated ? "Yes" : "No"));
-   printf("   Host Memory Mapping                : %s\n",(dProps.canMapHostMemory ? "Yes" : "No"));
+   printf("   Name                               : %s\n", dProps.name);
+   printf("   Compute Capability                 : %d.%d\n", dProps.major, dProps.minor);
+   printf("   Clock Rate                         : %d\n", clockRate);
+   printf("   Number of multiprocessors          : %d\n", dProps.multiProcessorCount);
+   printf("   Max Threads/multiprocessor         : %d\n", dProps.maxThreadsPerMultiProcessor);
+   printf("   Concurrent Copy/Execution          : %s\n", (asyncEngineCount > 0 ? "Yes" : "No"));
+   printf("   Concurrent Kernels                 : %d\n", dProps.concurrentKernels);
+   printf("   Compute Mode                       : %d\n", computeMode);
+   printf("   Kernel Timeout Enabled             : %s\n", (kernelExecTimeout ? "Yes" : "No"));
+   printf("   Integrated                         : %s\n", (dProps.integrated ? "Yes" : "No"));
+   printf("   Host Memory Mapping                : %s\n", (dProps.canMapHostMemory ? "Yes" : "No"));
    printf("\n__Configuration__\n");
    printf("   Registers/Block                    : %d\n",dProps.regsPerBlock);
    printf("   Warp Size                          : %d\n",dProps.warpSize);
