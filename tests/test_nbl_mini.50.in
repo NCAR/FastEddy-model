@@ -1,0 +1,88 @@
+# tests/params/test_nbl_mini.in
+Description = Mini NBL regression test
+
+numProcsX = 1
+numProcsY = 1
+
+tBx = 1
+tBy = 4
+tBz = 64
+
+#--GRID
+Nx = 64 # Number of discretised domain elements in the x (zonal) direction
+Ny = 66 # Number of discretised domain elements in the y (meridional) direction
+Nz = 58 # Number of discretised domain elements in the z (vertical) direction
+Nh = 3 # Number of halo cells to be used (dependent on largest stencil extent)
+
+
+d_xi = 15.0
+d_eta = 15.0
+d_zeta = 20.0
+coordHorizHalos = 1
+verticalDeformSwitch = 1
+verticalDeformFactor = 0.75
+verticalDeformQuadCoeff = 0.0
+
+Nt = 50          # Only 50 timesteps!
+dt = 0.04
+NtBatch = 50     # Single batch launch
+timeMethod = 0
+
+# Same physics as Example01_NBL:
+hydroBCs = 2
+hydroForcingWrite = 0
+hydroSubGridWrite = 1
+hydroForcingLog = 0
+advectionSelector = 3
+b_hyb = 0.0
+moistureSelector = 0
+turbulenceSelector = 1
+TKESelector = 1
+TKEAdvSelector = 3
+TKEAdvSelector_b_hyb = 0.0
+c_s = 0.18
+c_k = 0.10
+pgfSelector = 1
+coriolisSelector = 1
+coriolisLatitude = 54.0
+diffusionSelector = 0
+surflayerSelector = 1
+surflayer_z0 = 0.1
+surflayer_z0t = 0.01
+surflayer_wth = 0.0
+surflayer_tr = 0.0
+surflayer_wq = 0.0
+surflayer_qr = 0.0
+surflayer_idealsine = 0
+surflayer_stab = 0
+surflayer_z0tdyn = 1
+surflayer_offshore = 0
+filterSelector = 1
+filter_6thdiff_vert = 1
+filter_6thdiff_vert_coeff = 0.03
+dampingLayerSelector = 1
+dampingLayerDepth = 200.0
+lsfSelector = 0
+stabilityScheme = 2
+temp_grnd = 300.0
+pres_grnd = 100000.0
+zStableBottom = 500.0
+stableGradient = 0.08
+zStableBottom2 = 650.0
+stableGradient2 = 0.003
+zStableBottom3 = 50000.0
+stableGradient3 = 0.003
+U_g = 10.0
+V_g = 0.0
+z_Ug = 10000.0
+z_Vg = 10000.0
+Ug_grad = 0.0
+Vg_grad = 0.0
+thetaPerturbationSwitch = 1
+thetaHeight = 375.0
+thetaAmplitude = 0.25
+
+frqOutput = 50   # Output only at the end
+ioOutputMode = 0
+outPath = ./test_output/
+outFileBase = TEST_NBL_mini

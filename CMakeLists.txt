@@ -12,6 +12,7 @@ cmake_minimum_required(VERSION 3.21)
 #   cmake .. -DUSE_HIP=ON                 # HIP/ROCm backend
 # ------------------------------------------------------------------
 option(USE_HIP "Use AMD HIP/ROCm backend instead of NVIDIA CUDA" OFF)
+option(ENABLE_TESTS "Enable FastEddy model tests" OFF)
 
 # ------------------------------------------------------------------
 # Project Declaration (language depends on backend)
@@ -28,6 +29,10 @@ else()
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     project(FastEddy-model LANGUAGES C CXX CUDA)
     message(STATUS "GPU Backend: NVIDIA CUDA")
+endif()
+
+if(ENABLE_TESTS)
+    include(CTest)
 endif()
 
 # Add local cmake/ directory to module search path (for FindNetCDF.cmake)
@@ -70,7 +75,7 @@ else()
 
     # Set CUDA architectures.
     if(NOT CMAKE_CUDA_ARCHITECTURES)
-        set(CMAKE_CUDA_ARCHITECTURES "75;80;86;90" CACHE STRING "CUDA architectures")
+        set(CMAKE_CUDA_ARCHITECTURES "75;80;86;89;90" CACHE STRING "CUDA architectures")
         message(STATUS "Defaulting CMAKE_CUDA_ARCHITECTURES to ${CMAKE_CUDA_ARCHITECTURES}")
     endif()
 endif()
@@ -367,6 +372,10 @@ if(USE_HIP)
     set_source_files_properties(${GPU_ENTRY_SOURCES} PROPERTIES HEADER_FILE_ONLY TRUE)
 
     message(STATUS "HIP backend: hipify-perl will convert ${HIPIFY_CUDA_SOURCES} at build time")
+endif()
+
+if(ENABLE_TESTS)
+    add_subdirectory(tests)
 endif()
 
 message(STATUS "FastEddy model CMake configuration complete.")
