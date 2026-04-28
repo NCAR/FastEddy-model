@@ -15,25 +15,28 @@ set(test_names
     test_nbl_mini.50
     test_cbl_mini.50
     test_bomex_mini.50
+    test_nbl_mini_forcingwrite.50
+    test_nbl_mini_binary.50
+    test_nbl_mini_auxsc.50
 )
 
-foreach(TEST_ ${test_names})
-    set(TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/${TEST_}")
-    set(TEST_INPUT "${TEST_DIR}/${TEST_}.in")
+foreach(test_name ${test_names})
+    set(TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/${test_name}")
+    set(TEST_INPUT "${TEST_DIR}/${test_name}.in")
 
     file(MAKE_DIRECTORY "${TEST_DIR}")
     file(MAKE_DIRECTORY "${TEST_DIR}/test_output")
     configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_}.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.in"
         "${TEST_INPUT}"
         COPYONLY
     )
 
     add_test(
-        NAME integration.${TEST_}
+        NAME integration.${test_name}
         COMMAND $<TARGET_FILE:FastEddy_model> "${TEST_INPUT}"
     )
-    set_tests_properties(integration.${TEST_} PROPERTIES
+    set_tests_properties(integration.${test_name} PROPERTIES
         WORKING_DIRECTORY "${TEST_DIR}"
         LABELS "integration;gpu"
         TIMEOUT 300

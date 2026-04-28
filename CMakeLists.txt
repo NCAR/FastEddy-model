@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.21)
 
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+endif()
+
 # ------------------------------------------------------------------
 # GPU Backend Selection
 # ------------------------------------------------------------------
@@ -13,11 +17,12 @@ cmake_minimum_required(VERSION 3.21)
 # ------------------------------------------------------------------
 option(USE_HIP "Use AMD HIP/ROCm backend instead of NVIDIA CUDA" OFF)
 option(ENABLE_TESTS "Enable FastEddy model tests" OFF)
+option(ENABLE_COVERAGE "Enable host-side coverage data generation for CMake Tools" OFF)
 
 # ------------------------------------------------------------------
 # Project Declaration (language depends on backend)
 # ------------------------------------------------------------------
-set(CMAKE_CXX_STANDARD 17)  # it be great to move to 20
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(USE_HIP)
     set(CMAKE_HIP_STANDARD 17)
@@ -62,13 +67,6 @@ if(USE_HIP)
         set(CMAKE_HIP_ARCHITECTURES "gfx942" CACHE STRING "HIP architectures")
         message(STATUS "Defaulting CMAKE_HIP_ARCHITECTURES to ${CMAKE_HIP_ARCHITECTURES}")
     endif()
-
-    # HIP-specific compiler flags (from Makefile.hip)
-    # -Rpass-analysis=kernel-resource-usage --gpu-max-threads-per-block=256
-    set(HIP_COMPILER_FLAGS "-Rpass-analysis=kernel-resource-usage;--gpu-max-threads-per-block=256"
-        CACHE STRING "HIP compiler flags")
-    set(CMAKE_HIP_FLAGS "${HIP_COMPILER_FLAGS}")
-
 else()
     # --- NVIDIA CUDA ---
     find_package(CUDAToolkit REQUIRED)
@@ -164,6 +162,8 @@ if(WITH_URBAN)
     list(APPEND GPU_INCLUDED_SOURCES "SRC/EXTENSIONS/URBAN/CUDA/cuda_urbanDevice.cu")
 endif()
 
+set(FASTEDDY_COVERAGE_SOURCES ${CORE_SOURCES})
+
 set(HIPIFY_CUDA_SOURCES
     ${GPU_ENTRY_SOURCES}
     ${GPU_INCLUDED_SOURCES}
@@ -185,11 +185,35 @@ if(WITH_URBAN)
    target_compile_definitions(FastEddy_model PRIVATE URBAN_EXT)
 endif()
 
+if(USE_HIP)
+    # HIP-specific compiler flags (from Makefile.hip)
+    # -Rpass-analysis=kernel-resource-usage --gpu-max-threads-per-block=256
+    target_compile_options(FastEddy_model PRIVATE
+        $<$<COMPILE_LANGUAGE:HIP>:-Rpass-analysis=kernel-resource-usage;--gpu-max-threads-per-block=256>
+    )
+endif()
 # Deprecated C++ dialect warnings (from Makefile's DEFINES)
 target_compile_definitions(FastEddy_model PRIVATE
     CUB_IGNORE_DEPRECATED_CPP_DIALECT
     THRUST_IGNORE_DEPRECATED_CPP_DIALECT
 )
+
+if(ENABLE_COVERAGE)
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(FastEddy_model PRIVATE
+            $<$<COMPILE_LANGUAGE:C>:--coverage>
+            $<$<COMPILE_LANGUAGE:C>:-O0>
+            $<$<COMPILE_LANGUAGE:CXX>:--coverage>
+            $<$<COMPILE_LANGUAGE:CXX>:-O0>
+        )
+        target_link_options(FastEddy_model PRIVATE --coverage)
+    else()
+        message(WARNING
+            "ENABLE_COVERAGE currently supports GNU and Clang host compilers only. "
+            "Coverage artifacts will not be generated with ${CMAKE_C_COMPILER_ID}."
+        )
+    endif()
+endif()
 # ------------------------------------------------------------------
 # Include Directories
 # ------------------------------------------------------------------
@@ -376,6 +400,46 @@ endif()
 
 if(ENABLE_TESTS)
     add_subdirectory(tests)
+endif()
+
+if(ENABLE_COVERAGE AND ENABLE_TESTS AND CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    find_program(FASTEDDY_GCOV_EXECUTABLE NAMES gcov REQUIRED)
+
+    set(FASTEDDY_COVERAGE_OUTPUT_DIR "${CMAKE_BINARY_DIR}/coverage")
+    set(FASTEDDY_COVERAGE_INFO_FILE "${FASTEDDY_COVERAGE_OUTPUT_DIR}/coverage.info")
+    set(FASTEDDY_COVERAGE_TARGET_DIR "${CMAKE_BINARY_DIR}/CMakeFiles/FastEddy_model.dir")
+    set(FASTEDDY_COVERAGE_SOURCE_ARGS "")
+    foreach(source_file IN LISTS FASTEDDY_COVERAGE_SOURCES)
+        list(APPEND FASTEDDY_COVERAGE_SOURCE_ARGS
+            "--source" "${CMAKE_CURRENT_SOURCE_DIR}/${source_file}"
+        )
+    endforeach()
+
+    add_custom_target(fasteddy_coverage_reset
+        COMMAND "${CMAKE_COMMAND}"
+            -DFASTEDDY_BUILD_DIR="${CMAKE_BINARY_DIR}"
+            -DFASTEDDY_COVERAGE_INFO_FILE="${FASTEDDY_COVERAGE_INFO_FILE}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ResetCoverage.cmake"
+        COMMENT "Removing stale FastEddy coverage artifacts"
+        VERBATIM
+    )
+
+    add_custom_target(fasteddy_coverage_capture
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${FASTEDDY_COVERAGE_OUTPUT_DIR}"
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/gcov_to_lcov.py"
+            --build-dir "${CMAKE_BINARY_DIR}"
+            --source-dir "${CMAKE_CURRENT_SOURCE_DIR}"
+            --object-dir "${FASTEDDY_COVERAGE_TARGET_DIR}"
+            --output "${FASTEDDY_COVERAGE_INFO_FILE}"
+            "--gcov=${FASTEDDY_GCOV_EXECUTABLE}"
+            ${FASTEDDY_COVERAGE_SOURCE_ARGS}
+        BYPRODUCTS "${FASTEDDY_COVERAGE_INFO_FILE}"
+        COMMENT "Generating FastEddy LCOV coverage report"
+        COMMAND_EXPAND_LISTS
+        DEPENDS fasteddy_coverage_reset
+        VERBATIM
+    )
 endif()
 
 message(STATUS "FastEddy model CMake configuration complete.")

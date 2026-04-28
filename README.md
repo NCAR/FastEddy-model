@@ -65,6 +65,8 @@ cmake .. [options]
 | `-DCMAKE_HIP_ARCHITECTURES=<archs>` | HIP GPU architectures to compile for (semicolon-separated) | `gfx942` |
 | `-DHIP_COMPILER_FLAGS=<compiler_flags>` | HIP compiler flags (semicolon-separated) | `-Rpass-analysis=kernel-resource-usage;--gpu-max-threads-per-block=256` |
 | `-DCMAKE_BUILD_TYPE=Type` | Build type (`Release`, `Debug`, `RelWithDebInfo`, `MinSizeRel`) | (CMake default) |
+| `-DENABLE_TESTS=ON/OFF` | Enable FastEddy model tests (includes CTest and the `tests/` subdirectory) | `OFF` |
+| `-DENABLE_COVERAGE=ON/OFF` | Enable host-side coverage data generation (requires GNU/Clang compiler; generates LCOV coverage targets when combined with `ENABLE_TESTS`) | `OFF` |
 
 #### Example Configurations
 
@@ -84,6 +86,12 @@ Build with both extensions enabled in Debug mode:
 ```bash
 mkdir build && cd build
 cmake .. -DWITH_GAD=ON -DWITH_URBAN=ON -DCMAKE_BUILD_TYPE=Debug
+```
+
+Build with tests and coverage enabled:
+```bash
+mkdir build && cd build
+cmake .. -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON
 ```
 
 ### Building
