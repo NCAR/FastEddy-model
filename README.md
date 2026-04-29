@@ -112,6 +112,81 @@ To clean the build artifacts:
 rm -rf build
 ```
 
+## Testing
+
+Enable the test suite at configure time with `-DENABLE_TESTS=ON`, then run
+tests via CTest from the build directory:
+
+```bash
+cmake .. -DENABLE_TESTS=ON
+make -j$(nproc)
+ctest --output-on-failure
+```
+
+### Test labels
+
+Tests are grouped by label so subsets can be run independently:
+
+| Label | Description |
+|---|---|
+| `integration` | Runs `FastEddy_model` on a small parameter file; requires a GPU |
+| `gpu` | Applied alongside `integration` (same tests) |
+| `physics` | Runs `check_physics.py` on the NetCDF output of the preceding integration test |
+
+```bash
+# GPU integration tests only
+ctest -L integration --output-on-failure
+
+# Physics checks only (assumes integration tests have already produced output)
+ctest -L physics --output-on-failure
+```
+
+### Physics conservation checks
+
+After each integration test produces a NetCDF output file,
+`tests/check_physics.py` validates the following invariants derived from
+first principles — no golden-reference data required:
+
+| Check | Invariant |
+|---|---|
+| Finite fields | No `NaN` or `Inf` in any variable |
+| Density positivity | `rho > 0` everywhere |
+| Potential temperature | Total `theta` (perturbation + base state) `> 0 K` everywhere |
+| TKE non-negativity | Sub-grid TKE `>= -1e-4 m²/s²` (small floor for solver round-off) |
+| Moisture bounds | `qv`, `ql >= -1e-6 kg/kg` |
+| Velocity bounds | `|u|`, `|v|`, `|w| < 150 m/s` |
+
+The script can also be run directly against any FastEddy NetCDF output:
+
+```bash
+python tests/check_physics.py path/to/output.nc
+python tests/check_physics.py --verbose path/to/output.nc   # per-field statistics
+```
+
+Thresholds can be adjusted via CLI flags; run `python tests/check_physics.py --help`
+for the full list.
+
+### Python environment
+
+The physics checks require `netCDF4` and `numpy`.  CMake creates an isolated
+Python virtual environment in the build tree at configure time and pip-installs
+these packages if they are not already available.  The `--system-site-packages`
+flag is set so that packages provided by HPC module stacks (e.g. a loaded
+conda or spack environment) are inherited and pip is only invoked for genuinely
+absent packages.
+
+If venv creation or pip install fails CMake emits a warning and the `physics.*`
+tests are skipped rather than failing.  No manual setup is required.
+
+### BOMEX initial conditions
+
+The `test_bomex_mini.50` test requires an external NetCDF initial conditions
+file (`FE_BOMEX.0`, ~280 MB uncompressed).  The compressed file
+`tests/initial/FE_BOMEX.0.zip` is included in the repository.  CMake extracts
+it into the build tree automatically at configure time; no manual steps are
+needed.  If the zip is absent both the integration and physics tests for BOMEX
+are reported as *Not Run* rather than failing.
+
 ## Documentation
 [FastEddy documentation](https://fasteddy-model.readthedocs.io/) for this version and previous versions are available through Read the Docs.
 

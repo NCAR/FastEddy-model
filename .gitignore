@@ -12,3 +12,6 @@ docs/_build
 
 # local build
 build/
+
+# python cache directory
+**/__pycache__/
