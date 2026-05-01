@@ -480,12 +480,17 @@ zTop = ds_FEGrid['zPos'][-1,0,0].values+90.0
 NzWRFInterp = 200 #275
 zRect = np.linspace(zBottom,zTop,NzWRFInterp)
 if(mpi_rank == 0) and DEBUG_COUPLER:
+  print(f"zBottom,zTop,NzWRFInterp={zBottom},{zTop},{NzWRFInterp}")
   print(zRect[0],zRect[-1])
 
 ## Establish a kMaxPrnt that minimizes the length of the interpolating function (for performance)
 if parent_model == 1:
-  if np.min(ds_WRFRef['zPos'][0,-1,:,:].values, axis=(0,1)) > zTop and zTop > np.max(ds_WRFRef['zPos'][0,0,:,:].values,axis=(0,1)):  
-    kMaxPrnt = np.min(np.where(np.min(ds_WRFRef['zPos'][0,:,:,:].values,axis=(1,2))>zTop))+1
+  jPs = ds_WRFRef['dFE_jindxs'].values[0]
+  jPe = ds_WRFRef['dFE_jindxs'].values[-1]
+  iPs = ds_WRFRef['dFE_iindxs'].values[0]
+  iPe = ds_WRFRef['dFE_iindxs'].values[1]
+  if np.min(ds_WRFRef['zPos'][0,-1,jPs:jPe,iPs:iPe].values, axis=(0,1)) > zTop and zTop > np.max(ds_WRFRef['zPos'][0,0,jPs:jPe,iPs:iPe].values,axis=(0,1)):
+    kMaxPrnt = np.min(np.where(np.min(ds_WRFRef['zPos'][0,:,jPs:jPe,iPs:iPe].values,axis=(1,2))>zTop))+1
     print(f"Established kMaxPrnt = {kMaxPrnt} of {ds_WRFRef.sizes['zIndex']} total k-levels...")
   else:
     print(f"Error zTop = {zTop} is not within parent domain vertical bounds.\n Exiting Now!")
@@ -559,7 +564,10 @@ for Bdy_file_num in range(it00,it11):
     print('{:d}/{:d}: t3_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t3e-t3s))
     addTimeDim_FEfinal(dsFEFinal)
     if Bdy_file_num == 0:
-        timeLabel="{:02d}{:02d}{:02d}UTC".format(timeHour0,timeMinute0,timeSecond0)
+        if parent_model == 0:
+          timeLabel="{:02d}{:02d}{:02d}UTC".format(timeHour0,timeMinute0,timeSecond0)
+        elif parent_model == 1:
+          timeLabel=f"{itMin}"
         dsFEFinal.to_netcdf(ICBC_dir+'FE_interp_{:s}.{:d}'.format(timeLabel,0),format='NETCDF4',
                             encoding={'xIndex': {'dtype': 'i4'},'yIndex': {'dtype': 'i4'},'zIndex': {'dtype': 'i4'}})
     t4s = time.perf_counter()
