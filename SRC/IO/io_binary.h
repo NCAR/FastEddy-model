@@ -16,7 +16,7 @@
 //////////***********************  INPUT FUNCTIONS  *********************************////////
 
 //////////***********************  OUTPUT FUNCTIONS  *********************************////////
-/*----->>>>> int ioWriteiBinaryoutFileSingleTime();  ---------------------------------------------------------------
+/*----->>>>> int ioWriteBinaryoutFileSingleTime();  ---------------------------------------------------------------
  * Used to have N-ranks write N-binary files of registered variables for a single timestep.
  */
 #ifdef GAD_EXT
@@ -32,3 +32,8 @@ int ioPutBinaryoutFileVars(FILE *outptr, int Nx, int Ny, int Nz, int Nh, int Ntu
 #else
 int ioPutBinaryoutFileVars(FILE *outptr, int Nx, int Ny, int Nz, int Nh);
 #endif
+/*----->>>>> int ioWriteBinaryTowerFileSingleBatch();  ---------------------------------------------------------------
+ * Used to have N-ranks write N-binary files of virtual tower data structures for a batch of timesteps.
+ */
+int ioWriteBinaryTowerFileSingleBatch(int tstep, int batchSize, int Nz, float *batchTimes, float *towersData, float *towersSurfData, 
+		                      int *towerIDs, int rank_nTowers, int towerInstanceSize, int towerSurfInstanceSize);

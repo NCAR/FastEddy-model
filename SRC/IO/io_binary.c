@@ -184,3 +184,50 @@ int ioPutBinaryoutFileVars(FILE *outptr, int Nx, int Ny, int Nz, int Nh){
 
    return(errorCode);
 } //ioPutBinaryoutFileVars()
+
+/*----->>>>> int ioWriteBinaryTowerFileSingleBatch();  ---------------------------------------------------------------
+ * Used to have N-ranks write N-binary files of virtual tower data structures for a batch of timesteps.
+ */
+int ioWriteBinaryTowerFileSingleBatch(int tstep, int batchSize, int Nz, float *batchTimes, float *towersData, float *towersSurfData, 
+		                      int *towerIDs, int rank_nTowers, int towerInstanceSize, int towerSurfInstanceSize){
+   int errorCode = IO_SUCCESS;
+   FILE *output_ptr;
+   char towerSubString[64];
+   char towerFileName[256];
+   int itower;
+
+   for(itower = 0; itower < rank_nTowers; itower++){
+     //--------------Tower profile-variables file 
+     /* build the subString tag */
+     sprintf(towerSubString, "tower_%d.%d",towerIDs[itower],tstep-batchSize);
+     /* concatenate the fileName components */
+     sprintf(towerFileName, "%s%s",towerPath,towerSubString);
+     /*Open the output file*/
+     output_ptr = fopen(towerFileName,"wb");
+     /*Write the batch of tower instances to the output file*/
+     fwrite(&towerInstanceSize,sizeof(int),1,output_ptr);
+     fwrite(&batchSize,sizeof(int),1,output_ptr);
+     fwrite(&batchTimes[0],batchSize*sizeof(float),1,output_ptr);
+     fwrite(&towersData[itower*batchSize*towerInstanceSize],batchSize*towerInstanceSize*sizeof(float),1,output_ptr);
+     /*Close the output file*/
+     fclose(output_ptr);
+
+     //--------------Tower surface-variables file 
+     /* build the subString tag */
+     sprintf(towerSubString, "tower_sv_%d.%d",towerIDs[itower],tstep-batchSize);
+     /* concatenate the fileName components */
+     sprintf(towerFileName, "%s%s",towerPath,towerSubString);
+     /*Open the output file*/
+     output_ptr = fopen(towerFileName,"wb");
+     /*Write the batch of tower instances to the output file*/
+     fwrite(&towerSurfInstanceSize,sizeof(int),1,output_ptr);
+     fwrite(&batchSize,sizeof(int),1,output_ptr);
+     fwrite(&batchTimes[0],batchSize*sizeof(float),1,output_ptr);
+     fwrite(&towersSurfData[itower*batchSize*towerSurfInstanceSize],batchSize*towerSurfInstanceSize*sizeof(float),1,output_ptr);
+     /*Close the output file*/
+     fclose(output_ptr);
+   } //end for itower
+
+
+   return(errorCode);
+} //end ioWriteBinaryTowerFileSingleBatch()
