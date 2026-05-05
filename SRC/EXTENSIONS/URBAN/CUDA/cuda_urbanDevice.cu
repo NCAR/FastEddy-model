@@ -158,7 +158,7 @@ __global__ void cudaDevice_URBANfinal(float* hydroFlds_d, float* hydroFldsFrhs_d
       ijk = i*iStride + j*jStride + k*kStride;
 
       cudaDevice_UrbanDragMethod(&hydroFlds_d[fldStride*RHO_INDX+ijk],&hydroFlds_d[fldStride*U_INDX+ijk],&hydroFlds_d[fldStride*V_INDX+ijk],&hydroFlds_d[fldStride*W_INDX+ijk],
-                                 &hydroFlds_d[fldStride*THETA_INDX+ijk],&hydroBaseStateFlds_d[fldStride*THETA_INDX+ijk],&hydroBaseStateFlds_d[fldStride*RHO_INDX+ijk],
+                                 &hydroFlds_d[fldStride*THETA_INDX+ijk],&hydroBaseStateFlds_d[fldStride*THETA_INDX_BS+ijk],&hydroBaseStateFlds_d[fldStride*RHO_INDX_BS+ijk],
                                  &hydroFldsFrhs_d[fldStride*U_INDX+ijk],&hydroFldsFrhs_d[fldStride*V_INDX+ijk],&hydroFldsFrhs_d[fldStride*W_INDX+ijk],
                                  &hydroFldsFrhs_d[fldStride*THETA_INDX+ijk],&hydroFldsFrhs_d[fldStride*RHO_INDX+ijk],&building_mask_d[ijk]);
       if(NhydroAuxScalars_d > 0){
