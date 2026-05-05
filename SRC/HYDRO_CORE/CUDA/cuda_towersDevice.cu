@@ -155,9 +155,9 @@ __global__ void cudaDevice_towerAppendBuffers(int itBatch, int batchSize,
 	   towersSurfData_d[towIndx] = htFlux_d[ij];
 	   towIndx += 1; //only a single surface value so increment by 1
 	   if(Nmoist > 0){
-	     towersSurfData_d[towIndx] = qskin_d[ijk];
+	     towersSurfData_d[towIndx] = qskin_d[ij];
 	     towIndx += 1; //only a single surface value so increment by 1
-	     towersSurfData_d[towIndx] = qFlux_d[ijk];
+	     towersSurfData_d[towIndx] = qFlux_d[ij];
 	     towIndx += 1; //only a single surface value so increment by 1
 	   }//end if Nmoist > 0
 	 }//end if k == kMin_d

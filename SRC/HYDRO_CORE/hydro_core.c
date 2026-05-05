@@ -1911,6 +1911,15 @@ int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int
    int nElems;
    int nSurfElems;
    int towerCount;
+   int i,j,k,ij,ijk;
+   int iStride,jStride,kStride,fldStride;
+   int towerBaseAddress;
+   int towerSurfBaseAddress;
+   int towerFld_size;
+   int towerFld_cnt;
+   int towIndx;
+   int iFld;
+
    rank_nTowers = 0;
    towerInstanceSize = Nz*(registered3dVars-4); // r3dV-4 since no x,y,zPos, or pressure
    towerSurfInstanceSize = (registered2dVars-3); // r2dV-3 since no topoPos, lat or lon
@@ -1953,6 +1962,73 @@ int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int
 	      towerProfiles.coordsWE[towerIDs[towerCount]],towerProfiles.coordsSN[towerIDs[towerCount]],
     	      tower_iInds[towerCount],tower_jInds[towerCount]);
        fflush(stdout);
+     }
+
+     //Initialize the towerData and towerSurfData values
+     iStride = (Nyp+2*Nh)*(Nzp+2*Nh);
+     jStride = (Nzp+2*Nh);
+     kStride = 1;
+
+     fldStride = (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh);
+     towerFld_size = Nzp;
+     for(towerCount = 0; towerCount < rank_nTowers; towerCount++){
+        towerBaseAddress = towerCount*(NtBatch*towerInstanceSize);
+        towerFld_cnt = 0;
+
+	i = tower_iInds[towerCount];
+        j = tower_jInds[towerCount];
+
+	for(k=kMin; k < kMax; k++){
+           ijk = i*iStride + j*jStride + k*kStride;
+           for(iFld=0; iFld < Nhydro; iFld++){
+              towIndx = towerBaseAddress + towerFld_cnt*towerFld_size + k-Nh;
+              towersData[towIndx] = hydroFlds[iFld*fldStride+ijk];
+              towerFld_cnt += 1;
+           }//end for iFld
+	   for(iFld=0; iFld < TKESelector*turbulenceSelector; iFld++){
+              towIndx = towerBaseAddress + towerFld_cnt*towerFld_size + k-Nh;
+              towersData[towIndx] = sgstkeScalars[iFld*fldStride+ijk];
+              towerFld_cnt += 1;
+           }
+	   for(iFld=0; iFld < moistureNvars*moistureSelector; iFld++){
+              towIndx = towerBaseAddress + towerFld_cnt*towerFld_size + k-Nh;
+              towersData[towIndx] = moistScalars[iFld*fldStride+ijk];
+              towerFld_cnt += 1;
+           }
+           for(iFld=0; iFld < NhydroAuxScalars; iFld++){
+              towIndx = towerBaseAddress + towerFld_cnt*towerFld_size + k-Nh;
+              towersData[towIndx] = hydroAuxScalars[iFld*fldStride+ijk];
+              towerFld_cnt += 1;
+           }
+           for(iFld=0; iFld < 9; iFld++){      //There are 6 Tau^i-j and 3 tau^Theta-j
+              towIndx = towerBaseAddress + towerFld_cnt*towerFld_size + k-Nh;
+              towersData[towIndx] = hydroTauFlds[iFld*fldStride+ijk];
+              towerFld_cnt += 1;
+           }
+	   if(k == kMin){
+              ij = i*(Nyp+2*Nh) + j;
+	      towerSurfBaseAddress = towerCount*(NtBatch*towerSurfInstanceSize);
+              towIndx = towerSurfBaseAddress;
+              towersSurfData[towIndx] = z0m[ij];
+              towIndx += 1; //only a single surface value so increment by 1
+              towersSurfData[towIndx] = z0t[ij];
+              towIndx += 1; //only a single surface value so increment by 1
+              towersSurfData[towIndx] = tskin[ij];
+              towIndx += 1; //only a single surface value so increment by 1
+              towersSurfData[towIndx] = fricVel[ij];
+              towIndx += 1; //only a single surface value so increment by 1
+              towersSurfData[towIndx] = invOblen[ij];
+              towIndx += 1; //only a single surface value so increment by 1
+              towersSurfData[towIndx] = htFlux[ij];
+              towIndx += 1; //only a single surface value so increment by 1
+              if(moistureNvars*moistureSelector > 0){
+                towersSurfData[towIndx] = qskin[ij];
+                towIndx += 1; //only a single surface value so increment by 1
+                towersSurfData[towIndx] = qFlux[ij];
+                towIndx += 1; //only a single surface value so increment by 1
+              }//end if Nmoist > 0 
+           }
+	}// end for k
      }
    }// end if rank_nTowers > 0
    
