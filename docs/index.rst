@@ -58,5 +58,7 @@ web: https://fluidnumerics.com, email: support@fluidnumerics.com
    downloads.rst
    build_run.rst
    Tutorials/index
+   contributions.rst
    parameters.rst
    publications.rst
+
