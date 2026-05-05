@@ -41,6 +41,7 @@ int simTime_itRestart; /*Master simulation 'Restart' time step*/
 int numRKstages; /* number of stages in the time scheme */
 
 /* array fields */
+float* simTimeBatch; /*Array of master simulation time over NtBatch timesteps*/
 
 
 /*######################------------------- TIME_INTEGRATION module function definitions ---------------------#################*/
@@ -125,6 +126,9 @@ int timeInit(){
      numRKstages = 2;
    }
 
+   //Allocate space for an array of NtBatch master simulation time values
+   simTimeBatch = malloc(NtBatch*sizeof(float));
+
    /* Done */
    return(errorCode);
 } //end timeInit()
@@ -171,7 +175,7 @@ int timeCleanup(){
    int errorCode = TIME_INTEGRATION_SUCCESS;
 
    /* Free any TIME_INTEGRATION module arrays */
-   //currently none
+   free(simTimeBatch);
 
    return(errorCode);
 
