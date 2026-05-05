@@ -285,6 +285,16 @@ float thetaAmplitude; /* Initial theta perturbation (maximum amplitude in K)*/
 
 int physics_oneRKonly; /* selector to apply physics RHS forcing only at the latest RK stage */
 
+/*---VIRTUAL TOWERS*/
+int *towerIDs;
+int *tower_iInds;
+int *tower_jInds;
+int rank_nTowers;
+int towerInstanceSize;
+int towerSurfInstanceSize;
+float *towersData;
+float *towersSurfData;
+
 /*###################------------------- HYDRO_CORE module function definitions ---------------------#################*/
 
 /*----->>>>> int hydro_coreGetParams();   ----------------------------------------------------------------------
@@ -1892,6 +1902,63 @@ int hydro_coreSetBaseState(){
    return(errorCode);
 }// end coreSetBaseState
 
+/*----->>>>> int hydro_coreAllocateTowersDataStructure();   ---------------------------------------------------
+* Utility to allocate virtual tower data structures on appropriate ranks
+*/
+int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int NtBatch){
+   int errorCode = HYDRO_CORE_SUCCESS;
+   int itower;
+   int nElems;
+   int nSurfElems;
+   int towerCount;
+   rank_nTowers = 0;
+   towerInstanceSize = Nz*(registered3dVars-4); // r3dV-4 since no x,y,zPos, or pressure
+   towerSurfInstanceSize = (registered2dVars-3); // r2dV-3 since no topoPos, lat or lon
+   //Count the number of towers in a given mpi_rank's subdomain        
+   for(itower = 0; itower < nProfs; itower++){
+      if(towProfs.mpi_ranks[itower]==mpi_rank_world){
+        rank_nTowers = rank_nTowers + 1;
+      }
+   }
+   if(rank_nTowers > 0){ 
+     //Allocate and set the per-rank towerIDs
+     towerIDs = (int *) malloc(rank_nTowers*sizeof(int));
+     towerCount=0;
+     for(itower = 0; itower < nProfs; itower++){
+        if(towProfs.mpi_ranks[itower]==mpi_rank_world){
+          towerIDs[towerCount]=towProfs.profIDs[itower];
+	  towerCount=towerCount+1;
+        }
+     }
+   
+     //Calculate the number of float data elements 
+     nElems = NtBatch*rank_nTowers*towerInstanceSize;
+     nSurfElems = NtBatch*rank_nTowers*towerSurfInstanceSize;
+     //Allocate the tower data structure
+     towersData = (float *) malloc(nElems*sizeof(float));
+     towersSurfData = (float *) malloc(nSurfElems*sizeof(float));
+     printf("%d/%d: NtBatch = %d, rank_nTowers = %d, towerInstanceSize = %d, nElems = %d, towerSurfInstanceSize = %d, nSurfElems = %d\n",
+            mpi_rank_world,mpi_size_world,NtBatch,rank_nTowers,towerInstanceSize,nElems,towerSurfInstanceSize,nSurfElems);
+     
+     //Now identify the mpi_rank-specific i,j indices for each tower in the mpi_rank's subdomain
+     tower_iInds = (int *) malloc(rank_nTowers*sizeof(int));
+     tower_jInds = (int *) malloc(rank_nTowers*sizeof(int));
+     for(towerCount = 0; towerCount < rank_nTowers; towerCount++){
+        //Call an index finding function from the grid module.
+	errorCode = gridGetIJindsFromXYPosition(towerProfiles.coordsWE[towerIDs[towerCount]],
+			                        towerProfiles.coordsSN[towerIDs[towerCount]],
+		                          	&tower_iInds[towerCount], &tower_jInds[towerCount]); 
+       printf("%d/%d: towerCount = %d, towerID = %d, (x,y) = (%f,%f), (tower_iInd,tower_jInd) = (%d,%d)\n",
+              mpi_rank_world,mpi_size_world,towerCount,towerIDs[towerCount],
+	      towerProfiles.coordsWE[towerIDs[towerCount]],towerProfiles.coordsSN[towerIDs[towerCount]],
+    	      tower_iInds[towerCount],tower_jInds[towerCount]);
+       fflush(stdout);
+     }
+   }// end if rank_nTowers > 0
+   
+   return(errorCode);
+} //end hydro_coreAllocateProfilesDataStructure()
+
 /*----->>>>> int hydro_coreSetupBndyPlanesAllRanks();   ---------------------------------------------------
 * Utility to read/scatter (across ranks as appropriate) the next set of BdyPlanes in the series
 */
@@ -3240,6 +3307,14 @@ int hydro_coreCleanup(){
      memReleaseFloat(hydroAuxScalars);
      memReleaseFloat(hydroAuxScalarsFrhs);
    } //end if NhydroAuxScalars
+
+   if(rank_nTowers > 0){
+     free(towerIDs);
+     free(tower_iInds);
+     free(tower_jInds);
+     free(towersData);
+     free(towersSurfData);
+   }
 
 #ifdef GAD_EXT
    if(GADSelector > 0){

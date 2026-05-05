@@ -287,6 +287,16 @@ extern float thetaPerturbationAmplitude; /* Initial theta perturbations maximum 
 
 extern int physics_oneRKonly; /* selector to apply physics RHS forcing only at the latest RK stage */
 
+/*---HYDRO_CORE_TOWERS*/
+extern int *towerIDs;
+extern int *tower_iInds;
+extern int *tower_jInds;
+extern int rank_nTowers;
+extern int towerInstanceSize;
+extern int towerSurfInstanceSize;
+extern float *towersData;
+extern float *towersSurfData;
+
 /*###################------------- HYDRO_CORE module function declarations ---------------------#################*/
 
 /*----->>>>> int hydro_coreGetParams();    ----------------------------------------------------------------------
@@ -321,6 +331,11 @@ int hydro_coreGetFieldName(char * fldName, int iFld);
 */
 int hydro_coreSetBaseState();
 
+/*----->>>>> int hydro_coreAllocateProfilesDataStructure();   ---------------------------------------------------
+* Utility to allocate virtual tower data structures on appropriate ranks
+*/
+int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int NtBatch);
+
 /*----->>>>> int hydro_coreSetupBndyPlanesAllRanks();   ---------------------------------------------------
 * Utility to read/scatter (across ranks as appropriate) the next set of BdyPlanes in the series
 */
@@ -342,7 +357,7 @@ int hydro_coreScatterFieldBndyPlanes(int Nfields);
 */
 int hydro_coreReadNextBndyPlanesFile();
 
-/*----->>>>> int hydroi_coreTVCP();  -----------------------------------------------------------
+/*----->>>>> int hydro_coreTVCP();  -----------------------------------------------------------
  * Updates model parameters used by the CELLPERT submodule from dynamic lateral BNDY conditions.
  */
 int hydro_coreTVCP(float dt);

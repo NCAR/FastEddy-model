@@ -22,6 +22,7 @@
 #include <float.h>
 #include <math.h>
 #include <fempi.h>
+#include <io.h>
 #include <grid.h>
 #include <mem_utils.h>
 #include <hydro_core.h>
@@ -48,6 +49,7 @@
 #include "cuda_moistureDevice.cu" 
 #include "cuda_filtersDevice.cu" 
 #include "cuda_cellpertDevice.cu"
+#include "cuda_towersDevice.cu"
 
 #ifdef URBAN_EXT
   #include "cuda_urbanDevice.cu"
@@ -311,6 +313,7 @@ extern "C" int cuda_hydroCoreDeviceCleanup(){
      errorCode = cuda_filtersDeviceCleanup();
    }
 
+   errorCode = cuda_towersDeviceCleanup();
 #ifdef URBAN_EXT
    /* URBAN */
    if (urbanSelector > 0){
@@ -326,6 +329,25 @@ extern "C" int cuda_hydroCoreDeviceCleanup(){
    return(errorCode);
 
 }//end cuda_hydroCoreDeviceCleanup()
+
+/*----->>>>> int cuda_hydroCoreDeviceSecondaryStageSetup(); ---------------------------------------------------------
+* Secondary initializations at the device level for BCs and TOWERS submodules
+*/
+extern "C" int cuda_hydroCoreDeviceSecondaryStageSetup(float dt, int batchSize){
+    int errorCode = CUDA_HYDRO_CORE_SUCCESS;
+    int BdyUpdateSteps;
+    
+    /*Initialize device-level TOWER submodule */
+    errorCode = cuda_towersDeviceSetup(batchSize, rank_nTowers, towerInstanceSize, towerSurfInstanceSize);
+
+    /*Compute the number of timesteps between BndyPlane Updates*/
+    BdyUpdateSteps = (int) roundf(dtBdyPlaneBCs/dt);
+    cudaMemcpyToSymbol(BdyUpdateSteps_d, &BdyUpdateSteps, sizeof(int));
+
+    printf("%d/%d cuda_hydroCoreDeviceSecondaryStageSetup(): BdyUpdateSteps = %d \n",mpi_rank_world,mpi_size_world,BdyUpdateSteps);
+    fflush(stdout);
+    return(errorCode);
+}
 
 /*----->>>>> extern "C" int cuda_hydroCoreDeviceBuildFrhs();  --------------------------------------------------
 * This routine provides the externally callable cuda-kernel call to perform a complete hydroCore build_Frhs
@@ -1383,7 +1405,7 @@ extern "C" int cuda_hydroCoreInitFieldsDevice(){
 * This function handles the synchronization to host of on-device (GPU) fields  by executing the appropriate sequence
 * of cudaMemcpyDeviceiToHost data transfers.
 */
-extern "C" int cuda_hydroCoreSynchFieldsFromDevice(){
+extern "C" int cuda_hydroCoreSynchFieldsFromDevice(int batchSize){
    int errorCode = CUDA_HYDRO_CORE_SUCCESS;
    int Nelems;
    int Nelems2d;
@@ -1454,6 +1476,12 @@ extern "C" int cuda_hydroCoreSynchFieldsFromDevice(){
      }
    }
 #endif 
+   /* TOWERS */
+   if(rank_nTowers > 0){
+     gpuErrchk( cudaMemcpy(towersData, towersData_d, batchSize*rank_nTowers*towerInstanceSize*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(towersSurfData, towersSurfData_d, batchSize*rank_nTowers*towerSurfInstanceSize*sizeof(float), cudaMemcpyDeviceToHost) );
+   }
+
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
 //#ifdef DEBUG
 #if 1
@@ -1462,7 +1490,7 @@ extern "C" int cuda_hydroCoreSynchFieldsFromDevice(){
    fflush(stdout);
    MPI_Barrier(MPI_COMM_WORLD);
 #endif
-   
+  
    return(errorCode);
 }//end cuda_hydroCoreSynchFieldsFromDevice()
 
