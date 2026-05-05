@@ -1,6 +1,11 @@
 {
   "ICBC_dir": "/path_FEsim/ICBC/",
   "FE_simGrid": "/path_simgrid/simgrid.0",
+  "parent_model": 0,
+  "nest_tke_opt": true,
+  "_comment": "#######################################################",
+  "_comment": "### WRF as parent domain section (parent_model = 0) ###",
+  "_comment": "#######################################################",
   "WRF_PrntDir": "/path_wrf_data/",
   "WRF_PrntOutPrefix": "wrf_fasteddy_d01_",
   "date0": "2024-02-16",
@@ -8,5 +13,15 @@
   "timeMinute0": 0,
   "timeSecond0": 0,
   "secMax": 5401,
-  "secInc": 300
+  "secInc": 300,
+  "_comment": "############################################################",
+  "_comment": "### FastEddy as parent domain section (parent_model = 1) ###",
+  "_comment": "############################################################",
+  "FE_PrntDir": "/path_fe_parent/",
+  "FE_PrntOutPrefix": "FE_parent_name",
+  "itMin": 108000,
+  "dt_FE": 0.025,
+  "outputFrequency": 10.0,
+  "timeLengthSec": 3600.0,
+  "ideal_opt": false
 }

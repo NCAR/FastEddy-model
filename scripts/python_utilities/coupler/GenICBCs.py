@@ -25,7 +25,7 @@ mpi_rank = MPI.COMM_WORLD.Get_rank()
 mpi_name = MPI.Get_processor_name()
 
 print("{:d}/{:d}: Hello World! on {:s}.".format(mpi_rank, mpi_size, mpi_name))
-DEBUG_COUPLER = False #True
+DEBUG_COUPLER = False
 
 ######################################################
 ### Parse the command line arguments                ###
@@ -40,6 +40,7 @@ with open(args.file) as file:
 
 ICBC_dir = params["ICBC_dir"]
 FE_simGrid = params["FE_simGrid"]
+parent_model = params["parent_model"]
 WRF_PrntDir = params["WRF_PrntDir"]
 WRF_PrntOutPrefix = params["WRF_PrntOutPrefix"]
 dateString = params["date0"]
@@ -48,11 +49,23 @@ timeMinute0 = params["timeMinute0"]
 timeSecond0 = params["timeSecond0"]
 secMax = params["secMax"]
 secInc = params["secInc"]
+FE_PrntDir = params["FE_PrntDir"]
+FE_PrntOutPrefix = params["FE_PrntOutPrefix"]
+itMin = params["itMin"]
+dt_FE = params["dt_FE"]
+outputFrequency = params["outputFrequency"]
+timeLengthSec = params["timeLengthSec"]
+nest_tke_opt = params["nest_tke_opt"]
+ideal_opt = params["ideal_opt"]
 
 print(f"{mpi_rank}/{mpi_size}: Writing coupler outputs to {ICBC_dir}")
 print(f"{mpi_rank}/{mpi_size}: Interpolating to FE-domain from {FE_simGrid}")
-print(f"{mpi_rank}/{mpi_size}: Processing of WRF-files {WRF_PrntDir}{WRF_PrntOutPrefix}*")
-print(f"{mpi_rank}/{mpi_size}: Date and times of WRF-files to process: {dateString}_{timeHour0:02}:{timeMinute0:02}:*, every {secInc} s for {secMax} total seconds.")
+if (parent_model == 0):
+    print(f"{mpi_rank}/{mpi_size}: Processing of WRF-files {WRF_PrntDir}{WRF_PrntOutPrefix}*")
+    print(f"{mpi_rank}/{mpi_size}: Date and times of WRF-files to process: {dateString}_{timeHour0:02}:{timeMinute0:02}:*, every {secInc} s for {secMax} total seconds.")
+elif (parent_model == 1):
+    print(f"{mpi_rank}/{mpi_size}: Processing of FastEddy-files {FE_PrntDir}{FE_PrntOutPrefix}*")
+    print(f"{mpi_rank}/{mpi_size}: FastEddy-files to process: start at timestep {itMin}, every {outputFrequency} timesteps for {timeLengthSec} total seconds.")
 
 ################################################################################################
 ### Create a coupler output directory for initial and boundary conditions if necessary
@@ -67,19 +80,49 @@ if(mpi_rank == 0):
 files_list=[]
 times=[]
 
-year0 = int(dateString[0:4])
-month0 = int(dateString[5:7])
-day0 = int(dateString[8:10])
+if (parent_model == 0): # WRF
 
-date_it = dt.datetime(year0,month0,day0,timeHour0,timeMinute0,timeSecond0)
-for it in range(0,secMax,secInc):
-    dateString_it = str(date_it.year) + '-' + "{:02d}".format(date_it.month)  + '-' + "{:02d}".format(date_it.day) + '_'
-    thistime = "{:s}{:02d}:{:02d}:{:02d}".format(dateString_it,date_it.hour,date_it.minute,date_it.second)
-    file_tmp = f'{WRF_PrntDir}{WRF_PrntOutPrefix}{thistime}'
-    files_list.append(file_tmp)
-    if(mpi_rank == 0):
-       print(file_tmp)
-    date_it = date_it + dt.timedelta(seconds=secInc)
+    name_lat = 'XLAT'
+    name_lon = 'XLONG'
+    name_concat_dim = 'Time'
+
+    year0 = int(dateString[0:4])
+    month0 = int(dateString[5:7])
+    day0 = int(dateString[8:10])
+
+    date_it = dt.datetime(year0,month0,day0,timeHour0,timeMinute0,timeSecond0)
+    for it in range(0,secMax,secInc):
+        dateString_it = str(date_it.year) + '-' + "{:02d}".format(date_it.month)  + '-' + "{:02d}".format(date_it.day) + '_'
+        thistime = "{:s}{:02d}:{:02d}:{:02d}".format(dateString_it,date_it.hour,date_it.minute,date_it.second)
+        file_tmp = f'{WRF_PrntDir}{WRF_PrntOutPrefix}{thistime}'
+        files_list.append(file_tmp)
+        if(mpi_rank == 0):
+            print(file_tmp)
+        date_it = date_it + dt.timedelta(seconds=secInc)
+
+elif (parent_model == 1): # FastEddy
+
+    name_lat = 'lat'
+    name_lon = 'lon'
+    name_concat_dim = 'time'
+
+    itInc=np.int32(np.floor(outputFrequency/dt_FE))
+    itMax = itMin + itInc*np.int32(np.floor(timeLengthSec/outputFrequency))
+    print(f"Creating file list spanning timestep {itMin} to {itMax} in increments of {itInc} timesteps.")
+    timeMin = itMin*dt_FE
+    timeMax = itMax*dt_FE
+    timeInc = itInc*dt_FE
+    print(f"This corresponds to spanning time = {timeMin} [s] to {timeMax} [s] in increments of {timeInc} [s].")
+
+    for it in range(itMin,itMax+(itInc-1),itInc):
+        thistime = f'{it}'
+        times.append(thistime)
+        # print(f"thistime={thistime}")
+    for eachtime in times:
+        file_tmp = f"{FE_PrntDir}{FE_PrntOutPrefix}.{eachtime}"
+        files_list.append(file_tmp)
+        if(mpi_rank == 0):
+            print(file_tmp)
 
 ################################################################################################
 ### Setup mpi task decomposition over the set of files to process
@@ -140,22 +183,64 @@ ds_WRFRef=xr.open_dataset(files_list[0], engine="netcdf4")
 ## Find the the WRF d02 profiler locations
 itargs=[]
 jtargs=[]
-#print('WRF:')
-#print('(j,i):')
 
-latFE = ds_FEGrid.lat.values
-lonFE = ds_FEGrid.lon.values
+if (parent_model == 0):
+    dx_parent = ds_WRFRef.attrs['DX']
+    dy_parent = ds_WRFRef.attrs['DY']
+    Ngpx = ds_WRFRef.sizes['west_east']
+    Ngpy = ds_WRFRef.sizes['south_north']
+elif (parent_model == 1):
+    dx_parent = (ds_WRFRef['xPos'][0,0,0,1]-ds_WRFRef['xPos'][0,0,0,0]).values
+    dy_parent = (ds_WRFRef['yPos'][0,0,1,0]-ds_WRFRef['yPos'][0,0,0,0]).values
+    Ngpx = ds_WRFRef.sizes['xIndex']
+    Ngpy = ds_WRFRef.sizes['yIndex']
 
-corners_lat = np.asarray([latFE[0,0], latFE[0,-1],latFE[-1,-1], latFE[-1,0]])
-corners_lon = np.asarray([lonFE[0,0], lonFE[0,-1],lonFE[-1,-1], lonFE[-1,0]])
-print('corners_lat.shape=',corners_lat.shape)
-print('corners_lon.shape=',corners_lon.shape)
-print('corners_lat=',corners_lat)
-print('corners_lon=',corners_lon)
+if (not ideal_opt):
 
-for indx in range(len(corners_lat)):
-    blah3=np.sqrt( (ds_WRFRef['XLAT'][0,:,:].values-corners_lat[indx])**2
-                  +(ds_WRFRef['XLONG'][0,:,:].values-corners_lon[indx])**2)
+    latFE = ds_FEGrid.lat.values
+    lonFE = ds_FEGrid.lon.values
+
+    corners_lat = np.asarray([latFE[0,0], latFE[0,-1],latFE[-1,-1], latFE[-1,0]])
+    corners_lon = np.asarray([lonFE[0,0], lonFE[0,-1],lonFE[-1,-1], lonFE[-1,0]])
+    print('corners_lat.shape=',corners_lat.shape)
+    print('corners_lon.shape=',corners_lon.shape)
+    print('corners_lat=',corners_lat)
+    print('corners_lon=',corners_lon)
+
+    len_corners = len(corners_lat)
+
+    corners_var_y = corners_lat
+    corners_var_x = corners_lon
+
+else:
+
+    name_lat = 'yPos'
+    name_lon = 'xPos'
+
+    xcoordFE = ds_FEGrid.xPos.isel(zIndex=0).values
+    ycoordFE = ds_FEGrid.yPos.isel(zIndex=0).values
+    print("xcoordFE.shape=",xcoordFE.shape)
+
+    corners_x = np.asarray([xcoordFE[0,0], xcoordFE[0,-1], xcoordFE[-1,-1], xcoordFE[-1,0]])
+    corners_y = np.asarray([ycoordFE[0,0], ycoordFE[0,-1], ycoordFE[-1,-1], ycoordFE[-1,0]])
+    print('corners_x.shape=',corners_x.shape)
+    print('corners_y.shape=',corners_y.shape)
+    print('corners_x=',corners_x)
+    print('corners_y=',corners_y)
+
+    len_corners = len(corners_y)
+
+    corners_var_y = corners_x
+    corners_var_x = corners_y
+
+for indx in range(len_corners):
+    if (not ideal_opt):
+        blah3=np.sqrt( (ds_WRFRef[name_lat][0,:,:].values-corners_lat[indx])**2
+                          +(ds_WRFRef[name_lon][0,:,:].values-corners_lon[indx])**2)
+    else:
+        blah3=np.sqrt( (ds_WRFRef[name_lat][0,0,:,:].values-corners_y[indx])**2
+                          +(ds_WRFRef[name_lon][0,0,:,:].values-corners_x[indx])**2)
+
     locCount=0
     for jtarg, itarg in np.argwhere(blah3 == np.min(blah3,axis=(0,1))): 
         if locCount < 1:
@@ -166,74 +251,142 @@ for indx in range(len(corners_lat)):
         else:
             #skip this redundant location of minimum distance
             if(mpi_rank == 0):
-              print('Skipping redundant closest corner location: ',jtarg,itarg)
+                print('Skipping redundant closest corner location: ',jtarg,itarg)
 
 #### Append the corner index pairs to the WRFref dataset dFE_jindxs and dFE_iindxs  
 ds_WRFRef['dFE_jindxs']=xr.DataArray(np.asarray(jtargs,dtype=np.int32),dims=["corners"])
 ds_WRFRef['dFE_iindxs']=xr.DataArray(np.asarray(itargs,dtype=np.int32),dims=["corners"])
-for indx in range(len(corners_lat)):
-  if(mpi_rank == 0):
-    print(f"corner({indx}) @ WRF({ds_WRFRef['dFE_jindxs'][indx].values},{ds_WRFRef['dFE_iindxs'][indx].values})")
-    print('[WRF,corner({:d})]: lats = [{:f},{:f}], lons = [{:f},{:f}]'.format(indx,ds_WRFRef['XLAT'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
-                                                                                 corners_lat[indx],
-                                                                                 ds_WRFRef['XLONG'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
-                                                                                 corners_lon[indx]))
+
+print("ds_WRFRef['dFE_jindxs'].values=",ds_WRFRef['dFE_jindxs'].values)
+print("ds_WRFRef['dFE_iindxs'].values=",ds_WRFRef['dFE_iindxs'].values)
+
+if (not ideal_opt):
+
+    for indx in range(len_corners):
+        if(mpi_rank == 0):
+            print(f"corner({indx}) @ WRF({ds_WRFRef['dFE_jindxs'][indx].values},{ds_WRFRef['dFE_iindxs'][indx].values})")
+            print('[WRF,corner({:d})]: lats = [{:f},{:f}], lons = [{:f},{:f}]'.format(indx,ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
+                                                                                     corners_lat[indx],
+                                                                                     ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
+                                                                                     corners_lon[indx]))
     
+    ### Compute FE-domain corner lat/lon offsets from closest dsWRFRef cell-centered lat/lons
+    print('\t Pre-correction offsets:')        
+    for indx in range(len_corners):  
+        latOff = ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lat[indx]
+        lonOff = ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lon[indx]
+        if(mpi_rank == 0):
+            print('\t corner({:d}): latOff = {:f}, lonOff = {:f}'.format(indx,latOff,lonOff))
+        yoffset = -(ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lat[indx])\
+                *(dy_parent/( ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx]+1,ds_WRFRef['dFE_iindxs'][indx]]
+                                           -ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))
+        xoffset = -(ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lon[indx])\
+                 *(dx_parent/( ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]+1]
+                                           -ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))   
+        if(mpi_rank == 0):
+            print('\t corner({:d}): yOff = {:f}, xOff = {:f}'.format(indx,yoffset.values,xoffset.values))
+        if indx<2:   ## 0=southwest, or 1=southeast corner
+            if yoffset < 0.0:  #FE domain SW/SE corner is south of the closest wrf cell, decrement the bounding jindx
+                ds_WRFRef['dFE_jindxs'][indx]-=1 
+            if indx < 1: 
+                if xoffset < 0.0: #FE domain SW corner is west of the closest wrf cell, decrement the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]-=1
+            else: 
+                if xoffset > 0.0: #FE domain SE corner is east of the closest wrf cell, increment the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]+=1
+        else:   ## 3=northwest, or 2=northeast corner
+            if yoffset > 0.0:  #FE domain NE/NW corner is north of the closest wrf cell, increment the bounding jindx
+                ds_WRFRef['dFE_jindxs'][indx]+=1
+            if indx < 3: 
+                if xoffset > 0.0: #FE domain NE corner is east of the closest wrf cell, increment the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]+=1
+            else: 
+                if xoffset < 0.0: #FE domain NW corner is west of the closest wrf cell, decrement the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]-=1 
+    if(mpi_rank == 0):
+        print('Bounding-box corrected offsets:')
+
+    for indx in range(len_corners):  
+        latOff = ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lat[indx]
+        lonOff = ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lon[indx]
+        yoffset = -(ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lat[indx])\
+                  *(dy_parent/( ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx]+1,ds_WRFRef['dFE_iindxs'][indx]]
+                                           -ds_WRFRef[name_lat][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))
+        xoffset = -(ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lon[indx])\
+                  *(dx_parent/( ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]+1]
+                                           -ds_WRFRef[name_lon][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))   
+        if(mpi_rank == 0):
+            print('corner({:d}):latOff = {:f}, lonOff = {:f} -- yOff = {:f}, xOff = {:f}'.format(indx,latOff,lonOff,yoffset.values,xoffset.values))
+        if indx == 0:
+            ll_yoffset=yoffset.values
+            ll_xoffset=xoffset.values
+    for indx in range(len_corners):
+        if(mpi_rank == 0):
+            print('{:d},{:d}'.format(ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values))
+
+else:
+
+    for indx in range(len_corners):
+        if(mpi_rank == 0):
+            print(f"corner({indx}) @ WRF({ds_WRFRef['dFE_jindxs'][indx].values},{ds_WRFRef['dFE_iindxs'][indx].values})")
+            print('[WRF,corner({:d})]: yPos = [{:f},{:f}], xPos = [{:f},{:f}]'.format(indx,ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
+                                                                                     corners_y[indx],
+                                                                                     ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]].values,
+                                                                                     corners_y[indx]))
     
-### Compute FE-domain corner lat/lon offsets from closest dsWRFRef cell-centered lat/lons
-print('\t Pre-correction offsets:')        
-for indx in range(len(corners_lat)):  
-    latOff = ds_WRFRef['XLAT'][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lat[indx]
-    lonOff = ds_WRFRef['XLONG'][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lon[indx]
+    ### Compute FE-domain corner lat/lon offsets from closest dsWRFRef cell-centered lat/lons
+    print('\t Pre-correction offsets:')        
+    for indx in range(len_corners):  
+        xcoordOff = ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_y[indx]
+        ycoordOff = ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_x[indx]
+        if(mpi_rank == 0):
+            print('\t corner({:d}): ycoordOff = {:f}, xcoordOff = {:f}'.format(indx,ycoordOff,xcoordOff))
+        yoffset = -(ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_y[indx])\
+                *(dy_parent/( ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx]+1,ds_WRFRef['dFE_iindxs'][indx]]
+                                           -ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))
+        xoffset = -(ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_x[indx])\
+                 *(dx_parent/( ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]+1]
+                                           -ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))   
+        if(mpi_rank == 0):
+            print('\t corner({:d}): yOff = {:f}, xOff = {:f}'.format(indx,yoffset.values,xoffset.values))
+        if indx<2:   ## 0=southwest, or 1=southeast corner
+            if yoffset < 0.0:  #FE domain SW/SE corner is south of the closest wrf cell, decrement the bounding jindx
+                ds_WRFRef['dFE_jindxs'][indx]-=1 
+            if indx < 1: 
+                if xoffset < 0.0: #FE domain SW corner is west of the closest wrf cell, decrement the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]-=1
+            else: 
+                if xoffset > 0.0: #FE domain SE corner is east of the closest wrf cell, increment the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]+=1
+        else:   ## 3=northwest, or 2=northeast corner
+            if yoffset > 0.0:  #FE domain NE/NW corner is north of the closest wrf cell, increment the bounding jindx
+                ds_WRFRef['dFE_jindxs'][indx]+=1
+            if indx < 3: 
+                if xoffset > 0.0: #FE domain NE corner is east of the closest wrf cell, increment the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]+=1
+            else: 
+                if xoffset < 0.0: #FE domain NW corner is west of the closest wrf cell, decrement the bounding iindx
+                    ds_WRFRef['dFE_iindxs'][indx]-=1 
     if(mpi_rank == 0):
-      print('\t corner({:d}): latOff = {:f}, lonOff = {:f}'.format(indx,latOff,lonOff))
-    yoffset = -(ds_WRFRef['XLAT'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lat[indx])\
-              *(ds_WRFRef.attrs['DY']/( ds_WRFRef['XLAT'][0,ds_WRFRef['dFE_jindxs'][indx]+1,ds_WRFRef['dFE_iindxs'][indx]]
-                                       -ds_WRFRef['XLAT'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))
-    xoffset = -(ds_WRFRef['XLONG'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lon[indx])\
-              *(ds_WRFRef.attrs['DX']/( ds_WRFRef['XLONG'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]+1]
-                                       -ds_WRFRef['XLONG'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))   
-    if(mpi_rank == 0):
-      print('\t corner({:d}): yOff = {:f}, xOff = {:f}'.format(indx,yoffset.values,xoffset.values))
-    if indx<2:   ## 0=southwest, or 1=southeast corner
-        if yoffset < 0.0:  #FE domain SW/SE corner is south of the closest wrf cell, decrement the bounding jindx
-            ds_WRFRef['dFE_jindxs'][indx]-=1 
-        if indx < 1: 
-            if xoffset < 0.0: #FE domain SW corner is west of the closest wrf cell, decrement the bounding iindx
-                ds_WRFRef['dFE_iindxs'][indx]-=1
-        else: 
-            if xoffset > 0.0: #FE domain SE corner is east of the closest wrf cell, increment the bounding iindx
-                ds_WRFRef['dFE_iindxs'][indx]+=1
-    else:   ## 3=northwest, or 2=northeast corner
-        if yoffset > 0.0:  #FE domain NE/NW corner is north of the closest wrf cell, increment the bounding jindx
-            ds_WRFRef['dFE_jindxs'][indx]+=1
-        if indx < 3: 
-            if xoffset > 0.0: #FE domain NE corner is east of the closest wrf cell, increment the bounding iindx
-                ds_WRFRef['dFE_iindxs'][indx]+=1
-        else: 
-            if xoffset < 0.0: #FE domain NW corner is west of the closest wrf cell, decrement the bounding iindx
-                ds_WRFRef['dFE_iindxs'][indx]-=1 
-if(mpi_rank == 0):
-  print('Bounding-box corrected offsets:')        
-for indx in range(len(corners_lat)):  
-    latOff = ds_WRFRef['XLAT'][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lat[indx]
-    lonOff = ds_WRFRef['XLONG'][0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_lon[indx]
-    yoffset = -(ds_WRFRef['XLAT'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lat[indx])\
-              *(ds_WRFRef.attrs['DY']/( ds_WRFRef['XLAT'][0,ds_WRFRef['dFE_jindxs'][indx]+1,ds_WRFRef['dFE_iindxs'][indx]]
-                                       -ds_WRFRef['XLAT'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))
-    xoffset = -(ds_WRFRef['XLONG'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_lon[indx])\
-              *(ds_WRFRef.attrs['DX']/( ds_WRFRef['XLONG'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]+1]
-                                       -ds_WRFRef['XLONG'][0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))   
-    if(mpi_rank == 0):
-      print('corner({:d}):latOff = {:f}, lonOff = {:f} -- yOff = {:f}, xOff = {:f}'.format(indx,latOff,lonOff,yoffset.values,xoffset.values))
-    if indx == 0:
-        ll_yoffset=yoffset.values
-        ll_xoffset=xoffset.values
-#print('WRF:')
-#print('(j,i):')
-for indx in range(len(corners_lat)):
-    if(mpi_rank == 0):
-      print('{:d},{:d}'.format(ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values))
+        print('Bounding-box corrected offsets:')        
+    for indx in range(len_corners):  
+        xcoordOff = ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_y[indx]
+        ycoordOff = ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values]-corners_x[indx]
+        yoffset = -(ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_y[indx])\
+                  *(dy_parent/( ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx]+1,ds_WRFRef['dFE_iindxs'][indx]]
+                                           -ds_WRFRef[name_lat][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))
+        xoffset = -(ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]-corners_x[indx])\
+                  *(dx_parent/( ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]+1]
+                                           -ds_WRFRef[name_lon][0,0,ds_WRFRef['dFE_jindxs'][indx],ds_WRFRef['dFE_iindxs'][indx]]))   
+    for indx in range(len_corners):  
+        if(mpi_rank == 0):
+            print('corner({:d}):ycoordOff = {:f}, xcoordOff = {:f} -- yOff = {:f}, xOff = {:f}'.format(indx,ycoordOff,xcoordOff,yoffset.values,xoffset.values))
+        if indx == 0:
+            ll_yoffset=yoffset.values
+            ll_xoffset=xoffset.values
+    for indx in range(len_corners):
+        if(mpi_rank == 0):
+            print('{:d},{:d}'.format(ds_WRFRef['dFE_jindxs'][indx].values,ds_WRFRef['dFE_iindxs'][indx].values))
     
 #Nesting configuration parameters
 ll_jindx=ds_WRFRef['dFE_jindxs'].min(dim='corners').values
@@ -242,33 +395,33 @@ j_extent=ds_WRFRef['dFE_jindxs'].max(dim='corners').values-ll_jindx
 i_extent=ds_WRFRef['dFE_iindxs'].max(dim='corners').values-ll_iindx
 
 ##Ensure WRF interpolation area extents will entirely encompass FE target x & y domain 
-y_distWRF = (j_extent-1)*ds_WRFRef.attrs['DY']-ll_yoffset
-x_distWRF = (i_extent-1)*ds_WRFRef.attrs['DX']-ll_xoffset
+y_distWRF = (j_extent-1)*dy_parent-ll_yoffset
+x_distWRF = (i_extent-1)*dx_parent-ll_xoffset
 dxFE=(ds_FEGrid['xPos'][0,0,1]-ds_FEGrid['xPos'][0,0,0]).values
 dyFE=(ds_FEGrid['yPos'][0,1,0]-ds_FEGrid['yPos'][0,0,0]).values
 x_distFE = (ds_FEGrid.sizes['xIndex']-1)*dxFE
 y_distFE = (ds_FEGrid.sizes['yIndex']-1)*dyFE
 while x_distWRF <= x_distFE:
     i_extent += 1
-    x_distWRF = (i_extent-1)*ds_WRFRef.attrs['DX']-ll_xoffset
+    x_distWRF = (i_extent-1)*dx_parent-ll_xoffset
 while y_distWRF <= y_distFE:
     j_extent += 1
-    y_distWRF = (j_extent-1)*ds_WRFRef.attrs['DY']-ll_yoffset
+    y_distWRF = (j_extent-1)*dy_parent-ll_yoffset
 
 if(mpi_rank == 0):
     if (ll_jindx < 0):
-        print(f"Southern FE domain boundary coordinate falls outside of the provided WRF domain, exiting.")
+        print(f"Southern FE nested domain boundary coordinate falls outside of the provided parent domain, exiting.")
         exit()
     elif (ll_iindx < 0):
-        print(f"Western Ft domain boundary coordinate falls outside of the provided WRF domain, exiting.")
+        print(f"Western FE nested domain boundary coordinate falls outside of the provided parent domain, exiting.")
         exit()
-    elif (ll_jindx+j_extent > ds_WRFRef.sizes['south_north']):
-        print(f"Northern Ft domain boundary coordinate falls outside of the provided WRF domain, exiting.")
+    elif (ll_jindx+j_extent > Ngpy):
+        print(f"Northern FE nested domain boundary coordinate falls outside of the provided parent domain, exiting.")
         exit()
-    elif (ll_iindx+i_extent > ds_WRFRef.sizes['west_east']):  
-        print(f"Eastern Ft domain boundary coordinate falls outside of the provided WRF domain, exiting.")
+    elif (ll_iindx+i_extent > Ngpx):  
+        print(f"Eastern FE nested domain boundary coordinate falls outside of the provided parent domain, exiting.")
         exit()
-    else:  #All set to perform strictly interpolation in the horizontal of WRF outputs to FE domain 
+    else:  #All set to perform strictly interpolation in the horizontal of parent outputs to nested FE domain 
         print('ll: ({:d},{:d})'.format(ll_jindx,ll_iindx))
         print('extents: ({:d},{:d})'.format(j_extent,i_extent))
         print('y,x offsets: ({:f},{:f})'.format(ll_yoffset,ll_xoffset))
@@ -276,17 +429,14 @@ if(mpi_rank == 0):
 ######################################################################################################################
 ### Define the Cartesian southwest corner origin (x,y) WRF coordinate system for the horizontal FE-bounding domain ###
 ######################################################################################################################
-xWRF,stepX=np.linspace((ll_iindx+0.5)*ds_WRFRef.attrs['DX'],(ll_iindx+0.5+i_extent)*ds_WRFRef.attrs['DX'],i_extent,endpoint=False,retstep=True)
-yWRF,stepY=np.linspace((ll_jindx+0.5)*ds_WRFRef.attrs['DY'],(ll_jindx+0.5+j_extent)*ds_WRFRef.attrs['DY'],j_extent,endpoint=False,retstep=True)
+xWRF,stepX=np.linspace((ll_iindx+0.5)*dx_parent,(ll_iindx+0.5+i_extent)*dx_parent,i_extent,endpoint=False,retstep=True)
+yWRF,stepY=np.linspace((ll_jindx+0.5)*dy_parent,(ll_jindx+0.5+j_extent)*dy_parent,j_extent,endpoint=False,retstep=True)
 print(xWRF,'\n',yWRF,'\n')
 print(stepX,stepY)
 
 ##Given the correct x,y vectors create 2-d grids of x and y coordinates
 YvWRF,XvWRF=np.meshgrid(yWRF,xWRF, sparse=False, indexing='ij')
 print(XvWRF.shape,XvWRF.shape)
-
-
-print(ds_WRFRef['HGT'][0,ll_jindx:ll_jindx+j_extent,ll_iindx:ll_iindx+i_extent].values)
 
 ####################################################################################
 ### Map the target FE domain into the WRF bounding-grid relative x,y coordinates ###
@@ -330,15 +480,34 @@ zTop = ds_FEGrid['zPos'][-1,0,0].values+90.0
 NzWRFInterp = 200 #275
 zRect = np.linspace(zBottom,zTop,NzWRFInterp)
 if(mpi_rank == 0) and DEBUG_COUPLER:
+  print(f"zBottom,zTop,NzWRFInterp={zBottom},{zTop},{NzWRFInterp}")
   print(zRect[0],zRect[-1])
 
+## Establish a kMaxPrnt that minimizes the length of the interpolating function (for performance)
+if parent_model == 1:
+  jPs = ds_WRFRef['dFE_jindxs'].values[0]
+  jPe = ds_WRFRef['dFE_jindxs'].values[-1]
+  iPs = ds_WRFRef['dFE_iindxs'].values[0]
+  iPe = ds_WRFRef['dFE_iindxs'].values[1]
+  if np.min(ds_WRFRef['zPos'][0,-1,jPs:jPe,iPs:iPe].values, axis=(0,1)) > zTop and zTop > np.max(ds_WRFRef['zPos'][0,0,jPs:jPe,iPs:iPe].values,axis=(0,1)):
+    kMaxPrnt = np.min(np.where(np.min(ds_WRFRef['zPos'][0,:,jPs:jPe,iPs:iPe].values,axis=(1,2))>zTop))+1
+    print(f"Established kMaxPrnt = {kMaxPrnt} of {ds_WRFRef.sizes['zIndex']} total k-levels...")
+  else:
+    print(f"Error zTop = {zTop} is not within parent domain vertical bounds.\n Exiting Now!")
+    exit()
 ##############################################################################
 ### Create lists of relevant variable names in the WRF-FE coupling process ###
 ##############################################################################
-varsList = ['Z','ALT','U','V','W','T','QVAPOR','QCLOUD']
-surfVarsList = ['TSK','Q2','HGT','PSFC']  #Note: Q2 in absence of QVG (which is not in wrfout by deafult) from WRF
-FEvarsList = ['rho','u','v','w','theta','qv','ql']
-FEsurfVarsList = ['tskin','qskin','topoWRF','psfc','SeaMask']
+fe_low_tke = 1.0e-10;
+FEvarsList = ['rho','u','v','w','theta','qv','ql','TKE_0']
+FEsurfVarsList = ['tskin','qskin']
+FEvar_mp = ['qv','ql']
+if (parent_model == 0):
+    varsList = ['Z','ALT','U','V','W','T','QVAPOR','QCLOUD','QKE']
+    surfVarsList = ['TSK','Q2','HGT','PSFC']  #Note: Q2 in absence of QVG (which is not in wrfout by deafult) from WRF
+elif (parent_model == 1):
+    varsList = ['zPos','rho','u','v','w','theta','qv','ql','TKE_0']
+    surfVarsList = ['tskin','qskin','topoPos']
 
 #######################################################################
 ### Finally go ahead and create the initial and boundary conditions ###
@@ -352,36 +521,57 @@ for Bdy_file_num in range(it00,it11):
   if not(os.path.isfile(bdyFileName)):
     print('{:d}{:d}: {:s} does not exist, creating it...'.format(mpi_rank, mpi_size, bdyFileName))
     print("{:d}{:d}: Working on file {:s}".format(mpi_rank, mpi_size, files_list[Bdy_file_num]))
-    ds_ref = xr.open_mfdataset(files_list[Bdy_file_num],combine='nested',concat_dim='Time')
+    #ds_ref = xr.open_mfdataset(files_list[Bdy_file_num],combine='nested',concat_dim=name_concat_dim)
+    ds_ref = xr.open_dataset(files_list[Bdy_file_num])
 
     t0s = time.perf_counter()
-    dsWRF=interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent)
+    if parent_model == 0:
+       dsWRF=interpWRFToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent)
+    else:
+       dsWRF=interpFEToGrids(ds_ref,it0,varsList,surfVarsList,zRect,ll_iindx,i_extent,ll_jindx,j_extent,kMaxPrnt)
+
     t0e = time.perf_counter()
     print('{:d}/{:d}: t0_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t0e-t0s))
     t1s = time.perf_counter()
-    ds=copyAndTranspose(dsWRF)
+    if parent_model == 0:  ### Only needed if parent model is WRF
+       ds=copyAndTranspose(dsWRF)
+    else:
+       ds=dsWRF
     t1e = time.perf_counter()
     print('{:d}/{:d}: t1_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t1e-t1s))
     t2s = time.perf_counter()
-    dsFENew=interp2DForFE(ds,ds_FEGrid,XvWRF,YvWRF,xVec,yVec)
+    #dsFENew=interp2DForFE(ds,ds_FEGrid,XvWRF,YvWRF,xVec,yVec)
+    dsFENew=interp2DForFE(ds,ds_FEGrid,XvWRF,YvWRF,xVec,yVec,parent_model)
     t2e = time.perf_counter()
     print('{:d}/{:d}: t2_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t2e-t2s))
     t3s = time.perf_counter()
-    dsFEFinal=create_dsFEFinal(ds_FEGrid)
-    verticalInterpFinal(ds_FEGrid,dsFENew,dsFEFinal,zRect)
+    dsFEFinal=create_dsFEFinal(ds_FEGrid,parent_model)
+    verticalInterpFinal(ds_FEGrid,dsFENew,dsFEFinal,zRect,parent_model)
     if 'BuildingMask' in list(dsFEFinal.variables):
        for var in ['u','v','w','ql','TKE_0']:
           if var in list(dsFEFinal.variables):
             dsFEFinal[var][:,:,:]=dsFEFinal[var][:,:,:]*np.where((dsFEFinal['BuildingMask'][:,:,:]>1e-3),0.0,1.0)
+    if (not nest_tke_opt):
+        print(f"Zeroing out TKE_0 since nest_tke_opt={nest_tke_opt}")
+        dsFEFinal['TKE_0'][:,:,:] = fe_low_tke;
+    else: # clip TKE_0 to avoid very small and negative values
+        dsFEFinal['TKE_0'][:,:,:] = np.clip(dsFEFinal['TKE_0'][:,:,:],a_min=fe_low_tke,a_max=None)
+    # ensure moisture and hydrometeors are not negative
+    for var_mp in FEvar_mp:
+        if var_mp in FEvarsList:
+            dsFEFinal[var_mp][:,:,:] = np.clip(dsFEFinal[var_mp][:,:,:],a_min=0.0,a_max=None)
     t3e = time.perf_counter()
     print('{:d}/{:d}: t3_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t3e-t3s))
     addTimeDim_FEfinal(dsFEFinal)
     if Bdy_file_num == 0:
-        timeLabel="{:02d}{:02d}{:02d}UTC".format(timeHour0,timeMinute0,timeSecond0)
+        if parent_model == 0:
+          timeLabel="{:02d}{:02d}{:02d}UTC".format(timeHour0,timeMinute0,timeSecond0)
+        elif parent_model == 1:
+          timeLabel=f"{itMin}"
         dsFEFinal.to_netcdf(ICBC_dir+'FE_interp_{:s}.{:d}'.format(timeLabel,0),format='NETCDF4',
                             encoding={'xIndex': {'dtype': 'i4'},'yIndex': {'dtype': 'i4'},'zIndex': {'dtype': 'i4'}})
     t4s = time.perf_counter()
-    ds_Bdy=create_dsBdy(ds_FEGrid,FEvarsList,FEsurfVarsList)
+    ds_Bdy=create_dsBdy(ds_FEGrid,FEvarsList,FEsurfVarsList,parent_model)
     t4e = time.perf_counter()
     print('{:d}/{:d}: t4_elapsed = {:f} (s)'.format(mpi_rank, mpi_size, t4e-t4s))
     t5s = time.perf_counter()

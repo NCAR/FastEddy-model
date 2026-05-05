@@ -11,6 +11,7 @@ import matplotlib
 import math
 import struct
 from scipy.interpolate import RectBivariateSpline, NearestNDInterpolator
+from skimage.measure import block_reduce
 from couplingUtils import *
 
 #######################################
@@ -29,6 +30,9 @@ center_lon = params["center_lon"]
 urban_opt = params["urban_opt"]
 FE_new_nc_path = params["FE_new_nc_path"]
 name_dom_add = params["name_dom_add"]
+urban_heatRedis_opt = params["urban_heatRedis_opt"]
+landcover_table = params["landcover_table"]
+topo_average_opt = params["topo_average_opt"]
 save_plot_opt = params["save_plot_opt"]
 
 #######################################
@@ -85,16 +89,16 @@ print('yPos_2d[y_s,x_s]=',yPos_2d[y_s,x_s],'m')
 
 ##
 
-npx_inc = int(d_xi/dx_inter)
-npy_inc = int(d_eta/dy_inter)
-if (npx_inc==0):
-    npx_inc = d_xi/dx_inter
-    npy_inc = d_eta/dy_inter
-    x_e = x_s + int(np.ceil(Nx*npx_inc))
-    y_e = y_s + int(np.ceil(Ny*npy_inc))
-else:
+if ((d_xi % dx_inter) == 0.0 and d_xi >= dx_inter):
+    npx_inc = int(d_xi/dx_inter)
+    npy_inc = int(d_eta/dy_inter)
     x_e = x_s + Nx*npx_inc
     y_e = y_s + Ny*npy_inc
+else:
+    npx_inc = d_xi/dx_inter
+    npy_inc = d_eta/dy_inter
+    x_e = x_s + int(np.ceil((Nx-1)*npx_inc)) + 1
+    y_e = y_s + int(np.ceil((Ny-1)*npy_inc)) + 1
 print('x_s,x_e,y_s,y_e=',x_s,x_e,y_s,y_e)
 
 box_indx = [x_s,x_e,x_e,x_s,x_s]
@@ -113,7 +117,9 @@ else:
     print('Grid is not an even factor of GIS resolution, use interpolation')
     interp_flag = 1
 print('interp_flag=',interp_flag)
-
+if (topo_average_opt==1):
+    print('Using block averaging for topography')
+    
 verticalDeformSwitch = int(str(FE_params['verticalDeformSwitch'][0]))
 print('verticalDeformSwitch=',verticalDeformSwitch)
 if (verticalDeformSwitch==1):
@@ -130,23 +136,27 @@ print('c1,fCoeff=',c1,fCoeff)
 ## Read in terrain elevation array
 topo = ds_GIS.topoPos.values
 if (interp_flag==0):
-    data_topo0 = topo[y_s:y_e:npy_inc,x_s:x_e:npx_inc]
+    if (topo_average_opt==0):
+        data_topo0 = topo[y_s:y_e:npy_inc,x_s:x_e:npx_inc]
+    else:
+        data_topo0 = block_reduce(topo[y_s:y_e,x_s:x_e], block_size=(int(d_eta/dy_inter),int(d_xi/dx_inter)), func=np.mean)
 else:
     xPos_2d_dom_ori = xPos_2d[y_s:y_e,x_s:x_e]
     yPos_2d_dom_ori = yPos_2d[y_s:y_e,x_s:x_e]
-    topo_dom_ori = topo[y_s:y_e,x_s:x_e]
     print('xPos_2d_dom_ori.shape=',xPos_2d_dom_ori.shape)
-    f_topo = RectBivariateSpline(xPos_2d_dom_ori[0,:], yPos_2d_dom_ori[:,0], topo_dom_ori.T, kx=3, ky=3)
-
     xPos_1d_new = np.arange(x_box_corners[0],x_box_corners[1],d_xi)
     yPos_1d_new = np.arange(y_box_corners[0],y_box_corners[2],d_eta)
-
-    data_topo0_b = f_topo(xPos_1d_new, yPos_1d_new).T
     xPos_2d_new_b, yPos_2d_new_b = np.meshgrid(xPos_1d_new, yPos_1d_new)
-
-    data_topo0 = data_topo0_b[0:Ny,0:Nx]
     xPos_2d_new = xPos_2d_new_b[0:Ny,0:Nx]
     yPos_2d_new = yPos_2d_new_b[0:Ny,0:Nx]
+
+    topo_dom_ori = topo[y_s:y_e,x_s:x_e]
+    if (topo_average_opt==0):
+        f_topo = RectBivariateSpline(xPos_2d_dom_ori[0,:], yPos_2d_dom_ori[:,0], topo_dom_ori.T, kx=3, ky=3)
+        data_topo0_b = f_topo(xPos_1d_new, yPos_1d_new).T
+        data_topo0 = data_topo0_b[0:Ny,0:Nx]
+    else:
+        data_topo0 = block_average_topo(topo_dom_ori,dx_inter,dy_inter,d_xi,d_eta,Nx,Ny)
 
 data_topo = smoothTerrain(data_topo0,d_xi)
 
@@ -236,7 +246,7 @@ if (urban_opt == 1):
     if (interp_flag==0):
         data_bmask = bdg_heights[y_s:y_e:npy_inc,x_s:x_e:npx_inc]
     else:
-        f_bdg = NearestNDInterpolator(list(zip(xPos_2d_dom_ori.flatten(), yPos_2d_dom_ori.flatten())), data_bmask[y_s:y_e,x_s:x_e].flatten())
+        f_bdg = NearestNDInterpolator(list(zip(xPos_2d_dom_ori.flatten(), yPos_2d_dom_ori.flatten())), bdg_heights[y_s:y_e,x_s:x_e].flatten())
         data_bmask = f_bdg(xPos_2d_new, yPos_2d_new)
 
     bdg3d_tmp = np.zeros((Nz,Ny,Nx),dtype=np.float32)
@@ -300,6 +310,13 @@ else:
     lat_dom = lat_dom_b[0:Ny,0:Nx]
     lon_dom = lon_dom_b[0:Ny,0:Nx]
 
+# Surface heat flux redistribution
+
+if (urban_opt == 1 and urban_heatRedis_opt == 1):
+    z0_original, z0_modified = read_lc_table(landcover_table)
+    z1 = zarr[0,:,:]-data_topo
+    shfr = SHFR_process_polygons(data_landc,data_bmask,z1,z0_original,z0_modified)
+
 # Save to netCDF file
 
 ds_data = xr.Dataset()
@@ -315,6 +332,8 @@ ds_data['LandCover']= xr.DataArray(data_landc.astype(dtype=np.int32),dims=(['yIn
 if (urban_opt == 1):
     ds_data['BuildingMask']= xr.DataArray(bdg3d_tmp.astype(dtype=np.float32),dims=(['zIndex','yIndex','xIndex']))
     ds_data['BuildingHeights']= xr.DataArray(data_bmask.astype(dtype=np.float32),dims=(['yIndex','xIndex']))
+    if (urban_heatRedis_opt == 1):
+        ds_data['UrbanHeatRedis']= xr.DataArray(shfr.astype(dtype=np.float32),dims=(['yIndex','xIndex']))
 ds_data['lat']= xr.DataArray(lat_dom.astype(dtype=np.float64),dims=(['yIndex','xIndex']))
 ds_data['lon']= xr.DataArray(lon_dom.astype(dtype=np.float64),dims=(['yIndex','xIndex']))
 ds_data['xIndex']= xr.DataArray(np.arange(0,xarr.shape[2],dtype=np.int32),dims='xIndex')
