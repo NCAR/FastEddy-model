@@ -882,6 +882,60 @@ int calculateJacobians(){
    return(errorCode);
 } //end calculateJacobians
 
+/*----->>>>> int gridGetRankFromXYPosition();    ------------------------------------------------------------
+* Used to determine the i,j indices of an mpi_rank subdomain 
+* coordinate frame of the cell that contains the point xLoc,Yloc.
+*/
+int gridGetIJindsFromXYPosition(float xLoc, float yLoc, int *iIndx, int *jIndx){
+   int errorCode = GRID_SUCCESS;
+   int i,j,ijk;
+   *iIndx = -1;
+   *jIndx = -1;
+   for(i=iMin; i < iMax; i++){
+     for(j=jMin; j < jMax; j++){
+       ijk = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+kMin;
+       if(    (xLoc > (xPos[ijk]-0.5*d_xi) && xLoc <= (xPos[ijk]+0.5*d_xi)) 
+           && (yLoc > (yPos[ijk]-0.5*d_eta) && yLoc <= (yPos[ijk]+0.5*d_eta)) ){  
+          *iIndx = i; 
+          *jIndx = j; 
+       }
+     }
+   }
+   if((*iIndx < iMin) || (*jIndx < jMin)){
+     printf("Rank %d/%d: gridGetIJindsFromXYPosition(): Tower indices not found in this rank's subdomain!\n",
+            mpi_rank_world, mpi_size_world);
+     fflush(stdout);
+   } 
+   return (errorCode);
+} //end gridGetIJindsFromXYPosition()
+
+/*----->>>>> int gridGetRankFromXYPosition();    ------------------------------------------------------------
+* Used to determine the mpi_rank with a subdomain
+* that contains the xLoc,Yloc.
+*/
+int gridGetRankFromXYPosition(float xLoc, float yLoc){
+   int errorCode = GRID_SUCCESS;
+   int ret_rank;
+   int tmp_ret_rank = -1;
+   int ijk_min;
+   int ijk_max;
+   ijk_min = iMin*(Nyp+2*Nh)*(Nzp+2*Nh)+jMin*(Nzp+2*Nh)+kMin;
+   ijk_max = iMax*(Nyp+2*Nh)*(Nzp+2*Nh)+jMax*(Nzp+2*Nh)+kMin;
+   if( (xPos[ijk_min]-0.5*d_xi < xLoc) && (yPos[ijk_min]-0.5*d_eta < yLoc) ){
+     if( (xPos[ijk_max]+0.5*d_xi >= xLoc) && (yPos[ijk_max]+0.5*d_eta >= yLoc) ){
+       tmp_ret_rank = mpi_rank_world;
+     }
+   }
+   errorCode = MPI_Allreduce(&tmp_ret_rank, &ret_rank, 1,
+                             MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD);
+   if(errorCode != MPI_SUCCESS){
+     printf("Rank %d/%d gridGetRankFromXYPosition(): MPI_Allreducei returned with MPI_ERROR = %d!\n",
+            mpi_rank_world, mpi_size_world, errorCode);
+     fflush(stdout);
+   }
+   return (ret_rank);
+} //end gridGetRankFromXYPosition() 
+
 /*----->>>>> int singleRankGridHaloInit();    ------------------------------------------------------------
 * Used to setup xPos,yPos,zPos halos on all x-y boundaries 
 * when under single-rank setup (i.e. mpi_size_world ==1).

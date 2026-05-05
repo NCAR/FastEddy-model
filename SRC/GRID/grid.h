@@ -97,6 +97,18 @@ int gridSecondaryPreparations();
 */
 int calculateJacobians();
 
+/*----->>>>> int gridGetRankFromXYPosition();    ------------------------------------------------------------
+* Used to determine the mpi_rank with a subdomain
+* that contains the xLoc,Yloc.
+*/
+int gridGetIJindsFromXYPosition(float xLoc, float yLoc, int *iIndx, int *jIndx);
+
+/*----->>>>> int gridGetRankFromXYPosition();    ------------------------------------------------------------
+* Used to determine the mpi_rank with a subdomain
+* that contains the xLoc,Yloc.
+*/
+int gridGetRankFromXYPosition(float xLoc, float yLoc);
+
 /*----->>>>> int singleRankGridHaloInit();    ------------------------------------------------------------
 * Used to setup xPos,yPos,zPos halos on all x-y boundaries 
 * when under single-rank setup (i.e. mpi_size_world ==1).
