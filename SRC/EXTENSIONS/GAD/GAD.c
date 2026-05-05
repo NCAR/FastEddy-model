@@ -665,11 +665,12 @@ int GADConstructor(){
 int GADInitTurbineRefChars(float dt){
   int errorCode = GAD_SUCCESS;
   int iturb,i,j,k;
-  int ijk;
+  int ijk,ijkp1,ijkm1;
   int ij;
   float rVec;
   float rVec0;
   float deltaz, deltaz0;
+  float deltaz_p1, deltaz_m1;
   
   /*Initialize requisite parameters for the RefMag and RefDir calculations*/
   GADsamplingAvgLength = (int) floor(GADrefSampleWindow/dt);    //Determine the number of model timesteps in a sample window (high frequencies filter)
@@ -702,30 +703,39 @@ int GADInitTurbineRefChars(float dt){
     }//end if inFile == NULL
     for(i=iMin-Nh; i < iMax+Nh; i++){
       for(j=jMin-Nh; j < jMax+Nh; j++){
-        for(k=kMin-Nh; k < kMax+Nh; k++){
+        for(k=kMin-Nh+1; k < kMax+Nh-1; k++){
            ijk = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+k;
            ij = i*(Nyp+2*Nh)+j;
+           ijkp1 = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+(k+1);
+           ijkm1 = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+(k-1);
            rVec = sqrt( pow((GAD_Xcoords[iturb]-xPos[ijk]),2.0)
                        +pow((GAD_Ycoords[iturb]-yPos[ijk]),2.0));
-           if(rVec <= sqrt(pow(dX,2.0)+pow(dY,2.0))){ //Should be a candiate gridcell for (nacelle center) reference location
-	     if(rVec <= rVec0){
-	       if(rVec < rVec0){
+           if((rVec <= sqrt(pow(dX,2.0)+pow(dY,2.0))) && (rVec <= rVec0)){ //Should be a candiate gridcell for (nacelle center) reference location
+	     if(rVec < rVec0){
+	         printf("%d/%d: iturb = %d, rVec = %.9f, rVec0 = %.9f\n",
+                      mpi_rank_world,mpi_size_world, iturb, rVec, rVec0);
 	         rVec0 = rVec;
 	         GAD_turbineRank[iturb] = mpi_rank_world; 
                  GAD_turbineRefi[iturb] = i;
 	         GAD_turbineRefj[iturb] = j;
-	       }
-	       deltaz = sqrt(pow((GAD_hubHeights[GAD_turbineType[iturb]]-(zPos[ijk]-topoPos[ij])),2.0));
+	     }
+	     if ((GAD_turbineRank[iturb]==mpi_rank_world) && (GAD_turbineRefi[iturb]==i) && (GAD_turbineRefj[iturb]==j)){
+	       deltaz = fabsf(GAD_hubHeights[GAD_turbineType[iturb]]-(zPos[ijk]-topoPos[ij]));
+	       deltaz_p1 = GAD_hubHeights[GAD_turbineType[iturb]]-(zPos[ijkp1]-topoPos[ij]);
+	       deltaz_m1 = GAD_hubHeights[GAD_turbineType[iturb]]-(zPos[ijkm1]-topoPos[ij]);
 #ifdef DEBUG_TURBCHAR
-               printf("%d/%d: deltaz = %f, 0.5/(J33[ijk]*dZi)) = %f\n",
-                      mpi_rank_world,mpi_size_world, deltaz, 0.5/(J33[ijk]*dZi));
+               printf("%d/%d: iturb = %d, deltaz = %.9f, deltaz0 = %.9f, deltaz_m1 = %.9f, deltaz_p1 = %.9f\n",
+                      mpi_rank_world,mpi_size_world, iturb, deltaz, deltaz0, deltaz_m1, deltaz_p1);
 #endif
-               if(deltaz <= 0.5/(J33[ijk]*dZi)){         // 1/(J33[ijk]*dZi)) = dz of cell
+               if((deltaz_m1 > 0.0) && (deltaz_p1 < 0.0) && (deltaz < deltaz0)){
 		 deltaz0 = deltaz;      
 		 GAD_turbineRefk[iturb] = k;      
+#ifdef DEBUG_TURBCHAR
+		 printf("%d/%d: iturb = %d, k = %d, j=%d, i=%d, deltaz = %.9f, deltaz0 = %.9f\n", mpi_rank_world,mpi_size_world, iturb, k, j, i, deltaz, deltaz0); 
+#endif
                }//end if vertical delta < dz ...
-             }//end if rVec < rVec0...
-           }//end if rVec...
+	     }// end if GAD_turbine...
+           }//end if rVec<=...
         } //end for(k...
       } // end for(j...
     } // end for(i...

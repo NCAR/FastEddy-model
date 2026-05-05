@@ -236,7 +236,7 @@ extern "C" int cuda_GADDeviceCleanup(){
      cudaFree(GAD_turbineVseries_d);
      cudaFree(u_sampAvg_d);
      cudaFree(v_sampAvg_d);
-     cudaFree(GAD_yawError);
+     cudaFree(GAD_yawError_d);
      cudaFree(GAD_anFactor_d);
      cudaFree(GAD_Xcoords_d);
      cudaFree(GAD_Ycoords_d);
