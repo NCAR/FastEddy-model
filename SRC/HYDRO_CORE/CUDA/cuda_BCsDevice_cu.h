@@ -59,11 +59,6 @@ extern "C" int cuda_BCsDeviceSetup();
 */
 extern "C" int cuda_BCsDeviceCleanup();
 
-/*----->>>>> int cuda_hydroCoreDeviceSecondaryStageSetup(float dt); -----------------------------------------------------------------
-* Secondary initializations at the device level for BCs  
-*/
-extern "C" int cuda_hydroCoreDeviceSecondaryStageSetup(float dt);
-
 /*----->>>>> int cuda_hydroCoreDeviceBdyPlanesUpdate();      -----------------------------------------------------------------
 * Utility to cycle device-sided pointers and push (copy) newest BndyPlanes from Host to Device
 */

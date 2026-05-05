@@ -149,22 +149,6 @@ extern "C" int cuda_BCsDeviceCleanup(){
 
 }//end cuda_moistureDeviceCleanup()
 
-/*----->>>>> int cuda_hydroCoreDeviceSecondaryStageSetup(); ---------------------------------------------------------
-* Secondary initializations at the device level for BCs  
-*/
-extern "C" int cuda_hydroCoreDeviceSecondaryStageSetup(float dt){
-    int errorCode = CUDA_HYDRO_CORE_SUCCESS;
-    int BdyUpdateSteps;
-
-    /*Compute the number of timesteps between BndyPlane Updates*/ 
-    BdyUpdateSteps = (int) roundf(dtBdyPlaneBCs/dt);
-    cudaMemcpyToSymbol(BdyUpdateSteps_d, &BdyUpdateSteps, sizeof(int));
-
-    printf("%d/%d cuda_hydroCoreDeviceSecondaryStageSetup(): BdyUpdateSteps = %d \n",mpi_rank_world,mpi_size_world,BdyUpdateSteps);
-    fflush(stdout);
-    return(errorCode);
-}
-
 /*----->>>>> int cuda_hydroCoreDeviceBdyPlanesUpdate();      -----------------------------------------------------------------
 * Utility to cycle device-sided pointers and push (copy) newest BndyPlanes from Host to Device 
 */

@@ -52,8 +52,8 @@ extern "C" int cuda_coriolisDeviceCleanup(){
    int errorCode = CUDA_CORIOLIS_SUCCESS;
 
    /* Free any CORIOLIS submodule arrays */
-   cudaFree(lat);
-   cudaFree(lon);
+   cudaFree(lat_d);
+   cudaFree(lon_d);
 
    return(errorCode);
 
