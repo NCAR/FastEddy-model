@@ -268,8 +268,8 @@ int ioWriteBinaryTowerInitialFile(float dt, int itStart, int Nx, int Ny, int Nz,
        //--------------Tower time-independent variables  
        fwrite(&Nz,sizeof(int),1,output_ptr);
        fwrite(&zCoords[ijk],Nz*sizeof(float),1,output_ptr);
-       fwrite(&yCoords[ij],sizeof(float),1,output_ptr);
-       fwrite(&xCoords[ij],sizeof(float),1,output_ptr);
+       fwrite(&yCoords[ijk],sizeof(float),1,output_ptr);
+       fwrite(&xCoords[ijk],sizeof(float),1,output_ptr);
        fwrite(&topoFld[ij],sizeof(float),1,output_ptr);
     
        /*Write the batch of tower instances to the output file*/
