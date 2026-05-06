@@ -1922,7 +1922,7 @@ int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int
 
    rank_nTowers = 0;
    towerInstanceSize = Nz*(registered3dVars-4); // r3dV-4 since no x,y,zPos, or pressure
-   towerSurfInstanceSize = (registered2dVars-3); // r2dV-3 since no topoPos, lat or lon
+   towerSurfInstanceSize = (registered2dVars-(3+surflayer_offshore)); // r2dV-(3+surflayer_offshore) since no (topoPos, lat, lon + seamask) 
    //Count the number of towers in a given mpi_rank's subdomain        
    for(itower = 0; itower < nProfs; itower++){
       if(towProfs.mpi_ranks[itower]==mpi_rank_world){
@@ -1980,11 +1980,14 @@ int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int
 
 	for(k=kMin; k < kMax; k++){
            ijk = i*iStride + j*jStride + k*kStride;
+	   printf("k = %d ------- \n",k);
            for(iFld=0; iFld < Nhydro; iFld++){
               towIndx = towerBaseAddress + towerFld_cnt*towerFld_size + k-Nh;
               towersData[towIndx] = hydroFlds[iFld*fldStride+ijk];
               towerFld_cnt += 1;
+	      printf("%f ",towersData[towIndx]); //hydroFlds[iFld*fldStride+ijk]);
            }//end for iFld
+	   printf("\n");
 	   for(iFld=0; iFld < TKESelector*turbulenceSelector; iFld++){
               towIndx = towerBaseAddress + towerFld_cnt*towerFld_size + k-Nh;
               towersData[towIndx] = sgstkeScalars[iFld*fldStride+ijk];
@@ -2000,7 +2003,7 @@ int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int
               towersData[towIndx] = hydroAuxScalars[iFld*fldStride+ijk];
               towerFld_cnt += 1;
            }
-           for(iFld=0; iFld < 9; iFld++){      //There are 6 Tau^i-j and 3 tau^Theta-j
+           for(iFld=0; iFld < hydroSubGridWrite*9; iFld++){      //There are 6 Tau^i-j and 3 tau^Theta-j
               towIndx = towerBaseAddress + towerFld_cnt*towerFld_size + k-Nh;
               towersData[towIndx] = hydroTauFlds[iFld*fldStride+ijk];
               towerFld_cnt += 1;

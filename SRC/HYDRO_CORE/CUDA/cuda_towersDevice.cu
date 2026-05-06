@@ -81,6 +81,7 @@ __global__ void cudaDevice_towerAppendBuffers(int itBatch, int batchSize,
                                               int Nmoist, float *moistScalars_d,
                                               int NauxSc, float *hydroAuxScalars_d,
                                               int Ntaus, float *hydroTauFlds_d,
+                                              int NtausMoist, float *moistTauFlds_d,
                                               float *z0m_d, float *z0t_d, float *tskin_d, float *qskin_d,
                                               float *fricVel_d, float *invOblen_d, float *htFlux_d, float *qFlux_d){
    
@@ -137,6 +138,11 @@ __global__ void cudaDevice_towerAppendBuffers(int itBatch, int batchSize,
          for(iFld=0; iFld < Ntaus; iFld++){
             towIndx = towerBaseAddress + itBatch*towerInstanceSize_d + towerFld_cnt*towerFld_size + k-Nh_d;
             towersData_d[towIndx] = hydroTauFlds_d[iFld*fldStride+ijk];
+	    towerFld_cnt += 1;
+	 }
+         for(iFld=0; iFld < NtausMoist; iFld++){
+            towIndx = towerBaseAddress + itBatch*towerInstanceSize_d + towerFld_cnt*towerFld_size + k-Nh_d;
+            towersData_d[towIndx] = moistTauFlds_d[iFld*fldStride+ijk];
 	    towerFld_cnt += 1;
 	 }
 	 if(k == kMin_d){

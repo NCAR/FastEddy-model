@@ -165,7 +165,8 @@ extern "C" int cuda_timeIntDeviceCommence(int it){
                                                          TKESelector*turbulenceSelector, sgstkeScalars_d,
                                                          moistureNvars*moistureSelector, moistScalars_d, 
                                                          NhydroAuxScalars, hydroAuxScalars_d, 
-                                                         Ntaus, hydroTauFlds_d, 
+                                                         hydroSubGridWrite*Ntaus, hydroTauFlds_d, 
+							 hydroSubGridWrite*moistureNvars*3, moistTauFlds_d,
 						         z0m_d, z0t_d, tskin_d, qskin_d, 
 						         fricVel_d, invOblen_d, htFlux_d, qFlux_d); 
 

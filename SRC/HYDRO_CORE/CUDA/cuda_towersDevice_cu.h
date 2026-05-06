@@ -52,6 +52,7 @@ __global__ void cudaDevice_towerAppendBuffers(int itBatch, int batchSize,
                                               int Nmoist, float *moistScalars_d,
                                               int NauxSc, float *hydroAuxScalars_d,
                                               int Ntaus, float *hydroTauFlds_d,
+					      int NtausMoist, float *moistTauFlds_d,
                                               float *z0m_d, float *z0t_d, float *tskin_d, float *qskin_d,
                                               float *fricVel_d, float *invOblen_d, float *htFlux_d, float *qFlux_d);
 
