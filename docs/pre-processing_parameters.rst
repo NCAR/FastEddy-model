@@ -1,0 +1,69 @@
+*****************************************
+Pre-Processing Parameters Reference Guide
+*****************************************
+
+.. |br| raw:: html
+
+   <br/>
+
+This page defines the configurable pre-processing parameters available in
+FastEddy\ :sup:`®`. Parameters are organized by the JSON file in which
+they appear.
+
+Each table provides the:
+
+  * Name
+  * Description
+
+These definitions serve as a reference to ensure correct configuration.
+
+geospec.json
+============
+
+.. csv-table::
+   :file: csv/geospec.csv
+   :header-rows: 1
+   :delim: ;
+   :class: preprocessing
+
+
+simgrid.json
+============
+
+.. csv-table::
+   :file: csv/simgrid.csv
+   :header-rows: 1
+   :delim: ;
+   :class: preprocessing
+
+genicbcs.json
+=============
+
+.. csv-table::
+   :file: csv/genicbcs_top.csv
+   :header-rows: 1
+   :delim: ;
+   :class: preprocessing
+
+WRF as Parent Domain Section
+----------------------------
+
+Active only when parent_model=0.
+
+.. csv-table::
+   :file: csv/genicbcs_wrf.csv
+   :header-rows: 1
+   :delim: ;
+   :class: preprocessing
+
+
+FastEddy as Parent Domain Section
+---------------------------------
+
+Active only when parent_model = 1.
+
+.. csv-table::
+   :file: csv/genicbcs_fe.csv
+   :header-rows: 1
+   :delim: ;
+   :class: preprocessing
