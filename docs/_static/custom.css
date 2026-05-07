@@ -4,6 +4,13 @@
     width: 100% !important;
 }
 
+/* Force preprocessing width control - MUST use fixed layout for width control */
+.preprocessing table {
+    table-layout: fixed !important;   /* Required for width specifications to work */
+    width: 100% !important;
+}
+
+
 /* Override RTD theme responsive behavior */
 .wy-table-responsive {
     overflow: visible !important;
@@ -23,6 +30,15 @@
     text-overflow: ellipsis !important; /* show "…" for cut-off text */
 }
 
+/* Prevent wrapping in all columns by default */
+.preprocessing td,
+.preprocessing th {
+    padding: 4px 6px !important;      /* Default is usually 8px 12px */
+    white-space: nowrap !important;   /* keep text on one line */
+    overflow: hidden !important;      /* hide overflow if needed */
+    text-overflow: ellipsis !important; /* show "…" for cut-off text */
+}
+
 /* Allow wrapping ONLY in the Description column (6th column) */
 .longtable td:nth-child(1),
 .longtable th:nth-child(1) {
@@ -31,6 +47,16 @@
     overflow: visible !important;
     text-overflow: unset !important;
 }
+
+/* Allow wrapping ONLY in the Description column (2nd column) */
+.preprocessing td:nth-child(2),
+.preprocessing th:nth-child(2) {
+    white-space: normal !important;   /* wrapping allowed */
+    word-wrap: break-word !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+}
+
 
 /* Fixed widths for each column */
 .longtable td:nth-child(1),
@@ -55,4 +81,9 @@
     font-style: italic;
 }
 
+/* Fixed widths for each column */                                                                                                                                                                                  
+.preprocessing td:nth-child(1),
+.preprocessing th:nth-child(1) { width: 22% !important; }  /* Name */
 
+.preprocessing td:nth-child(2),
+.preprocessing th:nth-child(2) { width: 78% !important; }   /* Description */
