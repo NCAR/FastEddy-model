@@ -7,7 +7,9 @@ Pre-Processing Parameters Reference Guide
    <br/>
 
 This page defines the configurable pre-processing parameters available in
-FastEddy\ :sup:`®`. Parameters are organized by the JSON file in which
+FastEddy\ :sup:`®` and provides a workflow image.
+
+Parameters are organized by the JSON file in which
 they appear.
 
 Each table provides the:
@@ -16,6 +18,17 @@ Each table provides the:
   * Description
 
 These definitions serve as a reference to ensure correct configuration.
+
+
+.. figure:: /_static/FastEddy_Pre-Processing_Workflow_Gemini.png
+   :alt: FastEddy Pre-Processing Workflow Diagram
+   :align: center
+   :width: 100%
+
+   FastEddy Pre-Processing Workflow Diagram
+   
+   *Source: Google. (2026). Gemini (Version 3 Flash) [Large language model]. https://gemini.google.com*
+
 
 geospec.json
 ============
