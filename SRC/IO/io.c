@@ -321,12 +321,9 @@ int ioProfilePreparations(){
   }
   if(mpi_rank_world == 0){
     start[0] = 0;
-    sprintf(fldName,"profIDs");
-    if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
-       ERR(errorCode);
-    } //if nc_inq_varid
-    if ((errorCode = nc_get_vara_int(ncid, ncfldid, &start[0], &count[dimids[0]], towerProfiles.profIDs )) ){
-       ERR(errorCode);
+    //Setup the profIDs (these are common profile indices, shared across all ranks)
+    for(iprofile = 0; iprofile < nProfs; iprofile++){
+       towerProfiles.profIDs[iprofile] = iprofile;
     }
     sprintf(fldName,"coordTypes");
     if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){

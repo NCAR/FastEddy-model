@@ -1980,14 +1980,14 @@ int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int
 
 	for(k=kMin; k < kMax; k++){
            ijk = i*iStride + j*jStride + k*kStride;
-	   printf("k = %d ------- \n",k);
+	   //printf("k = %d ------- \n",k);
            for(iFld=0; iFld < Nhydro; iFld++){
               towIndx = towerBaseAddress + towerFld_cnt*towerFld_size + k-Nh;
               towersData[towIndx] = hydroFlds[iFld*fldStride+ijk];
               towerFld_cnt += 1;
-	      printf("%f ",towersData[towIndx]); //hydroFlds[iFld*fldStride+ijk]);
+	     // printf("%f ",towersData[towIndx]); //hydroFlds[iFld*fldStride+ijk]);
            }//end for iFld
-	   printf("\n");
+	   //printf("\n");
 	   for(iFld=0; iFld < TKESelector*turbulenceSelector; iFld++){
               towIndx = towerBaseAddress + towerFld_cnt*towerFld_size + k-Nh;
               towersData[towIndx] = sgstkeScalars[iFld*fldStride+ijk];
