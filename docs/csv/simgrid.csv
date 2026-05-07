@@ -1,0 +1,13 @@
+Name; Description
+name_dom; The base domain name string used as a prefix for output filenames.
+FE_ref_GIS_nc; Full path to the GeoSpec output netCDF file produced by GeoSpec.py. |br| This is a required upstream dependency.
+FE_params_file; Full path to the FastEddy parameters file (.in) containing grid dimensions and resolution.
+center_lat; Latitude (decimal degrees) of the desired simulation domain center. |br| Used to locate the nearest point in the GIS dataset and anchor the simulation grid.
+center_lon; Longitude (decimal degrees) of the desired simulation domain center. |br| Used with ‘center_lat’ to define grid placement.
+urban_opt; Enables urban building processing. |br| If 0: building fields are not computed or written. |br| If 1: reads BuildingHeights from the GeoSpec netCDF, constructs a 3-D building mask array (BuildingMask), and writes both to the output. Must match the value set in GeoSpec.
+FE_new_nc_path; Output directory for the SimGrid netCDF, binary terrain file (name_dom_Topography_NxN.dat), and optional diagnostic plot. |br| Created automatically if it does not exist.
+name_dom_add; Optional suffix appended to ‘name_dom’ in output filenames. |br| Can be empty.
+urban_heatRedis_opt; Enables urban surface heat flux redistribution. Only evaluated when urban_opt=1. |br| If 0: heat redistribution field is not computed. |br| If 1: reads z0 lookup tables from ‘landcover_table’ and computes a 2-D UrbanHeatRedis field written to the output netCDF file.
+landcover_table; Full path to the land-cover CSV lookup table. Only read when urban_opt=1 and urban_heatRedis_opt=1. |br| Used to determine original and modified z0 values for heat flux redistribution over urban areas. Requires a fourth column with the modified z0 corresponding to surface vegetation only (excluding the building contribution).
+topo_average_opt; Controls how terrain elevation is resampled from the GIS resolution to the simulation grid resolution. |br| If 0: direct sampling or interpolation. Nearest-neighbor decimation when the simulation grid is an integer multiple of GIS resolution, spline interpolation otherwise. |br| If 1: block averaging smooths sub-grid terrain variability (prevents aliasing).
+save_plot_opt; Controls diagnostic plot generation. |br| If 0: no plot is created. |br| If 1: saves a 2-panel PNG showing vertical grid level profiles at the lowest- and highest-elevation points in the domain.

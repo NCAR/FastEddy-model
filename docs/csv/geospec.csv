@@ -1,0 +1,11 @@
+Name; Description
+name_dom; The base domain name string used as a prefix for output filenames.
+gis_root; Path to the root directory containing GIS input files. |br| Used as prefix for ‘gis_file’ and ‘landcover_table’.
+gis_file; Filename of the input GIS netCDF file (relative to ‘gis_root’). |br| Expected variable names depend on ‘gis_opt’.
+landcover_table; Filename of the land cover CSV lookup table (relative to ‘gis_root’). |br| Maps land cover categories to roughness length (z0). |br| Used when gis_opt=0. 
+water_cats; List of integer land-cover class IDs to classify as water. |br| Used to set SeaMask=1 at those cells. Only evaluated when gis_opt=0.
+urban_opt; Enables urban building height processing. |br| If 0: building height data is ignored. |br| If 1: reads the BuildingHeights variable from the GIS file, replaces missing values (−9999) with 0, and writes it to the output netCDF. Must match the value used in the corresponding SimGrid run.
+FE_dataset_path; Output directory where the GeoSpec netCDF and optional diagnostic plot are written. |br| The directory must exist and be writable prior to execution.
+name_dom_add; Optional suffix appended to ‘name_dom’ in output filenames (e.g., for versioning). |br| Can be empty.
+gis_opt; Selects the GIS input format and determines all downstream variable name mappings. |br| If 0: reads lat, lon, elevation, LandCover. Derives z0 from ‘landcover_table’ CSV. Builds SeaMask from 'water_cats'. |br| If 1: (WRF-style dataset) reads XLAT, XLONG, HGT, LU_INDEX, ZNT, LANDMASK |br| SeaMask convention is inverted (WRF LANDMASK=1 is land, output SeaMask=1 is sea).
+save_plot_opt; Controls diagnostic plot generation. |br| If 0: no plot is created. |br| If 1: saves a 4-panel PNG showing terrain elevation, land cover, roughness length z0m, and SeaMask.

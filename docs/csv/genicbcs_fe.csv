@@ -1,0 +1,8 @@
+Name; Description
+FE_PrntDir; Directory containing parent FastEddy output files. Files are expected to be named as FE_PrntOutPrefix.TIMESTEP.
+FE_PrntOutPrefix; Base filename of the parent FastEddy output series. The integer timestep index is appended after a period.
+itMin; Starting timestep index of the parent FastEddy file series.
+dt_FE; Parent FastEddy model timestep (seconds). Used to convert between timestep index and physical time. |br| Must match the timestep used in the parent simulation exactly.
+outputFrequency; Output interval of FastEddy data. Used to compute timestep increment.
+timeLengthSec; Total simulation time (seconds) to process for FastEddy input.
+ideal_opt; Flag for idealized (non-real-data) simulations. |br| If true: use Cartesian coordinates (xPos, yPos). |br| If false: use lat/lon-based interpolation.

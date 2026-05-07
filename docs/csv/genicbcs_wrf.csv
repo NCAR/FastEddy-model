@@ -1,0 +1,8 @@
+Name; Description
+WRF_PrntDir; Filename prefix for WRF output files, appearing before the timestamp in the filename (e.g., wrf_fasteddy_d01\_ for wrf_fasteddy_d01_2024-02-16_17:00:00).
+date0; Start date for the WRF file list in YYYY-MM-DD format. Combined with time* fields to form the initial timestamp.
+timeHour0; Hour (UTC) of the first WRF output file to process.
+timeMinute0; Minute (UTC) of the first WRF output file to process.
+timeSecond0; Second (UTC) of the first WRF output file to process.
+secMax; Total duration (seconds) to process WRF files.
+secInc; Time increment (seconds) between WRF files. |br| Must exactly match the actual WRF output interval or files will not be found.

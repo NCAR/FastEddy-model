@@ -1,0 +1,5 @@
+Name; Description
+ICBC_dir; Output directory where initial condition and lateral boundary condition files are written (FE_Bndys.N and FE_interp_*.0). |br| Created automatically if it does not exist. |br| At startup, each MPI rank checks this directory and skips files that already exist.
+FE_simGrid; Full path to the SimGrid output netCDF file created by SimGrid.py. |br| Required upstream dependency to define the target interpolation grid.
+parent_model; Selects the parent model that supplies boundary data and controls all variable name mappings and interpolation paths. |br| If 0: WRF is the parent. Variables read: Z, ALT, U, V, W, T, QVAPOR, QCLOUD, QKE or TKE_PBL (not required), TSK, Q2. |br| If 1: FastEddy is the parent. T Variables read: zPos, rho, u, v, w, theta, qv, ql, TKE_0, tskin, qskin.
+nest_tke_opt; Controls how turbulent kinetic energy (TKE) is handled in the nested domain. |br| If false: TKE_0 is set to a near-zero floor value (1×10⁻¹⁰ m^2/s^{-2}). |br| If true: TKE is interpolated from the parent and clipped to the floor value to avoid negative or near-zero artifacts.
