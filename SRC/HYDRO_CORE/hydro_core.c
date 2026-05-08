@@ -104,8 +104,6 @@ float corioConstHorz;   /*Latitude dependent horizontal Coriolis term constant *
 float corioConstVert;   /*Latitude dependent Vertical Coriolis term constant */
 int coriolis_LAD = 0;       /*Coriolis force selector for LAD BC cases (hydroBCs==1): 0=off, 1=on*/
 float corioLS_fact;     /*large-scale factor on Coriolis term*/
-float* lat; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
-float* lon; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
 
 /*----Turbulence*/ 
 int turbulenceSelector;         /*turbulence scheme selector: 0= none, 1= Lilly/Smagorinsky */
@@ -290,6 +288,8 @@ int *towerIDs;
 int *tower_iInds;
 int *tower_jInds;
 int rank_nTowers;
+float *tower_xOffsets;
+float *tower_yOffsets;
 int towerInstanceSize;
 int towerSurfInstanceSize;
 float *towersData;
@@ -337,6 +337,7 @@ int hydro_coreGetParams(){
    errorCode = queryIntegerParameter("TKEAdvSelector", &TKEAdvSelector, 0, 6, PARAM_OPTIONAL);
    TKEAdvSelector_b_hyb = 0.0; //Default to 0.0
    errorCode = queryFloatParameter("TKEAdvSelector_b_hyb", &TKEAdvSelector_b_hyb, 0.0, 1.0, PARAM_OPTIONAL);
+
    if (turbulenceSelector == 1){
       if (TKESelector == 0){
          c_s = 0.18; //Default to 0.18
@@ -1355,7 +1356,18 @@ int hydro_coreInit(){
      errorCode=GADInit();
 #endif
      MPI_Barrier(MPI_COMM_WORLD);   
-     
+   
+     /*Initialize lat & lon arrays if no initial condition file was provided (cold-start) */
+     if(inFile == NULL){
+       for(i=iMin-Nh; i < iMax+Nh; i++){
+          for(j=jMin-Nh; j < jMax+Nh; j++){
+            ij = i*(Nyp+2*Nh)+j;
+            lat[ij] = coriolisLatitude;
+            lon[ij] = 0.0; // longitude is zero in idealized fresh start runs
+          }
+       }
+     }
+
      /* Provide intial approximation for the momentum and heat exchange coefficient at all surface locations*/
      k = kMin;
      for(i=iMin-Nh; i < iMax+Nh; i++){
@@ -1389,34 +1401,6 @@ int hydro_coreInit(){
        }
      }
    } // end of surflayerSelector > 0
-
-   // 2d arrays of latitude and longitude
-   lat = memAllocateFloat2DField(Nxp, Nyp, Nh, "lat");
-   errorCode = sprintf(&fldName[0],"lat");
-   errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, lat);
-   // Add NetCDF attributes for the registered variable
-   errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
-   printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
-           &fldName[0],lat);
-   fflush(stdout);
-
-   lon = memAllocateFloat2DField(Nxp, Nyp, Nh, "lon");
-   errorCode = sprintf(&fldName[0],"lon");
-   errorCode = ioRegisterVar(&fldName[0], "float", 3, dims2dTD, lon);
-   // Add NetCDF attributes for the registered variable
-   errorCode = hydro_coreAddFieldAttributes(&fldName[0], 0);
-   printf("hydro_coreInit:Field = %s stored at %p, has been registered with IO.\n",
-           &fldName[0],lon);
-   fflush(stdout);
-   if(inFile == NULL){ // fill-in lat/lon arrays if fresh start (no initial condition file)
-     for(i=iMin-Nh; i < iMax+Nh; i++){
-       for(j=jMin-Nh; j < jMax+Nh; j++){
-         ij = i*(Nyp+2*Nh)+j;
-	 lat[ij] = coriolisLatitude;
-	 lon[ij] = 0.0; // longitude is zero in idealized fresh start runs
-       }
-     }
-   }
 
    if(surflayer_offshore>0){
      sea_mask = memAllocateFloat2DField(Nxp, Nyp, Nh, "sea_mask");
@@ -1922,7 +1906,7 @@ int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int
 
    rank_nTowers = 0;
    towerInstanceSize = Nz*(registered3dVars-4); // r3dV-4 since no x,y,zPos, or pressure
-   towerSurfInstanceSize = (registered2dVars-(3+surflayer_offshore)); // r2dV-(3+surflayer_offshore) since no (topoPos, lat, lon + seamask) 
+   towerSurfInstanceSize = (registered2dVars-(3+surflayer_offshore)); // r2dV-(3+surflayer_offshore) since no (topoPos, lat, lon + sea_mask) 
    //Count the number of towers in a given mpi_rank's subdomain        
    for(itower = 0; itower < nProfs; itower++){
       if(towProfs.mpi_ranks[itower]==mpi_rank_world){
@@ -1941,8 +1925,8 @@ int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int
      }
    
      //Calculate the number of float data elements 
-     nElems = NtBatch*rank_nTowers*towerInstanceSize;
-     nSurfElems = NtBatch*rank_nTowers*towerSurfInstanceSize;
+     nElems = rank_nTowers*NtBatch*towerInstanceSize;
+     nSurfElems = rank_nTowers*NtBatch*towerSurfInstanceSize;
      //Allocate the tower data structure
      towersData = (float *) malloc(nElems*sizeof(float));
      towersSurfData = (float *) malloc(nSurfElems*sizeof(float));
@@ -1952,15 +1936,22 @@ int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int
      //Now identify the mpi_rank-specific i,j indices for each tower in the mpi_rank's subdomain
      tower_iInds = (int *) malloc(rank_nTowers*sizeof(int));
      tower_jInds = (int *) malloc(rank_nTowers*sizeof(int));
+     tower_xOffsets = (float *) malloc(rank_nTowers*sizeof(float));
+     tower_yOffsets = (float *) malloc(rank_nTowers*sizeof(float));
      for(towerCount = 0; towerCount < rank_nTowers; towerCount++){
         //Call an index finding function from the grid module.
 	errorCode = gridGetIJindsFromXYPosition(towerProfiles.coordsWE[towerIDs[towerCount]],
 			                        towerProfiles.coordsSN[towerIDs[towerCount]],
 		                          	&tower_iInds[towerCount], &tower_jInds[towerCount]); 
-       printf("%d/%d: towerCount = %d, towerID = %d, (x,y) = (%f,%f), (tower_iInd,tower_jInd) = (%d,%d)\n",
+	errorCode = gridGetXYOffsetsFromCellIndices(towerProfiles.coordsWE[towerIDs[towerCount]],
+                                                    towerProfiles.coordsSN[towerIDs[towerCount]],
+						    tower_iInds[towerCount], tower_jInds[towerCount],
+						    &tower_xOffsets[towerCount], &tower_yOffsets[towerCount]);
+
+       printf("%d/%d: towerCount = %d, towerID = %d, (x,y) = (%f,%f), (iInd,jInd) = (%d,%d), (xOffset,yOffset) = (%f,%f))\n",
               mpi_rank_world,mpi_size_world,towerCount,towerIDs[towerCount],
 	      towerProfiles.coordsWE[towerIDs[towerCount]],towerProfiles.coordsSN[towerIDs[towerCount]],
-    	      tower_iInds[towerCount],tower_jInds[towerCount]);
+    	      tower_iInds[towerCount],tower_jInds[towerCount],tower_xOffsets[towerCount], tower_yOffsets[towerCount]);
        fflush(stdout);
      }
 
@@ -1973,21 +1964,18 @@ int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int
      towerFld_size = Nzp;
      for(towerCount = 0; towerCount < rank_nTowers; towerCount++){
         towerBaseAddress = towerCount*(NtBatch*towerInstanceSize);
-        towerFld_cnt = 0;
 
 	i = tower_iInds[towerCount];
         j = tower_jInds[towerCount];
 
 	for(k=kMin; k < kMax; k++){
+           towerFld_cnt = 0;
            ijk = i*iStride + j*jStride + k*kStride;
-	   //printf("k = %d ------- \n",k);
            for(iFld=0; iFld < Nhydro; iFld++){
               towIndx = towerBaseAddress + towerFld_cnt*towerFld_size + k-Nh;
               towersData[towIndx] = hydroFlds[iFld*fldStride+ijk];
               towerFld_cnt += 1;
-	     // printf("%f ",towersData[towIndx]); //hydroFlds[iFld*fldStride+ijk]);
            }//end for iFld
-	   //printf("\n");
 	   for(iFld=0; iFld < TKESelector*turbulenceSelector; iFld++){
               towIndx = towerBaseAddress + towerFld_cnt*towerFld_size + k-Nh;
               towersData[towIndx] = sgstkeScalars[iFld*fldStride+ijk];
@@ -3391,6 +3379,8 @@ int hydro_coreCleanup(){
      free(towerIDs);
      free(tower_iInds);
      free(tower_jInds);
+     free(tower_xOffsets);
+     free(tower_yOffsets);
      free(towersData);
      free(towersSurfData);
    }

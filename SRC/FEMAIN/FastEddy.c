@@ -282,13 +282,14 @@ int main(int argc, char **argv){
     }
     fflush(stdout);
     errorCode = hydro_coreAllocateTowersDataStructure(nProfs, towerProfiles, NtBatch);
+    MPI_Barrier(MPI_COMM_WORLD); 
     
     //Write Towers static/initial conditions files
     ioWriteBinaryTowerInitialFile(dt, simTime_itRestart, Nxp, Nyp, Nzp, Nh, 
 		                  towersData, towersSurfData,
-                                  towerIDs, rank_nTowers, tower_iInds, tower_jInds,
+                                  towerIDs, rank_nTowers, tower_iInds, tower_jInds, tower_xOffsets, tower_yOffsets,
 				  NtBatch, towerInstanceSize, towerSurfInstanceSize,
-				  zPos, yPos, xPos, topoPos);
+				  zPos, yPos, xPos, topoPos, surflayer_offshore, sea_mask);
   }// endif towerIOSelector > 0
   MPI_Barrier(MPI_COMM_WORLD); 
   printf("Rank %d/%d: Profile preparations complete!\n",mpi_rank_world, mpi_size_world);
@@ -405,6 +406,7 @@ int main(int argc, char **argv){
      MPI_Barrier(MPI_COMM_WORLD);
      fflush(stdout);
  
+     mpi_t3 = MPI_Wtime();    //Mark the walltime to measure IO/logging duration.
      if(it%frqOutput == 0){
        MPI_Barrier(MPI_COMM_WORLD); 
        if(mpi_rank_world == 0){
@@ -426,7 +428,6 @@ int main(int argc, char **argv){
          fflush(stdout);
        } //if mpi_rank_world
 
-       mpi_t3 = MPI_Wtime();    //Mark the walltime to measure IO duration.
        /* Dump the root output file. */
 #ifndef IO_OFF
        if(ioOutputMode==0){
@@ -443,7 +444,6 @@ int main(int argc, char **argv){
 #endif
        }
 #endif 
-       mpi_t4 = MPI_Wtime();    //Mark the walltime to measure IO duration
        if(mpi_rank_world == 0){
          printf("Dumped state at timestep = %d...\n",it);
          fflush(stdout);
@@ -458,6 +458,7 @@ int main(int argc, char **argv){
          fflush(stdout);
        } //if mpi_rank_world
      }
+     mpi_t4 = MPI_Wtime();    //Mark the walltime to measure IO/logging duration
 #ifdef NOTCUDA 
      /* OBSELETE!!!!! There is longer any CPU model integration functionality */
 #else  /* ---------------  CUDA FASTEDDY !!!!! -------------------------  */
@@ -475,7 +476,7 @@ int main(int argc, char **argv){
      /*Kernel return*/
      itTmp = itTmp+NtBatch;  
 #endif
-     mpi_t2 = MPI_Wtime();    //Mark the walltime to measure duration of  a batch of timesteps.
+     mpi_t2 = MPI_Wtime();    //Mark the walltime to measure duration of a batch of timesteps (including any IO/logging).
      if(mpi_rank_world == 0){
         printf("\n\t\t\t!!!!!\t  TIMESTEP PERFORMANCE  \t !!!!! \n");
         printf(" Total Time (s) | Batch Steps \t| Time/step (s) | Comp./step (s) | IO Time (s)\n");

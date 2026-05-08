@@ -74,6 +74,9 @@ extern float *J33;      // dz/d_zeta
 extern float *D_Jac;    //Determinant of the Jacbian  (called scale factor i.e. if d_xi=d_eta=d_zeta=1, then cell volume)
 extern float *invD_Jac; //inverse Determinant of the Jacbian 
 
+extern float* lat; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
+extern float* lon; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
+
 /*######################------------------- GRID module function declarations ---------------------#################*/
 
 /*----->>>>> int gridGetParams();       ----------------------------------------------------------------------
@@ -108,6 +111,11 @@ int gridGetIJindsFromXYPosition(float xLoc, float yLoc, int *iIndx, int *jIndx);
 * that contains the xLoc,Yloc.
 */
 int gridGetRankFromXYPosition(float xLoc, float yLoc);
+
+/*----->>>>> int gridGetXYOffsetsFromXYPosition();    ------------------------------------------------------------
+* Used to determine the x,y position offsets from a predetermined i,j-index cell center x,y coordinate
+*/
+int gridGetXYOffsetsFromCellIndices(float xLoc, float yLoc, int iIndx, int jIndx, float *xOff, float *yOff);
 
 /*----->>>>> int singleRankGridHaloInit();    ------------------------------------------------------------
 * Used to setup xPos,yPos,zPos halos on all x-y boundaries 

@@ -902,12 +902,13 @@ __global__ void cudaDevice_hydroCoreCommenceRhoInvPresPert(float* hydroFlds_d, f
 } // end cudaDevice_hydroCoreCommenceRhoInvPresPert()
 
 __global__ void cudaDevice_hydroCoreComplete(float simTime, int simTime_it, float dt, int timeStage, int numRKstages,
-                                                     float* hydroFlds, float* hydroFldsFrhs, 
-                                                     float* hydroFaceVels, float* hydroBaseStateFlds, 
-                                                     float* hydroTauFlds,
-                                                     float* sgstkeScalars, float* sgstkeScalarsFrhs, 
-                                                     float* moistScalars, float* moistScalarsFrhs, float* moistTauFlds,
-                                                     float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* invD_Jac_d, float* zPos_d, float* lat_d){
+                                             float* hydroFlds, float* hydroFldsFrhs, 
+                                             float* hydroFaceVels, float* hydroBaseStateFlds, 
+                                             float* hydroTauFlds,
+                                             float* sgstkeScalars, float* sgstkeScalarsFrhs, 
+                                             float* moistScalars, float* moistScalarsFrhs, float* moistTauFlds,
+                                             float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, 
+					     float* invD_Jac_d, float* zPos_d, float* lat_d){
 
    int i,j,k,ijk,ij;
    int iFld,fldStride;

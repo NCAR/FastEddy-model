@@ -58,6 +58,9 @@ float *J33_d;      // dz/d_zeta
 float *D_Jac_d;    //Determinant of the Jacbian  (called scale factor i.e. if d_xi=d_eta=d_zeta=1, then cell volume)
 float *invD_Jac_d; //inverse Determinant of the Jacbian 
 
+float* lat_d; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
+float* lon_d; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
+
 /*#################------------------- CUDA_GRID module function definitions ---------------------#################*/
 /*----->>>>> int cuda_gridDeviceSetup();       ----------------------------------------------------------------------
  * Used to cudaMalloc and cudaMemcpy parameters and coordinate arrays, and for the GRID_CUDA module.
@@ -65,6 +68,7 @@ float *invD_Jac_d; //inverse Determinant of the Jacbian
 extern "C" int cuda_gridDeviceSetup(){
    int errorCode = CUDA_GRID_SUCCESS;
    size_t Nelems;
+   size_t Nelems2d;
 #ifdef DEBUG 
    cudaEvent_t startE, stopE;
    float elapsedTime;
@@ -97,7 +101,6 @@ extern "C" int cuda_gridDeviceSetup(){
    cudaMemcpyToSymbol(jMax_d, &jMax, sizeof(int));
    cudaMemcpyToSymbol(kMin_d, &kMin, sizeof(int));
    cudaMemcpyToSymbol(kMax_d, &kMax, sizeof(int));
-   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
 
    /*Set the full memory block number of elements for grid fields*/
    Nelems = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)); 
@@ -115,7 +118,6 @@ extern "C" int cuda_gridDeviceSetup(){
    fecuda_DeviceMalloc(Nelems, &J33_d);
    fecuda_DeviceMalloc(Nelems, &D_Jac_d);
    fecuda_DeviceMalloc(Nelems, &invD_Jac_d);
-   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
 
    /* cudaMemcpy the GRID arrays from Host to Device*/
    /* Coordinate Arrays */
@@ -130,8 +132,15 @@ extern "C" int cuda_gridDeviceSetup(){
    cudaMemcpy(J33_d, J33, Nelems*sizeof(float), cudaMemcpyHostToDevice);
    cudaMemcpy(D_Jac_d, D_Jac, Nelems*sizeof(float), cudaMemcpyHostToDevice);
    cudaMemcpy(invD_Jac_d, invD_Jac, Nelems*sizeof(float), cudaMemcpyHostToDevice);
+
+   Nelems2d = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh));
+   fecuda_DeviceMalloc(Nelems2d, &lat_d);
+   cudaMemcpy(lat_d, lat, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
+   fecuda_DeviceMalloc(Nelems2d, &lon_d);
+   cudaMemcpy(lon_d, lon, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
+
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
- 
+
 #ifdef DEBUG
    /*Launch an independent GPU calculation of the GRID arrays*/
    /*Synchronize the Device*/
@@ -176,21 +185,20 @@ extern "C" int cuda_gridDeviceCleanup(){
     /* metric tensor fields */
    cudaFree(J13_d); 
    cudaFree(J23_d); 
-   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    cudaFree(J31_d); 
    cudaFree(J32_d); 
    cudaFree(J33_d); 
-   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    cudaFree(D_Jac_d); 
    cudaFree(invD_Jac_d); 
     /* coordinate fields */
    cudaFree(xPos_d); 
    cudaFree(yPos_d); 
-   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
    cudaFree(zPos_d); 
    cudaFree(topoPos_d); 
-   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMemCpy calls*/
- 
+   
+   cudaFree(lat_d);
+   cudaFree(lon_d); 
+  
    return(errorCode);
 
 }//end cuda_gridDeviceCleanup()

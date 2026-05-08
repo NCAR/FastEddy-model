@@ -78,7 +78,10 @@ float *J33;      // dz/d_zeta
 
 float *D_Jac;    //Determinant of the Jacobian  (called scale factor i.e. if d_xi=d_eta=d_zeta=1, then cell volume)
 float *invD_Jac; //inverse Determinant of the Jacobian 
- 
+
+float* lat; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
+float* lon; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
+
 /*######################------------------- GRID module function definitions ---------------------#################*/
 
 /*----->>>>> int gridGetParams();       ----------------------------------------------------------------------
@@ -256,7 +259,7 @@ int gridInit(){
      yPos = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "yPos");
      zPos = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "zPos");
      topoPos = memAllocateFloat2DField(Nxp, Nyp, Nh, "topoPos");
-     topoPosGlobal = memAllocateFloat2DField(Nx, Ny, 0, "topoPos");
+     topoPosGlobal = memAllocateFloat2DField(Nx, Ny, 0, "topoPosGlobal");
      /* Metric Tensors Fields */
      J13 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J13");
      J23 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J23");
@@ -268,14 +271,11 @@ int gridInit(){
    } // end if errorCode indicates no errors thus far
 
    /*Register these fields with the IO module*/
-   /********* FOR THE MOMENT THESE SHOULD BE STRICTLY GLOBAL DOMAIN VARIABLE FIELDS ********/
    if(errorCode == GRID_SUCCESS){ 
      ioerrorCode = ioRegisterVar("xPos", "float", 4, dims4d, xPos);
      ioerrorCode = ioRegisterVar("yPos", "float", 4, dims4d, yPos);
      ioerrorCode = ioRegisterVar("zPos", "float", 4, dims4d, zPos);
      ioerrorCode = ioRegisterVar("topoPos", "float", 3, dims2dTD, topoPos);
-     printf("gridInit:topoPos stored at %p, has been registered with IO.\n",
-            &topoPosGlobal);
      fflush(stdout);
      if(ioerrorCode!=0){
        printf("Error in registering GRID module coordinate fields with IO.\n");
@@ -317,6 +317,15 @@ int gridInit(){
      ioerrorCode = ioAddStandardAttrs("J33", "-", "Metric tensor component dz/d_zeta", NULL);
 #endif 
    } // end if errorCode indicates no errors thus far
+
+   // Allocate 2d arrays of latitude and longitude
+   lat = memAllocateFloat2DField(Nxp, Nyp, Nh, "lat");
+   lon = memAllocateFloat2DField(Nxp, Nyp, Nh, "lon");
+   errorCode = ioRegisterVar("lat", "float", 3, dims2dTD, lat);
+   errorCode = ioRegisterVar("lon", "float", 3, dims2dTD, lon);
+   // Add NetCDF attributes for the registered variable
+   ioerrorCode = ioAddStandardAttrs("lat", "degrees", "latitude", NULL);
+   ioerrorCode = ioAddStandardAttrs("lon", "degrees", "longitude", NULL);
 
 #ifdef DEBUG
 //#if 1
@@ -936,6 +945,20 @@ int gridGetRankFromXYPosition(float xLoc, float yLoc){
    return (ret_rank);
 } //end gridGetRankFromXYPosition() 
 
+/*----->>>>> int gridGetXYOffsetsFromXYPosition();    ------------------------------------------------------------
+* Used to determine the x,y position offsets from a predetermined i,j-index cell center x,y coordinate
+*/
+int gridGetXYOffsetsFromCellIndices(float xLoc, float yLoc, int iIndx, int jIndx, float *xOff, float *yOff){
+   int errorCode = GRID_SUCCESS;
+   int ijk;
+   
+   ijk = iIndx*(Nyp+2*Nh)*(Nzp+2*Nh)+jIndx*(Nzp+2*Nh)+kMin;
+   *xOff = xPos[ijk]-xLoc;
+   *yOff = yPos[ijk]-yLoc;
+   
+   return (errorCode);
+} //end gridGetXYOffsetsFromXYPosition()
+  
 /*----->>>>> int singleRankGridHaloInit();    ------------------------------------------------------------
 * Used to setup xPos,yPos,zPos halos on all x-y boundaries 
 * when under single-rank setup (i.e. mpi_size_world ==1).

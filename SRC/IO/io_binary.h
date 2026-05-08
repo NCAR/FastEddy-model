@@ -43,6 +43,6 @@ int ioWriteBinaryTowerFileSingleBatch(int tstep, int batchSize, int Nz, float *b
  */
 int ioWriteBinaryTowerInitialFile(float dt, int itStart, int Nx, int Ny, int Nz, int Nh,
                                   float *towersData, float *towersSurfData,
-                                  int *towerIDs, int rank_nTowers, int *tower_iInds, int *tower_jInds,
+                                  int *towerIDs, int rank_nTowers, int *tower_iInds, int *tower_jInds, float *tower_xOffs, float *tower_yOffs,
                                   int batchSize, int towerInstanceSize, int towerSurfInstanceSize,
-                                  float *zCoords, float *yCoords, float *xCoords, float *topoFld);
+                                  float *zCoords, float *yCoords, float *xCoords, float *topoFld, int surflayer_offshore, float *seamask);

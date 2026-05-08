@@ -237,17 +237,22 @@ int ioWriteBinaryTowerFileSingleBatch(int tstep, int batchSize, int Nz, float *b
  */
 int ioWriteBinaryTowerInitialFile(float dt, int itStart, int Nx, int Ny, int Nz, int Nh, 
 		                  float *towersData, float *towersSurfData,
-                                  int *towerIDs, int rank_nTowers, int *tower_iInds, int *tower_jInds,
-				  int batchSize, int towerInstanceSize, int towerSurfInstanceSize,
-				  float *zCoords, float *yCoords, float *xCoords, float *topoFld){
+                                  int *towerIDs, int rank_nTowers, int *tower_iInds, int *tower_jInds, float *tower_xOffs, float *tower_yOffs,
+				  int batchSize, int towerInstanceSize, int towerSurfInstanceSize, 
+				  float *zCoords, float *yCoords, float *xCoords, float *topoFld, int surflayer_offshore, float *seamask){
     int errorCode = IO_SUCCESS;
     FILE *output_ptr;
     char towerSubString[64];
     char towerFileName[256];
     int itower;
     int i,j,k,ijk,ij;
+    int iStride,jStride,kStride;
     int tmpOne = 1;
     float timeStart;
+
+    iStride = (Ny+2*Nh)*(Nz+2*Nh);
+    jStride = (Nz+2*Nh);
+    kStride = 1;
 
     timeStart = itStart*dt;
 
@@ -255,7 +260,7 @@ int ioWriteBinaryTowerInitialFile(float dt, int itStart, int Nx, int Ny, int Nz,
        i = tower_iInds[itower];
        j = tower_jInds[itower];
        k = Nh;
-       ijk = i*((Ny+2*Nh)*(Nz+2*Nh)) + j*(Nz+2*Nh) + k;
+       ijk = i*iStride + j*jStride + k*kStride;
        ij = i*(Ny+2*Nh) + j; 
        //--------------Tower profile-variables  
        /* build the subString tag */
@@ -271,13 +276,18 @@ int ioWriteBinaryTowerInitialFile(float dt, int itStart, int Nx, int Ny, int Nz,
        fwrite(&yCoords[ijk],sizeof(float),1,output_ptr);
        fwrite(&xCoords[ijk],sizeof(float),1,output_ptr);
        fwrite(&topoFld[ij],sizeof(float),1,output_ptr);
-    
+       if(surflayer_offshore > 0){
+          fwrite(&seamask[ij],sizeof(float),1,output_ptr);
+       }//end if surfacelayer_offshore
+       fwrite(&tower_yOffs[itower],sizeof(float),1,output_ptr);
+       fwrite(&tower_xOffs[itower],sizeof(float),1,output_ptr);
+
        /*Write the batch of tower instances to the output file*/
        fwrite(&towerInstanceSize,sizeof(int),1,output_ptr);
        fwrite(&tmpOne,sizeof(int),1,output_ptr);
        fwrite(&timeStart,sizeof(float),1,output_ptr);
        fwrite(&towersData[itower*batchSize*towerInstanceSize],1*towerInstanceSize*sizeof(float),1,output_ptr);
-
+       
        //--------------Tower surface-variables  
        fwrite(&towerSurfInstanceSize,sizeof(int),1,output_ptr);
        fwrite(&tmpOne,sizeof(int),1,output_ptr);

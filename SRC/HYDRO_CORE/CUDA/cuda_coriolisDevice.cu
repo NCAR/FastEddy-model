@@ -18,8 +18,6 @@ __constant__ int coriolisSelector_d;          /*coriolis Force selector: 0=off, 
 __constant__ float corioConstHorz_d;          /*coriolis horizontal term constant */
 __constant__ float corioConstVert_d;          /*coriolis vertical term constant */
 __constant__ float corioLS_fact_d;            /*large-scale forcing factor on Coriolis term*/
-float* lat_d; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
-float* lon_d; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
 
 
 /*#################------------ CORIOLIS submodule function definitions ------------------#############*/
@@ -28,18 +26,11 @@ float* lon_d; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
 */
 extern "C" int cuda_coriolisDeviceSetup(){
    int errorCode = CUDA_CORIOLIS_SUCCESS;
-   size_t Nelems2d;
 
    cudaMemcpyToSymbol(coriolisSelector_d, &coriolisSelector, sizeof(int));
    cudaMemcpyToSymbol(corioConstHorz_d, &corioConstHorz, sizeof(float));
    cudaMemcpyToSymbol(corioConstVert_d, &corioConstVert, sizeof(float));
    cudaMemcpyToSymbol(corioLS_fact_d, &corioLS_fact, sizeof(float));
-
-   Nelems2d = (size_t)((Nxp+2*Nh)*(Nyp+2*Nh));
-   fecuda_DeviceMalloc(Nelems2d, &lat_d);
-   cudaMemcpy(lat_d, lat, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
-   fecuda_DeviceMalloc(Nelems2d, &lon_d);
-   cudaMemcpy(lon_d, lon, Nelems2d*sizeof(float), cudaMemcpyHostToDevice);
 
    return(errorCode);
 } //end cuda_coriolisDeviceSetup()
@@ -52,8 +43,6 @@ extern "C" int cuda_coriolisDeviceCleanup(){
    int errorCode = CUDA_CORIOLIS_SUCCESS;
 
    /* Free any CORIOLIS submodule arrays */
-   cudaFree(lat_d);
-   cudaFree(lon_d);
 
    return(errorCode);
 
