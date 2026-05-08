@@ -12,6 +12,7 @@ Real cases are performed by dynamically downscaling from a mesoscale model such 
    :alt: FastEddy Pre-Processing Workflow Diagram
    :align: center
    :width: 100%
+   :name: pre-processing_workflow_diagram	   
 
    FastEddy Pre-Processing Workflow Diagram
    

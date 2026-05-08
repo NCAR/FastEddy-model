@@ -19,6 +19,7 @@ Each table provides the:
 
 These definitions serve as a reference to ensure correct configuration.
 
+See the :ref:`pre-processing_workflow_diagram` for a visual representation of the workflow.
 
 .. figure:: /_static/FastEddy_Pre-Processing_Workflow_Gemini.png
    :alt: FastEddy Pre-Processing Workflow Diagram
