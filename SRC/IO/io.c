@@ -315,21 +315,20 @@ int ioProfilePreparations(){
   if(nProfs > 0){ 
     towerProfiles.profIDs = malloc(nProfs*sizeof(int));
     towerProfiles.mpi_ranks = malloc(nProfs*sizeof(int));
-    towerProfiles.coordTypes = malloc(nProfs*sizeof(int));
     towerProfiles.coordsSN = malloc(nProfs*sizeof(float));
     towerProfiles.coordsWE = malloc(nProfs*sizeof(float));
   }
   if(mpi_rank_world == 0){
-    start[0] = 0;
     //Setup the profIDs (these are common profile indices, shared across all ranks)
     for(iprofile = 0; iprofile < nProfs; iprofile++){
        towerProfiles.profIDs[iprofile] = iprofile;
     }
-    sprintf(fldName,"coordTypes");
+    start[0] = 0;
+    sprintf(fldName,"coordType");
     if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
        ERR(errorCode);
     } //if nc_inq_varid
-    if ((errorCode = nc_get_vara_int(ncid, ncfldid, &start[0], &count[dimids[0]], towerProfiles.coordTypes )) ){
+    if ((errorCode = nc_get_var_int(ncid, ncfldid, &towerProfiles.coordType )) ){
        ERR(errorCode);
     }
     sprintf(fldName,"coordsSN");
@@ -348,15 +347,15 @@ int ioProfilePreparations(){
     }
   } //end if mpi_rank_world == 0
   MPI_Bcast(towerProfiles.profIDs, nProfs, MPI_INTEGER, 0, MPI_COMM_WORLD);
-  MPI_Bcast(towerProfiles.coordTypes, nProfs, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&towerProfiles.coordType, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
   MPI_Bcast(towerProfiles.coordsSN, nProfs, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Bcast(towerProfiles.coordsWE, nProfs, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
   for(iprofile = 0; iprofile< nProfs; iprofile++){
-    printf("mpi_rank_world--%d/%d: profIDs[%d] = %d-- coordTypes[%d]= %d, coords[%d](y,x) = (%f,%f)\n",
+    printf("mpi_rank_world--%d/%d: profIDs[%d] = %d-- coordType = %d, coords[%d](y,x) = (%f,%f)\n",
          mpi_rank_world,mpi_size_world,
 	 iprofile,towerProfiles.profIDs[iprofile],
-	 iprofile,towerProfiles.coordTypes[iprofile],
+	 towerProfiles.coordType,
          iprofile,towerProfiles.coordsSN[iprofile],towerProfiles.coordsWE[iprofile]);
   }
   
@@ -374,7 +373,6 @@ int ioCleanupProfiles(){
      //SOA
      free(towerProfiles.profIDs);
      free(towerProfiles.mpi_ranks);
-     free(towerProfiles.coordTypes);
      free(towerProfiles.coordsSN);
      free(towerProfiles.coordsWE);
      free(towerSpecsFile);

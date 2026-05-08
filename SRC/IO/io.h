@@ -34,7 +34,7 @@
 typedef struct _ioProfiles_t {     // Structure of Arrays (SOA)
    int     *profIDs;
    int     *mpi_ranks;
-   int     *coordTypes; //0 = lat,lon or 1 = y,x
+   int     coordType; //0 = lat,lon or 1 = y,x
    double  *coordsLon;
    double  *coordsLat;
    float  *coordsSN;
