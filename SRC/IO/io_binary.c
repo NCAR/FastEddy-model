@@ -237,7 +237,8 @@ int ioWriteBinaryTowerFileSingleBatch(int tstep, int batchSize, int Nz, float *b
  */
 int ioWriteBinaryTowerInitialFile(float dt, int itStart, int Nx, int Ny, int Nz, int Nh, 
 		                  float *towersData, float *towersSurfData,
-                                  int *towerIDs, int rank_nTowers, int *tower_iInds, int *tower_jInds, float *tower_xOffs, float *tower_yOffs,
+                                  int *towerIDs, int rank_nTowers, int *tower_iInds, int *tower_jInds, 
+				  int coordType, float *tower_xOffs, float *tower_yOffs, double *tower_LonOffs, double *tower_LatOffs, 
 				  int batchSize, int towerInstanceSize, int towerSurfInstanceSize, 
 				  float *zCoords, float *yCoords, float *xCoords, float *topoFld, int surflayer_offshore, float *seamask){
     int errorCode = IO_SUCCESS;
@@ -249,6 +250,8 @@ int ioWriteBinaryTowerInitialFile(float dt, int itStart, int Nx, int Ny, int Nz,
     int iStride,jStride,kStride;
     int tmpOne = 1;
     float timeStart;
+    double tmpDbleWE;
+    double tmpDbleSN;
 
     iStride = (Ny+2*Nh)*(Nz+2*Nh);
     jStride = (Nz+2*Nh);
@@ -279,8 +282,15 @@ int ioWriteBinaryTowerInitialFile(float dt, int itStart, int Nx, int Ny, int Nz,
        if(surflayer_offshore > 0){
           fwrite(&seamask[ij],sizeof(float),1,output_ptr);
        }//end if surfacelayer_offshore
-       fwrite(&tower_yOffs[itower],sizeof(float),1,output_ptr);
-       fwrite(&tower_xOffs[itower],sizeof(float),1,output_ptr);
+       if(coordType == 0){
+         tmpDbleSN = tower_LatOffs[itower];
+         tmpDbleWE = tower_LonOffs[itower];
+       }else{
+         tmpDbleSN = (double) tower_yOffs[itower];
+         tmpDbleWE = (double) tower_xOffs[itower];
+       }
+       fwrite(&tmpDbleSN,sizeof(double),1,output_ptr);
+       fwrite(&tmpDbleWE,sizeof(double),1,output_ptr);
 
        /*Write the batch of tower instances to the output file*/
        fwrite(&towerInstanceSize,sizeof(int),1,output_ptr);

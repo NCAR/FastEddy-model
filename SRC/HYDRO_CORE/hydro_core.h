@@ -292,6 +292,8 @@ extern int *tower_jInds;
 extern int rank_nTowers;
 extern float *tower_xOffsets;
 extern float *tower_yOffsets;
+extern double *tower_LonOffsets;
+extern double *tower_LatOffsets;
 extern int towerInstanceSize;
 extern int towerSurfInstanceSize;
 extern float *towersData;

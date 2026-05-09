@@ -290,6 +290,8 @@ int *tower_jInds;
 int rank_nTowers;
 float *tower_xOffsets;
 float *tower_yOffsets;
+double *tower_LonOffsets;
+double *tower_LatOffsets;
 int towerInstanceSize;
 int towerSurfInstanceSize;
 float *towersData;
@@ -1936,22 +1938,40 @@ int hydro_coreAllocateTowersDataStructure(int nProfs, ioProfiles_t towProfs, int
      //Now identify the mpi_rank-specific i,j indices for each tower in the mpi_rank's subdomain
      tower_iInds = (int *) malloc(rank_nTowers*sizeof(int));
      tower_jInds = (int *) malloc(rank_nTowers*sizeof(int));
-     tower_xOffsets = (float *) malloc(rank_nTowers*sizeof(float));
-     tower_yOffsets = (float *) malloc(rank_nTowers*sizeof(float));
+     if(towerProfiles.coordType == 0){
+       tower_LonOffsets = (double *) malloc(rank_nTowers*sizeof(double));
+       tower_LatOffsets = (double *) malloc(rank_nTowers*sizeof(double));
+     }else{
+       tower_xOffsets = (float *) malloc(rank_nTowers*sizeof(float));
+       tower_yOffsets = (float *) malloc(rank_nTowers*sizeof(float));
+     }
      for(towerCount = 0; towerCount < rank_nTowers; towerCount++){
         //Call an index finding function from the grid module.
-	errorCode = gridGetIJindsFromXYPosition(towerProfiles.coordsWE[towerIDs[towerCount]],
-			                        towerProfiles.coordsSN[towerIDs[towerCount]],
-		                          	&tower_iInds[towerCount], &tower_jInds[towerCount]); 
-	errorCode = gridGetXYOffsetsFromCellIndices(towerProfiles.coordsWE[towerIDs[towerCount]],
-                                                    towerProfiles.coordsSN[towerIDs[towerCount]],
-						    tower_iInds[towerCount], tower_jInds[towerCount],
-						    &tower_xOffsets[towerCount], &tower_yOffsets[towerCount]);
-
-       printf("%d/%d: towerCount = %d, towerID = %d, (x,y) = (%f,%f), (iInd,jInd) = (%d,%d), (xOffset,yOffset) = (%f,%f))\n",
-              mpi_rank_world,mpi_size_world,towerCount,towerIDs[towerCount],
-	      towerProfiles.coordsWE[towerIDs[towerCount]],towerProfiles.coordsSN[towerIDs[towerCount]],
-    	      tower_iInds[towerCount],tower_jInds[towerCount],tower_xOffsets[towerCount], tower_yOffsets[towerCount]);
+	if(towerProfiles.coordType == 0){
+          errorCode = gridGetIJindsFromLatLonPosition(towerProfiles.coordsLon[towerIDs[towerCount]],
+                                                      towerProfiles.coordsLat[towerIDs[towerCount]],
+                                                      &tower_iInds[towerCount], &tower_jInds[towerCount]);
+	  errorCode = gridGetLatLonOffsetsFromCellIndices(towerProfiles.coordsLon[towerIDs[towerCount]],
+                                                          towerProfiles.coordsLat[towerIDs[towerCount]],
+	  		 		 	          tower_iInds[towerCount], tower_jInds[towerCount],
+						          &tower_LonOffsets[towerCount], &tower_LatOffsets[towerCount]);
+          printf("%d/%d: towerCount = %d, towerID = %d, (Lat,Lon) = (%f,%f), (iInd,jInd) = (%d,%d), (LatOffset,LonOffset) = (%f,%f))\n",
+                 mpi_rank_world,mpi_size_world,towerCount,towerIDs[towerCount],
+	         towerProfiles.coordsLat[towerIDs[towerCount]],towerProfiles.coordsLon[towerIDs[towerCount]],
+    	         tower_iInds[towerCount],tower_jInds[towerCount],tower_LatOffsets[towerCount], tower_LonOffsets[towerCount]);
+        }else{
+	  errorCode = gridGetIJindsFromXYPosition(towerProfiles.coordsWE[towerIDs[towerCount]],
+	  		                          towerProfiles.coordsSN[towerIDs[towerCount]],
+		                                  &tower_iInds[towerCount], &tower_jInds[towerCount]); 
+	  errorCode = gridGetXYOffsetsFromCellIndices(towerProfiles.coordsWE[towerIDs[towerCount]],
+                                                      towerProfiles.coordsSN[towerIDs[towerCount]],
+	  		 		 	      tower_iInds[towerCount], tower_jInds[towerCount],
+						      &tower_xOffsets[towerCount], &tower_yOffsets[towerCount]);
+          printf("%d/%d: towerCount = %d, towerID = %d, (x,y) = (%f,%f), (iInd,jInd) = (%d,%d), (xOffset,yOffset) = (%f,%f))\n",
+                 mpi_rank_world,mpi_size_world,towerCount,towerIDs[towerCount],
+	         towerProfiles.coordsWE[towerIDs[towerCount]],towerProfiles.coordsSN[towerIDs[towerCount]],
+    	         tower_iInds[towerCount],tower_jInds[towerCount],tower_xOffsets[towerCount], tower_yOffsets[towerCount]);
+	}//end if coordType == 0, else
        fflush(stdout);
      }
 
@@ -3379,8 +3399,13 @@ int hydro_coreCleanup(){
      free(towerIDs);
      free(tower_iInds);
      free(tower_jInds);
-     free(tower_xOffsets);
-     free(tower_yOffsets);
+     if(towerProfiles.coordType == 0){
+       free(tower_LonOffsets);
+       free(tower_LatOffsets);
+     }else{
+       free(tower_xOffsets);
+       free(tower_yOffsets);
+     }//end if coordType == 0, else...
      free(towersData);
      free(towersSurfData);
    }

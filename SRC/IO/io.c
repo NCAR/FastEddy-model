@@ -317,6 +317,8 @@ int ioProfilePreparations(){
     towerProfiles.mpi_ranks = malloc(nProfs*sizeof(int));
     towerProfiles.coordsSN = malloc(nProfs*sizeof(float));
     towerProfiles.coordsWE = malloc(nProfs*sizeof(float));
+    towerProfiles.coordsLat = malloc(nProfs*sizeof(double));
+    towerProfiles.coordsLon = malloc(nProfs*sizeof(double));
   }
   if(mpi_rank_world == 0){
     //Setup the profIDs (these are common profile indices, shared across all ranks)
@@ -331,34 +333,62 @@ int ioProfilePreparations(){
     if ((errorCode = nc_get_var_int(ncid, ncfldid, &towerProfiles.coordType )) ){
        ERR(errorCode);
     }
-    sprintf(fldName,"coordsSN");
-    if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
-       ERR(errorCode);
-    } //if nc_inq_varid
-    if ((errorCode = nc_get_vara_float(ncid, ncfldid, &start[0], &count[dimids[0]], towerProfiles.coordsSN )) ){
-       ERR(errorCode);
-    }
-    sprintf(fldName,"coordsWE");
-    if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
-       ERR(errorCode);
-    } //if nc_inq_varid
-    if ((errorCode = nc_get_vara_float(ncid, ncfldid, &start[0], &count[dimids[0]], towerProfiles.coordsWE )) ){
-       ERR(errorCode);
-    }
+    if(towerProfiles.coordType == 0){
+      sprintf(fldName,"coordsLat");
+      if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
+         ERR(errorCode);
+      } //if nc_inq_varid
+      if ((errorCode = nc_get_vara_double(ncid, ncfldid, &start[0], &count[dimids[0]], towerProfiles.coordsLat )) ){
+         ERR(errorCode);
+      }
+      sprintf(fldName,"coordsLon");
+      if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
+         ERR(errorCode);
+      } //if nc_inq_varid
+      if ((errorCode = nc_get_vara_double(ncid, ncfldid, &start[0], &count[dimids[0]], towerProfiles.coordsLon )) ){
+         ERR(errorCode);
+      }
+    }else{
+      sprintf(fldName,"coordsSN");
+      if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
+         ERR(errorCode);
+      } //if nc_inq_varid
+      if ((errorCode = nc_get_vara_float(ncid, ncfldid, &start[0], &count[dimids[0]], towerProfiles.coordsSN )) ){
+         ERR(errorCode);
+      }
+      sprintf(fldName,"coordsWE");
+      if ( (errorCode = nc_inq_varid(ncid, fldName, &ncfldid)) ){
+         ERR(errorCode);
+      } //if nc_inq_varid
+      if ((errorCode = nc_get_vara_float(ncid, ncfldid, &start[0], &count[dimids[0]], towerProfiles.coordsWE )) ){
+         ERR(errorCode);
+      }
+    }//end if coordType == 0, else
   } //end if mpi_rank_world == 0
   MPI_Bcast(towerProfiles.profIDs, nProfs, MPI_INTEGER, 0, MPI_COMM_WORLD);
   MPI_Bcast(&towerProfiles.coordType, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
-  MPI_Bcast(towerProfiles.coordsSN, nProfs, MPI_FLOAT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(towerProfiles.coordsWE, nProfs, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-  for(iprofile = 0; iprofile< nProfs; iprofile++){
-    printf("mpi_rank_world--%d/%d: profIDs[%d] = %d-- coordType = %d, coords[%d](y,x) = (%f,%f)\n",
-         mpi_rank_world,mpi_size_world,
-	 iprofile,towerProfiles.profIDs[iprofile],
-	 towerProfiles.coordType,
-         iprofile,towerProfiles.coordsSN[iprofile],towerProfiles.coordsWE[iprofile]);
-  }
-  
+  if(towerProfiles.coordType == 0){
+    MPI_Bcast(towerProfiles.coordsLat, nProfs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(towerProfiles.coordsLon, nProfs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    for(iprofile = 0; iprofile< nProfs; iprofile++){
+      printf("mpi_rank_world--%d/%d: profIDs[%d] = %d-- coordType = %d, coords[%d](lat,lon) = (%f,%f)\n",
+             mpi_rank_world,mpi_size_world,
+  	     iprofile,towerProfiles.profIDs[iprofile],
+  	     towerProfiles.coordType,
+             iprofile,towerProfiles.coordsLat[iprofile],towerProfiles.coordsLon[iprofile]);
+    }
+  }else{
+    MPI_Bcast(towerProfiles.coordsSN, nProfs, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(towerProfiles.coordsWE, nProfs, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    for(iprofile = 0; iprofile< nProfs; iprofile++){
+      printf("mpi_rank_world--%d/%d: profIDs[%d] = %d-- coordType = %d, coords[%d](y,x) = (%f,%f)\n",
+             mpi_rank_world,mpi_size_world,
+  	     iprofile,towerProfiles.profIDs[iprofile],
+  	     towerProfiles.coordType,
+             iprofile,towerProfiles.coordsSN[iprofile],towerProfiles.coordsWE[iprofile]);
+    }
+  }//end if coordType == 0, else 
   fflush(stdout);
   return(errorCode);
 } //end ioProfilePreparations()
@@ -375,6 +405,8 @@ int ioCleanupProfiles(){
      free(towerProfiles.mpi_ranks);
      free(towerProfiles.coordsSN);
      free(towerProfiles.coordsWE);
+     free(towerProfiles.coordsLat);
+     free(towerProfiles.coordsLon);
      free(towerSpecsFile);
      free(towerPath);
    }

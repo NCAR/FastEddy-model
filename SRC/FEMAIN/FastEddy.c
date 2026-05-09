@@ -268,26 +268,39 @@ int main(int argc, char **argv){
     int tmp_rank;
     errorCode = ioProfilePreparations();
     for(iprofile = 0; iprofile < nProfs; iprofile++){
-      tmp_rank = gridGetRankFromXYPosition(towerProfiles.coordsWE[iprofile],towerProfiles.coordsSN[iprofile]);
-      //Testing Profile_Preparations
-      if(tmp_rank >= 0){
-        towerProfiles.mpi_ranks[iprofile] = tmp_rank;
-        printf("Rank %d/%d: profile ID = %d at position (x,y) = (%f,%f), found in mpi_rank = %d subdomain!\n",
-               mpi_rank_world, mpi_size_world, towerProfiles.profIDs[iprofile],towerProfiles.coordsWE[iprofile],towerProfiles.coordsSN[iprofile],
- 	      towerProfiles.mpi_ranks[iprofile]);
+      if(towerProfiles.coordType == 0){
+        tmp_rank = gridGetRankFromLatLonPosition(towerProfiles.coordsLon[iprofile],towerProfiles.coordsLat[iprofile]);
+        if(tmp_rank >= 0){
+          towerProfiles.mpi_ranks[iprofile] = tmp_rank;
+          printf("Rank %d/%d: profile ID = %d at position (lat,lon) = (%f,%f), found in mpi_rank = %d subdomain!\n",
+                 mpi_rank_world, mpi_size_world, towerProfiles.profIDs[iprofile],towerProfiles.coordsLat[iprofile],towerProfiles.coordsLon[iprofile],
+ 	         towerProfiles.mpi_ranks[iprofile]);
+        }else{
+          printf("Rank %d/%d: profile ID = %d at position (lat,lon) = (%f,%f), not in simulation domain!\n",
+                 mpi_rank_world, mpi_size_world, towerProfiles.profIDs[iprofile],towerProfiles.coordsLat[iprofile],towerProfiles.coordsLon[iprofile]);
+        }
       }else{
-         printf("Rank %d/%d: profile ID = %d at position (x,y) = (%f,%f), not in simulation domain!\n",
-                mpi_rank_world, mpi_size_world, towerProfiles.profIDs[iprofile],towerProfiles.coordsWE[iprofile],towerProfiles.coordsSN[iprofile]);
+        tmp_rank = gridGetRankFromXYPosition(towerProfiles.coordsWE[iprofile],towerProfiles.coordsSN[iprofile]);
+        if(tmp_rank >= 0){
+          towerProfiles.mpi_ranks[iprofile] = tmp_rank;
+          printf("Rank %d/%d: profile ID = %d at position (x,y) = (%f,%f), found in mpi_rank = %d subdomain!\n",
+                 mpi_rank_world, mpi_size_world, towerProfiles.profIDs[iprofile],towerProfiles.coordsWE[iprofile],towerProfiles.coordsSN[iprofile],
+ 	         towerProfiles.mpi_ranks[iprofile]);
+        }else{
+          printf("Rank %d/%d: profile ID = %d at position (x,y) = (%f,%f), not in simulation domain!\n",
+                 mpi_rank_world, mpi_size_world, towerProfiles.profIDs[iprofile],towerProfiles.coordsWE[iprofile],towerProfiles.coordsSN[iprofile]);
+        }
       }
     }
     fflush(stdout);
     errorCode = hydro_coreAllocateTowersDataStructure(nProfs, towerProfiles, NtBatch);
     MPI_Barrier(MPI_COMM_WORLD); 
-    
+   
     //Write Towers static/initial conditions files
     ioWriteBinaryTowerInitialFile(dt, simTime_itRestart, Nxp, Nyp, Nzp, Nh, 
-		                  towersData, towersSurfData,
-                                  towerIDs, rank_nTowers, tower_iInds, tower_jInds, tower_xOffsets, tower_yOffsets,
+                                  towersData, towersSurfData,
+                                  towerIDs, rank_nTowers, tower_iInds, tower_jInds, 
+	    		          towerProfiles.coordType, tower_xOffsets, tower_yOffsets, tower_LonOffsets, tower_LatOffsets,
 				  NtBatch, towerInstanceSize, towerSurfInstanceSize,
 				  zPos, yPos, xPos, topoPos, surflayer_offshore, sea_mask);
   }// endif towerIOSelector > 0
@@ -614,6 +627,7 @@ int main(int argc, char **argv){
   /* Finalize the FEMPI environment */
   if(mpi_rank_world == 0){
     printf("Shutting down MPI...\n Goodbye!\n");
+    fflush(stdout);
   } //if mpi_rank_world == 0
   MPI_Barrier(MPI_COMM_WORLD);
   errorCode = fempi_FinalizeMPI();
