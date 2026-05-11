@@ -21,6 +21,7 @@
 #include <float.h>
 #include <math.h>
 #include <fempi.h>
+#include <io.h>
 #include <grid.h>
 #include <mem_utils.h>
 #include <hydro_core.h>
@@ -76,8 +77,8 @@ extern "C" int cuda_timeIntDeviceSetup(){
    
    gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
 
-   //Ensure secondary time-integration dependent hydro_core parameters get initialized
-   errorCode = cuda_hydroCoreDeviceSecondaryStageSetup(dt);
+   //Ensure secondary time-integration dependent, device-level hydro_core submodules get initialized
+   errorCode = cuda_hydroCoreDeviceSecondaryStageSetup(dt, NtBatch);
    //Inital Host-to-Device field copies 
    errorCode = cuda_hydroCoreInitFieldsDevice();  //Transfer initial/restart conditions to the device
    //printf("cuda_timeIntDeviceSetup() complete.\n");
@@ -106,6 +107,7 @@ extern "C" int cuda_timeIntDeviceCommence(int it){
    int errorCode = TIME_INTEGRATION_SUCCESS;
    int itBatch;
    int RKstage;
+   int Ntaus;
 #ifdef TIMERS_LEVEL1
    float elapsedTime;
    cudaEvent_t startE, stopE
@@ -153,14 +155,32 @@ extern "C" int cuda_timeIntDeviceCommence(int it){
           stopSynchReportDestroyEvent(&startE, &stopE, &elapsedTime);
           printf("cuda_timeIntCommenceRK3_WS2002()  Kernel execution time (ms): %12.8f\n", elapsedTime);
 #endif
-       } //end for RKstage 
+       } //end for RKstage
+       if(towerIOSelector > 0){
+	 Ntaus = 9;
+         //Append time-advanced data to tower buffers
+         cudaDevice_towerAppendBuffers<<<grid, tBlock>>>(itBatch, NtBatch,
+			                                 towersData_d, towersSurfData_d, tower_iInds_d, tower_jInds_d,
+  	    	                                         Nhydro, hydroFlds_d,
+                                                         TKESelector*turbulenceSelector, sgstkeScalars_d,
+                                                         moistureNvars*moistureSelector, moistScalars_d, 
+                                                         NhydroAuxScalars, hydroAuxScalars_d, 
+                                                         hydroSubGridWrite*Ntaus, hydroTauFlds_d, 
+							 hydroSubGridWrite*moistureNvars*3, moistTauFlds_d,
+						         z0m_d, z0t_d, tskin_d, qskin_d, 
+						         fricVel_d, invOblen_d, htFlux_d, qFlux_d); 
+
+       }
      } //end if(timeMethod == 0){...
      simTime_it = simTime_it + 1;   //Increment the master simulation time step
      simTime = simTime_it * dt;   /*Increment the master simulation time*/
+     simTimeBatch[itBatch] = simTime;   /*Store the master simulation time*/
    }//end for itBatch...
+   gpuErrchk( cudaDeviceSynchronize() );
 
    //Retrieve desired HYDRO_CORE fields from device
-   errorCode = cuda_hydroCoreSynchFieldsFromDevice();
+   errorCode = cuda_hydroCoreSynchFieldsFromDevice(NtBatch);
+   gpuErrchk( cudaDeviceSynchronize() );
    
    return(errorCode);
 }//end cuda_timeIntDeviceCommence()

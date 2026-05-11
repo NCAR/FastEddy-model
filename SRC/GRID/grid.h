@@ -74,6 +74,9 @@ extern float *J33;      // dz/d_zeta
 extern float *D_Jac;    //Determinant of the Jacbian  (called scale factor i.e. if d_xi=d_eta=d_zeta=1, then cell volume)
 extern float *invD_Jac; //inverse Determinant of the Jacbian 
 
+extern float* lat; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
+extern float* lon; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
+
 /*######################------------------- GRID module function declarations ---------------------#################*/
 
 /*----->>>>> int gridGetParams();       ----------------------------------------------------------------------
@@ -96,6 +99,40 @@ int gridSecondaryPreparations();
 * Used to calculate the metric tensor elements for a generalized curvilinear coordinate system
 */
 int calculateJacobians();
+
+/*----->>>>> int gridGetRankFromXYPosition();    ------------------------------------------------------------
+* Used to determine the mpi_rank with a subdomain
+* that contains the xLoc,Yloc.
+*/
+int gridGetIJindsFromXYPosition(float xLoc, float yLoc, int *iIndx, int *jIndx);
+
+/*----->>>>> int gridGetRankFromXYPosition();    ------------------------------------------------------------
+* Used to determine the i,j indices of an mpi_rank subdomain
+* coordinate frame of the cell that contains the point latLoc,lonloc.
+*/
+int gridGetIJindsFromLatLonPosition(float lonLoc, float latLoc, int *iIndx, int *jIndx);
+
+/*----->>>>> int gridGetRankFromXYPosition();    ------------------------------------------------------------
+* Used to determine the mpi_rank with a subdomain
+* that contains the xLoc,Yloc.
+*/
+int gridGetRankFromXYPosition(float xLoc, float yLoc);
+
+/*----->>>>> int gridGetRankFromLatLonPosition();    ------------------------------------------------------------
+* Used to determine the mpi_rank with a subdomain
+* that contains the latLoc,lonloc.
+*/
+int gridGetRankFromLatLonPosition(double lonLoc, double latLoc);
+
+/*----->>>>> int gridGetXYOffsetsFromXYPosition();    ------------------------------------------------------------
+* Used to determine the x,y position offsets from a predetermined i,j-index cell center x,y coordinate
+*/
+int gridGetXYOffsetsFromCellIndices(float xLoc, float yLoc, int iIndx, int jIndx, float *xOff, float *yOff);
+
+/*----->>>>> int gridGetLatLonOffsetsFromXYPosition();    ------------------------------------------------------------
+* Used to determine the lat,lon position offsets from a predetermined i,j-index cell center lat,lon coordinate
+*/
+int gridGetLatLonOffsetsFromCellIndices(double lonLoc, double latLoc, int iIndx, int jIndx, double *lonOff, double *latOff);
 
 /*----->>>>> int singleRankGridHaloInit();    ------------------------------------------------------------
 * Used to setup xPos,yPos,zPos halos on all x-y boundaries 

@@ -63,13 +63,12 @@ int main(int argc, char **argv){
      /* Parse the command line arguments */
      if(argc != 2){
         printf("usage: %s paramFile \n",argv[0]);
-        fflush(stdout);
         exit(0);
      }else{
         sscanf(argv[1],"%s", paramFile);
         printf("Obtaining parameters from %s\n", paramFile);
-        fflush(stdout);
      }
+     fflush(stdout);
   } //end if(mpi_rank == 0 )
  
   /*** ---------------------------------------------------------------------------------------------- ***/
@@ -260,6 +259,56 @@ int main(int argc, char **argv){
     errorCode = hydro_corePrepareFromInitialConditions(simTime_itRestart, dt);
   }//end if inFile !=NULL
 
+
+  /*** ---------------------------------------------------------------------------------------------- ***/
+  /*** ----------------- Initialize/configure any specified Profile/Planes IO functionality ----------***/
+  /*** ---------------------------------------------------------------------------------------------- ***/
+  if(towerIOSelector > 0){
+    int iprofile;
+    int tmp_rank;
+    errorCode = ioProfilePreparations();
+    for(iprofile = 0; iprofile < nProfs; iprofile++){
+      if(towerProfiles.coordType == 0){
+        tmp_rank = gridGetRankFromLatLonPosition(towerProfiles.coordsLon[iprofile],towerProfiles.coordsLat[iprofile]);
+        if(tmp_rank >= 0){
+          towerProfiles.mpi_ranks[iprofile] = tmp_rank;
+          printf("Rank %d/%d: profile ID = %d at position (lat,lon) = (%f,%f), found in mpi_rank = %d subdomain!\n",
+                 mpi_rank_world, mpi_size_world, towerProfiles.profIDs[iprofile],towerProfiles.coordsLat[iprofile],towerProfiles.coordsLon[iprofile],
+ 	         towerProfiles.mpi_ranks[iprofile]);
+        }else{
+          printf("Rank %d/%d: profile ID = %d at position (lat,lon) = (%f,%f), not in simulation domain!\n",
+                 mpi_rank_world, mpi_size_world, towerProfiles.profIDs[iprofile],towerProfiles.coordsLat[iprofile],towerProfiles.coordsLon[iprofile]);
+        }
+      }else{
+        tmp_rank = gridGetRankFromXYPosition(towerProfiles.coordsWE[iprofile],towerProfiles.coordsSN[iprofile]);
+        if(tmp_rank >= 0){
+          towerProfiles.mpi_ranks[iprofile] = tmp_rank;
+          printf("Rank %d/%d: profile ID = %d at position (x,y) = (%f,%f), found in mpi_rank = %d subdomain!\n",
+                 mpi_rank_world, mpi_size_world, towerProfiles.profIDs[iprofile],towerProfiles.coordsWE[iprofile],towerProfiles.coordsSN[iprofile],
+ 	         towerProfiles.mpi_ranks[iprofile]);
+        }else{
+          printf("Rank %d/%d: profile ID = %d at position (x,y) = (%f,%f), not in simulation domain!\n",
+                 mpi_rank_world, mpi_size_world, towerProfiles.profIDs[iprofile],towerProfiles.coordsWE[iprofile],towerProfiles.coordsSN[iprofile]);
+        }
+      }
+    }
+    fflush(stdout);
+    errorCode = hydro_coreAllocateTowersDataStructure(nProfs, towerProfiles, NtBatch);
+    MPI_Barrier(MPI_COMM_WORLD); 
+   
+    //Write Towers static/initial conditions files
+    ioWriteBinaryTowerInitialFile(dt, simTime_itRestart, Nxp, Nyp, Nzp, Nh, 
+                                  towersData, towersSurfData,
+                                  towerIDs, rank_nTowers, tower_iInds, tower_jInds, 
+	    		          towerProfiles.coordType, tower_xOffsets, tower_yOffsets, tower_LonOffsets, tower_LatOffsets,
+				  NtBatch, towerInstanceSize, towerSurfInstanceSize,
+				  zPos, yPos, xPos, topoPos, surflayer_offshore, sea_mask);
+  }// endif towerIOSelector > 0
+  MPI_Barrier(MPI_COMM_WORLD); 
+  printf("Rank %d/%d: Profile preparations complete!\n",mpi_rank_world, mpi_size_world);
+  fflush(stdout);
+  MPI_Barrier(MPI_COMM_WORLD); 
+
   /*** ---------------------------------------------------------------------------------------------- ***/
   /*** ----------------- Initialize the CUDA-layer of each model-component module --------------------***/
   /*** ---------------------------------------------------------------------------------------------- ***/
@@ -299,8 +348,8 @@ int main(int argc, char **argv){
 
 #endif /* ifndef NOTCUDA: THIS SECTION PREPARED FOR CUDA FASTEDDY SIMULATION */
    
+  fflush(stdout);
   MPI_Barrier(MPI_COMM_WORLD); 
-
   /*** ---------------------------------------------------------------------------------------------- ***/
   /*** ------- Final pre-check logging and initialization before entering the main time-loop ---------***/
   /*** ---------------------------------------------------------------------------------------------- ***/
@@ -359,7 +408,7 @@ int main(int argc, char **argv){
      /*If appropriate timing to do so, update the nesting boundary conditions*/ 
      if(hydroBCs == 1){
        if((it%((int)roundf(dtBdyPlaneBCs/dt))==0)&&(it > simTime_itRestart)){    //If due for an update and after the simulation start
-         printf("FastEddy MAin timestepping loop: Reading new BdyPlanes at it=%d...\n",it);
+         printf("FastEddy Main timestepping loop: Reading new BdyPlanes at it=%d...\n",it);
          fflush(stdout);
          errorCode = timeIntBdyPlaneUpdates();
          if((cellpertSelector==1)&&(cellpert_tvcp==1)){ // update CP parameters with dynamic LBCs
@@ -368,7 +417,9 @@ int main(int argc, char **argv){
        }//end if hydroBCs == 1
      }
      MPI_Barrier(MPI_COMM_WORLD);
+     fflush(stdout);
  
+     mpi_t3 = MPI_Wtime();    //Mark the walltime to measure IO/logging duration.
      if(it%frqOutput == 0){
        MPI_Barrier(MPI_COMM_WORLD); 
        if(mpi_rank_world == 0){
@@ -378,6 +429,7 @@ int main(int argc, char **argv){
        } //if mpi_rank_world
   
        MPI_Barrier(MPI_COMM_WORLD); 
+       fflush(stdout);
 
        /*Every rank calls the StateLogDump*/
        hydro_coreStateLogDump();
@@ -389,7 +441,6 @@ int main(int argc, char **argv){
          fflush(stdout);
        } //if mpi_rank_world
 
-       mpi_t3 = MPI_Wtime();    //Mark the walltime to measure IO duration.
        /* Dump the root output file. */
 #ifndef IO_OFF
        if(ioOutputMode==0){
@@ -405,13 +456,22 @@ int main(int argc, char **argv){
          errorCode = ioWriteBinaryoutFileSingleTime(it, Nxp, Nyp, Nzp, Nh);
 #endif
        }
-#endif
-       mpi_t4 = MPI_Wtime();    //Mark the walltime to measure IO duration
+#endif 
        if(mpi_rank_world == 0){
          printf("Dumped state at timestep = %d...\n",it);
          fflush(stdout);
        } //if mpi_rank_world
      } //end if (it%frqOutput == 0) ....   (We log summary info and dump outputs)
+     //Dump tower data if appropriate
+     if((towerIOSelector > 0) && (it > simTime_itRestart)){
+       ioWriteBinaryTowerFileSingleBatch(it, NtBatch, Nz, simTimeBatch, towersData, towersSurfData, 
+		                         towerIDs, rank_nTowers, towerInstanceSize, towerSurfInstanceSize);
+       if(mpi_rank_world == 0){
+         printf("Dumped batch tower data at timestep = %d...\n",it);
+         fflush(stdout);
+       } //if mpi_rank_world
+     }
+     mpi_t4 = MPI_Wtime();    //Mark the walltime to measure IO/logging duration
 #ifdef NOTCUDA 
      /* OBSELETE!!!!! There is longer any CPU model integration functionality */
 #else  /* ---------------  CUDA FASTEDDY !!!!! -------------------------  */
@@ -429,7 +489,7 @@ int main(int argc, char **argv){
      /*Kernel return*/
      itTmp = itTmp+NtBatch;  
 #endif
-     mpi_t2 = MPI_Wtime();    //Mark the walltime to measure duration of  a batch of timesteps.
+     mpi_t2 = MPI_Wtime();    //Mark the walltime to measure duration of a batch of timesteps (including any IO/logging).
      if(mpi_rank_world == 0){
         printf("\n\t\t\t!!!!!\t  TIMESTEP PERFORMANCE  \t !!!!! \n");
         printf(" Total Time (s) | Batch Steps \t| Time/step (s) | Comp./step (s) | IO Time (s)\n");
@@ -460,6 +520,37 @@ int main(int argc, char **argv){
   hydro_coreStateLogDump();
   MPI_Barrier(MPI_COMM_WORLD); 
 
+  MPI_Barrier(MPI_COMM_WORLD); 
+  if(mpi_rank_world == 0){
+    printf("\n_____________________#######_________  TOWER-SUMMARY @ it = %d _________#######____________________ \n", it);
+    fflush(stdout);
+  } //if mpi_rank_world  
+  MPI_Barrier(MPI_COMM_WORLD); 
+#ifdef DEBUG_TOWER
+  for(int mrank=0; mrank < mpi_size_world; mrank++){
+     MPI_Barrier(MPI_COMM_WORLD); 
+     if(mrank == mpi_rank_world){
+       for(int towerCount = 0; towerCount < rank_nTowers; towerCount++){
+          printf("=========================================  TOWER-ID %d =========================================== \n", towerIDs[towerCount]);
+          for(int k=0; k < Nz; k++){
+	    printf("%d: ",k);
+            for(int towfld=0; towfld < 15; towfld++){
+	     printf("%f, ",towersData[(NtBatch)*towerCount*towerInstanceSize + (NtBatch-1)*towerInstanceSize+towfld*Nz+k]);
+	    }
+	    printf("\n");
+	  }
+          printf("************ surface values ****************\n");
+          for(int surfld=0; surfld < 6; surfld++){
+	     printf("%f, ",towersSurfData[(NtBatch)*towerCount*towerSurfInstanceSize + (NtBatch-1)*towerSurfInstanceSize+surfld]);
+	  }
+	  printf("\n");
+       }
+       fflush(stdout);
+     }
+     MPI_Barrier(MPI_COMM_WORLD); 
+  }//end for mrank	  
+  MPI_Barrier(MPI_COMM_WORLD); 
+#endif
   if(mpi_rank_world == 0){
     printf("Dumping state at timestep = %d...\n",it);
     fflush(stdout);
@@ -482,6 +573,11 @@ int main(int argc, char **argv){
   }
 #endif
   MPI_Barrier(MPI_COMM_WORLD); 
+  //Dump tower data if appropriate
+  if(towerIOSelector > 0){
+    ioWriteBinaryTowerFileSingleBatch(it, NtBatch, Nz, simTimeBatch, towersData, towersSurfData, towerIDs, rank_nTowers, towerInstanceSize, towerSurfInstanceSize);
+  }
+  MPI_Barrier(MPI_COMM_WORLD); 
   mpi_t4 = MPI_Wtime();    //Mark the walltime to measure IO duration
   mpi_t2 = MPI_Wtime();    //Mark the walltime to measure final timestep summary and performance.
   if(mpi_rank_world == 0){
@@ -492,7 +588,6 @@ int main(int argc, char **argv){
     printf("   %8.4f \t| %8d \t|  %8.4f \t|  %8.4f \t |  %9.6f \n", (mpi_t2-mpi_t1), 0, 
             (mpi_t2-mpi_t1)/NtBatch, (mpi_t2-mpi_t1-(mpi_t4-mpi_t3))/NtBatch, (mpi_t4-mpi_t3));
     printf("\n********************************************************************************************************\n");
-    fflush(stdout);
     printf("Your FastEddy simulation is complete!\n");
     printf("Cleaning up...\n");
     fflush(stdout);
@@ -532,6 +627,7 @@ int main(int argc, char **argv){
   /* Finalize the FEMPI environment */
   if(mpi_rank_world == 0){
     printf("Shutting down MPI...\n Goodbye!\n");
+    fflush(stdout);
   } //if mpi_rank_world == 0
   MPI_Barrier(MPI_COMM_WORLD);
   errorCode = fempi_FinalizeMPI();

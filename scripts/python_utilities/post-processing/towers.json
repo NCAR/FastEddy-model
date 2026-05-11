@@ -1,0 +1,7 @@
+{
+  "runPath": "INSERT_PATH_TO_YOUR_RUN_DIRECTORY/",
+  "FEparamsFile": "FE_params.in",
+  "outputFileName": "Alltowers.nc",
+  "startStep": 0,
+  "endStep": 300000
+}

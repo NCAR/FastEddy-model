@@ -36,7 +36,7 @@ DEBUG_CFLAGS = -g
 DEFINES = -DCUB_IGNORE_DEPRECATED_CPP_DIALECT -DTHRUST_IGNORE_DEPRECATED_CPP_DIALECT
 
 TEST_CFLAGS = -Wall -m64 ${DEFINES} ${INCLUDES} ${OTHER_INCLUDES}
-ARCH_CU_FLAGS = -arch=sm_70
+ARCH_CU_FLAGS = -arch=sm_80
 TEST_CU_CFLAGS = ${ARCH_CU_FLAGS} -m64 -std=c++11 ${DEFINES} ${INCLUDES} ${OTHER_INCLUDES}
 
 L_CPPFLAGS =
@@ -189,7 +189,8 @@ all: FastEddy
         ../HYDRO_CORE/CUDA/cuda_largeScaleForcingsDevice.cu \
         ../HYDRO_CORE/CUDA/cuda_moistureDevice.cu \
         ../HYDRO_CORE/CUDA/cuda_filtersDevice.cu \
-	../HYDRO_CORE/CUDA/cuda_cellpertDevice.cu
+	../HYDRO_CORE/CUDA/cuda_cellpertDevice.cu \
+	../HYDRO_CORE/CUDA/cuda_towersDevice.cu
 	$(TEST_CU_CC) $(TEST_CU_CFLAGS) -dc $< -o $@
 ################################################################################
 # Generic Executable

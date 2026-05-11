@@ -78,7 +78,10 @@ float *J33;      // dz/d_zeta
 
 float *D_Jac;    //Determinant of the Jacobian  (called scale factor i.e. if d_xi=d_eta=d_zeta=1, then cell volume)
 float *invD_Jac; //inverse Determinant of the Jacobian 
- 
+
+float* lat; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
+float* lon; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
+
 /*######################------------------- GRID module function definitions ---------------------#################*/
 
 /*----->>>>> int gridGetParams();       ----------------------------------------------------------------------
@@ -256,7 +259,7 @@ int gridInit(){
      yPos = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "yPos");
      zPos = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "zPos");
      topoPos = memAllocateFloat2DField(Nxp, Nyp, Nh, "topoPos");
-     topoPosGlobal = memAllocateFloat2DField(Nx, Ny, 0, "topoPos");
+     topoPosGlobal = memAllocateFloat2DField(Nx, Ny, 0, "topoPosGlobal");
      /* Metric Tensors Fields */
      J13 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J13");
      J23 = memAllocateFloat3DField(Nxp, Nyp, Nzp, Nh, "J23");
@@ -268,14 +271,11 @@ int gridInit(){
    } // end if errorCode indicates no errors thus far
 
    /*Register these fields with the IO module*/
-   /********* FOR THE MOMENT THESE SHOULD BE STRICTLY GLOBAL DOMAIN VARIABLE FIELDS ********/
    if(errorCode == GRID_SUCCESS){ 
      ioerrorCode = ioRegisterVar("xPos", "float", 4, dims4d, xPos);
      ioerrorCode = ioRegisterVar("yPos", "float", 4, dims4d, yPos);
      ioerrorCode = ioRegisterVar("zPos", "float", 4, dims4d, zPos);
      ioerrorCode = ioRegisterVar("topoPos", "float", 3, dims2dTD, topoPos);
-     printf("gridInit:topoPos stored at %p, has been registered with IO.\n",
-            &topoPosGlobal);
      fflush(stdout);
      if(ioerrorCode!=0){
        printf("Error in registering GRID module coordinate fields with IO.\n");
@@ -317,6 +317,15 @@ int gridInit(){
      ioerrorCode = ioAddStandardAttrs("J33", "-", "Metric tensor component dz/d_zeta", NULL);
 #endif 
    } // end if errorCode indicates no errors thus far
+
+   // Allocate 2d arrays of latitude and longitude
+   lat = memAllocateFloat2DField(Nxp, Nyp, Nh, "lat");
+   lon = memAllocateFloat2DField(Nxp, Nyp, Nh, "lon");
+   errorCode = ioRegisterVar("lat", "float", 3, dims2dTD, lat);
+   errorCode = ioRegisterVar("lon", "float", 3, dims2dTD, lon);
+   // Add NetCDF attributes for the registered variable
+   ioerrorCode = ioAddStandardAttrs("lat", "degrees", "latitude", NULL);
+   ioerrorCode = ioAddStandardAttrs("lon", "degrees", "longitude", NULL);
 
 #ifdef DEBUG
 //#if 1
@@ -882,6 +891,154 @@ int calculateJacobians(){
    return(errorCode);
 } //end calculateJacobians
 
+/*----->>>>> int gridGetIJindsFromXYPosition();    ------------------------------------------------------------
+* Used to determine the i,j indices of an mpi_rank subdomain 
+* coordinate frame of the cell that contains the point xLoc,Yloc.
+*/
+int gridGetIJindsFromXYPosition(float xLoc, float yLoc, int *iIndx, int *jIndx){
+   int errorCode = GRID_SUCCESS;
+   int i,j,ijk;
+   *iIndx = -1;
+   *jIndx = -1;
+   for(i=iMin; i < iMax; i++){
+     for(j=jMin; j < jMax; j++){
+       ijk = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+kMin;
+       if(    (xLoc > (xPos[ijk]-0.5*d_xi) && xLoc <= (xPos[ijk]+0.5*d_xi)) 
+           && (yLoc > (yPos[ijk]-0.5*d_eta) && yLoc <= (yPos[ijk]+0.5*d_eta)) ){  
+          *iIndx = i; 
+          *jIndx = j; 
+       }
+     }
+   }
+   if((*iIndx < iMin) || (*jIndx < jMin)){
+     printf("Rank %d/%d: gridGetIJindsFromXYPosition(): Tower indices not found in this rank's subdomain!\n",
+            mpi_rank_world, mpi_size_world);
+     fflush(stdout);
+   } 
+   return (errorCode);
+} //end gridGetIJindsFromXYPosition()
+
+/*----->>>>> int gridGetIJindsFromLatLonPosition();    ------------------------------------------------------------
+* Used to determine the i,j indices of an mpi_rank subdomain
+* coordinate frame of the cell that contains the point latLoc,lonloc.
+*/
+int gridGetIJindsFromLatLonPosition(float lonLoc, float latLoc, int *iIndx, int *jIndx){
+   int errorCode = GRID_SUCCESS;
+   int i,j,ij;
+   double dr; 
+   double min_dr;
+   
+   min_dr = DBL_MAX;
+   *iIndx = -1;
+   *jIndx = -1;
+   for(i=iMin; i < iMax; i++){
+     for(j=jMin; j < jMax; j++){
+       ij = i*(Nyp+2*Nh)+j;
+       dr = sqrt( pow((lon[ij]-lonLoc),2.0)+pow((lat[ij]-latLoc),2.0) );
+       if( (dr >= 0.0 ) && (dr < min_dr) ){
+	  min_dr = dr;
+          *iIndx = i;
+          *jIndx = j;
+       }
+     }
+   }
+   if((*iIndx < iMin) || (*jIndx < jMin)){
+     printf("Rank %d/%d: gridGetIJindsFromXYPosition(): Tower indices not found in this rank's subdomain!\n",
+            mpi_rank_world, mpi_size_world);
+     fflush(stdout);
+   }
+   return (errorCode);
+} //end gridGetIJindsFromLatLonPosition()
+  
+/*----->>>>> int gridGetRankFromXYPosition();    ------------------------------------------------------------
+* Used to determine the mpi_rank with a subdomain
+* that contains the xLoc,Yloc.
+*/
+int gridGetRankFromXYPosition(float xLoc, float yLoc){
+   int errorCode = GRID_SUCCESS;
+   int ret_rank;
+   int tmp_ret_rank = -1;
+   int ijk_min;
+   int ijk_max;
+   ijk_min = iMin*(Nyp+2*Nh)*(Nzp+2*Nh)+jMin*(Nzp+2*Nh)+kMin;
+   ijk_max = (iMax-1)*(Nyp+2*Nh)*(Nzp+2*Nh)+(jMax-1)*(Nzp+2*Nh)+kMin;
+   if( (xPos[ijk_min]-0.5*d_xi < xLoc) && (yPos[ijk_min]-0.5*d_eta < yLoc) ){
+     if( (xPos[ijk_max]+0.5*d_xi >= xLoc) && (yPos[ijk_max]+0.5*d_eta >= yLoc) ){
+       tmp_ret_rank = mpi_rank_world;
+     }
+   }
+   errorCode = MPI_Allreduce(&tmp_ret_rank, &ret_rank, 1,
+                             MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD);
+   if(errorCode != MPI_SUCCESS){
+     printf("Rank %d/%d gridGetRankFromXYPosition(): MPI_Allreducei returned with MPI_ERROR = %d!\n",
+            mpi_rank_world, mpi_size_world, errorCode);
+     fflush(stdout);
+   }
+   return (ret_rank);
+} //end gridGetRankFromXYPosition() 
+
+/*----->>>>> int gridGetRankFromLatLonPosition();    ------------------------------------------------------------
+* Used to determine the mpi_rank with a subdomain
+* that contains the latLoc,lonloc.
+*/
+int gridGetRankFromLatLonPosition(double lonLoc, double latLoc){
+   int errorCode = GRID_SUCCESS;
+   int ret_rank;
+   int tmp_ret_rank = -1;
+   int ij_min;
+   int ij_max;
+   double dlat;
+   double dlon;
+
+   ij_min = iMin*(Nyp+2*Nh)+jMin;
+   ij_max = (iMax-1)*(Nyp+2*Nh)+(jMax-1);
+
+   dlat = fabs(lat[ij_min + 1]-lat[ij_min]);
+   dlon = fabs(lon[ij_min + (Nyp+2*Nh)]-lon[ij_min]);
+  
+   if( (lon[ij_min]-0.5*dlon < lonLoc) && (lat[ij_min]-0.5*dlat < latLoc) ){
+     if( (lon[ij_max]+0.5*dlon >= lonLoc) && (lat[ij_max]+0.5*dlat >= latLoc) ){
+       tmp_ret_rank = mpi_rank_world;
+     }
+   }
+   errorCode = MPI_Allreduce(&tmp_ret_rank, &ret_rank, 1,
+                             MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD);
+   if(errorCode != MPI_SUCCESS){
+     printf("Rank %d/%d gridGetRankFromLatLonPosition(): MPI_Allreduce returned with MPI_ERROR = %d!\n",
+            mpi_rank_world, mpi_size_world, errorCode);
+     fflush(stdout);
+   }
+   return (ret_rank);
+} //end gridGetRankFromLatLonPosition()
+ 
+/*----->>>>> int gridGetXYOffsetsFromXYPosition();    ------------------------------------------------------------
+* Used to determine the x,y position offsets from a predetermined i,j-index cell center x,y coordinate
+*/
+int gridGetXYOffsetsFromCellIndices(float xLoc, float yLoc, int iIndx, int jIndx, float *xOff, float *yOff){
+   int errorCode = GRID_SUCCESS;
+   int ijk;
+   
+   ijk = iIndx*(Nyp+2*Nh)*(Nzp+2*Nh)+jIndx*(Nzp+2*Nh)+kMin;
+   *xOff = xPos[ijk]-xLoc;
+   *yOff = yPos[ijk]-yLoc;
+   
+   return (errorCode);
+} //end gridGetXYOffsetsFromXYPosition()
+  
+/*----->>>>> int gridGetLatLonOffsetsFromXYPosition();    ------------------------------------------------------------
+* Used to determine the lat,lon position offsets from a predetermined i,j-index cell center lat,lon coordinate
+*/
+int gridGetLatLonOffsetsFromCellIndices(double lonLoc, double latLoc, int iIndx, int jIndx, double *lonOff, double *latOff){
+   int errorCode = GRID_SUCCESS;
+   int ij;
+   
+   ij = iIndx*(Nyp+2*Nh)+jIndx;
+   *lonOff = lon[ij]-lonLoc;
+   *latOff = lat[ij]-latLoc;
+   
+   return (errorCode);
+} //end gridGetLatLonOffsetsFromCellIndices()
+  
 /*----->>>>> int singleRankGridHaloInit();    ------------------------------------------------------------
 * Used to setup xPos,yPos,zPos halos on all x-y boundaries 
 * when under single-rank setup (i.e. mpi_size_world ==1).

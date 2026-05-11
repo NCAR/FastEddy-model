@@ -55,6 +55,9 @@ extern float *J33_d;      // dz/d_zeta
 extern float *D_Jac_d;    //Determinant of the Jacbian  (called scale factor i.e. if d_xi=d_eta=d_zeta=1, then cell volume)
 extern float *invD_Jac_d; //inverse Determinant of the Jacbian 
 
+extern float* lat_d; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
+extern float* lon_d; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
+
 /*#################------------------- GRID_CUDADEV module function declarations ---------------------##############*/
 
 /*----->>>>> int cuda_gridDeviceSetup();       ----------------------------------------------------------------------

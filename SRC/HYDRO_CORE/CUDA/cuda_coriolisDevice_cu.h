@@ -25,8 +25,6 @@ extern __constant__ int coriolisSelector_d;   /*coriolis Force selector: 0= none
 extern __constant__ float corioConstHorz_d;          /*coriolis horizontal term constant */
 extern __constant__ float corioConstVert_d;          /*coriolis vertical term constant */
 extern __constant__ float corioLS_fact_d;            /*large-scale factor on Coriolis term*/
-extern float* lat_d; /* latitude in degrees north "()" 2-d array (x by y) (m)*/
-extern float* lon_d; /* longitude in degrees east "()" 2-d array (x by y) (m)*/
 
 /*##############-------------- CORIOLIS_CUDADEV submodule function declarations ------------------############*/
 

@@ -130,7 +130,7 @@ int addStandardAttrsToVar(char *varName, char *units, char *longName, char *stan
 } //end addStandardAttrsToVar
 
 int printList(){
-  int i, j;
+   int i, j;
    ioVar_t *tmp;
    /*print the contents of the list from beginning to end*/
    i = 0;
@@ -174,6 +174,30 @@ int printList(){
 
    return(i);
 } //end printList
+
+int countVarsInList(int *reg3dVars, int *reg2dVars){
+   int i;
+   int i3d;
+   int i2d;
+   ioVar_t *tmp;
+   /*Count the registered variables in the list from beginning to end*/
+   i = 0;
+   i3d = 0;
+   i2d = 0;
+   tmp = head;
+   while(tmp != NULL){
+      if (tmp->nDims == 4){
+       i3d++;
+      }else if(tmp->nDims == 3){
+       i2d++;
+      }
+      tmp = tmp->next;
+      i++;
+   }// end while
+   *reg3dVars = i3d;
+   *reg2dVars = i2d;
+   return(i);
+} //end countVarsInList
 
 void destroyList(){
    

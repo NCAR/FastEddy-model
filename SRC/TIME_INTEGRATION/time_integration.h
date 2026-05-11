@@ -33,6 +33,7 @@ extern int simTime_itRestart; /*Master simulation 'Restart' time step*/
 extern int numRKstages; /* number of stages in the time scheme */
 
 /* array fields */
+extern float* simTimeBatch; /*Array of master simulation time over NtBatch timesteps*/
 
 /*############------------------- TIME_INTEGRATION module function declarations ---------------------############*/
 

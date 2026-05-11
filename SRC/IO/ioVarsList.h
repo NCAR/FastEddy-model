@@ -50,6 +50,7 @@ ioVar_t *getFirstVarFromList();
 ioVar_t *getNamedVarFromList(char* name);
 int addVarToList(char *name, char *type, int nDims, int *dimids, void *varMemAddress);
 int printList();
+int countVarsInList(int *reg3dVars, int *reg2dVars);
 void destroyList();
 
 /* Add a single NetCDF attribute to an existing variable in the list

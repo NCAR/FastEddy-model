@@ -31,6 +31,16 @@
 #include <io_binary.h>
 #include <ioVarsList.h>
 
+typedef struct _ioProfiles_t {     // Structure of Arrays (SOA)
+   int     *profIDs;
+   int     *mpi_ranks;
+   int     coordType; //0 = lat,lon or 1 = y,x
+   double  *coordsLon;
+   double  *coordsLat;
+   float  *coordsSN;
+   float  *coordsWE;
+} ioProfiles_t;
+
 /*######################------------------- IO module variable declarations ---------------------#################*/
 /* Parameters */
 extern int ioOutputMode;  /*0: N-to-1 gather and write to a netCDF file, 1: N-to-N writes of FastEddy binary files*/
@@ -44,6 +54,10 @@ extern int frqOutput;     /*frequency in timesteps to produce output; should be 
 extern char *outSubString; /*subString portion of outFile holding element-in-series as in path/base.substring */
 extern char *outFileName;      /*full name instance of outFileName =  path/base.substring */
 extern char *inFileName;      /*full name instance of inFileName =  path/infile */
+extern int registeredVars;   /* Total number of variables registered with the primary ioVarsList */
+extern int registered3dVars; /* Number of 3-dimensional variables registered with the primary ioVarsList */
+extern int registered2dVars; /* Number of 2-dimensional variables registered with the primary ioVarsList */
+
 extern int nz_varid;
 extern int ny_varid;
 extern int nx_varid;
@@ -53,6 +67,13 @@ extern float *ioBuffField;
 extern float *ioBuffFieldTransposed;
 extern float *ioBuffFieldRho;
 extern float *ioBuffFieldTransposed2D;
+
+/*IO-profiles*/
+extern int towerIOSelector;
+extern  char *towerSpecsFile;  /* The path+filename to a tower specifications file*/
+extern char *towerPath;     /* Directory Path where tower files are to be written */
+extern int nProfs;
+extern ioProfiles_t towerProfiles;
 
 /*######################------------------- IO module function declarations ---------------------#################*/
 
@@ -70,6 +91,19 @@ int ioInit();
 * Allocate memory to io-buffers for reading/writing IO-registered fields
 */
 int ioAllocateBuffers(int globalNx, int globalNy, int globalNz);
+
+/*----->>>>> int ioProfilePreparations();   ------------------------------------------------------------
+ * Profile Preparations routine for the IO module. Includes counting registered variables, reading
+ * profiles, slices/planes or other reduced-data-volume output specifications, allocating associated arrays,
+ * and...
+ */
+//int ioProfilePreparations(int *numProfiles);
+int ioProfilePreparations();
+
+/*----->>>>> int ioCleanupProfiles();       ----------------------------------------------------------------------
+Used to free all malloced memory associated with Priofiles output from the IO module.
+*/
+int ioCleanupProfiles();
 
 /*----->>>>> int ioCleanup();       ----------------------------------------------------------------------
 Used to free all malloced memory by the IO module.

@@ -80,6 +80,9 @@ extern float *hydroRhoInv_d;   //storage for 1.0/rho
 /*---CELL PERTURBATION METHOD*/
 #include <cuda_cellpertDevice_cu.h>
 
+/*---TOWERS*/
+#include <cuda_towersDevice_cu.h>
+
 #ifdef URBAN_EXT
   /*URBAN */
   #include <cuda_urbanDevice_cu.h>
@@ -117,6 +120,11 @@ extern "C" int cuda_hydroCoreDeviceSetup();
 * Used to free all malloced memory by the HYDRO_CORE_CUDADEV module.
 */
 extern "C" int cuda_hydroCoreDeviceCleanup();
+
+/*----->>>>> int cuda_hydroCoreDeviceSecondaryStageSetup(float dt); -----------------------------------------------------------------
+* Secondary initializations at the device level for BCs
+*/
+extern "C" int cuda_hydroCoreDeviceSecondaryStageSetup(float dt, int batchSize);
 
 /*----->>>>> extern "C" int cuda_hydroCoreDeviceBuildFrhs();  --------------------------------------------------
 * This routine provides the externally callable cuda-kernel call to perform a complete hydroCore build_Frhs
@@ -181,8 +189,8 @@ extern "C" int cuda_hydroCoreInitFieldsDevice();
 
 /*----->>>>> extern "C" int cuda_hydroCoreSynchFieldsFromDevice();  --------------------------------------------------
 * This function handles the synchronization to host of on-device (GPU) fields  by executing the appropriate sequence
-* of cudaMemcpyDeviceiToHost data transfers.
+* of cudaMemcpyDeviceiToHost data transfers. This now includes virtual towers.
 */
-extern "C" int cuda_hydroCoreSynchFieldsFromDevice();
+extern "C" int cuda_hydroCoreSynchFieldsFromDevice(int batchSize);
 
 #endif // _HYDRO_CORE_CUDADEV_CU_H
