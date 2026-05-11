@@ -14,13 +14,15 @@ Real cases are performed by dynamically downscaling from a mesoscale model such 
    :width: 100%
    :name: pre-processing_workflow_diagram	   
 
-   FastEddy Pre-Processing Workflow Diagram
+   FastEddy Pre-Processing Workflow Diagram\ *
    
-   *Source: Google. (2026). Gemini (Version 3 Flash) [Large language model]. https://gemini.google.com*
-  
 The following tutorial provides a practical example of performing these preprocessing steps followed by a corresponding weather-driven FastEddy simulation for a real-world downscaled scenario. 
 
 .. toctree::
 
    cases_real/WRF_coupling_case0.rst
    cases_real/WRF_coupling_case0_FE.rst
+
+.. rst-class:: footnote-source
+
+   \* Source: Google. (2026). Gemini (Version 3 Flash) [Large language model]. https://gemini.google.com	       

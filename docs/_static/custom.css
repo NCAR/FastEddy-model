@@ -87,3 +87,11 @@
 
 .preprocessing td:nth-child(2),
 .preprocessing th:nth-child(2) { width: 78% !important; }   /* Description */
+
+.footnote-source {
+    font-size: 0.75em;
+    color: #666;
+    margin-top: 2em;
+    border-top: 1px solid #ddd;
+    padding-top: 0.5em;
+}
