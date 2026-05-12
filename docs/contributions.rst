@@ -28,6 +28,23 @@ what additions will be part of a release for coordination purposes. Exceptions
 will be considered for small bug fixes for their incorporation outside of a
 release cycle.
 
+Share Feedback or Ideas
+-----------------------
+
+Not all input needs to come through a code contribution. If you have suggestions,
+ideas, or have encountered issues, we encourage you to share them through our
+feedback form.
+
+This is a good option if you:
+
+  * Have an idea but are not planning to implement it yourself
+  * Want to report an issue or usability challenge
+  * Have general suggestions or feedback based on your experience
+
+Share feedback, suggestions, or report issues to the development team.
+**Update with published URL**
+`Feedback form <https://docs.google.com/forms/d/e/1FAIpQLScRiI2V5Tp5ga9KIpJ8813eaP86hmNLLICePAYfuuXOaVH44g/viewform?usp=header>`_
+
 Scope of Contributions
 ======================
 
