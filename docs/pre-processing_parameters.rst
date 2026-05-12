@@ -1,6 +1,6 @@
-*****************************************
-Pre-Processing Parameters Reference Guide
-*****************************************
+******************************
+Pre-Processing Reference Guide
+******************************
 
 .. |br| raw:: html
 
@@ -20,16 +20,6 @@ Each table provides the:
 These definitions serve as a reference to ensure correct configuration.
 
 See the :ref:`pre-processing_workflow_diagram` for a visual representation of the workflow.
-
-.. figure:: /_static/FastEddy_Pre-Processing_Workflow_Gemini.png
-   :alt: FastEddy Pre-Processing Workflow Diagram
-   :align: center
-   :width: 100%
-
-   FastEddy Pre-Processing Workflow Diagram
-   
-   *Source: Google. (2026). Gemini (Version 3 Flash) [Large language model]. https://gemini.google.com*
-
 
 geospec.json
 ============

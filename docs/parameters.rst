@@ -1,11 +1,14 @@
-**************************
-Parameters Reference Guide
-**************************
+*********************
+Model Reference Guide
+*********************
 
 .. |br| raw:: html
 
    <br/>
 
+Parameters
+==========
+ 
 This page defines the configurable parameters available in FastEddy\ :sup:`®`.
 Parameters are organized into logical sets by model feature or model configuration component.
 
@@ -25,7 +28,7 @@ Each table provides the:
 These definitions serve as a reference to ensure correct configuration and valid inputs for FastEddy simulations.
 
 FEMPI
-=====
+-----
 
 .. csv-table::
    :file: csv/fempi.csv
@@ -34,7 +37,7 @@ FEMPI
    :class: longtable
 
 FECUDA
-======
+------
 
 .. csv-table::
    :file: csv/fecuda.csv
@@ -42,7 +45,7 @@ FECUDA
    :class: longtable
 
 IO 
-===
+---
 
 .. csv-table::
    :file: csv/io.csv
@@ -51,14 +54,14 @@ IO
 
 	   
 GRID
-====
+----
 .. csv-table::
    :file: csv/grid.csv
    :delim: ,
    :class: longtable
 
 TIME INTEGRATION
-================
+----------------
 
 .. csv-table::
    :file: csv/time_integration.csv
@@ -67,10 +70,10 @@ TIME INTEGRATION
 
 	   
 HYDRO CORE
-==========
+----------
 
 BOUNDARY CONDITIONS
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_boundary_cond.csv
@@ -78,7 +81,7 @@ BOUNDARY CONDITIONS
    :class: longtable
 
 HYDRO_IO/LOGGING
-----------------
+^^^^^^^^^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_io_logging.csv
@@ -86,7 +89,7 @@ HYDRO_IO/LOGGING
    :class: longtable
 
 ADVECTION
----------
+^^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_advection.csv
@@ -94,7 +97,7 @@ ADVECTION
    :class: longtable
 
 MOISTURE
---------
+^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_moisture.csv
@@ -102,7 +105,7 @@ MOISTURE
    :class: longtable
 
 CORIOLIS
---------
+^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_coriolis.csv
@@ -110,7 +113,7 @@ CORIOLIS
    :class: longtable
 
 TURBULENCE
-----------
+^^^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_turbulence.csv
@@ -118,7 +121,7 @@ TURBULENCE
    :class: longtable
 
 CANOPY
-------
+^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_canopy.csv
@@ -126,7 +129,7 @@ CANOPY
    :class: longtable
 
 DIFFUSION
----------
+^^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_diffusion.csv
@@ -134,7 +137,7 @@ DIFFUSION
    :class: longtable
 
 AUXILIARY SCALARS AND SOURCES
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_auxiliary_scalars.csv
@@ -142,7 +145,7 @@ AUXILIARY SCALARS AND SOURCES
    :class: longtable
 
 EXPLICIT FILTERS
-----------------
+^^^^^^^^^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_explicit_filters.csv
@@ -150,7 +153,7 @@ EXPLICIT FILTERS
    :class: longtable
 
 RAYLEIGH DAMPING LAYER
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_rayleigh_damping_layer.csv
@@ -158,7 +161,7 @@ RAYLEIGH DAMPING LAYER
    :class: longtable
 
 SURFACE LAYER
--------------
+^^^^^^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_surface_layer.csv
@@ -166,7 +169,7 @@ SURFACE LAYER
    :class: longtable
 
 CELL PERTURBATION METHOD
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_cell_perturbation.csv
@@ -174,7 +177,7 @@ CELL PERTURBATION METHOD
    :class: longtable
 
 BASE-STATE
-----------
+^^^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_base_state.csv
@@ -182,7 +185,7 @@ BASE-STATE
    :class: longtable
 
 LARGE SCALE FORCINGS
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 .. csv-table::
    :file: csv/hydro_core_large_scale_forcings.csv
@@ -190,10 +193,10 @@ LARGE SCALE FORCINGS
    :class: longtable
 
 EXTENSIONS
-==========
+----------
 
 GAD
----
+^^^
 
 .. csv-table::
    :file: csv/extensions_gad.csv
@@ -201,7 +204,7 @@ GAD
    :class: longtable
 
 URBAN
------
+^^^^^
 
 .. csv-table::
    :file: csv/extensions_urban.csv
