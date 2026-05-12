@@ -41,11 +41,9 @@ This is a good option if you:
   * Want to report an issue or usability challenge
   * Have general suggestions or feedback based on your experience
 
-Share feedback, suggestions, or report issues to the development team.
-
-**Update with published URL**
-
-`Feedback form <https://docs.google.com/forms/d/e/1FAIpQLScRiI2V5Tp5ga9KIpJ8813eaP86hmNLLICePAYfuuXOaVH44g/viewform?usp=header>`_
+| Share feedback, suggestions, or report issues to the development team.
+| **Update with published URL**
+| `Feedback form <https://docs.google.com/forms/d/e/1FAIpQLScRiI2V5Tp5ga9KIpJ8813eaP86hmNLLICePAYfuuXOaVH44g/viewform?usp=header>`_
 
 Scope of Contributions
 ======================
