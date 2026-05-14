@@ -126,7 +126,7 @@ if (verticalDeformSwitch==1):
     c1 = float(str(FE_params['verticalDeformFactor'][0]))
     fCoeff = float(str(FE_params['verticalDeformQuadCoeff'][0]))
 else:
-    c1 = 0.0
+    c1 = 1.0
     fCoeff = 0.0
 print('c1,fCoeff=',c1,fCoeff)
 
@@ -186,7 +186,10 @@ if(np.mean(topo,axis=(0,1)) == 0.0):
 
   for kk in range(0,Nz):
     zPos_uni = kk*d_zeta + 0.5*d_zeta
-    zPos_str[kk] = zDeform(zPos_uni,zbot,ztop,c1,fCoeff)
+    if (verticalDeformSwitch==1):
+        zPos_str[kk] = zDeform(zPos_uni,zbot,ztop,c1,fCoeff)
+    else:
+        zPos_str[kk] = zPos_uni
     if (kk==0):
         print('kk,zPos_str,dz=',kk,',',zPos_str[kk],', -')
     else:
@@ -199,7 +202,10 @@ else:
     for i in range(Nx):
         zbot = data_topo[j,i]
         zPos_uni = np.linspace(0.5*d_zeta,(Nz-0.5)*d_zeta,Nz)
-        zPos_str = zDeform(zPos_uni,zbot,ztop,c1,fCoeff)
+        if (verticalDeformSwitch==1):
+            zPos_str = zDeform(zPos_uni,zbot,ztop,c1,fCoeff)
+        else:
+            zPos_str = zPos_uni
         zarr[:,j,i] = zPos_str
         if (j==0) and (i==0):
          for k in range(Nz):
