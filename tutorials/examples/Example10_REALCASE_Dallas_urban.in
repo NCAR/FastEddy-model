@@ -38,7 +38,7 @@ hydroBCs =  1 # Selector for hydro BC set. 2= periodicHorizVerticalAbl
 ceilingAdvectionBC = 1 #selector for normal advection at the domain ceiling (0=zero-valued w-BC, 1=non-zero w-BC)
 hydroBndysFileBase = ./ICBC/FE_Bndys # ./ICBC/FE_Bndys #
 hydroBndysFileStart = 0 #
-hydroBndysFileEnd = 16
+hydroBndysFileEnd = 6
 dtBdyPlaneBCs = 300.0
 ##----------: HYDRO_IO/LOGGGING ---
 hydroForcingWrite = 0 # Switch for dumping hydroFldsFrhs for prognositic fields. 0 = off, 1=on

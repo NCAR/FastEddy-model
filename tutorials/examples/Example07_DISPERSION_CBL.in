@@ -9,10 +9,10 @@ tBz = 32 # Number of threads in z-dimension
 #--IO
 inPath = # Path where initial/restart file is read in from
 inFile = # name of the input file for coordinate system and initial or restart conditions
-outPath = ./output_binary/ # ./output/ # Path where output files are to be written
+outPath = ./output/ # ./output/ # Path where output files are to be written
 outFileBase = FE_DISPERSION # Base name of the output file series as in (outFileBase).element-in-series
 frqOutput = 30000 # frequency (in timesteps) at which to produce output
-ioOutputMode = 1 # 0: N-to-1 gather and write to a netcdf file, 1:N-to-N writes of FastEddy binary files
+ioOutputMode = 0 # 0: N-to-1 gather and write to a netcdf file, 1:N-to-N writes of FastEddy binary files
 #--GRID
 Nx = 504 # Number of discretised domain elements in the x (zonal) direction
 Ny = 498 # Number of discretised domain elements in the y (meridional) direction

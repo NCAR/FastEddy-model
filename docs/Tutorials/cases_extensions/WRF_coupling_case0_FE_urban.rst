@@ -12,7 +12,7 @@ In the *GeoSpec* preprocessing step, and additional 2d field describing building
 
 This tutorial provides an example georeference input file with building heights for downtown Dallas, TX (:code:`Dallas_input_Oct2025_lod13.nc`). The *geospec.json* parameter file option :code:`urban_opt : 1` needs to be selected for building height information to be ingested in the reference standard-format NetCDF output file upon execution of **GeoSpec.py**.
 
-The same :code:`urban_opt : 1` option needs must be included in the subsequent *SimGrid* and *GenICBCs* stages, where building information is used for the creation of a :code:`BuildingMask` array containing gridded information of building presence, and ensuring that winds, subgrid-scale TKE and hydrometeors are set to zero within buildings for both initial and boundary conditions.
+The same :code:`urban_opt : 1` option needs must be included in the subsequent *SimGrid* and *GenICBCs* stages, where building information is used for the creation of a :code:`BuildingMask` array containing gridded information of building presence, and ensuring that winds, subgrid-scale TKE and hydrometeors are set to zero within buildings for both initial and boundary conditions. In this example *center_lat* and *center_lon* are (32.7835, -96.8092), required by **simgrid.json**.
 
 After initial and boundary conditions have been created, a building-resolving FastEddy simulation can be undertaken by activating the urban model capability in the parameters file (see **tutorials/examples/Example10_REALCASE_Dallas_urban.in**).
 

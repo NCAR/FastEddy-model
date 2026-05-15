@@ -75,7 +75,7 @@ dampingLayerSelector = 1 # Rayleigh damping layer selector: 0= off, 1= on.
 dampingLayerDepth = 500.0 # Rayleigh damping layer depth in meters
 ##----------: SURFACE LAYER ---
 surflayerSelector = 1 # surfacelayer selector: 0= off, 1= surface kinematic heat flux (surflayer_wth), 2=sking temperature rate (surflayer_tr)
-surflayer_z0 = 0.0002 # roughness length (momentum) when surflayerSelector > 0
+surflayer_z0 = 0.001 # roughness length (momentum) when surflayerSelector > 0
 surflayer_z0t = 0.0002 # roughness length (temperature) when surflayerSelector > 0
 surflayer_wth = 0.008 # kinematic sensible heat flux at the surface when surflayerSelector = 1
 surflayer_tr = -0.0 # temperature rate at the surface when surflayerSelector = 2 (>0 for warming; <0 for cooling)

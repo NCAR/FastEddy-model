@@ -30,6 +30,9 @@ The **convert.json** file controls the specifics of the conversion as follows:
    :header-rows: 1
    :delim: ;
 
+.. note::
+   * FastEddy can only restart from a netCDF file, irrespective of the :code:`ioOutputMode` options used.
+
 Profiles
 ========
 An efficient option to output vertical profiles at the model's timestep at specific locations is available (includes the entire vertical grid). This option is activated with the following selector in the FastEddy parameters file:
