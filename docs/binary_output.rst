@@ -32,7 +32,8 @@ The **convert.json** file controls the specifics of the conversion as follows:
    :class: binary
 	   
 .. note::
-   * FastEddy can only restart from a netCDF file, irrespective of the :code:`ioOutputMode` options used.
+
+  - FastEddy can only restart from a netCDF file, irrespective of the :code:`ioOutputMode` options used.
 
 Profiles
 ========
