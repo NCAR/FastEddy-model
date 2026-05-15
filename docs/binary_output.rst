@@ -29,7 +29,8 @@ The **convert.json** file controls the specifics of the conversion as follows:
    :file: csv/efficient_output_full.csv
    :header-rows: 1
    :delim: ;
-
+   :class: binary
+	   
 .. note::
    * FastEddy can only restart from a netCDF file, irrespective of the :code:`ioOutputMode` options used.
 
@@ -60,4 +61,5 @@ A python script (**/scripts/python_utilities/post-processing/FEtowersToNetCDF.py
    :file: csv/efficient_output_prof.csv
    :header-rows: 1
    :delim: ;
+   :class: binary
 

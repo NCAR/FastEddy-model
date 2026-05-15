@@ -10,6 +10,12 @@
     width: 100% !important;
 }
 
+/* Force binary width control - MUST use fixed layout for width control */
+.binary table {
+    table-layout: fixed !important;   /* Required for width specifications to work */
+    width: 100% !important;
+}
+
 
 /* Override RTD theme responsive behavior */
 .wy-table-responsive {
@@ -30,15 +36,6 @@
     text-overflow: ellipsis !important; /* show "…" for cut-off text */
 }
 
-/* Prevent wrapping in all columns by default */
-.preprocessing td,
-.preprocessing th {
-    padding: 4px 6px !important;      /* Default is usually 8px 12px */
-    white-space: nowrap !important;   /* keep text on one line */
-    overflow: hidden !important;      /* hide overflow if needed */
-    text-overflow: ellipsis !important; /* show "…" for cut-off text */
-}
-
 /* Allow wrapping ONLY in the Description column (6th column) */
 .longtable td:nth-child(1),
 .longtable th:nth-child(1) {
@@ -51,6 +48,15 @@
 /* Allow wrapping ONLY in the Description column (2nd column) */
 .preprocessing td:nth-child(2),
 .preprocessing th:nth-child(2) {
+    white-space: normal !important;   /* wrapping allowed */
+    word-wrap: break-word !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+}
+
+/* Allow wrapping ONLY in the Description column (2nd column) */
+.binary td:nth-child(2),
+.binary th:nth-child(2) {
     white-space: normal !important;   /* wrapping allowed */
     word-wrap: break-word !important;
     overflow: visible !important;
@@ -87,6 +93,13 @@
 
 .preprocessing td:nth-child(2),
 .preprocessing th:nth-child(2) { width: 78% !important; }   /* Description */
+
+/* Fixed widths for each column */                                                                                                                                        
+.binary td:nth-child(1),
+.binary th:nth-child(1) { width: 18% !important; }  /* Name */
+
+.binary td:nth-child(2),
+.binary th:nth-child(2) { width: 82% !important; }   /* Description */
 
 .footnote-source {
     font-size: 0.75em;
