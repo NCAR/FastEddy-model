@@ -4,3 +4,6 @@
 **outFileBase:** |br| Base name of the output file series as in (outFileBase).element-in-series, N/A, N/A, , M
 **frqOutput:** |br| Frequency (in timesteps) at which to produce output |br| Should be an even multiple of NtBatch, 0, INT_MAX, , M
 **ioOutputMode:** |br| 0: N-to-1 gather and write to a netcdf file |br| 1: N-to-N writes of FastEddy binary files, 0, 1, 0, O
+**towerIOSelector** |br| 0=off; 1=on, 0, 1, 0, O
+**towerPath** |br| Path where output profile files are to be written |br| *C-M if towerIOSelector==1*, N/A, N/A, , C-M
+**towerSpecsFile** |br| The path and filename to a Tower specification file |br| *C-M if towerIOSelector==1*, N/A, N/A, , C-M
