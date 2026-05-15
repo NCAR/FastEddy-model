@@ -15,7 +15,7 @@ For cases where large domains are considered and/or full domain output is requir
 .. code-block:: none
 
    #--IO
-   ioOutputMode = 1 # 0: N-to-1 gather and write to a netcdf file, 1:N-to-N writes of FastEddy binary files
+   ioOutputMode = 1
 
 In this case, rank-wise binary output files. Personalize and use the batch submission script **/scripts/batch_jobs/fasteddy_convert_pbs_script_casper.sh** which will invoke a python script (**/scripts/python_utilities/post-processing/FEbinaryToNetCDF.py**) to convert the rank-wise binary files from each output timestep into a single aggregate netCDF output file per timestep. Users can run the following `conda activate` command if running on Casper:
 
@@ -49,7 +49,7 @@ An efficient option to output vertical profiles at the model's timestep at speci
    float coordsSN(nProfs) ;
    float coordsWE(nProfs) ;
 
-:code:`coordType` = 0 is used when the coordinates are specified based on latitude (:code:`coordsLat`), and longitude (:code:`coordsLon`). Alternatively, the cartesian x,y coordinates refered to the FastEddy domain grid can be specified. In that case :code:`coordType` = 1 and :code:`coordsLat`,:code:`coordsLon` are replaced by :code:`coordsSN` and :code:`coordsWE`.
+:code:`coordType` = 0 is used when the coordinates are specified based on latitude (:code:`coordsLat`), and longitude (:code:`coordsLon`). Alternatively, the cartesian x,y coordinates refered to the FastEddy domain grid can be specified. In that case :code:`coordType` = 1 and :code:`coordsLat`, :code:`coordsLon` are replaced by :code:`coordsSN` and :code:`coordsWE`.
 
 A python script (**/scripts/python_utilities/post-processing/FEtowersToNetCDF.py**) to convert the profile binary files into a single aggregate netCDF output file is provided. The **towers.json** file controls the specifics of the conversion as follows:
 
