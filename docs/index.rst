@@ -60,6 +60,7 @@ web: https://fluidnumerics.com, email: support@fluidnumerics.com
    Tutorials/index
    contributions.rst
    pre-processing_parameters.rst
+   binary_output.rst
    parameters.rst
    publications.rst
    feedback_updates.rst
