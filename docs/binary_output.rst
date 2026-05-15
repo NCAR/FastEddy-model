@@ -26,9 +26,35 @@ In this case, rank-wise binary output files. Personalize and use the batch submi
 The **convert.json** file controls the specifics of the conversion as follows:
 
 .. csv-table::
-   :file: csv/efficient_output.csv
+   :file: csv/efficient_output_full.csv
    :header-rows: 1
    :delim: ;
-   :class: efficientoutput
 
+Profiles
+========
+An efficient option to output vertical profiles at the model's timestep at specific locations is available (includes the entire vertical grid). This option is activated with the following selector in the FastEddy parameters file:
+
+.. code-block:: none
+
+   #--IO
+   towerIOSelector = 1
+   towerPath = ./TowerData/
+   towerSpecsFile = ./towerSpecsFile.nc
+
+*towerPath* indicates the location where the profiles will be written. A netCDF file (*towerSpecsFile*) specifies the location of the vertical profiles, and must have the following structure:
+
+.. code-block:: none
+
+   int coordType ;
+   float coordsSN(nProfs) ;
+   float coordsWE(nProfs) ;
+
+:code:`coordType` = 0 is used when the coordinates are specified based on latitude (:code:`coordsLat`), and longitude (:code:`coordsLon`). Alternatively, the cartesian x,y coordinates refered to the FastEddy domain grid can be specified. In that case :code:`coordType` = 1 and :code:`coordsLat`,:code:`coordsLon` are replaced by :code:`coordsSN` and :code:`coordsWE`.
+
+A python script (**/scripts/python_utilities/post-processing/FEtowersToNetCDF.py**) to convert the profile binary files into a single aggregate netCDF output file is provided. The **towers.json** file controls the specifics of the conversion as follows:
+
+.. csv-table::
+   :file: csv/efficient_output_prof.csv
+   :header-rows: 1
+   :delim: ;
 
