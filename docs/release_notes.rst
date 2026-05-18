@@ -8,7 +8,9 @@ FastEddy-model Version 5.0 Release Notes (20260518)
 .. dropdown:: Repository, build, and test
 
    * Tutorial extensions for using mesoscale MPAS and FastEddy to drive downscaled FastEddy simulations, and to apply the surface heat flux redistribution option for urban simulations
-   * Pre-processing parameters reference guide for GeoSpec, SimGrid, and GenICBCs  
+   * Pre-processing parameters reference guide for GeoSpec, SimGrid, and GenICBCs
+   * Documentation section for Efficient Output Modes (full domain binary I/O and virtual towers)
+   * Inclusion of a Feedback and Updates section  
 
 .. dropdown:: Bugfixes
 
