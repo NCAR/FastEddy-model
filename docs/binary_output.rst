@@ -30,6 +30,7 @@ The **convert.json** file controls the specifics of the conversion as follows:
    :header-rows: 1
    :delim: ;
    :class: binary
+   :widths: 18, 82
 
 .. note::
 
@@ -64,4 +65,5 @@ A python script (**/scripts/python_utilities/post-processing/FEtowersToNetCDF.py
    :header-rows: 1
    :delim: ;
    :class: binary
+   :widths: 18, 82
 
