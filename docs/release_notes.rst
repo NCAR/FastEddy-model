@@ -18,7 +18,7 @@ FastEddy-model Version 5.0 Release Notes (20260518)
 
 .. dropdown:: Enhancements
 
-   * Virtual tower capability for high-frequency output a specified locations
+   * Virtual tower capability for high-frequency output at specified locations
    * Nesting of TKE boundary conditions from parent domain
    * Reduction of the order of the advection scheme near the surface to avoid use of below-ground halo values
    * Inclusion of 2d maps of latitude and longitude to IO and usage for Coriolis forcing and virtual tower location
