@@ -54,7 +54,8 @@ An efficient option to output high temporal fidelity vertical profile (spanning 
    int coordType ;
    float coordsLat(nProfs) ;
    float coordsLon(nProfs) ;
- where :code:`coordType` = 0 is used when the coordinates are specified based on latitude (:code:`coordsLat`), and longitude (:code:`coordsLon`). Alternatively, the cartesian x,y coordinates refered to the FastEddy domain grid can be specified. In this case set :code:`coordType` = 1 and provide coordinates variable arrays :code:`coordsSN` and :code:`coordsWE`.
+
+where :code:`coordType` = 0 is used when the coordinates are specified based on latitude (:code:`coordsLat`), and longitude (:code:`coordsLon`). Alternatively, the cartesian x,y coordinates refered to the FastEddy domain grid can be specified. In this case set :code:`coordType` = 1 and provide coordinates variable arrays :code:`coordsSN` and :code:`coordsWE`.
 
 .. code-block:: none
 
