@@ -67,6 +67,7 @@ extern float *ioBuffField;
 extern float *ioBuffFieldTransposed;
 extern float *ioBuffFieldRho;
 extern float *ioBuffFieldTransposed2D;
+extern int *ioBuffFieldInt;
 
 /*IO-profiles*/
 extern int towerIOSelector;
