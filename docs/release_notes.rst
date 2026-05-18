@@ -2,6 +2,43 @@
 Release Notes
 *************
 
+FastEddy-model Version 5.0 Release Notes (20260518)
+===================================================
+
+.. dropdown:: Repository, build, and test
+
+   * Tutorial extensions for using mesoscale MPAS and FastEddy to drive downscaled FastEddy simulations, and to apply the surface heat flux redistribution option for urban simulations
+   * Pre-processing parameters reference guide for GeoSpec, SimGrid, and GenICBCs  
+
+.. dropdown:: Bugfixes
+
+   * Fix to the parameter that controls urban surface heat redistribution option to properly be passed down to the GPU
+   * Fix to memory address of potential temperature base state used in urban simulations [contributed by Mingxin Gong and Prof. Bowen Zhou from Nanjing University, China]
+   * Fix to GAD exception when a turbine hub height coincides with a vertical cell face [in collaboration with Dr. William Radunz from Johns Hopkins University]  
+
+.. dropdown:: Enhancements
+
+   * Virtual tower capability for high-frequency output a specified locations
+   * Nesting of TKE boundary conditions from parent domain
+   * Reduction of the order of the advection scheme near the surface to avoid use of below-ground halo values
+   * Inclusion of 2d maps of latitude and longitude to IO and usage for Coriolis forcing and virtual tower location
+   * Extension of SimGrid preprocessing step to compute a surface heat flux redistribution map for urban simulations [contributed by Eloisa Raluy-López from University of Murcia, Spain]
+   * Extension of GenICBCs to allow LES-to-LES nesting within FastEddy (both real and ideal cases)
+   * Allow prescription of subgrid TKE through lateral boundary conditions (hydroBCs = 1)  
+
+FastEddy-model Version 4.0.1 Release Notes (20251118)
+=====================================================
+
+.. dropdown:: Bugfixes
+
+   * Added gpu_type=a100 to fasteddy_pbs_scripts per NSF NCAR HPC environment change
+   * Added full path for conda environment to to fasteddy_pbs_scripts
+   * Changed default Example08 jsons
+   * Casted simTime_it as unsigned long long in curandPseudo…Seed()
+   * Enhanced Simgrid.py
+   * Removed redundant factor of four on all device allocated array memory
+   * Removed extra sqrt(rho) factor from friction velocity output  
+
 FastEddy-model Version 4.0 Release Notes (20251023)
 ===================================================
 
