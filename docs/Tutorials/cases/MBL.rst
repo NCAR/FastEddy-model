@@ -18,7 +18,7 @@ Input parameters
 * Surface potential temperature: :math:`299.1` K
 * Surface sensible heat flux: :math:`8 \times 10^{-3}` K m :math:`\mbox{s}^{-1}`
 * Surface latent heat flux: :math:`5.2 \times 10^{-5}` m :math:`\mbox{s}^{-1}`
-* Surface roughness length: :math:`z_0=0.0002` m
+* Surface roughness length: :math:`z_0=0.001` m
 * Rayleigh damping layer: uppermost :math:`500` m of the domain
 * Initial perturbations: :math:`\pm 0.1` K
 * Depth of perturbations: :math:`1600` m
