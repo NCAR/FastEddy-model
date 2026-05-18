@@ -29,7 +29,7 @@ geospec.json
    :header-rows: 1
    :delim: ;
    :class: preprocessing
-
+   :widths: 22, 78
 
 simgrid.json
 ============
@@ -39,6 +39,7 @@ simgrid.json
    :header-rows: 1
    :delim: ;
    :class: preprocessing
+   :widths: 22,	78
 
 genicbcs.json
 =============
@@ -48,6 +49,7 @@ genicbcs.json
    :header-rows: 1
    :delim: ;
    :class: preprocessing
+   :widths: 22,	78
 
 WRF as Parent Domain Section
 ----------------------------
@@ -59,6 +61,7 @@ Active only when parent_model=0.
    :header-rows: 1
    :delim: ;
    :class: preprocessing
+   :widths: 22,	78
 
 
 FastEddy as Parent Domain Section
@@ -71,3 +74,4 @@ Active only when parent_model = 1.
    :header-rows: 1
    :delim: ;
    :class: preprocessing
+   :widths: 22,	78
