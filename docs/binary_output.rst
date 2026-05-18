@@ -17,7 +17,7 @@ For cases where large domains are considered and/or full domain output is requir
    #--IO
    ioOutputMode = 1
 
-In this case, rank-wise binary output files. Personalize and use the batch submission script **/scripts/batch_jobs/fasteddy_convert_pbs_script_casper.sh** which will invoke a python script (**/scripts/python_utilities/post-processing/FEbinaryToNetCDF.py**) to convert the rank-wise binary files from each output timestep into a single aggregate netCDF output file per timestep. Users can run the following `conda activate` command if running on Casper:
+In this case, rank-wise binary output files. Personalize and use the batch submission script **/scripts/batch_jobs/fasteddy_convert_pbs_script_casper.sh** which will invoke a python script (**/scripts/python_utilities/post-processing/FEbinaryToNetCDF.py**) to convert the rank-wise binary files from each output timestep into a single aggregate netCDF output file per timestep. Users can run the following :code:`conda activate` command if running on Casper:
 
 .. code::
 
@@ -30,10 +30,11 @@ The **convert.json** file controls the specifics of the conversion as follows:
    :header-rows: 1
    :delim: ;
    :class: binary
-	   
+
 .. note::
 
-  - FastEddy can only restart from a netCDF file, irrespective of the :code:`ioOutputMode` options used.
+  FastEddy can only restart from a netCDF file, irrespective of the :code:`ioOutputMode` options used.
+
 
 Profiles
 ========

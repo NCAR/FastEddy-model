@@ -1,5 +1,5 @@
 Name; Description
-runPath; Path to the root directory containing the binary profile output files. |br| This is ‘towerPath‘ in the *.in file.
+runPath; Path to the root directory containing the binary profile output files. |br| This is ‘towerPath‘ in the \*.in file.
 FEparamsFile; FastEddy params.in file.
 outputFileName; Name of the profile netCDF file.
 startStep; Simulation timestep where the profile conversion starts (integer).

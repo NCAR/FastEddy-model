@@ -1,7 +1,7 @@
 Name; Description
-outpath; Path to the root directory containing the rank-wise binary output files. |br| This is ‘outPath‘ in the *.in file.
-FEoutBase; Base simulation name string used as a prefix for output filenames. |br| This is ‘outFileBase‘ in the *.in file.
-numOutRanks; Total number of GPUs used to run the simulation (integer). |br| This is ‘numProcsX*numProcsY‘ in the *.in file.
+outpath; Path to the root directory containing the rank-wise binary output files. |br| This is ‘outPath‘ in the \*.in file.
+FEoutBase; Base simulation name string used as a prefix for output filenames. |br| This is ‘outFileBase‘ in the \*.in file.
+numOutRanks; Total number of GPUs used to run the simulation (integer). |br| This is ‘numProcsX*numProcsY‘ in the \*.in file.
 fileSetSize; Number of files to be converted to netCDF (integer).
 tstart; Simulation timestep where the file conversion starts (integer).
 tstep; Timestep increment between output files to be converted (integer).
