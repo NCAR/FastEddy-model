@@ -2,7 +2,7 @@
 **inFile:** |br| Name of the input file for coordinate system and initial or restart conditions, N/A, N/A, , O
 **outPath:** |br| Path where output files are to be written, N/A, N/A, , M
 **outFileBase:** |br| Base name of the output file series as in (outFileBase).element-in-series, N/A, N/A, , M
-**frqOutput:** |br| Frequency (in timesteps) at which to produce output |br| Should be an even multiple of NtBatch, 0, INT_MAX, , M
+**frqOutput:** |br| Frequency (in timesteps) at which to produce full 3 dimensional field outputs |br| Should be an even multiple of NtBatch, 0, INT_MAX, , M
 **ioOutputMode:** |br| 0: N-to-1 gather and write to a netcdf file |br| 1: N-to-N writes of FastEddy binary files, 0, 1, 0, O
 **towerIOSelector** |br| Virtual Tower IO-Selector |br| 0=off; 1=on, 0, 1, 0, O
 **towerPath** |br| Path where output profile files are to be written |br| *C-M if towerIOSelector==1*, N/A, N/A, , C-M

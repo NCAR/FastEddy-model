@@ -63,7 +63,7 @@ where :code:`coordType` = 0 is used when the coordinates are specified based on 
    float coordsSN(nProfs) ;
    float coordsWE(nProfs) ;
 
-A python script (**/scripts/python_utilities/post-processing/FEtowersToNetCDF.py**) to convert the profile binary files into a single aggregate netCDF output file is provided. The **towers.json** file controls the specifics of the conversion as follows:
+A python script (**/scripts/python_utilities/post-processing/FEtowersToNetCDF.py**) to convert the profile binary files (each containing :code:`NtBatch` time steps) into a single aggregate netCDF output file (all towers, all timesteps) is provided. The **towers.json** file controls the specifics of the conversion as follows:
 
 .. csv-table::
    :file: csv/efficient_output_prof.csv
