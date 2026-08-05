@@ -146,36 +146,6 @@ extern "C" int cuda_hydroCoreDeviceSetup(){
      errorCode = cuda_auxScalarsDeviceSetup();
    }//end if NhydroAuxScalars > 0
 
-   /*PRESSURE*/
-   if(pgfSelector > 0){
-     errorCode = cuda_pressureDeviceSetup();
-   }//end if pgfSelector > 0
-
-   /*BASESTATE*/
-   errorCode = cuda_BaseStateDeviceSetup();
-
-   /*SGSTURB*/
-   if(turbulenceSelector > 0){
-     errorCode = cuda_sgsTurbDeviceSetup();
-     /* SGSTKE */
-     if (TKESelector > 0) { 
-       errorCode = cuda_sgstkeDeviceSetup();
-     } // end if TKESelector > 0
-   }//end if turbulenceSelector > 0
-
-   if (diffusionSelector > 0) { 
-     errorCode = cuda_molecularDiffDeviceSetup();
-   }
-   if (surflayerSelector > 0) { 
-       errorCode = cuda_surfaceLayerDeviceSetup();
-   }
-   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
-
-   /* CANOPY */
-   if (canopySelector > 0){
-     errorCode = cuda_canopyDeviceSetup();
-   }
-
    /*ADVECTION*/
    if(advectionSelector >= 0){
      errorCode = cuda_advectionDeviceSetup();
@@ -204,7 +174,8 @@ extern "C" int cuda_hydroCoreDeviceSetup(){
    if (surflayerSelector > 0) { 
        errorCode = cuda_surfaceLayerDeviceSetup();
    }
-
+   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
+   
    /* CELL PERTURBATION METHOD */
    if (cellpertSelector > 0) { 
       errorCode = cuda_cellpertDeviceSetup();
