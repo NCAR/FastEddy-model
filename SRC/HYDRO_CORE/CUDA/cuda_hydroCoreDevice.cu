@@ -174,7 +174,6 @@ extern "C" int cuda_hydroCoreDeviceSetup(){
    if (surflayerSelector > 0) { 
        errorCode = cuda_surfaceLayerDeviceSetup();
    }
-   gpuErrchk( cudaPeekAtLastError() ); /*Check for errors in the cudaMalloc calls*/
    
    /* CELL PERTURBATION METHOD */
    if (cellpertSelector > 0) { 
