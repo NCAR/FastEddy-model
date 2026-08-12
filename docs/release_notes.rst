@@ -2,6 +2,14 @@
 Release Notes
 *************
 
+FastEddy-model Version 5.0.1 Release Notes (20260813)
+=====================================================
+
+.. dropdown:: Bugfixes
+
+   * Fix to remove twice allocated fields to avoid using a larger device memory footprint than required
+
+
 FastEddy-model Version 5.0 Release Notes (20260518)
 ===================================================
 
