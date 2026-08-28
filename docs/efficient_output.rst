@@ -71,3 +71,11 @@ A python script (**/scripts/python_utilities/post-processing/FEtowersToNetCDF.py
    :delim: ;
    :class: binary
    :widths: 18, 82
+
+
+Post-Processing Reference
+=========================
+
+The Python utilities used to convert efficient binary output and calculate time-averaged tower statistics are documented in
+:doc:`post_processing`. That page includes command-line examples, JSON configuration parameters, expected input/output
+filenames, and the **TowerTimeStatistics.py** statistics definitions.
