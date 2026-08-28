@@ -1,5 +1,5 @@
 *************************
-Post-processing Utilities
+Post-Processing Utilities
 *************************
 
 FastEddy provides Python utilities for converting efficient binary output to
