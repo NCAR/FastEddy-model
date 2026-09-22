@@ -4,6 +4,14 @@
 Publications
 ************
 
+.. _applied_meteorology_climatology_2026:
+
+| Hendricks, E. A., T. W. Juliano, S. E. Haupt, J. A. Sauer, D. Muñoz-Esparza, and B. Kosović,
+|   “Comparisons of “Gray-Zone” Simulations with One- and Three-Dimensional Planetary Boundary
+|   Layer Parameterizations and Upscaled Large-Eddy Simulations over Coastal Central California”.
+|   *Journal of Applied Meteorology and Climatology*, 65, 983–1001 (2026)
+|   https://doi.org/10.1175/JAMC-D-25-0185.1
+
 .. _urban_nature_2026:
 
 | Cui, Y., S. Chen, L. Xue, D. Muñoz-Esparza, J.A. Sauer, L. Hu, J.D. Albertson, Q. Li. “Local cloud
