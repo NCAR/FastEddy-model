@@ -495,6 +495,12 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 #endif
    gpuErrchk( cudaGetLastError() );
    gpuErrchk( cudaDeviceSynchronize() );
+#ifdef GAD_EXT
+   if (GADSelector > 0 && (timeStage==numRKstages)){
+     //Owner ranks updated rotorTheta/RefMag/anFactor in GADinter; share them before GADfinal
+     errorCode = cuda_GADDeviceSyncTurbineState();
+   }
+#endif
    
 /*********************************** build_Frhs "final tasks" phase ************************************************************/
    cudaDevice_hydroCoreComplete<<<grid, tBlock>>>(simTime, simTime_it, dt, timeStage, numRKstages, hydroFlds_d, hydroFldsFrhs_d,
@@ -1440,6 +1446,7 @@ extern "C" int cuda_hydroCoreSynchFieldsFromDevice(int batchSize){
      gpuErrchk( cudaMemcpy(GAD_yawError, GAD_yawError_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
      gpuErrchk( cudaMemcpy(GAD_anFactor, GAD_anFactor_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
      gpuErrchk( cudaMemcpy(GAD_rotorTheta, GAD_rotorTheta_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) ); 
+     errorCode = cuda_GADMaskNonOwnedHostState(); //Device state is shared across ranks; IO sums over ranks
      if (GADoutputForces == 1){
        gpuErrchk( cudaMemcpy(GAD_forceX, GAD_forceX_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );
        gpuErrchk( cudaMemcpy(GAD_forceY, GAD_forceY_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );

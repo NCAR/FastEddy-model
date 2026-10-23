@@ -68,6 +68,7 @@ float* GAD_turbineVolMask_d; /* turbine Volume mask (0 if turbine free cell in d
 float* GAD_forceX_d;         /* turbine forces in the x-direction */
 float* GAD_forceY_d;         /* turbine forces in the y-direction */
 float* GAD_forceZ_d;         /* turbine forces in the z-direction */
+float* GAD_syncBuffer;       /* host buffer for the per-turbine state shared across ranks */
 
 
 /*#################------------ GAD submodule function definitions ------------------#############*/
@@ -209,6 +210,10 @@ extern "C" int cuda_GADDeviceSetup(){
       cudaMemcpy(GAD_forceY_d, GAD_forceY, (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), cudaMemcpyHostToDevice);
       cudaMemcpy(GAD_forceZ_d, GAD_forceZ, (Nxp+2*Nh)*(Nyp+2*Nh)*(Nzp+2*Nh)*sizeof(float), cudaMemcpyHostToDevice);
     }
+
+    /*Give every rank the owner's per-turbine state (host arrays are zero for non-owned turbines)*/
+    GAD_syncBuffer = (float *) malloc(GAD_NUM_SYNC_FIELDS*GADNumTurbines*sizeof(float));
+    errorCode = cuda_GADDeviceSyncTurbineState();
    }
 
 
@@ -257,11 +262,62 @@ extern "C" int cuda_GADDeviceCleanup(){
        cudaFree(GAD_forceY_d);
        cudaFree(GAD_forceZ_d);
      }
+     free(GAD_syncBuffer);
    }
 
    return(errorCode);
 
 }//end cuda_GADDeviceCleanup()
+
+/*----->>>>> extern "C" int cuda_GADDeviceSyncTurbineState();  -----------------------------------------------------------
+* Share the owning rank's rotorTheta, RefMag and anFactor with all ranks. A rotor that spans a rank boundary
+* is then forced with the same yaw and inflow state on every rank holding part of it.
+*/
+extern "C" int cuda_GADDeviceSyncTurbineState(){
+   int errorCode = CUDA_GAD_SUCCESS;
+   int iturb,ifld;
+   float* fld_d[GAD_NUM_SYNC_FIELDS];
+
+   fld_d[0] = GAD_rotorTheta_d;
+   fld_d[1] = GAD_turbineRefMag_d;
+   fld_d[2] = GAD_anFactor_d;
+   for(ifld=0; ifld < GAD_NUM_SYNC_FIELDS; ifld++){
+     gpuErrchk( cudaMemcpy(&GAD_syncBuffer[ifld*GADNumTurbines], fld_d[ifld], GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
+     for(iturb=0; iturb < GADNumTurbines; iturb++){
+       if(GAD_turbineRank[iturb] != mpi_rank_world){
+         GAD_syncBuffer[ifld*GADNumTurbines+iturb] = 0.0; //only the owner contributes to the sum
+       }
+     }
+   }
+   MPI_Allreduce(MPI_IN_PLACE, GAD_syncBuffer, GAD_NUM_SYNC_FIELDS*GADNumTurbines, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+   for(ifld=0; ifld < GAD_NUM_SYNC_FIELDS; ifld++){
+     gpuErrchk( cudaMemcpy(fld_d[ifld], &GAD_syncBuffer[ifld*GADNumTurbines], GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice) );
+   }
+
+   return(errorCode);
+} //end cuda_GADDeviceSyncTurbineState()
+
+/*----->>>>> extern "C" int cuda_GADMaskNonOwnedHostState();  -----------------------------------------------------------
+* Zero the host copies of per-turbine state for turbines not owned by this rank, so the IO reductions
+* (MPI_SUM across ranks, and per-rank binary files summed in post-processing) yield the owner's values.
+*/
+extern "C" int cuda_GADMaskNonOwnedHostState(){
+   int errorCode = CUDA_GAD_SUCCESS;
+   int iturb;
+
+   for(iturb=0; iturb < GADNumTurbines; iturb++){
+     if(GAD_turbineRank[iturb] != mpi_rank_world){
+       GAD_rotorTheta[iturb] = 0.0;
+       GAD_turbineRefMag[iturb] = 0.0;
+       GAD_turbineRefDir[iturb] = 0.0;
+       GAD_turbineYawing[iturb] = 0;
+       GAD_yawError[iturb] = 0.0;
+       GAD_anFactor[iturb] = 0.0;
+     }
+   }
+
+   return(errorCode);
+} //end cuda_GADMaskNonOwnedHostState()
 
 /*----->>>>> __global__ void  cudaDevice_GADinter();  --------------------------------------------------
 * This function is the global entry kernel for computing reference values for GAD yawing and other turbine characteristics

@@ -680,7 +680,9 @@ int GADInitTurbineRefChars(float dt){
   float rVec0;
   float deltaz, deltaz0;
   float deltaz_p1, deltaz_m1;
+  struct { float val; int rank; } *ownerCand; //(distance, rank) pairs to resolve a unique owner per turbine
   
+
   /*Initialize requisite parameters for the RefMag and RefDir calculations*/
   GADsamplingAvgLength = (int) floor(GADrefSampleWindow/dt);    //Determine the number of model timesteps in a sample window (high frequencies filter)
   MPI_Bcast(&GADsamplingAvgLength, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -696,6 +698,7 @@ int GADInitTurbineRefChars(float dt){
   fflush(stdout);
 #endif
 
+  ownerCand = malloc(GADNumTurbines*sizeof(*ownerCand));
   for(iturb = 0; iturb < GADNumTurbines; iturb++){
     rVec0 = 99999.9999;
     deltaz0 = 99999.9999;
@@ -703,8 +706,9 @@ int GADInitTurbineRefChars(float dt){
       GAD_turbineRefi[iturb] = -999;  //Initialize to special "absent" value of -999
       GAD_turbineRefj[iturb] = -999;  //Initialize to special "absent" value of -999
       GAD_turbineRefk[iturb] = -999;  //Initialize to special "absent" value of -999
-    for(i=iMin-Nh; i < iMax+Nh; i++){
-      for(j=jMin-Nh; j < jMax+Nh; j++){
+    //Search interior (non-halo) cells only, so the reference cell is one this rank actually updates
+    for(i=iMin; i < iMax; i++){
+      for(j=jMin; j < jMax; j++){
         for(k=kMin-Nh+1; k < kMax+Nh-1; k++){
            ijk = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+k;
            ij = i*(Nyp+2*Nh)+j;
@@ -720,6 +724,8 @@ int GADInitTurbineRefChars(float dt){
 	         GAD_turbineRank[iturb] = mpi_rank_world; 
                  GAD_turbineRefi[iturb] = i;
 	         GAD_turbineRefj[iturb] = j;
+	         GAD_turbineRefk[iturb] = -999; //a new column, restart the vertical search
+	         deltaz0 = 99999.9999;
 	     }
 	     if ((GAD_turbineRank[iturb]==mpi_rank_world) && (GAD_turbineRefi[iturb]==i) && (GAD_turbineRefj[iturb]==j)){
 	       deltaz = fabsf(GAD_hubHeights[GAD_turbineType[iturb]]-(zPos[ijk]-topoPos[ij]));
@@ -743,6 +749,8 @@ int GADInitTurbineRefChars(float dt){
     } // end for(i...
     //dummy update here making use of deltaz0 avoiding compiler warning for an usused variable
     deltaz = deltaz0;
+    ownerCand[iturb].val = rVec0;
+    ownerCand[iturb].rank = mpi_rank_world;
 #ifdef DEBUG_TURBCHAR
     if(GAD_turbineRank[iturb] == mpi_rank_world){
       printf("%d/%d: Turbine %d has determined nacelle center cell @ %d,%d,%d with rVec0 = %f and deltaz0 = %f\n",
@@ -751,6 +759,27 @@ int GADInitTurbineRefChars(float dt){
     }
 #endif
   }// end for iturb...
+
+  //Resolve a single owner rank per turbine (closest reference cell, lowest rank on ties)
+  //and make GAD_turbineRank consistent across all ranks
+  MPI_Allreduce(MPI_IN_PLACE, ownerCand, GADNumTurbines, MPI_FLOAT_INT, MPI_MINLOC, MPI_COMM_WORLD);
+  for(iturb = 0; iturb < GADNumTurbines; iturb++){
+     if(ownerCand[iturb].val >= 99999.0){ //no rank holds a reference cell for this turbine
+       GAD_turbineRank[iturb] = -999;
+     }else{
+       GAD_turbineRank[iturb] = ownerCand[iturb].rank;
+     }
+     if(GAD_turbineRank[iturb] != mpi_rank_world){
+       GAD_turbineRefi[iturb] = -999;
+       GAD_turbineRefj[iturb] = -999;
+       GAD_turbineRefk[iturb] = -999;
+     }
+     if((mpi_rank_world == 0) && (GAD_turbineRank[iturb] < 0)){
+       printf("WARNING GADInitTurbineRefChars(): turbine %d has no reference cell in the domain!\n",iturb);
+       fflush(stdout);
+     }
+  }// end for iturb...
+  free(ownerCand);
 
   //Having determined the mpi_rank of each turbine, zero out the 
   //GAD_rotorTheta and other elements for any turbines which do NOT belong to a given mpi_rank_world

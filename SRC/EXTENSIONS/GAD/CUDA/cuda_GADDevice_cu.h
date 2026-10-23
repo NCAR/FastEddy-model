@@ -87,6 +87,17 @@ extern "C" int cuda_GADDeviceSetup();
 */
 extern "C" int cuda_GADDeviceCleanup();
 
+/*----->>>>> extern "C" int cuda_GADDeviceSyncTurbineState();  -----------------------------------------------------------
+* Share the owning rank's rotorTheta, RefMag and anFactor with all ranks
+*/
+#define GAD_NUM_SYNC_FIELDS 3
+extern "C" int cuda_GADDeviceSyncTurbineState();
+
+/*----->>>>> extern "C" int cuda_GADMaskNonOwnedHostState();  -----------------------------------------------------------
+* Zero host copies of per-turbine state for turbines not owned by this rank (IO sums across ranks)
+*/
+extern "C" int cuda_GADMaskNonOwnedHostState();
+
 /*----->>>>> __global__ void  cudaDevice_GADinter();  --------------------------------------------------
 * This function is the global entry kernel for computing reference values for GAD yawing and other turbine characteristics
 */
