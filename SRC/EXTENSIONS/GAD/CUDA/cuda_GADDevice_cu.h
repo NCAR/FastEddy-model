@@ -186,4 +186,14 @@ __device__ void compute_normalInduction(float turbineRefMag, float rotorD, float
                                         float turbineRadius, float beta_angle, float omega_rot, float chord_length,
                                         float *rnorm_vect, float *alpha_minmax_vect, float *turbinePolyCl, float *turbinePolyCd,
 					float *turbineRefAn);
+
+/*----->>>>> __device__ void cudaDevice_GADdiskInduction();  --------------------------------------------------
+* Rotor-disk (annulus-area weighted) axial induction factor from GAD_NUM_RADIAL_STATIONS analytic radial stations
+*/
+#define GAD_NUM_RADIAL_STATIONS 20
+__device__ void cudaDevice_GADdiskInduction(float turbineRefMag, float rotorD, float nacelleD,
+                                            float* turbinePolyTwist_d, float* turbinePolyChord_d,
+                                            float* turbinePolyPitch_d, float* turbinePolyOmega_d,
+                                            float *rnorm_vect, float *alpha_minmax_vect, float *turbinePolyCl, float *turbinePolyCd,
+                                            float *turbineRefAn);
 #endif // _GAD_CUDADEV_CU_H

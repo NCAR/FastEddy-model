@@ -90,7 +90,7 @@ extern "C" int cuda_GADDeviceSetup(){
     cudaMemcpyToSymbol(GADaxialIndVal_d, &GADaxialIndVal, sizeof(float));
     cudaMemcpyToSymbol(GADrefSwitch_d, &GADrefSwitch, sizeof(int));
     cudaMemcpyToSymbol(GADrefU_d, &GADrefU, sizeof(float));
-    cudaMemcpyToSymbol(GADForcingSwitch_d, &GADForcingSwitch_d, sizeof(int)); 
+    cudaMemcpyToSymbol(GADForcingSwitch_d, &GADForcingSwitch, sizeof(int)); 
     cudaMemcpyToSymbol(GADNumTurbineTypes_d, &GADNumTurbineTypes, sizeof(int));
     cudaMemcpyToSymbol(turbinePolyOrderMax_d, &turbinePolyOrderMax, sizeof(int));
     cudaMemcpyToSymbol(turbinePolyClCdrNormSegments_d, &turbinePolyClCdrNormSegments, sizeof(int));
@@ -281,18 +281,11 @@ __global__ void cudaDevice_GADinter(float* xPos_d, float* yPos_d, float* zPos_d,
                                     float* GAD_turbineRefMag_d, float* GAD_turbineRefDir_d,
 				    int* GAD_turbineYawing_d, float* GAD_yawError_d, float* GAD_anFactor_d){
 
-   int i,j,k,ijk,ij;
+   int i,j,k,ijk;
    int fldStride;
    int iStride,jStride,kStride;
    int iturb;
    int sampleIndex;
-   float cell_inRotor;
-   float cell_rVector;
-   float cell_twistAngle;
-   float cell_chordLength;
-   float cell_betaAngle;
-   float cell_omegaRot;
-   float tiltAngle=0.0;
 
    /*Establish necessary indices for spatial locality*/
    i = (blockIdx.x)*blockDim.x + threadIdx.x;
@@ -307,7 +300,6 @@ __global__ void cudaDevice_GADinter(float* xPos_d, float* yPos_d, float* zPos_d,
       (j >= jMin_d)&&(j < jMax_d) &&
       (k >= kMin_d)&&(k < kMax_d) ){
       ijk = i*iStride + j*jStride + k*kStride;
-      ij = i*(Ny_d+2*Nh_d) + j*(1);
       if(GAD_turbineVolMask_d[ijk] > 0.0){
         iturb = __float2int_rn( GAD_turbineVolMask_d[ijk] ) - 1;
         if((timeStage == numRKstages) &&
@@ -328,27 +320,18 @@ __global__ void cudaDevice_GADinter(float* xPos_d, float* yPos_d, float* zPos_d,
              //reset the sampleAVG values to zero
              u_sampAvg_d[iturb] = 0.0;
              v_sampAvg_d[iturb] = 0.0;
-	     // compute normal/axial induction factor at hub height from time-averaged hub-hight wind speed
+	     // compute the rotor-disk normal/axial induction factor from the time-averaged hub-height wind speed.
+	     // Evaluated at fixed analytic radial stations (no dependence on the reference cell's distance
+	     // from the rotor axis, which at fine resolution can fall inside the hub radius)
 	     if (simTime_it > 0){
-             cudaDevice_cellInRotor(&cell_inRotor, &cell_rVector, iturb, GAD_Xcoords_d[iturb], GAD_Ycoords_d[iturb],
-                                    GAD_rotorTheta_d[iturb], GAD_hubHeights_d[GAD_turbineType_d[iturb]], tiltAngle,
-                                    GAD_rotorD_d[GAD_turbineType_d[iturb]], GAD_nacelleD_d[GAD_turbineType_d[iturb]],
-                                    xPos_d[ijk], yPos_d[ijk],
-                                    zPos_d[ijk]-topoPos_d[ij],
-                                    dX_d,dY_d);
-	     cudaDevice_GADtwistChord(&turbinePolyTwist_d[GAD_turbineType_d[iturb]*turbinePolyOrderMax_d], &turbinePolyChord_d[GAD_turbineType_d[iturb]*turbinePolyOrderMax_d],
-                                      GAD_rotorD_d[GAD_turbineType_d[iturb]], cell_rVector, &cell_twistAngle, &cell_chordLength);
-	     cudaDevice_GADbetaOmega(GAD_turbineRefMag_d[iturb], GAD_anFactor_d[iturb],
-                                     &turbinePolyPitch_d[GAD_turbineType_d[iturb]*turbinePolyOrderMax_d], &turbinePolyOmega_d[GAD_turbineType_d[iturb]*turbinePolyOrderMax_d],
-                                     GAD_rotorD_d[GAD_turbineType_d[iturb]], cell_rVector, cell_twistAngle, &cell_betaAngle, &cell_omegaRot);
-
-	     compute_normalInduction(GAD_turbineRefMag_d[iturb], GAD_rotorD_d[GAD_turbineType_d[iturb]], GAD_nacelleD_d[GAD_turbineType_d[iturb]],
-                                     cell_rVector, cell_betaAngle, cell_omegaRot, cell_chordLength,
-				     &rnorm_vect_d[GAD_turbineType_d[iturb]*(turbinePolyClCdrNormSegments_d+1)],
-                                     &alpha_minmax_vect_d[GAD_turbineType_d[iturb]*alphaBounds_d],
-                                     &turbinePolyCl_d[GAD_turbineType_d[iturb]*turbinePolyClCdrNormSegments_d*turbinePolyOrderMax_d],
-                                     &turbinePolyCd_d[GAD_turbineType_d[iturb]*turbinePolyClCdrNormSegments_d*turbinePolyOrderMax_d],
-				     &GAD_anFactor_d[iturb]);
+	     cudaDevice_GADdiskInduction(GAD_turbineRefMag_d[iturb], GAD_rotorD_d[GAD_turbineType_d[iturb]], GAD_nacelleD_d[GAD_turbineType_d[iturb]],
+                                         &turbinePolyTwist_d[GAD_turbineType_d[iturb]*turbinePolyOrderMax_d], &turbinePolyChord_d[GAD_turbineType_d[iturb]*turbinePolyOrderMax_d],
+                                         &turbinePolyPitch_d[GAD_turbineType_d[iturb]*turbinePolyOrderMax_d], &turbinePolyOmega_d[GAD_turbineType_d[iturb]*turbinePolyOrderMax_d],
+				         &rnorm_vect_d[GAD_turbineType_d[iturb]*(turbinePolyClCdrNormSegments_d+1)],
+                                         &alpha_minmax_vect_d[GAD_turbineType_d[iturb]*alphaBounds_d],
+                                         &turbinePolyCl_d[GAD_turbineType_d[iturb]*turbinePolyClCdrNormSegments_d*turbinePolyOrderMax_d],
+                                         &turbinePolyCd_d[GAD_turbineType_d[iturb]*turbinePolyClCdrNormSegments_d*turbinePolyOrderMax_d],
+				         &GAD_anFactor_d[iturb]);
 #ifdef DEBUG_GAD
 	     printf("GAD_turbineRefMag_d[iturb]=%f,GAD_anFactor_d[iturb]=%f \n",GAD_turbineRefMag_d[iturb],GAD_anFactor_d[iturb]);
 #endif
@@ -507,7 +490,7 @@ __device__ void cudaDevice_cellInRotor(float* cell_inRotor, float* cell_rVector,
     /*Perpendicular "dx" in the rotated "x-y" plane  */
     perpdx_rot =  fabsf(dx*cosf(0.5*pi+turbTheta*pi/180.0)) + fabsf(dy*sinf(0.5*pi+turbTheta*pi/180.0));
 
-    if(   (perpDist < __int2float_rn(numgridCells_away_d)*perpdx_rot)
+    if(   (fabsf(perpDist) < __int2float_rn(numgridCells_away_d)*perpdx_rot)
        && *cell_rVector <= (0.5*rotorD)     //Not in notebook but needed?
        && *cell_rVector > (0.5*nacelleD) ){
        *cell_inRotor = 1.0;
@@ -554,7 +537,7 @@ __device__ void cudaDevice_GADbetaOmega(float turbineRefMag, float anFactor, flo
                                         float rotorD, float turbineRadius, float twist_angle, float* beta_angle, float* omega_rot){
 
   int nn;
-  float pitch_angle;
+  float pitch_angle = 0.0;
   float U_ijk;
   float pi = acosf(-1.0);
   float temp_expo;
@@ -658,13 +641,11 @@ __device__ void cudaDevice_GADforcesCompute(float u, float v, float rho, float r
 
     c_t = C_l*sinf(phi_rel)-C_d*cosf(phi_rel);
     at_it = 1.0/(4.0*F_tot*sinf(phi_rel)*cosf(phi_rel)/(sigma*c_t) - 1.0); // tangential induction factor
-    __syncthreads();
 
     a_tol = sqrtf(powf(an_it-an_0,2.0) + powf(at_it-at_0,2.0));
     an_0 = an_it;
     at_0 = at_it;
 
-    __syncthreads();
     iter_cnt++;
   } //while(a_tol > a_tol_min) --end of iterative process
 
@@ -751,7 +732,7 @@ __device__ void compute_ClCd_incoeff(float* rnorm_vect, float* turbinePolyCl, fl
   for (rn=0; rn<turbinePolyClCdrNormSegments_d; rn++){
      rn_min = rnorm_vect[rn];
      rn_max = rnorm_vect[rn+1];
-     if ((r_norm>rn_min)&&(rn_min<=rn_max)){
+     if ((r_norm>rn_min)&&(r_norm<=rn_max)){
        rn_seg = rn;
      }
   }
@@ -860,6 +841,9 @@ __device__ void update_rotorTheta(float* turbineRefDir, float* rotorTheta, float
   yawing_angle = copysign(1.0,*yawError)*yawing_rate*dt;
   *rotorTheta = *rotorTheta + yawing_angle;
   *rotorTheta = fmodf(*rotorTheta,ref360);
+  if(*rotorTheta < 0.0){
+    *rotorTheta = *rotorTheta + ref360;
+  }
   Angle_TurbWind(*turbineRefDir, *rotorTheta, &diff_angle);
 
   if (fabsf(diff_angle) <  fabsf(yawing_angle)){
@@ -917,6 +901,11 @@ __device__ void compute_normalInduction(float turbineRefMag, float rotorD, float
   r_norm = turbineRadius/blade_length;
   r_hub = 0.5*nacelleD;
 
+  // BEM (tip/hub losses) is undefined at or inside the hub radius and at/beyond the blade tip
+  if((turbineRadius <= r_hub) || (turbineRadius >= blade_length)){
+    return;
+  }
+
   if(GADForcingSwitch_d == 1){
     U_ijk = GADrefU_d;
     switchFactor = 1.0;
@@ -950,16 +939,61 @@ __device__ void compute_normalInduction(float turbineRefMag, float rotorD, float
 
     c_t = C_l*sinf(phi_rel)-C_d*cosf(phi_rel);
     at_it = 1.0/(4.0*F_tot*sinf(phi_rel)*cosf(phi_rel)/(sigma*c_t) - 1.0); // tangential induction factor
-    __syncthreads();
 
     a_tol = sqrtf(powf(an_it-an_0,2.0) + powf(at_it-at_0,2.0));
     an_0 = an_it;
     at_0 = at_it;
 
-    __syncthreads();
     iter_cnt++;
   } //while(a_tol > a_tol_min) --end of iterative process
 
-  *turbineRefAn = fmaxf(fminf(an_it,0.5),0.0);
+  // a non-finite result leaves the incoming value untouched (fminf would otherwise map NaN to the 0.5 bound)
+  if(isfinite(an_it)){
+    *turbineRefAn = fmaxf(fminf(an_it,0.5),0.0);
+  }
 
 } // end compute_normalInduction()
+
+/*----->>>>> __device__ void cudaDevice_GADdiskInduction();  --------------------------------------------------
+*/
+__device__ void cudaDevice_GADdiskInduction(float turbineRefMag, float rotorD, float nacelleD,
+                                            float* turbinePolyTwist_d, float* turbinePolyChord_d,
+                                            float* turbinePolyPitch_d, float* turbinePolyOmega_d,
+                                            float *rnorm_vect, float *alpha_minmax_vect, float *turbinePolyCl, float *turbinePolyCd,
+                                            float *turbineRefAn){
+
+  int ir;
+  float r_hub,blade_length,dr;
+  float station_r,station_an,station_wgt;
+  float twist_angle,chord_length,beta_angle,omega_rot;
+  float an_sum,wgt_sum;
+  float an_prev;
+  float an_flag = -1.0; // sentinel: compute_normalInduction leaves it untouched on an invalid station
+
+  blade_length = 0.5*rotorD;
+  r_hub = 0.5*nacelleD;
+  dr = (blade_length-r_hub)/((float) GAD_NUM_RADIAL_STATIONS);
+  an_prev = *turbineRefAn; // beta and omega use the previous rotor-disk value (as before)
+  an_sum = 0.0;
+  wgt_sum = 0.0;
+
+  for(ir=0; ir < GAD_NUM_RADIAL_STATIONS; ir++){
+    station_r = r_hub + (((float) ir)+0.5)*dr; // annulus mid-radius
+    cudaDevice_GADtwistChord(turbinePolyTwist_d, turbinePolyChord_d, rotorD, station_r, &twist_angle, &chord_length);
+    cudaDevice_GADbetaOmega(turbineRefMag, an_prev, turbinePolyPitch_d, turbinePolyOmega_d,
+                            rotorD, station_r, twist_angle, &beta_angle, &omega_rot);
+    station_an = an_flag;
+    compute_normalInduction(turbineRefMag, rotorD, nacelleD, station_r, beta_angle, omega_rot, chord_length,
+                            rnorm_vect, alpha_minmax_vect, turbinePolyCl, turbinePolyCd, &station_an);
+    if(station_an >= 0.0){
+      station_wgt = station_r*dr; // annulus area weight (2*pi omitted)
+      an_sum = an_sum + station_wgt*station_an;
+      wgt_sum = wgt_sum + station_wgt;
+    }
+  }
+  if(wgt_sum > 0.0){
+    *turbineRefAn = an_sum/wgt_sum;
+  }
+
+} // end cudaDevice_GADdiskInduction()
+
