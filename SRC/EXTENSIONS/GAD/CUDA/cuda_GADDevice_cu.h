@@ -191,6 +191,9 @@ __device__ void compute_normalInduction(float turbineRefMag, float rotorD, float
 * Rotor-disk (annulus-area weighted) axial induction factor from GAD_NUM_RADIAL_STATIONS analytic radial stations
 */
 #define GAD_NUM_RADIAL_STATIONS 20
+/* Wind-speed range [m/s] over which the turbine pitch/omega polynomials are evaluated (cut-in/cut-out) */
+#define GAD_POLY_UMIN 3.0
+#define GAD_POLY_UMAX 25.0
 __device__ void cudaDevice_GADdiskInduction(float turbineRefMag, float rotorD, float nacelleD,
                                             float* turbinePolyTwist_d, float* turbinePolyChord_d,
                                             float* turbinePolyPitch_d, float* turbinePolyOmega_d,

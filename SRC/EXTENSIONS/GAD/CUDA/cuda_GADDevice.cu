@@ -550,6 +550,9 @@ __device__ void cudaDevice_GADbetaOmega(float turbineRefMag, float anFactor, flo
     U_ijk = GADrefU_d;
   }else{
     U_ijk = turbineRefMag/(1.0-anFactor); // should this include vertical velcoty too - w???
+    // keep the pitch/omega polynomials within their fitted operating range (they diverge outside it,
+    // e.g. U_ijk = 2*RefMag at anFactor = 0.5, which would otherwise lock the turbine at anFactor = 0.5)
+    U_ijk = fmaxf(fminf(U_ijk,GAD_POLY_UMAX),GAD_POLY_UMIN);
   }
 
   /* pitch angle */
