@@ -656,6 +656,15 @@ int GADConstructor(){
   errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_anFactor[0]);
   errorCode = ioAddStandardAttrs("GAD_anFactor", "-", "rotor-normal upstream wind speed induction factor", NULL);
 
+  /*Default the turbine state; an inFile (initial or restart) overwrites only the fields it contains*/
+  for(iFld = 0; iFld < GADNumTurbines; iFld++){
+    GAD_turbineYawing[iFld] = 0;     //Initialize to all turbines not rotating
+    GAD_turbineRefMag[iFld] = 0.0;   //Standard initialization to zero
+    GAD_turbineRefDir[iFld] = fmodf(270.0-GAD_rotorTheta[iFld]+360.0,360.0); //Wind direction aligned with the rotor
+    GAD_yawError[iFld] = 0.0;        //Initialize to zero yaw error
+    GAD_anFactor[iFld] = 0.0;        //Initialize to zero axial induction factor
+  }
+
   return(errorCode);
 } //end GADConstructor()
 
@@ -694,13 +703,6 @@ int GADInitTurbineRefChars(float dt){
       GAD_turbineRefi[iturb] = -999;  //Initialize to special "absent" value of -999
       GAD_turbineRefj[iturb] = -999;  //Initialize to special "absent" value of -999
       GAD_turbineRefk[iturb] = -999;  //Initialize to special "absent" value of -999
-    if(inFile == NULL){
-      GAD_turbineRefMag[iturb] = 0.0; //Standard initialization to zero
-      GAD_turbineRefDir[iturb] = 0.0; //Standard initialization to zero
-      GAD_turbineYawing[iturb] = 0;   //Initialize to all turbines not rotating
-      GAD_yawError[iturb] = 0.0;      //Initialize to zero yaw error
-      GAD_anFactor[iturb] = 0.0;      //Initialize to zero axial induction factor
-    }//end if inFile == NULL
     for(i=iMin-Nh; i < iMax+Nh; i++){
       for(j=jMin-Nh; j < jMax+Nh; j++){
         for(k=kMin-Nh+1; k < kMax+Nh-1; k++){
