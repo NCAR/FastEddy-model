@@ -761,15 +761,15 @@ __device__ void cudaDevice_GADforcesApply(float rho, float turb_Xcoord, float tu
 #endif
   // forces exerted by the turbine on the flow have opposite sign
   if (GADofflineForces_d==0){
-    *GADforce_x = *GADforce_x - rho*F_factor*F_x;
-    *GADforce_y = *GADforce_y - rho*F_factor*F_y;
-    *GADforce_z = *GADforce_z - rho*F_factor*F_z;
+    *GADforce_x = *GADforce_x - F_factor*F_x;
+    *GADforce_y = *GADforce_y - F_factor*F_y;
+    *GADforce_z = *GADforce_z - F_factor*F_z;
   }
   // save forces for output
   if (GADoutputForces_d==1){
-    *GAD_fX = -rho*F_factor*F_x;
-    *GAD_fY = -rho*F_factor*F_y;
-    *GAD_fZ = -rho*F_factor*F_z;
+    *GAD_fX = -F_factor*F_x;
+    *GAD_fY = -F_factor*F_y;
+    *GAD_fZ = -F_factor*F_z;
   }
 
 } // end cudaDevice_GADforcesApply()
