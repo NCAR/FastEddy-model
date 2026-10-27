@@ -597,6 +597,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 #endif
 #ifdef GAD_EXT
    if (GADSelector > 0 && ((physics_oneRKonly==0) || (timeStage==numRKstages))){
+     gpuErrchk( cudaMemset(GAD_turbinePower_d, 0, GADNumTurbines*sizeof(float)) ); // rebuilt by each launch, the last RK stage's sum is output
      cudaDevice_GADfinal<<<grid, tBlock>>>(xPos_d, yPos_d, zPos_d, topoPos_d,
                                            hydroFlds_d, hydroFldsFrhs_d,simTime_it,dt,
                                            GAD_turbineType_d, GAD_turbineVolMask_d,
@@ -607,7 +608,8 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
                                            rnorm_vect_d, alpha_minmax_vect_d,
                                            turbinePolyCl_d, turbinePolyCd_d,
 					   GAD_turbineRefMag_d, GAD_anFactor_d,
-                                           GAD_forceX_d, GAD_forceY_d, GAD_forceZ_d);
+                                           GAD_forceX_d, GAD_forceY_d, GAD_forceZ_d,
+                                           D_Jac_d, GAD_turbinePower_d);
    }
 #endif 
 
@@ -1445,6 +1447,7 @@ extern "C" int cuda_hydroCoreSynchFieldsFromDevice(int batchSize){
      gpuErrchk( cudaMemcpy(GAD_turbineRefDir, GAD_turbineRefDir_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
      gpuErrchk( cudaMemcpy(GAD_yawError, GAD_yawError_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
      gpuErrchk( cudaMemcpy(GAD_anFactor, GAD_anFactor_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(GAD_turbinePower, GAD_turbinePower_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
      gpuErrchk( cudaMemcpy(GAD_rotorTheta, GAD_rotorTheta_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) ); 
      errorCode = cuda_GADMaskNonOwnedHostState(); //Device state is shared across ranks; IO sums over ranks
      if (GADoutputForces == 1){

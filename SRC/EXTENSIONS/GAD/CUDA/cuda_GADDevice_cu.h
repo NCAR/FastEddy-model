@@ -57,6 +57,7 @@ extern float* u_sampAvg_d;         /* u sample averages for each turbine */
 extern float* v_sampAvg_d;         /* v sample averages for each turbine */
 extern float* GAD_yawError_d;      /* yaw error between the incoming wind and the turbine orientation */
 extern float* GAD_anFactor_d;     /* turbine axial induction factor at hub heigth*/
+extern float* GAD_turbinePower_d; /* rotor aerodynamic power, this rank's share of the rotor [W] */
 extern float* GAD_rotorTheta_d;    /* turbine yaw angle [deg. North] */
 extern float* GAD_hubHeights_d;    /* turbine hub height [m AGL] */
 extern float* GAD_rotorD_d;        /* turbine rotor diameter [m] */
@@ -129,7 +130,8 @@ __global__ void cudaDevice_GADfinal(float* xPos_d, float* yPos_d, float* zPos_d,
                                     float* rnorm_vect_d, float* alpha_minmax_vect_d,
                                     float* turbinePolyCl_d, float* turbinePolyCd_d,
 				    float* GAD_turbineRefMag_d, float* GAD_anFactor_d,
-                                    float* GAD_forceX_d, float* GAD_forceY_d, float* GAD_forceZ_d);
+                                    float* GAD_forceX_d, float* GAD_forceY_d, float* GAD_forceZ_d,
+                                    float* D_Jac_d, float* GAD_turbinePower_d);
 
 /*----->>>>> __device__ void  cudaDevice_cellInRotor();  --------------------------------------------------
  * This functions calculates a radial vector and setes a flag to detrmine if a cell is in a rotor disk area
@@ -163,6 +165,14 @@ __device__ void cudaDevice_GADforcesApply(float rho, float turb_Xcoord, float tu
                                           float xLoc, float yLoc, float zLoc,
                                           float GADforce_n, float GADforce_t, float* GADforce_x, float* GADforce_y, float* GADforce_z,
                                           float* GAD_fX, float* GAD_fY, float* GAD_fZ, float turbineRadius, float nacelleD);
+
+/*----->>>>> __device__ void cudaDevice_GADpowerAccumulate();  --------------------------------------------------
+* Adds one rotor cell's share of its turbine's aerodynamic power, P = Omega*sum(r*f_t*dV), where f_t = F_factor*GADforce_t
+* is the tangential blade force per unit volume applied in cudaDevice_GADforcesApply() and dV the physical cell volume.
+*/
+__device__ void cudaDevice_GADpowerAccumulate(float turb_Xcoord, float turb_Ycoord, float rotorTheta, float rotorD,
+                                              float xLoc, float yLoc, float GADforce_t, float turbineRadius,
+                                              float omega_rot, float cellVolume, float* turbinePower);
 
 /*----->>>>> __device__ void compute_ClCd_incoeff();  --------------------------------------------------
 */

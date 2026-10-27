@@ -57,6 +57,7 @@ extern float* GAD_turbineRefMag;/* Reference "ambient" velocity magnitude for ya
 extern float* GAD_turbineRefDir;/* *Reference "ambient" velocity direction (horizontal, met. standard orientation) for yaw control and beta/omega [degrees]*/
 extern float* GAD_yawError;     /* yaw error between the incoming wind and the turbine orientation */
 extern float* GAD_anFactor;     /* turbine axial induction factor at hub heigth*/
+extern float* GAD_turbinePower; /* rotor aerodynamic power (torque x rotor speed), this rank's share of the rotor [W]*/
 extern float* GAD_rotorTheta;   /* rotor-normal horizontal angle from North [degrees]*/
 extern float* GAD_hubHeights;   /* Above-ground-level hub-heights of turbines [m]*/
 extern float* GAD_rotorD;       /* turbine-specific rotor diameters  [m]*/

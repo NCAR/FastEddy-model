@@ -51,6 +51,7 @@ float* u_sampAvg_d;         /* u sample averages for each turbine */
 float* v_sampAvg_d;         /* v sample averages for each turbine */
 float* GAD_yawError_d;      /* yaw error between the incoming wind and the turbine orientation */
 float* GAD_anFactor_d;     /* turbine axial induction factor at hub heigth*/
+float* GAD_turbinePower_d; /* rotor aerodynamic power, this rank's share of the rotor [W] */
 float* GAD_rotorTheta_d;    /* turbine yaw angle [deg. North] */
 float* GAD_hubHeights_d;    /* turbine hub height [m AGL] */
 float* GAD_rotorD_d;        /* turbine rotor diameter [m] */
@@ -123,6 +124,7 @@ extern "C" int cuda_GADDeviceSetup(){
     fecuda_DeviceMalloc((size_t)(GADNumTurbines), &GAD_rotorTheta_d);
     fecuda_DeviceMalloc((size_t)(GADNumTurbines), &GAD_yawError_d);
     fecuda_DeviceMalloc((size_t)(GADNumTurbines), &GAD_anFactor_d);
+    fecuda_DeviceMalloc((size_t)(GADNumTurbines), &GAD_turbinePower_d);
     cudaMemcpy(GAD_turbineRefMag_d, GAD_turbineRefMag, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_turbineRefDir_d, GAD_turbineRefDir, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_Xcoords_d, GAD_Xcoords, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
@@ -136,6 +138,7 @@ extern "C" int cuda_GADDeviceSetup(){
 #endif
     cudaMemcpy(GAD_yawError_d, GAD_yawError, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(GAD_anFactor_d, GAD_anFactor, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(GAD_turbinePower_d, GAD_turbinePower, GADNumTurbines*sizeof(float), cudaMemcpyHostToDevice);
     
     fecuda_DeviceMalloc((size_t)(GADNumTurbines*GADrefSeriesLength), &GAD_turbineUseries_d);
     fecuda_DeviceMalloc((size_t)(GADNumTurbines*GADrefSeriesLength), &GAD_turbineVseries_d);
@@ -243,6 +246,7 @@ extern "C" int cuda_GADDeviceCleanup(){
      cudaFree(v_sampAvg_d);
      cudaFree(GAD_yawError_d);
      cudaFree(GAD_anFactor_d);
+     cudaFree(GAD_turbinePower_d);
      cudaFree(GAD_Xcoords_d);
      cudaFree(GAD_Ycoords_d);
      cudaFree(GAD_rotorTheta_d);
@@ -300,6 +304,7 @@ extern "C" int cuda_GADDeviceSyncTurbineState(){
 /*----->>>>> extern "C" int cuda_GADMaskNonOwnedHostState();  -----------------------------------------------------------
 * Zero the host copies of per-turbine state for turbines not owned by this rank, so the IO reductions
 * (MPI_SUM across ranks, and per-rank binary files summed in post-processing) yield the owner's values.
+* GAD_turbinePower is left alone: each rank holds the power of its own part of the rotor, so the sum is the total.
 */
 extern "C" int cuda_GADMaskNonOwnedHostState(){
    int errorCode = CUDA_GAD_SUCCESS;
@@ -432,7 +437,8 @@ __global__ void cudaDevice_GADfinal(float* xPos_d, float* yPos_d, float* zPos_d,
                                     float* rnorm_vect_d, float* alpha_minmax_vect_d,
                                     float* turbinePolyCl_d, float* turbinePolyCd_d,
 				    float* GAD_turbineRefMag_d, float* GAD_anFactor_d,
-                                    float* GAD_forceX_d, float* GAD_forceY_d, float* GAD_forceZ_d){
+                                    float* GAD_forceX_d, float* GAD_forceY_d, float* GAD_forceZ_d,
+                                    float* D_Jac_d, float* GAD_turbinePower_d){
 
    int i,j,k,ijk,ij;
    int fldStride;
@@ -500,6 +506,10 @@ __global__ void cudaDevice_GADfinal(float* xPos_d, float* yPos_d, float* zPos_d,
                                     cell_forceN, cell_forceT, &hydroFldsFrhs_d[fldStride*U_INDX+ijk], &hydroFldsFrhs_d[fldStride*V_INDX+ijk],
                                     &hydroFldsFrhs_d[fldStride*W_INDX+ijk],&GAD_forceX_d[ijk],&GAD_forceY_d[ijk],&GAD_forceZ_d[ijk],
                                     cell_rVector, GAD_nacelleD_d[GAD_turbineType_d[iturb]]);
+          cudaDevice_GADpowerAccumulate(GAD_Xcoords_d[iturb], GAD_Ycoords_d[iturb], GAD_rotorTheta_d[iturb],
+                                        GAD_rotorD_d[GAD_turbineType_d[iturb]], xPos_d[ijk], yPos_d[ijk],
+                                        cell_forceT, cell_rVector, cell_omegaRot,
+                                        dX_d*dY_d*dZ_d*D_Jac_d[ijk], &GAD_turbinePower_d[iturb]);
 	  }
         }
       }//if this is a cell in the yaw-swept volume sphere
@@ -773,6 +783,21 @@ __device__ void cudaDevice_GADforcesApply(float rho, float turb_Xcoord, float tu
   }
 
 } // end cudaDevice_GADforcesApply()
+
+/*----->>>>> __device__ void cudaDevice_GADpowerAccumulate();  --------------------------------------------------
+* Adds one rotor cell's share of its turbine's aerodynamic power, P = Omega*sum(r*f_t*dV), where f_t = F_factor*GADforce_t
+* is the tangential blade force per unit volume applied in cudaDevice_GADforcesApply() and dV the physical cell volume.
+*/
+__device__ void cudaDevice_GADpowerAccumulate(float turb_Xcoord, float turb_Ycoord, float rotorTheta, float rotorD,
+                                              float xLoc, float yLoc, float GADforce_t, float turbineRadius,
+                                              float omega_rot, float cellVolume, float* turbinePower){
+
+  float F_factor;
+
+  distribute_GADforces(xLoc, yLoc, turb_Xcoord, turb_Ycoord, rotorTheta-180.0, rotorD, &F_factor); // same spreading as the applied force
+  atomicAdd(turbinePower, omega_rot*turbineRadius*F_factor*GADforce_t*cellVolume);
+
+} // end cudaDevice_GADpowerAccumulate()
 
 /*----->>>>> __device__ void compute_ClCd_incoeff();  --------------------------------------------------
 */

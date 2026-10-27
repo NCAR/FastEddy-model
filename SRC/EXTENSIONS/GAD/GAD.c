@@ -50,6 +50,7 @@ float* GAD_turbineRefMag;/* Reference "ambient" velocity magnitude for yaw contr
 float* GAD_turbineRefDir;/* *Reference "ambient" velocity direction (horizontal, met. standard orientation) for yaw control and beta/omega [degrees]*/
 float* GAD_yawError;     /* yaw error between the incoming wind and the turbine orientation */
 float* GAD_anFactor;     /* turbine axial induction factor at hub heigth*/
+float* GAD_turbinePower; /* rotor aerodynamic power (torque x rotor speed), this rank's share of the rotor [W]*/
 float* GAD_rotorTheta;   /* rotor-normal horizontal angle from North [degrees]*/
 float* GAD_hubHeights;   /* Above-ground-level hub-heights of turbines [m]*/
 float* GAD_rotorD;       /* turbine-specific rotor diameters [m]*/
@@ -655,6 +656,10 @@ int GADConstructor(){
   sprintf(&fldName[0],"GAD_anFactor");
   errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_anFactor[0]);
   errorCode = ioAddStandardAttrs("GAD_anFactor", "-", "rotor-normal upstream wind speed induction factor", NULL);
+  GAD_turbinePower = (float*) malloc(GADNumTurbines*sizeof(float));
+  sprintf(&fldName[0],"GAD_turbinePower");
+  errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_turbinePower[0]);
+  errorCode = ioAddStandardAttrs("GAD_turbinePower", "W", "rotor aerodynamic power (torque x rotor speed)", NULL);
 
   /*Default the turbine state; an inFile (initial or restart) overwrites only the fields it contains*/
   for(iFld = 0; iFld < GADNumTurbines; iFld++){
@@ -663,6 +668,7 @@ int GADConstructor(){
     GAD_turbineRefDir[iFld] = fmodf(270.0-GAD_rotorTheta[iFld]+360.0,360.0); //Wind direction aligned with the rotor
     GAD_yawError[iFld] = 0.0;        //Initialize to zero yaw error
     GAD_anFactor[iFld] = 0.0;        //Initialize to zero axial induction factor
+    GAD_turbinePower[iFld] = 0.0;    //Diagnostic, recomputed every time step
   }
 
   return(errorCode);
@@ -996,6 +1002,7 @@ int GADDestructor(){
   free(GAD_turbineRefDir);
   free(GAD_yawError);
   free(GAD_anFactor);
+  free(GAD_turbinePower);
   free(GAD_rotorTheta);
   free(GAD_hubHeights);
   free(GAD_rotorD);
