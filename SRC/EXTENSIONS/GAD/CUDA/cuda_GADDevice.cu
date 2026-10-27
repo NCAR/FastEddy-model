@@ -905,7 +905,9 @@ __device__ void update_rotorTheta(float* turbineRefDir, float* rotorTheta, float
   }
   Angle_TurbWind(*turbineRefDir, *rotorTheta, &diff_angle);
 
-  if (fabsf(diff_angle) <  fabsf(yawing_angle)){
+  // stop when aligned, or when the target lies behind the yawing direction (RefDir only updates once per
+  // sampling window and can jump past the rotor; without this the rotor keeps turning for another 360 deg)
+  if ((fabsf(diff_angle) <  fabsf(yawing_angle)) || (diff_angle*yawing_angle < 0.0)){
     *turbineYawing = 0;
     *yawError = 0.0;
   }
