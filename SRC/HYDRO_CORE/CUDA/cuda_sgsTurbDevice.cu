@@ -234,7 +234,7 @@ __device__ void cudaDevice_hydroCoreCalcStrainRateElements(float* u, float* v, f
 __device__ void cudaDevice_hydroCoreCalcEddyDiff(float* S11, float* S21, float* S31,
                                                  float* S32, float* S22, float* S33,
                                                  float* STH3, float* theta, float* rhoInv,
-                                                 float* sgstke, float* sgstke_ls, float* Km, float* D_Jac_d){
+                                                 float* sgstke, float* sgstke_ls, float sgstke_ls_km1, float* Km, float* D_Jac_d){
 
    int i,j,k,ijk,ijkm1;
    int iStride,jStride,kStride;
@@ -266,7 +266,7 @@ __device__ void cudaDevice_hydroCoreCalcEddyDiff(float* S11, float* S21, float* 
       if(TKESelector_d>0){ // Lilly (prognostic SGSTKE equation)
         sgstke_ijk = sgstke[ijk]*rhoInv[ijk];
         sgstke_ijkm1 = sgstke[ijkm1]*rhoInv[ijkm1];
-        Km_ijk = c_k_d*0.5*(sgstke_ls[ijk]*powf(sgstke_ijk,0.5)+sgstke_ls[ijkm1]*powf(sgstke_ijkm1,0.5));
+        Km_ijk = c_k_d*0.5*(sgstke_ls[ijk]*powf(sgstke_ijk,0.5)+sgstke_ls_km1*powf(sgstke_ijkm1,0.5)); // sgstke_ls_km1 from this thread, not sgstke_ls[ijkm1] (written by another thread in this kernel)
       }else{ // Smagorinsky
         turbDelta = powf(dX_d*dY_d*dZ_d*D_Jac_d[ijk],1.0/3.0);   // "l"
         invPr = 3.0;

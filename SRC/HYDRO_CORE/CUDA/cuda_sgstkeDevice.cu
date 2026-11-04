@@ -110,9 +110,12 @@ __global__ void cudaDevice_hydroCoreCompleteSGSTKE(float* hydroFlds_d, float* hy
 
 } // end cudaDevice_hydroCoreCompleteSGSTKE()
 
-/*----->>>>> __device__ void  cudaDevice_sgstkeLengthScale();  --------------------------------------------------
+/*----->>>>> __device__ float  cudaDevice_sgstkeLengthScale();  --------------------------------------------------
+* Returns the sub-grid length scale at (i,j,k+kOffset) for the calling thread's (i,j,k). With kOffset=0 it is also
+* stored in sgstke_ls[ijk]. Km at (i,j,k) averages the length scale at k and k-1, and within the same kernel
+* sgstke_ls[ijkm1] is written by another thread, so the k-1 value is obtained with kOffset=-1 (returned, not stored).
 */
-__device__ void cudaDevice_sgstkeLengthScale(float* th, float* rhoInv, float* sgstke, float* sgstke_ls, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d){
+__device__ float cudaDevice_sgstkeLengthScale(float* th, float* rhoInv, float* sgstke, float* sgstke_ls, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d, int kOffset){
 
   float e_ijk;
   float tke_lenscale;
@@ -125,7 +128,7 @@ __device__ void cudaDevice_sgstkeLengthScale(float* th, float* rhoInv, float* sg
 
   i = (blockIdx.x)*blockDim.x + threadIdx.x;
   j = (blockIdx.y)*blockDim.y + threadIdx.y;
-  k = (blockIdx.z)*blockDim.z + threadIdx.z;
+  k = (blockIdx.z)*blockDim.z + threadIdx.z + kOffset;
   iStride = (Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
   jStride = (Nz_d+2*Nh_d);
   kStride = 1;
@@ -137,6 +140,7 @@ __device__ void cudaDevice_sgstkeLengthScale(float* th, float* rhoInv, float* sg
   ijkm1 = i*iStride + j*jStride + (k-1)*kStride;
   ijkp1 = i*iStride + j*jStride + (k+1)*kStride;
 
+  tke_lenscale = 0.0;
   if((i >= iMin_d-1)&&(i < iMax_d+1) && (j >= jMin_d-1)&&(j < jMax_d+1) && (k >= kMin_d-1)&&(k < kMax_d+1)){
 
     dthdz = 0.5*((J31_d[ijk]*dXi_d*(th[ip1jk]*rhoInv[ip1jk]-th[im1jk]*rhoInv[im1jk]))
@@ -155,17 +159,21 @@ __device__ void cudaDevice_sgstkeLengthScale(float* th, float* rhoInv, float* sg
       tke_lenscale = len_2; // else not stable conditions so grid resolution is the appropriate length scale
     }
 
-    sgstke_ls[ijk] = tke_lenscale;
+    if(kOffset == 0){
+      sgstke_ls[ijk] = tke_lenscale;
+    }
 
     
 #if DEBUG_TKE 
-    if (i==iMin_d && j==jMin_d){
+    if (i==iMin_d && j==jMin_d && kOffset==0){
       printf("cudaDevice_sgstkeLengthScale(): At (%d,%d,%d) sgstke_ls,len_1,len_2,e_ijk,term_b,dthdz,th_ijk = %f,%f,%f,%12.10f,%f,%f,%f\n",i,j,k,sgstke_ls[ijk],len_1,len_2,e_ijk,term_b,dthdz,th[ijk]*rhoInv[ijk]);
       //printf("cudaDevice_sgstkeLengthScale(): At (%d,%d,%d) dthdz, th = %f,%f\n",i,j,k,dthdz,th[ijk]*rhoInv[ijk]);
     }
 #endif    
 
-  } // if (within the computational domain...) 
+  } // if (within the computational domain...)
+
+  return(tke_lenscale);
 
 } //end cudaDevice_sgstkeLengthScale
 

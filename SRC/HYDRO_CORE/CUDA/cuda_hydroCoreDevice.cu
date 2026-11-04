@@ -1159,6 +1159,7 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
    int fldStride;
    float inv_pr; 
    int iFld; 
+   float sgstke_ls_km1; // sub-grid length scale at k-1 for Km (prognostic TKE)
 
    fldStride = (Nx_d+2*Nh_d)*(Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
 
@@ -1222,14 +1223,18 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
 	 if(iFld==0){
            cudaDevice_sgstkeLengthScale(&hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
                                       &sgstkeScalars_d[fldStride*iFld], &sgstke_ls_d[fldStride*iFld],
-                                      J31_d, J32_d, J33_d, D_Jac_d); // length scale calculation
+                                      J31_d, J32_d, J33_d, D_Jac_d, 0); // length scale calculation
+           sgstke_ls_km1 = cudaDevice_sgstkeLengthScale(&hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
+                                                        &sgstkeScalars_d[fldStride*iFld], &sgstke_ls_d[fldStride*iFld],
+                                                        J31_d, J32_d, J33_d, D_Jac_d, -1); // length scale at k-1, computed by this thread (not stored)
 	 }else if(iFld==1){
            cudaDevice_sgstkeLengthScaleLF(&sgstke_ls_d[fldStride*iFld]); // canopy length scale assignment
+           sgstke_ls_km1 = canopy_lf_d; // canopy length scale at k-1
          }
          cudaDevice_hydroCoreCalcEddyDiff(&hydroTauFlds_d[fldStride*0], &hydroTauFlds_d[fldStride*1], &hydroTauFlds_d[fldStride*2],
                                           &hydroTauFlds_d[fldStride*3], &hydroTauFlds_d[fldStride*4], &hydroTauFlds_d[fldStride*5],
                                           &hydroTauFlds_d[fldStride*8], &hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
-                                          &sgstkeScalars_d[fldStride*iFld], &sgstke_ls_d[fldStride*iFld], &hydroKappaM_d[0], D_Jac_d); // calculate Km
+                                          &sgstkeScalars_d[fldStride*iFld], &sgstke_ls_d[fldStride*iFld], sgstke_ls_km1, &hydroKappaM_d[0], D_Jac_d); // calculate Km
          cudaDevice_GradScalar(&sgstkeScalars_d[fldStride*iFld], &hydroRhoInv_d[0],
                                &dedxi_d[fldStride*(iFld*3+0)], &dedxi_d[fldStride*(iFld*3+1)], &dedxi_d[fldStride*(iFld*3+2)],
                                J13_d, J23_d, J31_d, J32_d, J33_d); // calculate SGSTKE spatial gradients
@@ -1246,7 +1251,7 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
        cudaDevice_hydroCoreCalcEddyDiff(&hydroTauFlds_d[fldStride*0], &hydroTauFlds_d[fldStride*1], &hydroTauFlds_d[fldStride*2],
                                         &hydroTauFlds_d[fldStride*3], &hydroTauFlds_d[fldStride*4], &hydroTauFlds_d[fldStride*5],
                                         &hydroTauFlds_d[fldStride*8], &hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
-                                        &sgstkeScalars_d[0], &sgstke_ls_d[0], &hydroKappaM_d[0], D_Jac_d); // calculate Km
+                                        &sgstkeScalars_d[0], &sgstke_ls_d[0], 0.0, &hydroKappaM_d[0], D_Jac_d); // calculate Km (sgstke_ls_km1 unused)
        cudaDevice_hydroCoreCalcTaus(&hydroTauFlds_d[fldStride*0], &hydroTauFlds_d[fldStride*1], &hydroTauFlds_d[fldStride*2],
                                     &hydroTauFlds_d[fldStride*3], &hydroTauFlds_d[fldStride*4], &hydroTauFlds_d[fldStride*5],
                                     &hydroTauFlds_d[fldStride*6], &hydroTauFlds_d[fldStride*7], &hydroTauFlds_d[fldStride*8],
