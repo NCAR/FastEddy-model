@@ -62,8 +62,9 @@ __device__ void cudaDevice_calcCoriolis(float* Frhs_u, float* Frhs_v, float* Frh
   lat_factH = sinf(pi/180.0*(*lat));
   lat_factV = cosf(pi/180.0*(*lat));
 
-  *Frhs_u = *Frhs_u + ( corioConstHorz_d*lat_factH*((*vMom)/(*rho)-corioLS_fact_d*(*vBS)/(*rhoBS))
-                       -corioConstVert_d*lat_factV*((*wMom)/(*rho)-corioLS_fact_d*(*wBS)/(*rhoBS)) );
-  *Frhs_v = *Frhs_v - ( corioConstHorz_d*lat_factH*((*uMom)/(*rho)-corioLS_fact_d*(*uBS)/(*rhoBS)) );
-  *Frhs_w = *Frhs_w + ( corioConstVert_d*lat_factV*((*uMom)/(*rho)-corioLS_fact_d*(*uBS)/(*rhoBS)) );
+  /* Frhs holds tendencies of the momenta (rho*u), so the velocity-form Coriolis acceleration is multiplied by rho */
+  *Frhs_u = *Frhs_u + (*rho)*( corioConstHorz_d*lat_factH*((*vMom)/(*rho)-corioLS_fact_d*(*vBS)/(*rhoBS))
+                              -corioConstVert_d*lat_factV*((*wMom)/(*rho)-corioLS_fact_d*(*wBS)/(*rhoBS)) );
+  *Frhs_v = *Frhs_v - (*rho)*( corioConstHorz_d*lat_factH*((*uMom)/(*rho)-corioLS_fact_d*(*uBS)/(*rhoBS)) );
+  *Frhs_w = *Frhs_w + (*rho)*( corioConstVert_d*lat_factV*((*uMom)/(*rho)-corioLS_fact_d*(*uBS)/(*rhoBS)) );
 } // end cudaDevice_calcCoriolis()
