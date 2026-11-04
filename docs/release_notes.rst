@@ -2,6 +2,26 @@
 Release Notes
 *************
 
+FastEddy-model Version 5.0.2 Release Notes (20261104)
+=====================================================
+
+.. dropdown:: Bugfixes
+
+   * Fix to GAD turbines stalling at an axial induction of 0.5 (near-zero power), with the rotor axial induction now computed from analytic radial stations [in collaboration with Dr. William Radunz from Johns Hopkins University]
+   * Fix to bound the wind speed used in the GAD pitch and rotor-speed polynomials to the turbine cut-in/cut-out range
+   * Fix to always initialize the GAD per-turbine state
+   * Fix to GAD turbine ownership and per-step state sharing across MPI ranks, allowing rotors to span rank boundaries
+   * Fix to remove an extra density factor from the applied GAD turbine force
+   * Fix to the GAD yaw controller to stop yawing when the rotor passes the target direction, avoiding full-circle rotations
+   * Fix to the Coriolis forcing to include the missing density factor in the momentum tendencies
+   * Fix to a race condition on the sub-grid length scale at k-1 in the eddy diffusivity for prognostic SGS TKE, which made runs non-reproducible
+   * Fix to the inverted Reynolds number of the canopy element in the canopy skin-friction option [reported by Joran Dartevelle from the von Karman Institute for Fluid Dynamics, Belgium]
+
+.. dropdown:: Enhancements
+
+   * Output of per-turbine rotor power for the GAD (GAD_turbinePower)
+
+
 FastEddy-model Version 5.0.1 Release Notes (20260813)
 =====================================================
 
