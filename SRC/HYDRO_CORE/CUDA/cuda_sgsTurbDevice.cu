@@ -474,6 +474,14 @@ __device__ void cudaDevice_hydroCoreCalcTausScalar(float* SM1, float* SM2, float
       SM1[ijk] = -rho[ijk]*Km[ijk]*invPr*SM1[ijk];
       SM2[ijk] = -rho[ijk]*Km[ijk]*invPr*SM2[ijk];
       SM3[ijk] = -rho[ijk]*Km[ijk]*invPr*SM3[ijk];
+      /* Impermeable lower boundary: the SGS diffusivity on the surface cell face is zero, so the vertical SGS
+       * flux (tau_s3) through the face k == kMin_d is identically zero for every scalar routed through here
+       * (auxiliary scalars and all moisture species). A surface-flux parameterization that applies to a given
+       * scalar (e.g. the MOST latent-heat flux for qv in cudaDevice_SurfaceLayerMOSTmoist) runs later in the same
+       * thread of cudaDevice_hydroCoreCalcFaceVelocities and overwrites this face value; keep that ordering. */
+      if(k == kMin_d){
+        SM3[ijk] = 0.0f;
+      }
 
    } //end if in the range of non-halo cells
 
