@@ -14,7 +14,7 @@ FastEddy-model Version 5.0.2 Release Notes (20261104)
    * Fix to remove an extra density factor from the applied GAD turbine force
    * Fix to the GAD yaw controller to stop yawing when the rotor passes the target direction, avoiding full-circle rotations
    * Fix to the Coriolis forcing to include the missing density factor in the momentum tendencies
-   * Fix to a race condition on the sub-grid length scale at k-1 in the eddy diffusivity for prognostic SGS TKE, which made runs non-reproducible
+   * Fix to a race condition on the sub-grid length scale at k-1 in the eddy diffusivity for prognostic SGS TKE, which made the result depend on GPU thread scheduling
    * Fix to the sub-grid scale diffusive flux of scalars (auxiliary scalars and moisture species) through the lower boundary, which allowed mass to leak through the surface [reported independently by Audrey McManemin from Stanford University, and Prof. Haofei Yu from the University of Central Florida]
    * Fix to the inverted Reynolds number of the canopy element in the canopy skin-friction option [reported by Joran Dartevelle from the von Karman Institute for Fluid Dynamics, Belgium]
 
