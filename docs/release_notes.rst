@@ -2,7 +2,7 @@
 Release Notes
 *************
 
-FastEddy-model Version 5.0.2 Release Notes (20261104)
+FastEddy-model Version 5.0.2 Release Notes (20261106)
 =====================================================
 
 .. dropdown:: Bugfixes

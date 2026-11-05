@@ -11,7 +11,7 @@ Downloads
      - Tar File
      - Release Notes
    * - 5.0.2
-     - November 4, 2026
+     - November 6, 2026
      - `v5.0.2.tar.gz <https://github.com/NCAR/FastEddy-model/archive/refs/tags/v5.0.2.tar.gz>`_
      - `v5.0.2 Release Notes <https://fasteddy-model.readthedocs.io/en/main_v5.0/release_notes.html>`_
    * - 5.0.1
