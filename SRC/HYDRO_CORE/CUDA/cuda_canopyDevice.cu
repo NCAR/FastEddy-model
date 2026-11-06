@@ -101,7 +101,7 @@ __device__ void cudaDevice_canopyMomDrag(float* rhoInv, float* u, float* v, floa
     w_ijk = w[ijk]*rhoInv[ijk];
     U_ijk = powf(powf(u_ijk,2.0)+powf(v_ijk,2.0)+powf(w_ijk,2.0),0.5);
     if(canopySkinOpt_d == 1){
-      Re_l = U_ijk*nu_air/canopy_lf_d;
+      Re_l = U_ijk*canopy_lf_d/nu_air; // Reynolds number of the canopy element, U*l/nu
       csf_coeff = 1.328/powf(Re_l,0.5) + 2.326/Re_l;
       cd_coeff = cd_coeff + csf_coeff; 
     }

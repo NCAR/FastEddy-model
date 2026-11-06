@@ -52,10 +52,10 @@ __global__ void cudaDevice_hydroCoreCompleteSGSTKE(float* hydroFlds_d, float* hy
                                                            float* sgstkeScalars_d, float* sgstkeScalarsFrhs_d,
                                                            float* J13_d, float* J23_d, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
 
-/*----->>>>> __device__ void  cudaDevice_sgstkeLengthScale();  --------------------------------------------------
-* This cuda kernel calculates the sub-grid length scale
+/*----->>>>> __device__ float  cudaDevice_sgstkeLengthScale();  --------------------------------------------------
+* This cuda device function returns the sub-grid length scale at (i,j,k+kOffset), stored in sgstke_ls only for kOffset=0
 */
-__device__ void cudaDevice_sgstkeLengthScale(float* th, float* rhoInv, float* sgstke, float* sgstke_ls, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d);
+__device__ float cudaDevice_sgstkeLengthScale(float* th, float* rhoInv, float* sgstke, float* sgstke_ls, float* J31_d, float* J32_d, float* J33_d, float* D_Jac_d, int kOffset);
 
 /*----->>>>> __device__ void  cudaDevice_sgstkeBuoyancy();  --------------------------------------------------
 * This cuda kernel calculates the Buoyancy term in the SGSTKE equation

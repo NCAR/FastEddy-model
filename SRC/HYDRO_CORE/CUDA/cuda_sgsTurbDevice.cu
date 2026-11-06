@@ -234,7 +234,7 @@ __device__ void cudaDevice_hydroCoreCalcStrainRateElements(float* u, float* v, f
 __device__ void cudaDevice_hydroCoreCalcEddyDiff(float* S11, float* S21, float* S31,
                                                  float* S32, float* S22, float* S33,
                                                  float* STH3, float* theta, float* rhoInv,
-                                                 float* sgstke, float* sgstke_ls, float* Km, float* D_Jac_d){
+                                                 float* sgstke, float* sgstke_ls, float sgstke_ls_km1, float* Km, float* D_Jac_d){
 
    int i,j,k,ijk,ijkm1;
    int iStride,jStride,kStride;
@@ -266,7 +266,7 @@ __device__ void cudaDevice_hydroCoreCalcEddyDiff(float* S11, float* S21, float* 
       if(TKESelector_d>0){ // Lilly (prognostic SGSTKE equation)
         sgstke_ijk = sgstke[ijk]*rhoInv[ijk];
         sgstke_ijkm1 = sgstke[ijkm1]*rhoInv[ijkm1];
-        Km_ijk = c_k_d*0.5*(sgstke_ls[ijk]*powf(sgstke_ijk,0.5)+sgstke_ls[ijkm1]*powf(sgstke_ijkm1,0.5));
+        Km_ijk = c_k_d*0.5*(sgstke_ls[ijk]*powf(sgstke_ijk,0.5)+sgstke_ls_km1*powf(sgstke_ijkm1,0.5)); // sgstke_ls_km1 from this thread, not sgstke_ls[ijkm1] (written by another thread in this kernel)
       }else{ // Smagorinsky
         turbDelta = powf(dX_d*dY_d*dZ_d*D_Jac_d[ijk],1.0/3.0);   // "l"
         invPr = 3.0;
@@ -474,6 +474,14 @@ __device__ void cudaDevice_hydroCoreCalcTausScalar(float* SM1, float* SM2, float
       SM1[ijk] = -rho[ijk]*Km[ijk]*invPr*SM1[ijk];
       SM2[ijk] = -rho[ijk]*Km[ijk]*invPr*SM2[ijk];
       SM3[ijk] = -rho[ijk]*Km[ijk]*invPr*SM3[ijk];
+      /* Impermeable lower boundary: the SGS diffusivity on the surface cell face is zero, so the vertical SGS
+       * flux (tau_s3) through the face k == kMin_d is identically zero for every scalar routed through here
+       * (auxiliary scalars and all moisture species). A surface-flux parameterization that applies to a given
+       * scalar (e.g. the MOST latent-heat flux for qv in cudaDevice_SurfaceLayerMOSTmoist) runs later in the same
+       * thread of cudaDevice_hydroCoreCalcFaceVelocities and overwrites this face value; keep that ordering. */
+      if(k == kMin_d){
+        SM3[ijk] = 0.0f;
+      }
 
    } //end if in the range of non-halo cells
 

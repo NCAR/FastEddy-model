@@ -50,6 +50,7 @@ float* GAD_turbineRefMag;/* Reference "ambient" velocity magnitude for yaw contr
 float* GAD_turbineRefDir;/* *Reference "ambient" velocity direction (horizontal, met. standard orientation) for yaw control and beta/omega [degrees]*/
 float* GAD_yawError;     /* yaw error between the incoming wind and the turbine orientation */
 float* GAD_anFactor;     /* turbine axial induction factor at hub heigth*/
+float* GAD_turbinePower; /* rotor aerodynamic power (torque x rotor speed), this rank's share of the rotor [W]*/
 float* GAD_rotorTheta;   /* rotor-normal horizontal angle from North [degrees]*/
 float* GAD_hubHeights;   /* Above-ground-level hub-heights of turbines [m]*/
 float* GAD_rotorD;       /* turbine-specific rotor diameters [m]*/
@@ -655,6 +656,20 @@ int GADConstructor(){
   sprintf(&fldName[0],"GAD_anFactor");
   errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_anFactor[0]);
   errorCode = ioAddStandardAttrs("GAD_anFactor", "-", "rotor-normal upstream wind speed induction factor", NULL);
+  GAD_turbinePower = (float*) malloc(GADNumTurbines*sizeof(float));
+  sprintf(&fldName[0],"GAD_turbinePower");
+  errorCode = ioRegisterVar(&fldName[0], "float", 2, dims1dTD_GAD, &GAD_turbinePower[0]);
+  errorCode = ioAddStandardAttrs("GAD_turbinePower", "W", "rotor aerodynamic power (torque x rotor speed)", NULL);
+
+  /*Default the turbine state; an inFile (initial or restart) overwrites only the fields it contains*/
+  for(iFld = 0; iFld < GADNumTurbines; iFld++){
+    GAD_turbineYawing[iFld] = 0;     //Initialize to all turbines not rotating
+    GAD_turbineRefMag[iFld] = 0.0;   //Standard initialization to zero
+    GAD_turbineRefDir[iFld] = fmodf(270.0-GAD_rotorTheta[iFld]+360.0,360.0); //Wind direction aligned with the rotor
+    GAD_yawError[iFld] = 0.0;        //Initialize to zero yaw error
+    GAD_anFactor[iFld] = 0.0;        //Initialize to zero axial induction factor
+    GAD_turbinePower[iFld] = 0.0;    //Diagnostic, recomputed every time step
+  }
 
   return(errorCode);
 } //end GADConstructor()
@@ -671,7 +686,9 @@ int GADInitTurbineRefChars(float dt){
   float rVec0;
   float deltaz, deltaz0;
   float deltaz_p1, deltaz_m1;
+  struct { float val; int rank; } *ownerCand; //(distance, rank) pairs to resolve a unique owner per turbine
   
+
   /*Initialize requisite parameters for the RefMag and RefDir calculations*/
   GADsamplingAvgLength = (int) floor(GADrefSampleWindow/dt);    //Determine the number of model timesteps in a sample window (high frequencies filter)
   MPI_Bcast(&GADsamplingAvgLength, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -687,6 +704,7 @@ int GADInitTurbineRefChars(float dt){
   fflush(stdout);
 #endif
 
+  ownerCand = malloc(GADNumTurbines*sizeof(*ownerCand));
   for(iturb = 0; iturb < GADNumTurbines; iturb++){
     rVec0 = 99999.9999;
     deltaz0 = 99999.9999;
@@ -694,15 +712,9 @@ int GADInitTurbineRefChars(float dt){
       GAD_turbineRefi[iturb] = -999;  //Initialize to special "absent" value of -999
       GAD_turbineRefj[iturb] = -999;  //Initialize to special "absent" value of -999
       GAD_turbineRefk[iturb] = -999;  //Initialize to special "absent" value of -999
-    if(inFile == NULL){
-      GAD_turbineRefMag[iturb] = 0.0; //Standard initialization to zero
-      GAD_turbineRefDir[iturb] = 0.0; //Standard initialization to zero
-      GAD_turbineYawing[iturb] = 0;   //Initialize to all turbines not rotating
-      GAD_yawError[iturb] = 0.0;      //Initialize to zero yaw error
-      GAD_anFactor[iturb] = 0.0;      //Initialize to zero axial induction factor
-    }//end if inFile == NULL
-    for(i=iMin-Nh; i < iMax+Nh; i++){
-      for(j=jMin-Nh; j < jMax+Nh; j++){
+    //Search interior (non-halo) cells only, so the reference cell is one this rank actually updates
+    for(i=iMin; i < iMax; i++){
+      for(j=jMin; j < jMax; j++){
         for(k=kMin-Nh+1; k < kMax+Nh-1; k++){
            ijk = i*(Nyp+2*Nh)*(Nzp+2*Nh)+j*(Nzp+2*Nh)+k;
            ij = i*(Nyp+2*Nh)+j;
@@ -718,6 +730,8 @@ int GADInitTurbineRefChars(float dt){
 	         GAD_turbineRank[iturb] = mpi_rank_world; 
                  GAD_turbineRefi[iturb] = i;
 	         GAD_turbineRefj[iturb] = j;
+	         GAD_turbineRefk[iturb] = -999; //a new column, restart the vertical search
+	         deltaz0 = 99999.9999;
 	     }
 	     if ((GAD_turbineRank[iturb]==mpi_rank_world) && (GAD_turbineRefi[iturb]==i) && (GAD_turbineRefj[iturb]==j)){
 	       deltaz = fabsf(GAD_hubHeights[GAD_turbineType[iturb]]-(zPos[ijk]-topoPos[ij]));
@@ -741,6 +755,8 @@ int GADInitTurbineRefChars(float dt){
     } // end for(i...
     //dummy update here making use of deltaz0 avoiding compiler warning for an usused variable
     deltaz = deltaz0;
+    ownerCand[iturb].val = rVec0;
+    ownerCand[iturb].rank = mpi_rank_world;
 #ifdef DEBUG_TURBCHAR
     if(GAD_turbineRank[iturb] == mpi_rank_world){
       printf("%d/%d: Turbine %d has determined nacelle center cell @ %d,%d,%d with rVec0 = %f and deltaz0 = %f\n",
@@ -749,6 +765,27 @@ int GADInitTurbineRefChars(float dt){
     }
 #endif
   }// end for iturb...
+
+  //Resolve a single owner rank per turbine (closest reference cell, lowest rank on ties)
+  //and make GAD_turbineRank consistent across all ranks
+  MPI_Allreduce(MPI_IN_PLACE, ownerCand, GADNumTurbines, MPI_FLOAT_INT, MPI_MINLOC, MPI_COMM_WORLD);
+  for(iturb = 0; iturb < GADNumTurbines; iturb++){
+     if(ownerCand[iturb].val >= 99999.0){ //no rank holds a reference cell for this turbine
+       GAD_turbineRank[iturb] = -999;
+     }else{
+       GAD_turbineRank[iturb] = ownerCand[iturb].rank;
+     }
+     if(GAD_turbineRank[iturb] != mpi_rank_world){
+       GAD_turbineRefi[iturb] = -999;
+       GAD_turbineRefj[iturb] = -999;
+       GAD_turbineRefk[iturb] = -999;
+     }
+     if((mpi_rank_world == 0) && (GAD_turbineRank[iturb] < 0)){
+       printf("WARNING GADInitTurbineRefChars(): turbine %d has no reference cell in the domain!\n",iturb);
+       fflush(stdout);
+     }
+  }// end for iturb...
+  free(ownerCand);
 
   //Having determined the mpi_rank of each turbine, zero out the 
   //GAD_rotorTheta and other elements for any turbines which do NOT belong to a given mpi_rank_world
@@ -965,6 +1002,7 @@ int GADDestructor(){
   free(GAD_turbineRefDir);
   free(GAD_yawError);
   free(GAD_anFactor);
+  free(GAD_turbinePower);
   free(GAD_rotorTheta);
   free(GAD_hubHeights);
   free(GAD_rotorD);

@@ -495,6 +495,12 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 #endif
    gpuErrchk( cudaGetLastError() );
    gpuErrchk( cudaDeviceSynchronize() );
+#ifdef GAD_EXT
+   if (GADSelector > 0 && (timeStage==numRKstages)){
+     //Owner ranks updated rotorTheta/RefMag/anFactor in GADinter; share them before GADfinal
+     errorCode = cuda_GADDeviceSyncTurbineState();
+   }
+#endif
    
 /*********************************** build_Frhs "final tasks" phase ************************************************************/
    cudaDevice_hydroCoreComplete<<<grid, tBlock>>>(simTime, simTime_it, dt, timeStage, numRKstages, hydroFlds_d, hydroFldsFrhs_d,
@@ -591,6 +597,7 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
 #endif
 #ifdef GAD_EXT
    if (GADSelector > 0 && ((physics_oneRKonly==0) || (timeStage==numRKstages))){
+     gpuErrchk( cudaMemset(GAD_turbinePower_d, 0, GADNumTurbines*sizeof(float)) ); // rebuilt by each launch, the last RK stage's sum is output
      cudaDevice_GADfinal<<<grid, tBlock>>>(xPos_d, yPos_d, zPos_d, topoPos_d,
                                            hydroFlds_d, hydroFldsFrhs_d,simTime_it,dt,
                                            GAD_turbineType_d, GAD_turbineVolMask_d,
@@ -601,7 +608,8 @@ extern "C" int cuda_hydroCoreDeviceBuildFrhs(float simTime, int simTime_it, int 
                                            rnorm_vect_d, alpha_minmax_vect_d,
                                            turbinePolyCl_d, turbinePolyCd_d,
 					   GAD_turbineRefMag_d, GAD_anFactor_d,
-                                           GAD_forceX_d, GAD_forceY_d, GAD_forceZ_d);
+                                           GAD_forceX_d, GAD_forceY_d, GAD_forceZ_d,
+                                           D_Jac_d, GAD_turbinePower_d);
    }
 #endif 
 
@@ -1151,6 +1159,7 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
    int fldStride;
    float inv_pr; 
    int iFld; 
+   float sgstke_ls_km1; // sub-grid length scale at k-1 for Km (prognostic TKE)
 
    fldStride = (Nx_d+2*Nh_d)*(Ny_d+2*Nh_d)*(Nz_d+2*Nh_d);
 
@@ -1214,14 +1223,18 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
 	 if(iFld==0){
            cudaDevice_sgstkeLengthScale(&hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
                                       &sgstkeScalars_d[fldStride*iFld], &sgstke_ls_d[fldStride*iFld],
-                                      J31_d, J32_d, J33_d, D_Jac_d); // length scale calculation
+                                      J31_d, J32_d, J33_d, D_Jac_d, 0); // length scale calculation
+           sgstke_ls_km1 = cudaDevice_sgstkeLengthScale(&hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
+                                                        &sgstkeScalars_d[fldStride*iFld], &sgstke_ls_d[fldStride*iFld],
+                                                        J31_d, J32_d, J33_d, D_Jac_d, -1); // length scale at k-1, computed by this thread (not stored)
 	 }else if(iFld==1){
            cudaDevice_sgstkeLengthScaleLF(&sgstke_ls_d[fldStride*iFld]); // canopy length scale assignment
+           sgstke_ls_km1 = canopy_lf_d; // canopy length scale at k-1
          }
          cudaDevice_hydroCoreCalcEddyDiff(&hydroTauFlds_d[fldStride*0], &hydroTauFlds_d[fldStride*1], &hydroTauFlds_d[fldStride*2],
                                           &hydroTauFlds_d[fldStride*3], &hydroTauFlds_d[fldStride*4], &hydroTauFlds_d[fldStride*5],
                                           &hydroTauFlds_d[fldStride*8], &hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
-                                          &sgstkeScalars_d[fldStride*iFld], &sgstke_ls_d[fldStride*iFld], &hydroKappaM_d[0], D_Jac_d); // calculate Km
+                                          &sgstkeScalars_d[fldStride*iFld], &sgstke_ls_d[fldStride*iFld], sgstke_ls_km1, &hydroKappaM_d[0], D_Jac_d); // calculate Km
          cudaDevice_GradScalar(&sgstkeScalars_d[fldStride*iFld], &hydroRhoInv_d[0],
                                &dedxi_d[fldStride*(iFld*3+0)], &dedxi_d[fldStride*(iFld*3+1)], &dedxi_d[fldStride*(iFld*3+2)],
                                J13_d, J23_d, J31_d, J32_d, J33_d); // calculate SGSTKE spatial gradients
@@ -1238,7 +1251,7 @@ __global__ void cudaDevice_hydroCoreCalcFaceVelocities(float simTime, int simTim
        cudaDevice_hydroCoreCalcEddyDiff(&hydroTauFlds_d[fldStride*0], &hydroTauFlds_d[fldStride*1], &hydroTauFlds_d[fldStride*2],
                                         &hydroTauFlds_d[fldStride*3], &hydroTauFlds_d[fldStride*4], &hydroTauFlds_d[fldStride*5],
                                         &hydroTauFlds_d[fldStride*8], &hydroFlds_d[fldStride*THETA_INDX], &hydroRhoInv_d[0],
-                                        &sgstkeScalars_d[0], &sgstke_ls_d[0], &hydroKappaM_d[0], D_Jac_d); // calculate Km
+                                        &sgstkeScalars_d[0], &sgstke_ls_d[0], 0.0, &hydroKappaM_d[0], D_Jac_d); // calculate Km (sgstke_ls_km1 unused)
        cudaDevice_hydroCoreCalcTaus(&hydroTauFlds_d[fldStride*0], &hydroTauFlds_d[fldStride*1], &hydroTauFlds_d[fldStride*2],
                                     &hydroTauFlds_d[fldStride*3], &hydroTauFlds_d[fldStride*4], &hydroTauFlds_d[fldStride*5],
                                     &hydroTauFlds_d[fldStride*6], &hydroTauFlds_d[fldStride*7], &hydroTauFlds_d[fldStride*8],
@@ -1439,7 +1452,9 @@ extern "C" int cuda_hydroCoreSynchFieldsFromDevice(int batchSize){
      gpuErrchk( cudaMemcpy(GAD_turbineRefDir, GAD_turbineRefDir_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
      gpuErrchk( cudaMemcpy(GAD_yawError, GAD_yawError_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
      gpuErrchk( cudaMemcpy(GAD_anFactor, GAD_anFactor_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
+     gpuErrchk( cudaMemcpy(GAD_turbinePower, GAD_turbinePower_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) );
      gpuErrchk( cudaMemcpy(GAD_rotorTheta, GAD_rotorTheta_d, GADNumTurbines*sizeof(float), cudaMemcpyDeviceToHost) ); 
+     errorCode = cuda_GADMaskNonOwnedHostState(); //Device state is shared across ranks; IO sums over ranks
      if (GADoutputForces == 1){
        gpuErrchk( cudaMemcpy(GAD_forceX, GAD_forceX_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );
        gpuErrchk( cudaMemcpy(GAD_forceY, GAD_forceY_d, Nelems*sizeof(float), cudaMemcpyDeviceToHost) );

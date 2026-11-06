@@ -22,11 +22,11 @@ language='en'
 project = 'FastEddy'
 author = 'UCAR/NCAR'
 author_list = 'Muñoz-Esparza, D., J. Sauer'
-version = '5.0.1'
+version = '5.0.2'
 verinfo = version
 release = f'{version}'
 release_year = '2026'
-release_date = f'{release_year}-08-13'
+release_date = f'{release_year}-11-06'
 copyright = f'{release_year}, {author}'
 
 # -- General configuration ---------------------------------------------------

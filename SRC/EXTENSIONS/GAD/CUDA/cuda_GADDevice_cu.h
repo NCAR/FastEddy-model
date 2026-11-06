@@ -57,6 +57,7 @@ extern float* u_sampAvg_d;         /* u sample averages for each turbine */
 extern float* v_sampAvg_d;         /* v sample averages for each turbine */
 extern float* GAD_yawError_d;      /* yaw error between the incoming wind and the turbine orientation */
 extern float* GAD_anFactor_d;     /* turbine axial induction factor at hub heigth*/
+extern float* GAD_turbinePower_d; /* rotor aerodynamic power, this rank's share of the rotor [W] */
 extern float* GAD_rotorTheta_d;    /* turbine yaw angle [deg. North] */
 extern float* GAD_hubHeights_d;    /* turbine hub height [m AGL] */
 extern float* GAD_rotorD_d;        /* turbine rotor diameter [m] */
@@ -86,6 +87,17 @@ extern "C" int cuda_GADDeviceSetup();
 * Used to free all malloced memory by the GAD submodule.
 */
 extern "C" int cuda_GADDeviceCleanup();
+
+/*----->>>>> extern "C" int cuda_GADDeviceSyncTurbineState();  -----------------------------------------------------------
+* Share the owning rank's rotorTheta, RefMag and anFactor with all ranks
+*/
+#define GAD_NUM_SYNC_FIELDS 3
+extern "C" int cuda_GADDeviceSyncTurbineState();
+
+/*----->>>>> extern "C" int cuda_GADMaskNonOwnedHostState();  -----------------------------------------------------------
+* Zero host copies of per-turbine state for turbines not owned by this rank (IO sums across ranks)
+*/
+extern "C" int cuda_GADMaskNonOwnedHostState();
 
 /*----->>>>> __global__ void  cudaDevice_GADinter();  --------------------------------------------------
 * This function is the global entry kernel for computing reference values for GAD yawing and other turbine characteristics
@@ -118,7 +130,8 @@ __global__ void cudaDevice_GADfinal(float* xPos_d, float* yPos_d, float* zPos_d,
                                     float* rnorm_vect_d, float* alpha_minmax_vect_d,
                                     float* turbinePolyCl_d, float* turbinePolyCd_d,
 				    float* GAD_turbineRefMag_d, float* GAD_anFactor_d,
-                                    float* GAD_forceX_d, float* GAD_forceY_d, float* GAD_forceZ_d);
+                                    float* GAD_forceX_d, float* GAD_forceY_d, float* GAD_forceZ_d,
+                                    float* D_Jac_d, float* GAD_turbinePower_d);
 
 /*----->>>>> __device__ void  cudaDevice_cellInRotor();  --------------------------------------------------
  * This functions calculates a radial vector and setes a flag to detrmine if a cell is in a rotor disk area
@@ -153,6 +166,14 @@ __device__ void cudaDevice_GADforcesApply(float rho, float turb_Xcoord, float tu
                                           float GADforce_n, float GADforce_t, float* GADforce_x, float* GADforce_y, float* GADforce_z,
                                           float* GAD_fX, float* GAD_fY, float* GAD_fZ, float turbineRadius, float nacelleD);
 
+/*----->>>>> __device__ void cudaDevice_GADpowerAccumulate();  --------------------------------------------------
+* Adds one rotor cell's share of its turbine's aerodynamic power, P = Omega*sum(r*f_t*dV), where f_t = F_factor*GADforce_t
+* is the tangential blade force per unit volume applied in cudaDevice_GADforcesApply() and dV the physical cell volume.
+*/
+__device__ void cudaDevice_GADpowerAccumulate(float turb_Xcoord, float turb_Ycoord, float rotorTheta, float rotorD,
+                                              float xLoc, float yLoc, float GADforce_t, float turbineRadius,
+                                              float omega_rot, float cellVolume, float* turbinePower);
+
 /*----->>>>> __device__ void compute_ClCd_incoeff();  --------------------------------------------------
 */
 __device__ void compute_ClCd_incoeff(float* rnorm_vect, float* turbinePolyCl, float* turbinePolyCd, float alpha, float r_norm, float* C_l, float* C_d);
@@ -186,4 +207,17 @@ __device__ void compute_normalInduction(float turbineRefMag, float rotorD, float
                                         float turbineRadius, float beta_angle, float omega_rot, float chord_length,
                                         float *rnorm_vect, float *alpha_minmax_vect, float *turbinePolyCl, float *turbinePolyCd,
 					float *turbineRefAn);
+
+/*----->>>>> __device__ void cudaDevice_GADdiskInduction();  --------------------------------------------------
+* Rotor-disk (annulus-area weighted) axial induction factor from GAD_NUM_RADIAL_STATIONS analytic radial stations
+*/
+#define GAD_NUM_RADIAL_STATIONS 20
+/* Wind-speed range [m/s] over which the turbine pitch/omega polynomials are evaluated (cut-in/cut-out) */
+#define GAD_POLY_UMIN 3.0
+#define GAD_POLY_UMAX 25.0
+__device__ void cudaDevice_GADdiskInduction(float turbineRefMag, float rotorD, float nacelleD,
+                                            float* turbinePolyTwist_d, float* turbinePolyChord_d,
+                                            float* turbinePolyPitch_d, float* turbinePolyOmega_d,
+                                            float *rnorm_vect, float *alpha_minmax_vect, float *turbinePolyCl, float *turbinePolyCd,
+                                            float *turbineRefAn);
 #endif // _GAD_CUDADEV_CU_H

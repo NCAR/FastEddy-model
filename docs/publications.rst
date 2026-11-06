@@ -4,6 +4,13 @@
 Publications
 ************
 
+.. _eloisa_terrainflilt_2025:
+
+| Raluy-López, E., D. Muñoz-Esparza, and J.P. Montávez. “A local terrain smoothing approach for
+|   stabilizing microscale and high-resolution mesoscale simulations: A case study using
+|   FastEddy\ :sup:`®` (v3.0) and WRF (v4.6.0)”. *Geoscientific Model Development*, 19, 5139–5154 (2026)
+|   https://doi.org/10.5194/gmd-19-5139-2026
+
 .. _urban_nature_2026:
 
 | Cui, Y., S. Chen, L. Xue, D. Muñoz-Esparza, J.A. Sauer, L. Hu, J.D. Albertson, Q. Li. “Local cloud
@@ -16,13 +23,6 @@ Publications
 | Muñoz‐Esparza, D., J.A. Sauer, and B. Kosović. “Explicit modeling of near‐surface ABL turbulence
 |   at sub‐meter grid spacings via one‐way LES‐to‐LES nesting”. *JGR Atmospheres*, 130(24), 2025
 |   https://doi.org/10.1029/2025JD044934
-
-.. _eloisa_terrainflilt_2025:
-
-| Raluy-López, E., D. Muñoz-Esparza, and J.P. Montávez. “A local terrain smoothing approach for
-|   stabilizing microscale and high-resolution mesoscale simulations: A case study using
-|   FastEddy\ :sup:`®` (v3.0) and WRF (v4.6.0)”. *Geoscientific Model Development* (2025)
-|   https://doi.org/10.5194/egusphere-2025-3744
 
 .. _bowen_pressurewaves_2025:
 
